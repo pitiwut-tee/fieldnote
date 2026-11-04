@@ -52,7 +52,25 @@ p{margin:0}
 .prompt{font-size:1.08rem}
 .opts{display:flex;flex-direction:column;gap:8px}
 .opt{font:inherit;text-align:left;color:var(--ink);background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer}
-.opt:hover:not(:disabled){border-color:var(--accent)}
+@media (hover:hover){.opt:hover:not(:disabled){border-color:var(--accent)}}   /* touch screens keep a "hover" after a tap, which looked like a hint */
+.optrow{display:flex;gap:6px;align-items:stretch}
+.optrow .opt{flex:1}
+.xopt{flex:none;width:40px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--muted);font:inherit;cursor:pointer}
+.opt.struck{opacity:.45;text-decoration:line-through;background:var(--soft)}
+.term{font:inherit;color:inherit;background:none;border:0;padding:0;border-bottom:2px dotted var(--accent);cursor:pointer}
+details.ask{display:flex;flex-direction:column;gap:6px}
+details.ask summary{cursor:pointer;color:var(--accent);font-size:.9rem;padding:4px 0}
+details.ask[open]{display:flex}
+.dot.leave{border-style:dashed;display:flex;align-items:center;justify-content:center;font-size:.8rem}
+.padfab{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:30;font:inherit;font-family:var(--display);border:0;border-radius:999px;padding:10px 16px;background:var(--beak);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer}
+.pad{position:fixed;left:0;right:0;bottom:0;height:48vh;z-index:20;background:var(--card);border-top:2px solid var(--line);display:flex;flex-direction:column;box-shadow:0 -4px 16px rgba(0,0,0,.12)}
+.pad[hidden]{display:none}
+.padbar{display:flex;gap:6px;padding:8px 12px;flex-wrap:wrap}
+.padbar button{font:inherit;font-size:.85rem;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.padbar button[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,var(--card))}
+#pad-canvas{flex:1;width:100%;touch-action:none;background-image:linear-gradient(var(--line) 1px,transparent 1px);background-size:100% 32px}
+body.padopen .wrap{padding-bottom:calc(48vh + 70px)}
+body.padopen .padfab{bottom:calc(48vh + 10px)}
 .opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 12%,var(--card))}
 .opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--card))}
 .opt:disabled{cursor:default}
@@ -137,7 +155,7 @@ button.spell{cursor:pointer} button.spell:hover{border-color:var(--accent)}
 </div>
 
 <script>
-const ERR = {concept:"ยังไม่เข้าใจหลัก", read:"อ่านโจทย์พลาด", calc:"คิดเลขผิด", guess:"เดา"};
+const ERR = {concept:"ยังไม่เข้าใจหลัก", read:"อ่านโจทย์พลาด", unclear:"โจทย์กำกวม อ่านแล้วไม่เข้าใจ", calc:"คิดเลขผิด", guess:"เดา", dontknow:"คิดไม่ออก (กดดูเฉลย)"};
 const LV = {1:"ระดับ 1 · พื้นฐาน",2:"ระดับ 2 · ประยุกต์",3:"ระดับ 3 · แนวคิดวิเคราะห์"};
 
 const SETS = [
@@ -363,6 +381,27 @@ const READINGS=[
      {q:"Why is the median better here?",opts:["Because 9 hours is much larger than the others","Because the mean is always wrong","Because there are five members","Because the song is new"],a:0}]}
 ];
 
+const READ_TH=[
+{text:"มินาอยากวาดแมวของเธอ อย่างแรก เธอร่างภาพอย่างเร็วๆ แล้วมองให้ดีเพื่อสังเกตเงาใต้คางของมัน ครั้งแรกเธอยังทำไม่ได้ แต่เธออดทน หลังลองไปสามครั้ง ผลงานก็ดูเกือบเหมือนมีชีวิต",
+ qs:[{q:"มินาทำอะไรเป็นอย่างแรก",opts:["เธอร่างภาพอย่างเร็วๆ","เธอแรเงาส่วนที่เป็นเงา","เธอซื้อแมว","เธอยอมแพ้"]},
+     {q:"คำไหนแปลว่าเธอไม่ยอมแพ้ง่ายๆ",opts:["อดทน","อยากรู้อยากเห็น","โบราณ","อ่อนโยน"]}]},
+{text:"ในการทดลอง ห้องเรียนหนึ่งใส่น้ำตาลปริมาณเท่ากันลงในน้ำสามแก้ว ตัวแปรเดียวที่เปลี่ยนคืออุณหภูมิ น้ำตาลละลายเร็วที่สุดในแก้วที่ร้อนที่สุด ข้อมูลของพวกเขาแสดงว่าความร้อนช่วยให้น้ำตาลละลายเร็วขึ้น",
+ qs:[{q:"ห้องเรียนเปลี่ยนอะไร",opts:["อุณหภูมิ","ปริมาณน้ำตาล","ชนิดของแก้ว","ปริมาณน้ำ"]},
+     {q:"หลักฐานแสดงว่าอะไร",opts:["ความร้อนทำให้น้ำตาลละลายเร็วขึ้น","ความเย็นทำให้น้ำตาลละลายเร็วขึ้น","น้ำตาลไม่ละลายเลย","ทุกแก้วเหมือนกันหมด"]}]},
+{text:"หุ่นยนต์ตัวเล็กตื่นขึ้นมาตัวคนเดียวบนเกาะ มันไม่รู้ว่าจะอยู่ที่นั่นอย่างไร จึงตัดสินใจสังเกตสัตว์ต่างๆ ทุกวันมันจดข้อมูลไว้ว่า นกกินอาหารเมื่อไร กวางนอนที่ไหน และอากาศเปลี่ยนไปอย่างไร ผ่านไปหนึ่งเดือน หุ่นยนต์ทำนายได้ว่าฝนจะตกล่วงหน้าหนึ่งวัน",
+ qs:[{q:"หุ่นยนต์เรียนรู้เรื่องเกาะได้อย่างไร",opts:["มันสังเกตสัตว์และจดข้อมูลไว้","มันอ่านหนังสือ","มันถามครู","มันรู้ทุกอย่างอยู่แล้ว"]},
+     {q:"คำว่า predict ในเรื่องนี้หมายถึงอะไร",opts:["บอกว่าจะเกิดอะไรก่อนที่จะเกิดขึ้น","ลืมบางอย่าง","วาดรูป","นอนหลับนานๆ"]}]},
+{text:"ในเกมออนไลน์แบบ 5 ต่อ 5 ทีมของมะลิเล่นไป 20 แมตช์ในสัปดาห์นี้ ชนะ 14 แมตช์ เพื่อนของเธอบอกว่า \"อัตราชนะของเราคือ 14 เปอร์เซ็นต์\" มะลิหัวเราะแล้วอธิบายคำตอบที่ถูก ทั้งหมดคือ 20 ไม่ใช่ 100 อัตราชนะจึงเป็น 14 จาก 20",
+ qs:[{q:"อัตราชนะจริงของทีมคือเท่าไร",opts:["70 เปอร์เซ็นต์","14 เปอร์เซ็นต์","20 เปอร์เซ็นต์","34 เปอร์เซ็นต์"]},
+     {q:"เพื่อนผิดตรงไหน",opts:["เขาคิดว่าทั้งหมดคือ 100","เขานับจำนวนที่ชนะผิด","เขาลืมเล่น","เขาใช้ค่าเฉลี่ย"]}]},
+{text:"นักวิทยาศาสตร์ศึกษาสัตว์ตัวจิ๋วในป่า พวกเขาประมาณจำนวนประชากรโดยจับมา 40 ตัว ติดป้ายเล็กๆ ไว้ทุกตัว แล้วปล่อยไป หนึ่งสัปดาห์ต่อมาจับใหม่ 50 ตัว มี 10 ตัวที่มีป้าย เมื่อใช้อัตราส่วนนี้ พวกเขาประมาณว่ามีสัตว์อยู่ในป่าราว 200 ตัว",
+ qs:[{q:"ทำไมนักวิทยาศาสตร์ต้องติดป้ายให้สัตว์",opts:["เพื่อประมาณว่ามีสัตว์อยู่ในป่ากี่ตัว","เพื่อตั้งชื่อให้","เพื่อให้มันวิ่งเร็วขึ้น","เพื่อเอาไปขาย"]},
+     {q:"ตัวเลขไหนคืออัตราส่วนของสัตว์ที่มีป้ายในการจับครั้งที่สอง",opts:["10 จาก 50","40 จาก 50","10 จาก 40","50 จาก 200"]}]},
+{text:"วงเต้นที่มีสมาชิกห้าคนซ้อมเพลงใหม่ ครูจดเวลาซ้อมของสมาชิกแต่ละคนเป็นชั่วโมงได้ 3, 4, 4, 5 และ 9 คนที่ซ้อม 9 ชั่วโมงกำลังเตรียมท่อนโซโล่ ครูบอกว่ามัธยฐานบอกเวลาซ้อมตามปกติได้ดีกว่าค่าเฉลี่ย",
+ qs:[{q:"มัธยฐานของเวลาซ้อมคือเท่าไร",opts:["4 ชั่วโมง","5 ชั่วโมง","9 ชั่วโมง","3 ชั่วโมง"]},
+     {q:"ทำไมมัธยฐานจึงเหมาะกว่าในกรณีนี้",opts:["เพราะ 9 ชั่วโมงมากกว่าคนอื่นมาก","เพราะค่าเฉลี่ยผิดเสมอ","เพราะมีสมาชิกห้าคน","เพราะเป็นเพลงใหม่"]}]}
+];
+READINGS.forEach((r,i)=>{ r.th=READ_TH[i]; r.idx=i });
 
 /* ---------- test mode: open the page with #test once; results get a "test" tag ---------- */
 let TEST=false;
@@ -475,13 +514,16 @@ function dayKey(iso){ const d=new Date(iso); d.setHours(0,0,0,0); return d.getTi
 function todayKey(){ return dayKey(new Date().toISOString()) }
 function nextDay(d){ const t=new Date(d); t.setDate(t.getDate()+1); t.setHours(0,0,0,0); return t.getTime() }
 function xpOf(a){ if(isSkip(a)) return 0; if(typeof a.xp==="number") return a.xp; return (a.correct||0)*10+((a.total||0)-(a.correct||0))*5+20 }
-function itemXp(items){ return items.reduce((s,x)=>s+(x.skipped?0:x.correct?10:5),0) }
+function itemXp(items){ return items.reduce((s,x)=>s+(x.skipped||x.dontknow?0:x.correct?10:5),0) }
 function progressOf(list){
   /* a day counts when both missions are done: one lesson set (or review) and the daily vocabulary */
   const byDay=new Map(), skipDays=new Set(), lessonDays=new Set(), vocabDays=new Set(), met=new Set();
-  list.forEach(a=>{const k=dayKey(a.endedAt); if(isSkip(a)){skipDays.add(k);return} byDay.set(k,(byDay.get(k)||0)+xpOf(a)); (a.type==="vocab"?vocabDays:lessonDays).add(k)});
+  const leaveDays=new Set();
+  list.forEach(a=>{const k=dayKey(a.endedAt);
+    if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
+    byDay.set(k,(byDay.get(k)||0)+xpOf(a)); (a.type==="vocab"?vocabDays:lessonDays).add(k)});
   const noVocabToday=(()=>{try{const v=vocabToday();return !v.due.length&&!v.fresh.length}catch(e){return false}})();
-  const today=todayKey(), keys=[...byDay.keys(),...skipDays];
+  const today=todayKey(), keys=[...byDay.keys(),...skipDays,...[...leaveDays].filter(d=>d<=todayKey())];
   let streak=0, freeze=0, goalDays=0; const frozen=new Set(), earned=[];
   if(keys.length){
     for(let d=Math.min(...keys); d<=today; d=nextDay(d)){
@@ -490,13 +532,15 @@ function progressOf(list){
         goalDays++; streak++;
         if(goalDays%5===0&&freeze<FREEZE_MAX){freeze++;earned.push({d,why:"ถึงเป้าครบ 5 วัน"})}
         if(xp>=GOAL*2&&freeze<FREEZE_MAX){freeze++;earned.push({d,why:"เก็บ XP ได้ 120 ขึ้นไปในวันเดียว"})}
+      } else if(leaveDays.has(d)){
+        /* planned leave (camp, trip): the flame waits, no ice used */
       } else if(d<today){
         if(freeze>0&&streak>0){freeze--;frozen.add(d)} else streak=0;
       }
     }
   }
   const todayXp=byDay.get(today)||0;
-  return {streak,freeze,goalDays,frozen,skipDays,byDay,met,todayXp,lessonToday:lessonDays.has(today),vocabToday:vocabDays.has(today),goalToday:met.has(today),earnedToday:earned.filter(e=>e.d===today)};
+  return {streak,freeze,goalDays,frozen,skipDays,byDay,met,todayXp,lessonToday:lessonDays.has(today),leaveDays,onLeave:leaveDays.has(today),vocabToday:vocabDays.has(today),goalToday:met.has(today),earnedToday:earned.filter(e=>e.d===today)};
 }
 
 /* ---------- what to do today ---------- */
@@ -513,10 +557,11 @@ function reviewPool(list){
   }));
   return [...wrong.entries()].sort((a,b)=>a[1]-b[1]).map(([qid])=>QBANK[qid].q);
 }
-function shuffleQ(q){
+function shuffleQ(q, perm){
   if(q.num) return q;
-  const idx=q.opts.map((_,k)=>k); for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]]}
-  return {...q,opts:idx.map(k=>q.opts[k]),a:idx.indexOf(q.a)};
+  let idx=perm&&perm.length===q.opts.length?perm:null;
+  if(!idx){ idx=q.opts.map((_,k)=>k); for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]]} }
+  return {...q,opts:idx.map(k=>q.opts[k]),a:idx.indexOf(q.a),perm:idx};
 }
 
 /* ---------- spell tiers ---------- */
@@ -553,7 +598,7 @@ function nextStep(sp,info){
 }
 
 /* ---------- lesson sessions ---------- */
-function startSet(set, conceptFirst){
+function startSet(set, conceptFirst, perms){
   const warm = set.warm.map(q=>({kind:"q",phase:"อุ่นเครื่อง (ทบทวนของเก่า)",q}));
   const card = {kind:"concept",phase:"การ์ดสรุปเนื้อหา"};
   const steps = [
@@ -561,14 +606,15 @@ function startSet(set, conceptFirst){
     ...set.practice.map(q=>({kind:"q",phase:"ฝึกทำ",q})),
     {kind:"q",phase:"ข้อท้าทาย (ไม่บังคับ)",q:set.challenge,optional:true},
     {kind:"rate",phase:"ปิดท้าย"}
-  ];
-  S = {mode:"set", set, conceptFirst, steps, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, rating:null, hints:0, confused:[], altShown:0};
+  ].map((st,k)=>st.q?{...st,q:shuffleQ(st.q,perms&&perms[k])}:st);   // the right answer is not always the first choice
+  S = {mode:"set", active:true, set, conceptFirst, steps, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, rating:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0};
+  PAD.strokes=[]; saveProgress();
   view="session"; render(); window.scrollTo({top:0});
 }
 function startReview(){
   const qs=reviewPool(mine()).slice(0,5); if(!qs.length) return;
   S = {mode:"review", set:{id:"review",subject:"ทบทวน",topic:"ทบทวนข้อที่เคยพลาด"}, steps:[...qs.map(q=>({kind:"q",phase:"ทบทวนข้อที่เคยพลาด",q:shuffleQ(q)})),{kind:"finish",phase:"เสร็จ"}],
-       i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, confused:[], altShown:0};
+       active:true, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0};
   view="session"; render(); window.scrollTo({top:0});
 }
 
@@ -600,8 +646,8 @@ function renderHome(){
   const days=["จ","อ","พ","พฤ","ศ","ส","อา"];
   const mon=new Date(); mon.setHours(0,0,0,0); mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
   const dots=days.map((d,k)=>{const t=new Date(mon);t.setDate(mon.getDate()+k);const tk=t.getTime();
-    const on=p.met.has(tk), ice=p.frozen.has(tk), sk=!on&&p.skipDays.has(tk);
-    return `<div class="day"><span class="dot ${on?"on":ice?"ice":""} ${sk&&!ice?"rest":""}" title="${on?"ถึงเป้า":ice?"ใช้น้ำแข็งกันไฟดับ":sk?"ขอพัก":"ยังไม่ถึงเป้า"}"></span>${tk===today?"<b>วันนี้</b>":d}</div>`}).join("");
+    const on=p.met.has(tk), ice=p.frozen.has(tk), lv=!on&&p.leaveDays.has(tk), sk=!on&&!lv&&p.skipDays.has(tk);
+    return `<div class="day"><span class="dot ${on?"on":ice?"ice":lv?"leave":""} ${sk&&!ice?"rest":""}" title="${on?"ภารกิจครบ":ice?"ใช้น้ำแข็งกันไฟดับ":lv?"ลาไว้":sk?"ขอพัก":"ยังไม่ครบ"}">${lv?"🏕":""}</span>${tk===today?"<b>วันนี้</b>":d}</div>`}).join("");
   const rec=recommend(list), pool=reviewPool(list), vt=vocabToday(), vocabDone=list.some(a=>a.type==="vocab"&&dayKey(a.endedAt)===today);
   const skippedToday=p.skipDays.has(today);
   const setCard=(s,k)=>`<button class="set" data-k="${k}">
@@ -616,8 +662,13 @@ function renderHome(){
     ${flameHtml(p)}
     <div class="week">${dots}</div>
     <p class="small muted">${p.goalToday?"วันนี้ภารกิจครบแล้ว ไฟยังลุกอยู่ 🔥":"ทำภารกิจให้ครบ 2 อย่าง (ชุดฝึก + คำศัพท์) ไฟถึงจะติด"} · ทำครบทุก 5 วัน หรือเก็บ XP ได้ ${GOAL*2} ในวันเดียว ได้น้ำแข็ง 1 ก้อน (เก็บได้สูงสุด ${FREEZE_MAX}) วันที่ไม่ได้ทำ น้ำแข็งจะละลายแทนไฟ</p>
-    ${p.goalToday||skippedToday?(skippedToday&&!p.goalToday?`<p class="small muted">วันนี้บอกพักไว้แล้ว พรุ่งนี้มาต่อนะ</p>`:""):`<button class="btn ghost" id="skip-open">วันนี้ขอพัก</button>`}
+    ${p.onLeave&&!p.goalToday?`<p class="small">🏕 ช่วงนี้ลาไว้ ไฟหยุดรออยู่ กลับมาเมื่อไรก็ทำต่อได้เลย (ทำระหว่างลาก็นับนะ)</p>`
+      :p.goalToday||skippedToday?(skippedToday&&!p.goalToday?`<p class="small muted">วันนี้บอกพักไว้แล้ว พรุ่งนี้มาต่อนะ</p>`:""):`<button class="btn ghost" id="skip-open">ขอพัก (วันเดียว หรือ ไปค่ายหลายวัน)</button>`}
   </section>
+  ${V&&V.active&&view!=="vocab"?`<section class="card" style="border:2px solid var(--beak)"><b>คำศัพท์วันนี้ทำค้างไว้</b><div class="row"><button class="btn" id="resume-v">ทำต่อ</button></div></section>`:""}
+  ${(()=>{const pd=pendingSet(); return pd?`<section class="card" style="border:2px solid var(--beak)"><b>ทำชุด "${esc(pd.set.topic)}" ค้างไว้</b>
+    <p class="small muted">ทำต่อจากข้อที่ค้างได้เลย ข้อที่ตอบไปแล้วยังอยู่ครบ</p>
+    <div class="row"><button class="btn" id="resume">ทำต่อ</button><button class="btn ghost" id="discard">เริ่มชุดใหม่แทน</button></div></section>`:""})()}
   <section class="card pick">
     <span class="eyebrow">ภารกิจวันนี้ · ทำให้ครบ 2 อย่าง</span>
     <div class="mission ${p.lessonToday?"done":""}">
@@ -662,6 +713,9 @@ function renderHome(){
   on("send-open",()=>{view="send";render()});
   on("leave-test",leaveTest);
   on("skip-open",()=>{view="skip";render()});
+  on("resume",resumeSet);
+  on("resume-v",()=>{view="vocab";render()});
+  on("discard",e=>{const b=e.target; if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="กดอีกครั้ง ข้อที่ทำไว้จะหาย";return} clearProgress(); if(S&&S.mode==="set") S.active=false; renderHome()});
   on("vocab-go",startVocab);
   on("review-go",startReview);
   on("wipe",e=>{const b=e.target; if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="กดอีกครั้งเพื่อยืนยัน ลบแล้วกู้คืนไม่ได้";return}
@@ -669,22 +723,35 @@ function renderHome(){
     TEST=false; attempts=[]; showAll=false; view="home"; render(); window.scrollTo({top:0}) });
 }
 
-let skipPick=null;
+let skipPick=null, skipMode="one", leaveDaysN=3;
+const LEAVE_REASONS=["ไปค่าย","ทัศนศึกษา","ไปต่างจังหวัด/ต่างประเทศ","สอบ/งานโรงเรียนช่วงยาว","ไม่สบายหลายวัน","อื่นๆ"];
 function renderSkip(){
   const p=progressOf(mine());
-  $v.innerHTML=`<section class="card"><h2>วันนี้ขอพัก</h2>
-    <p class="small muted">ได้เลย บอกไว้หน่อยว่าเพราะอะไร พรุ่งนี้ค่อยมาต่อ</p>
-    <p class="small">${p.streak?(p.freeze?`มีน้ำแข็ง 🧊 ${p.freeze} ก้อน พรุ่งนี้จะใช้ 1 ก้อนกันไฟ ${p.streak} วันไม่ให้ดับ`:`ตอนนี้ไม่มีน้ำแข็ง ไฟ ${p.streak} วันจะดับ แต่ไม่เป็นไร เริ่มใหม่ได้เสมอ`):"ไม่เป็นไร พรุ่งนี้เริ่มจุดไฟใหม่กัน"}</p>
-    <div class="why">${SKIP_REASONS.map(x=>`<button data-sr="${x}" aria-pressed="${skipPick===x}">${x}</button>`).join("")}</div>
+  const reasons=skipMode==="one"?SKIP_REASONS:LEAVE_REASONS;
+  const until=new Date(); until.setDate(until.getDate()+leaveDaysN-1);
+  $v.innerHTML=`<section class="card"><h2>ขอพัก</h2>
+    <div class="why" role="tablist"><button data-mode="one" aria-pressed="${skipMode==="one"}">วันนี้วันเดียว</button><button data-mode="leave" aria-pressed="${skipMode==="leave"}">ไม่อยู่หลายวัน (ค่าย ทัศนศึกษา)</button></div>
+    ${skipMode==="one"?`<p class="small">${p.streak?(p.freeze?`มีน้ำแข็ง 🧊 ${p.freeze} ก้อน พรุ่งนี้จะใช้ 1 ก้อนกันไฟ ${p.streak} วันไม่ให้ดับ`:`ตอนนี้ไม่มีน้ำแข็ง ไฟ ${p.streak} วันจะดับ แต่ไม่เป็นไร เริ่มใหม่ได้เสมอ`):"ไม่เป็นไร พรุ่งนี้เริ่มจุดไฟใหม่กัน"}</p>`
+    :`<p class="small">ช่วงที่ลาไว้ ไฟ ${p.streak} วันจะ<b>หยุดรอ</b> ไม่ดับและไม่ใช้น้ำแข็ง กลับมาแล้วทำต่อได้เลย ลาได้ครั้งละไม่เกิน 14 วัน พ่อจะเห็นในหน้าผู้ปกครอง</p>
+      <label class="small" for="ldays">กี่วัน (นับวันนี้ด้วย)</label>
+      <div class="row"><button class="btn ghost" id="lminus" ${leaveDaysN<=2?"disabled":""}>−</button><b id="ldays" style="font-family:var(--mono);font-size:1.3rem">${leaveDaysN}</b><button class="btn ghost" id="lplus" ${leaveDaysN>=14?"disabled":""}>+</button>
+      <span class="small muted">ถึง ${until.toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})}</span></div>`}
+    <p class="small muted">เพราะอะไร</p>
+    <div class="why">${reasons.map(x=>`<button data-sr="${x}" aria-pressed="${skipPick===x}">${x}</button>`).join("")}</div>
     <label class="small muted" for="skipnote">อยากเล่าเพิ่มไหม (ไม่บังคับ)</label>
-    <input id="skipnote" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)" placeholder="เช่น มีงานกลุ่มส่งพรุ่งนี้">
+    <input id="skipnote" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)" placeholder="${skipMode==="one"?"เช่น มีงานกลุ่มส่งพรุ่งนี้":"เช่น ค่ายลูกเสือที่กาญจนบุรี ห้ามใช้มือถือ"}">
     <div class="row"><button class="btn" id="skipsave" ${skipPick?"":"disabled"}>บันทึก</button><button class="btn ghost" id="skipback">กลับ</button></div></section>`;
-  $v.querySelectorAll("[data-sr]").forEach(b=>b.onclick=()=>{const n=document.getElementById("skipnote").value;skipPick=b.dataset.sr;renderSkip();document.getElementById("skipnote").value=n});
+  const keep=f=>()=>{const n=document.getElementById("skipnote").value; f(); renderSkip(); document.getElementById("skipnote").value=n};
+  $v.querySelectorAll("[data-mode]").forEach(b=>b.onclick=keep(()=>{skipMode=b.dataset.mode;skipPick=null}));
+  $v.querySelectorAll("[data-sr]").forEach(b=>b.onclick=keep(()=>{skipPick=b.dataset.sr}));
+  const lm=document.getElementById("lminus"); if(lm) lm.onclick=keep(()=>{leaveDaysN=Math.max(2,leaveDaysN-1)});
+  const lp=document.getElementById("lplus"); if(lp) lp.onclick=keep(()=>{leaveDaysN=Math.min(14,leaveDaysN+1)});
   document.getElementById("skipback").onclick=()=>{view="home";render()};
   document.getElementById("skipsave").onclick=async e=>{e.target.disabled=true;
-    const now=new Date().toISOString();
-    await saveAttempt({type:"skip",setId:"skip",topic:"ขอพัก",reason:skipPick,memo:document.getElementById("skipnote").value.trim(),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
-    skipPick=null; view="home"; render();};
+    const now=new Date().toISOString(), from=todayKey(); let to=from; for(let i=1;i<leaveDaysN;i++) to=nextDay(to);
+    const base={type:"skip",reason:skipPick,memo:document.getElementById("skipnote").value.trim(),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]};
+    await saveAttempt(skipMode==="one"?{...base,setId:"skip",topic:"ขอพัก"}:{...base,setId:"leave",topic:"ลาหลายวัน",leave:true,days:leaveDaysN,from,to});
+    skipPick=null; skipMode="one"; view="home"; render();};
 }
 
 let introSet=null;
@@ -733,6 +800,97 @@ function header(){
   <div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div>`;
 }
 
+/* ---------- glossary: tap a dotted word in a card or question to see what it means ---------- */
+const GLOSS={
+ "จำนวนคู่":"จำนวนที่หารด้วย 2 ลงตัว เช่น 2, 4, 6, 8 · ในเรื่องมัธยฐาน \"ข้อมูลมีจำนวนคู่\" แปลว่านับข้อมูลได้ 2, 4, 6, … ตัว เช่น คะแนน 6 คน พอเรียงแล้วตรงกลางจะมี 2 ตัว (ตัวที่ 3 กับตัวที่ 4) จึงต้องเอาสองตัวนั้นมาเฉลี่ยกัน",
+ "จำนวนคี่":"จำนวนที่หารด้วย 2 ไม่ลงตัว เช่น 1, 3, 5, 7 · ถ้าข้อมูลมีจำนวนคี่ เช่น 7 ตัว ตรงกลางจะมีตัวเดียวพอดี คือตัวที่ 4",
+ "เรียงข้อมูล":"เอาตัวเลขทั้งหมดมาเรียงจากน้อยไปมาก เช่น 5, 2, 9 เรียงได้ 2, 5, 9",
+ "ตัวกลาง":"ตัวที่อยู่ตรงกลางพอดีหลังเรียงข้อมูลแล้ว มีจำนวนตัวทางซ้ายเท่ากับทางขวา",
+ "ค่าผิดปกติ":"ค่าที่สูงหรือต่ำกว่าตัวอื่นมากๆ เช่น 3, 4, 5, 100 ตัว 100 คือค่าผิดปกติ",
+ "ข้อมูล":"ตัวเลขหรือข้อเท็จจริงที่เก็บมา เช่น คะแนนสอบของเพื่อนแต่ละคน",
+ "ผลรวม":"เอาทุกตัวมาบวกกัน",
+ "อัตราส่วนอย่างต่ำ":"อัตราส่วนที่หารทั้งสองข้างต่อไม่ได้แล้ว เช่น 24 : 16 หารด้วย 8 ได้ 3 : 2 ซึ่งเป็นอย่างต่ำ",
+ "อัตราส่วน":"การเทียบปริมาณสองอย่าง เช่น แมว 2 ตัว ต่อ หมา 3 ตัว เขียนว่า 2 : 3",
+ "ร้อยละ":"ส่วนในทุก 100 · ร้อยละ 25 แปลว่า ทุก 100 เอามา 25",
+ "สัดส่วน":"อัตราส่วนสองชุดที่เท่ากัน เช่น 1 : 2 = 3 : 6",
+ "ตัวทำละลาย":"สารที่ทำหน้าที่ละลายของอื่น มักเป็นสารที่มีมากที่สุดและมีสถานะเดียวกับสารละลาย เช่น น้ำในน้ำเชื่อม",
+ "ตัวละลาย":"สารที่ถูกละลายหายเข้าไป เช่น น้ำตาลในน้ำเชื่อม",
+ "เนื้อเดียว":"มองแล้วเหมือนกันทุกส่วน แยกด้วยตาไม่ออก",
+ "สถานะ":"รูปแบบของสาร คือ ของแข็ง ของเหลว หรือแก๊ส",
+ "สภาพละลายได้":"ปริมาณมากที่สุดที่สารละลายในน้ำได้ ที่อุณหภูมินั้น",
+ "ความเข้มข้น":"บอกว่าในสารละลายมีตัวละลายอยู่มากหรือน้อย",
+ "cm³":"ลูกบาศก์เซนติเมตร หน่วยปริมาตร 1 cm³ เท่ากับ 1 มิลลิลิตร",
+ "% w/v":"ร้อยละโดยมวลต่อปริมาตร คือ มีตัวละลายกี่กรัม ในสารละลายทุก 100 cm³"
+};
+const GLOSS_KEYS=Object.keys(GLOSS).sort((a,b)=>b.length-a.length);
+function gloss(raw){
+  let t=esc(raw); const marks=[];
+  GLOSS_KEYS.forEach(k=>{ const ek=esc(k), i=t.indexOf(ek); if(i<0) return;
+    marks.push(k); t=t.slice(0,i)+"\u0001"+(marks.length-1)+"\u0002"+t.slice(i+ek.length) });
+  return t.replace(/\u0001(\d+)\u0002/g,(_,n)=>`<button class="term" type="button" data-t="${esc(marks[+n])}">${esc(marks[+n])}</button>`);
+}
+function bindGloss(){
+  $v.querySelectorAll(".term").forEach(b=>b.onclick=()=>{
+    const box=document.getElementById("gloss-box"); if(!box) return;
+    const k=b.dataset.t; box.hidden=false; box.innerHTML=`<b>${esc(k)}</b> <span class="small">${esc(GLOSS[k]||"")}</span> <button class="btn ghost" id="gloss-x" style="border:0;padding:0 4px">ปิด</button>`;
+    document.getElementById("gloss-x").onclick=()=>{box.hidden=true};
+    if(S&&!S.glossed.includes(k)) S.glossed.push(k);
+  });
+}
+
+/* ---------- ask about the exact thing that is confusing; goes to dad (and Claude) with the results ---------- */
+function askHtml(where){
+  const done=S.confused.find(c=>c.where===where&&c.ask&&c.key===askKey(where));
+  return `<details class="ask"${S.askOpen===askKey(where)?" open":""}><summary>✍️ พิมพ์ถามตรงจุดที่งง</summary>
+    ${done?`<p class="small">ส่งคำถามแล้ว: “${esc(done.ask)}” พ่อกับ Claude จะช่วยตอบ</p>`:""}
+    <textarea id="ask-text" rows="2" placeholder="เช่น จำนวนคู่ คืออะไร / ทำไมต้องหาร 5" style="font:inherit;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);width:100%;box-sizing:border-box"></textarea>
+    <button class="btn ghost" id="ask-send">ส่งคำถาม</button>
+    <p class="small muted">คำว่าที่มีเส้นประใต้ กดดูความหมายได้ทันทีนะ</p></details>`;
+}
+function askKey(where){ const st=S.steps[S.i]; return where==="concept"?"concept":(st.q?.id||"q") }
+function bindAsk(where, extra){
+  const d=$v.querySelector("details.ask"); if(d) d.ontoggle=()=>{S.askOpen=d.open?askKey(where):null};
+  const b=document.getElementById("ask-send"); if(!b) return;
+  b.onclick=()=>{ const t=document.getElementById("ask-text").value.trim(); if(!t) return;
+    S.confused.push({where,key:askKey(where),topic:extra.topic,qid:extra.qid,prompt:extra.prompt,ask:t}); saveProgress(); S.askOpen=askKey(where); renderStep() };
+}
+
+/* ---------- scratch paper for the pencil ---------- */
+const PAD={open:false,strokes:[],tool:"pen",penSeen:false};
+function padHtml(){
+  return `<button class="padfab" id="pad-toggle" type="button">${PAD.open?"✕ ปิดกระดาษทด":"✏️ กระดาษทด"}</button>
+  <div class="pad" id="pad" ${PAD.open?"":"hidden"}>
+    <div class="padbar"><button type="button" data-tool="pen" aria-pressed="${PAD.tool==="pen"}">✏️ ปากกา</button><button type="button" data-tool="eraser" aria-pressed="${PAD.tool==="eraser"}">🧽 ยางลบ</button>
+      <button type="button" id="pad-undo">↶ ย้อน</button><button type="button" id="pad-clear">🗑 ล้าง</button></div>
+    <canvas id="pad-canvas"></canvas></div>`;
+}
+function padSetup(){
+  const tg=document.getElementById("pad-toggle"); if(!tg) return;
+  tg.onclick=()=>{PAD.open=!PAD.open; document.body.classList.toggle("padopen",PAD.open); const p=document.getElementById("pad"); p.hidden=!PAD.open; tg.textContent=PAD.open?"✕ ปิดกระดาษทด":"✏️ กระดาษทด"; if(PAD.open) padDraw(true)};
+  document.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>{PAD.tool=b.dataset.tool;document.querySelectorAll("[data-tool]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.tool===PAD.tool))});
+  document.getElementById("pad-undo").onclick=()=>{PAD.strokes.pop();padDraw()};
+  document.getElementById("pad-clear").onclick=()=>{PAD.strokes=[];padDraw()};
+  const cv=document.getElementById("pad-canvas"); let cur=null;
+  const pt=e=>{const r=cv.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top,e.pressure||0.5]};
+  cv.onpointerdown=e=>{ if(e.pointerType==="pen") PAD.penSeen=true; if(PAD.penSeen&&e.pointerType==="touch") return; // palm rests while writing with the pencil
+    cv.setPointerCapture(e.pointerId); cur={tool:PAD.tool,pts:[pt(e)]}; PAD.strokes.push(cur); e.preventDefault() };
+  cv.onpointermove=e=>{ if(!cur) return; (e.getCoalescedEvents?e.getCoalescedEvents():[e]).forEach(ev=>cur.pts.push(pt(ev))); padDraw() };
+  cv.onpointerup=cv.onpointercancel=()=>{cur=null};
+  if(PAD.open){ document.body.classList.add("padopen"); padDraw(true) }
+}
+function padDraw(resize){
+  const cv=document.getElementById("pad-canvas"); if(!cv||cv.offsetParent===null) return;
+  const dpr=window.devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight;
+  if(resize||cv.width!==Math.round(w*dpr)){ cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr) }
+  const g=cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,w,h);
+  const ink=getComputedStyle(document.documentElement).getPropertyValue("--ink").trim()||"#16302B";
+  PAD.strokes.forEach(s=>{ g.globalCompositeOperation=s.tool==="eraser"?"destination-out":"source-over"; g.strokeStyle=ink; g.lineCap="round"; g.lineJoin="round";
+    for(let i=1;i<s.pts.length;i++){ const [x0,y0]=s.pts[i-1],[x1,y1,p]=s.pts[i]; g.lineWidth=s.tool==="eraser"?22:1.2+p*2.6; g.beginPath(); g.moveTo(x0,y0); g.lineTo(x1,y1); g.stroke() } });
+  g.globalCompositeOperation="source-over";
+}
+window.addEventListener("resize",()=>padDraw(true));
+
+/* ---------- one question ---------- */
 function renderStep(){
   const st = S.steps[S.i];
   if(st.kind==="concept") return renderConcept();
@@ -741,71 +899,84 @@ function renderStep(){
   const q = st.q, ans = S.answered;
   let body;
   if(q.num){
-    body = `<div class="num"><input id="numin" inputmode="decimal" aria-label="คำตอบ" ${ans?"disabled":""} value="${ans?esc(ans.raw):""}"><span class="muted" style="align-self:center">${q.unit}</span>
+    body = `<div class="num"><input id="numin" inputmode="decimal" aria-label="คำตอบ" ${ans?"disabled":""} value="${ans&&!ans.dontknow?esc(ans.raw):""}"><span class="muted" style="align-self:center">${q.unit}</span>
       ${ans?"":`<button class="btn" id="check">ตรวจคำตอบ</button>`}</div>`;
   } else {
     body = `<div class="opts">${q.opts.map((o,k)=>{
       let c=""; if(ans){ if(k===q.a) c="right"; else if(k===ans.choice) c="wrong"; }
-      return `<button class="opt ${c}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>`}).join("")}</div>`;
+      const struck=!ans&&S.struck.includes(k);
+      return `<div class="optrow"><button class="opt ${c} ${struck?"struck":""}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>
+        ${ans?"":`<button class="xopt" type="button" data-x="${k}" aria-pressed="${struck}" aria-label="${struck?"เอาคืน":"ตัดตัวเลือกนี้"}" title="${struck?"เอาคืน":"ตัดตัวเลือกนี้"}">${struck?"↺":"✕"}</button>`}</div>`}).join("")}</div>
+      ${ans?"":`<p class="small muted">กด ✕ ท้ายข้อเพื่อตัดตัวเลือกที่ไม่ใช่แน่ๆ</p>`}`;
   }
   let fb = "";
   if(ans){
-    fb = `<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?YAY[S.i%YAY.length]:OOPS[S.i%OOPS.length]}${q.num&&!ans.correct?` · คำตอบคือ ${q.answer} ${q.unit}`:""}</b><p>${esc(q.ex)}</p>
-      ${ans.correct?"":`<span class="small muted">พลาดเพราะอะไร (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
-      <div class="why">${Object.entries(ERR).map(([k,v])=>`<button data-why="${k}" aria-pressed="${S.why===k}">${v}</button>`).join("")}</div>`}
+    const head = ans.dontknow?"ไม่เป็นไร มาดูวิธีคิดกัน (0 XP)":ans.correct?YAY[S.i%YAY.length]:OOPS[S.i%OOPS.length];
+    fb = `<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answer} ${q.unit}`:""}</b><p>${gloss(q.ex)}</p>
+      ${ans.correct||ans.dontknow?"":`<span class="small muted">พลาดเพราะอะไร (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
+      <div class="why">${Object.entries(ERR).filter(([k])=>k!=="dontknow").map(([k,v])=>`<button data-why="${k}" aria-pressed="${S.why===k}">${v}</button>`).join("")}</div>`}
+      ${ans.correct?"":askHtml("question")}
     </div>
     <button class="btn" id="next">ต่อไป</button>`;
   }
   $v.innerHTML = `<section class="card">${header()}
     <span class="row" style="gap:6px"><span class="chip l${q.level}">${LV[q.level]} · ${esc(q.topic)}</span>${q.en?`<span class="chip">English corner</span>`:""}</span>
-    <p class="prompt">${esc(q.q)}</p>
+    <p class="prompt">${gloss(q.q)}</p>
+    <div class="feedback" id="gloss-box" hidden></div>
     ${S.hints?`<div class="feedback">${q.hints.slice(0,S.hints).map((h,k)=>`<span class="small"><b>คำใบ้ ${k+1}</b> ${esc(h)}</span>`).join("")}</div>`:""}
     ${body}${fb}
     <div class="row">${!ans&&S.hints<q.hints.length?`<button class="btn ghost" id="hint">ขอคำใบ้ (${S.hints}/${q.hints.length})</button>`:""}
-    ${st.optional&&!ans?`<button class="btn ghost" id="skip">ข้ามข้อนี้</button>`:""}
-    ${ans&&!ans.correct?`<button class="btn ghost" id="confq">${S.confused.some(c=>c.qid===q.id)?"บันทึกแล้ว พ่อกับ Claude จะช่วยดู":"ยังงงอยู่ ขอให้ช่วย"}</button>`:""}</div>
-  </section>`;
+    ${!ans?`<button class="btn ghost" id="dontknow">🤔 ยังคิดไม่ออก ดูเฉลย</button>`:""}
+    ${st.optional&&!ans?`<button class="btn ghost" id="skip">ข้ามข้อนี้</button>`:""}</div>
+  </section>${padHtml()}`;
+  bindGloss(); padSetup();
   if(!ans){
     if(q.num){
       const go=()=>{const raw=document.getElementById("numin").value.trim().replace(/,/g,"");const v=parseFloat(raw);if(raw===""||isNaN(v))return;
         answer({raw, correct:Math.abs(v-q.answer)<=q.tol});};
       document.getElementById("check").onclick=go;
       document.getElementById("numin").onkeydown=e=>{if(e.key==="Enter")go()};
-      document.getElementById("numin").focus();
-    } else $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer({choice:+b.dataset.k,correct:+b.dataset.k===q.a}));
-    const hb=document.getElementById("hint"); if(hb) hb.onclick=()=>{S.hints++;renderStep()};
+    } else {
+      $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer({choice:+b.dataset.k,correct:+b.dataset.k===q.a}));
+      $v.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{const k=+b.dataset.x; S.struck=S.struck.includes(k)?S.struck.filter(x=>x!==k):[...S.struck,k]; const y=window.scrollY; renderStep(); window.scrollTo({top:y})});
+    }
+    const hb=document.getElementById("hint"); if(hb) hb.onclick=()=>{S.hints++;const y=window.scrollY;renderStep();window.scrollTo({top:y})};
+    document.getElementById("dontknow").onclick=()=>{S.why="dontknow"; answer({choice:-1,raw:"",correct:false,dontknow:true})};
     const sk=document.getElementById("skip"); if(sk) sk.onclick=()=>{S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,skipped:true,timeSec:0});advance()};
   } else {
-    $v.querySelectorAll("[data-why]").forEach(b=>b.onclick=()=>{S.why=b.dataset.why;renderStep()});
-    const cq=document.getElementById("confq"); if(cq) cq.onclick=()=>{if(!S.confused.some(c=>c.qid===q.id))S.confused.push({where:"question",qid:q.id,topic:q.topic,prompt:q.q});renderStep()};
+    $v.querySelectorAll("[data-why]").forEach(b=>b.onclick=()=>{S.why=b.dataset.why;const y=window.scrollY;renderStep();window.scrollTo({top:y})});
+    bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
     document.getElementById("next").onclick=()=>{
-      S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,errorType:ans.correct?null:(S.why||"unspecified"),hints:S.hints,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q});
+      S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":(S.why||"unspecified")),hints:S.hints,struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q});
       advance();
     };
   }
 }
-function answer(a){ S.answered={...a,at:Date.now()}; S.why=null; renderStep() }
-function advance(){ S.i++; S.answered=null; S.why=null; S.hints=0; S.qStart=Date.now(); renderStep(); window.scrollTo({top:0}) }
+function answer(a){ S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=null; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
+function advance(){ S.i++; S.answered=null; S.why=null; S.hints=0; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
 
 function renderConcept(){
   const c=S.set.concept;
   $v.innerHTML=`<section class="card concept">${header()}
     <h2>${esc(c.title)}</h2>
-    <ul>${c.points.map(p=>`<li>${esc(p)}</li>`).join("")}</ul>
+    <ul>${c.points.map(p=>`<li>${gloss(p)}</li>`).join("")}</ul>
+    <div class="feedback" id="gloss-box" hidden></div>
     ${c.formulas.map(f=>`<div class="formula">${esc(f)}</div>`).join("")}
     <div><span class="eyebrow">คำศัพท์อังกฤษของบทนี้</span><div class="vocab">${c.vocab.map(([e,t])=>`<span>${e} <i>${t}</i></span>`).join("")}</div></div>
-    ${c.alts.slice(0,S.altShown).map(a=>`<div class="feedback"><b>${esc(a.label)}</b>${a.lines.map(l=>`<p class="small">${esc(l)}</p>`).join("")}</div>`).join("")}
+    ${c.alts.slice(0,S.altShown).map(a=>`<div class="feedback"><b>${esc(a.label)}</b>${a.lines.map(l=>`<p class="small">${gloss(l)}</p>`).join("")}</div>`).join("")}
     <div class="row"><button class="btn" id="next">เข้าใจแล้ว ไปต่อ</button>
-    ${S.altShown<c.alts.length?`<button class="btn ghost" id="alt">ยังไม่เข้าใจ อธิบายอีกแบบ</button>`:`<button class="btn ghost" id="confc">${S.confused.some(x=>x.where==="concept")?"บันทึกแล้ว พ่อกับ Claude จะช่วยดู":"ยังงงอยู่ ขอให้ช่วย"}</button>`}</div></section>`;
+    ${S.altShown<c.alts.length?`<button class="btn ghost" id="alt">อธิบายอีกแบบ</button>`:""}</div>
+    ${askHtml("concept")}</section>${padHtml()}`;
+  bindGloss(); padSetup(); bindAsk("concept",{topic:S.set.topic});
   const al=document.getElementById("alt"); if(al) al.onclick=()=>{S.altShown++;renderConcept()};
-  const cc=document.getElementById("confc"); if(cc) cc.onclick=()=>{if(!S.confused.some(x=>x.where==="concept"))S.confused.push({where:"concept",topic:S.set.topic});renderConcept()};
   document.getElementById("next").onclick=()=>{S.conceptSec=Math.round((Date.now()-S.qStart)/1000);advance()};
 }
 
+const RATINGS=["ง่ายมาก","ง่าย","พอดี","ยาก","ยากมาก"];
 function renderRate(){
   $v.innerHTML=`<section class="card">${header()}
     <h2>วันนี้รู้สึกอย่างไร</h2>
-    <div class="rate">${["ง่าย","พอดี","ยาก"].map(r=>`<button class="btn ${S.rating===r?"":"ghost"}" data-r="${r}">${r}</button>`).join("")}</div>
+    <div class="rate">${RATINGS.map(r=>`<button class="btn ${S.rating===r?"":"ghost"}" data-r="${r}">${r}</button>`).join("")}</div>
     <label class="small muted" for="memo">อยากบอกอะไรเพิ่มไหม (ไม่บังคับ)</label>
     <input id="memo" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)" placeholder="เช่น ข้อปลาสนุกดี / การ์ดสรุปยาวไป">
     <button class="btn" id="save" ${S.rating?"":"disabled"}>บันทึกและรับ XP</button></section>`;
@@ -815,10 +986,31 @@ function renderRate(){
     const items=S.items, scored=items.filter(x=>!x.skipped);
     const rec={type:"set",setId:S.set.id,spell:S.set.spell,subject:S.set.subject,topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
       durationSec:Math.round((Date.now()-S.start)/1000),conceptSec:S.conceptSec||0,rating:S.rating,memo:document.getElementById("memo").value.trim(),
-      correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items)+20,altShown:S.altShown,confused:S.confused,items};
+      correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items)+20,altShown:S.altShown,glossed:S.glossed,confused:S.confused,items};
     await finishWith(rec);
   };
 }
+
+/* ---------- unfinished set survives a tab switch or a reload (same day) ---------- */
+function saveProgress(){
+  if(!S||S.mode!=="set") return;
+  try{ localStorage.setItem("fieldnote.inprogress",JSON.stringify({setId:S.set.id,conceptFirst:S.conceptFirst,day:todayKey(),i:S.i,start:S.start,items:S.items,confused:S.confused,altShown:S.altShown,conceptSec:S.conceptSec||0,glossed:S.glossed,
+    perms:S.steps.map(x=>x.q?.perm||null)})) }catch(e){}
+}
+function clearProgress(){ try{ localStorage.removeItem("fieldnote.inprogress") }catch(e){} }
+function pendingSet(){
+  if(S&&S.mode==="set"&&S.active) return {live:true,set:S.set,i:S.i,n:S.steps.length};
+  try{ const p=JSON.parse(localStorage.getItem("fieldnote.inprogress")||"null"); if(!p||p.day!==todayKey()) return null;
+    const set=SETS.find(s=>s.id===p.setId); return set?{live:false,set,i:p.i,n:null,saved:p}:null }catch(e){ return null }
+}
+function resumeSet(){
+  const p=pendingSet(); if(!p) return;
+  if(p.live){ view="session"; render(); return }
+  const sv=p.saved; startSet(p.set, sv.conceptFirst, sv.perms);
+  Object.assign(S,{i:sv.i,start:sv.start,items:sv.items||[],confused:sv.confused||[],altShown:sv.altShown||0,conceptSec:sv.conceptSec,glossed:sv.glossed||[]});
+  render();
+}
+
 async function finishReview(){
   $v.innerHTML=`<section class="card"><p class="muted">กำลังบันทึก…</p></section>`;
   const items=S.items, scored=items.filter(x=>!x.skipped);
@@ -826,6 +1018,8 @@ async function finishReview(){
     durationSec:Math.round((Date.now()-S.start)/1000),correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items),confused:S.confused,items});
 }
 async function finishWith(rec){
+  if(S&&rec.type!=="vocab"){ S.active=false; if(S.mode==="set") clearProgress() }
+  PAD.open=false; document.body.classList.remove("padopen");
   const before=progressOf(mine());
   const where=await saveAttempt(rec);
   const list=attempts.includes(rec)?mine():[rec,...mine()];
@@ -898,14 +1092,30 @@ try{ if(CAN_SPEAK) speechSynthesis.getVoices(); }catch(e){}
 function speak(text, slow){
   if(!CAN_SPEAK){ speechBroken=true; showSpeechHelp(); return }
   try{
-    speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(text); u.lang="en-US"; u.rate=slow?0.7:0.9;
-    const vs=speechSynthesis.getVoices(); const v=vs.find(v=>/^en(-|_)US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang)); if(v) u.voice=v;
+    if(speechSynthesis.speaking||speechSynthesis.pending) speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text); u.lang="en-US"; u.rate=slow?0.42:0.9;
+    const v=pickVoice(); if(v){ u.voice=v; u.lang=v.lang }
     let started=false; u.onstart=()=>{started=true;speechBroken=false;hideSpeechHelp()}; u.onerror=e=>{ if(e.error!=="interrupted"&&e.error!=="canceled"){speechBroken=true;showSpeechHelp()} };
     speechSynthesis.speak(u);
     setTimeout(()=>{ if(!started&&!speechSynthesis.speaking){ speechBroken=true; showSpeechHelp() } },2500);
   }catch(e){ speechBroken=true; showSpeechHelp() }
 }
+function enVoices(){ try{ return speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)) }catch(e){ return [] } }
+function pickVoice(){ const vs=enVoices(); let want=null; try{ want=localStorage.getItem("fieldnote.voice") }catch(e){}
+  return vs.find(v=>v.voiceURI===want)||vs.find(v=>/^en(-|_)US/i.test(v.lang)&&v.localService)||vs.find(v=>/^en(-|_)US/i.test(v.lang))||vs[0]||null }
+function voicePicker(){
+  const vs=enVoices(); if(!vs.length) return "";
+  const cur=pickVoice();
+  return `<details class="small"><summary>🎙 เลือกเสียงผู้อ่าน (${esc(cur?cur.name:"ค่าเริ่มต้น")})</summary>
+    <div class="row" style="margin-top:6px"><select id="voice-sel" style="font:inherit;padding:6px;border-radius:8px;max-width:100%">${vs.map(v=>`<option value="${esc(v.voiceURI)}" ${cur&&v.voiceURI===cur.voiceURI?"selected":""}>${esc(v.name)} · ${esc(v.lang)}</option>`).join("")}</select>
+    <button class="btn ghost" id="voice-try" type="button">ลองฟัง</button></div></details>`;
+}
+function bindVoicePicker(){
+  const sel=document.getElementById("voice-sel"); if(!sel) return;
+  sel.onchange=()=>{ try{ localStorage.setItem("fieldnote.voice",sel.value) }catch(e){} speak("Hello! Let's learn new words.") };
+  document.getElementById("voice-try").onclick=()=>speak("Hello! Let's learn new words.");
+}
+try{ if(CAN_SPEAK) speechSynthesis.onvoiceschanged=()=>{ if(view==="vocab"&&!document.getElementById("voice-sel")) renderVocab() } }catch(e){}
 function speechHelpHtml(){
   const page=location.href.split("#")[0].split("?")[0];
   const chrome=IS_ANDROID?`<a class="btn" href="intent://${page.replace(/^https?:\/\//,"")}#Intent;scheme=https;package=com.android.chrome;end">เปิดใน Chrome</a>`:"";
@@ -928,14 +1138,16 @@ function startVocab(){
   const spellNew=fresh.map(w=>({w,kind:"spell",fresh:true}));
   const spellDue=due.filter(w=>(st[w.w]?.box||0)>=2||Math.random()<.5).map(w=>({w,kind:"spell"}));
   const quiz=[...meaning.sort(()=>Math.random()-.5),...[...spellNew,...spellDue].sort(()=>Math.random()-.5)];
-  const read=isWeekend()?READINGS[Math.floor(todayKey()/DAY)%READINGS.length]:null;
-  V={fresh,quiz,read,phase:fresh.length?"learn":"quiz",li:0,qi:0,ri:0,ans:null,results:[],rres:[],heard:new Set(),showTh:false,start:Date.now()};
+  const base=isWeekend()?READINGS[Math.floor(todayKey()/DAY)%READINGS.length]:null;
+  const read=base?{...base,qs:base.qs.map((q,qi)=>{const sq=shuffleQ(q); return {...sq,qth:base.th.qs[qi].q,optsTh:sq.perm.map(k=>base.th.qs[qi].opts[k])}})}:null;
+  V={active:true,fresh,quiz,read,phase:fresh.length?"learn":"quiz",li:0,qi:0,ri:0,ans:null,results:[],rres:[],heard:new Set(),showTh:false,start:Date.now()};
   view="vocab"; render(); window.scrollTo({top:0});
 }
 const sayBtn=(id,label)=>`<button class="btn ghost" id="${id}" type="button">🔊 ${label}</button>`;
 function bindSay(id,text,slow,after){ const b=document.getElementById(id); if(b) b.onclick=()=>{speak(text,slow); if(after) after()} }
 function renderVocab(){
-  const top=`<div class="stage"><span>คำศัพท์วันนี้</span><span>${V.phase==="learn"?`คำใหม่ ${V.li+1}/${V.fresh.length}`:V.phase==="quiz"?`ทดสอบ ${V.qi+1}/${V.quiz.length}`:`อ่านสั้นๆ`}</span></div>`;
+  const top=`<div class="stage"><span>คำศัพท์วันนี้</span><span>${V.phase==="learn"?`คำใหม่ ${V.li+1}/${V.fresh.length}`:V.phase==="quiz"?`ทดสอบ ${V.qi+1}/${V.quiz.length}`:`อ่านสั้นๆ`}</span></div>${voicePicker()}`;
+  setTimeout(bindVoicePicker,0);
   if(V.phase==="learn"){
     const w=V.fresh[V.li], heard=speechBroken||V.heard.has(w.w);
     $v.innerHTML=`<section class="card">${top}<span class="eyebrow">คำใหม่</span>
@@ -945,11 +1157,11 @@ function renderVocab(){
       <div id="speech-slot">${speechBroken?speechHelpHtml():""}</div>
       <div class="feedback"><p class="vex">“${esc(w.ex)}”</p>
         ${V.showTh?`<p class="small">${esc(w.exTh)}</p>`:`<button class="btn ghost" id="show-th" style="border:0;padding:0">ลองเดาความหมายก่อน แล้วกดดูคำแปล</button>`}
-        ${sayBtn("say-ex","ฟังประโยค")}</div>
+        <div class="row">${sayBtn("say-ex","ฟังประโยค")}${sayBtn("say-ex-slow","ฟังช้าๆ")}</div></div>
       <button class="btn" id="vn" ${heard?"":"disabled"}>${V.li+1<V.fresh.length?"ต่อไป":"ไปทดสอบ"}</button></section>`;
     bindSay("say-w",w.w,false,()=>{if(!V.heard.has(w.w)){V.heard.add(w.w);renderVocab()}});
     bindSay("say-slow",w.w,true,()=>{if(!V.heard.has(w.w)){V.heard.add(w.w);renderVocab()}});
-    bindSay("say-ex",w.ex,false);
+    bindSay("say-ex",w.ex,false); bindSay("say-ex-slow",w.ex,true);
     const st=document.getElementById("show-th"); if(st) st.onclick=()=>{V.showTh=true;renderVocab()};
     document.getElementById("vn").onclick=()=>{ V.showTh=false; if(V.li+1<V.fresh.length) V.li++; else V.phase="quiz"; renderVocab() };
     return;
@@ -982,10 +1194,12 @@ function renderVocab(){
         document.getElementById("check").onclick=go; inp.onkeydown=e=>{if(e.key==="Enter")go()}; inp.focus();
       } else {
         if(!ans.correct&&ans.retype){
-          inp.oninput=()=>{ if(inp.value.trim().toLowerCase()===it.w.w.toLowerCase()){ document.getElementById("vn").disabled=false; document.getElementById("rmsg").textContent="เยี่ยม จำตัวสะกดได้แล้ว" } };
-          inp.onkeydown=e=>{ if(e.key==="Enter"&&!document.getElementById("vn").disabled) next() };
-        }
-        document.getElementById("vn").onclick=next;
+          const ok=()=>inp.value.trim().toLowerCase()===it.w.w.toLowerCase();
+          inp.oninput=()=>{ const good=ok(); document.getElementById("vn").disabled=!good; document.getElementById("rmsg").textContent=good?"เยี่ยม จำตัวสะกดได้แล้ว":(inp.value.trim()?"ยังไม่ตรง ลองดูตัวสะกดด้านบนอีกที":"") };
+          inp.onkeydown=e=>{ if(e.key==="Enter"&&ok()) next() };
+          document.getElementById("vn").onclick=()=>{ if(ok()) next() };
+          inp.focus();
+        } else document.getElementById("vn").onclick=next;
       }
       return;
     }
@@ -1008,13 +1222,18 @@ function renderVocab(){
       <div class="row">${sayBtn("say-r","ฟังทั้งเรื่อง")}</div><div id="speech-slot"></div>
       <p class="prompt">${esc(q.q)}</p>
       <div class="opts">${q.opts.map((o,k)=>{let c="";if(ans){if(k===q.a)c="right";else if(k===ans.choice)c="wrong"}return `<button class="opt ${c}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>`}).join("")}</div>
-      ${ans?`<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?"ถูก +5 XP":"ยังไม่ใช่ ลองอ่านอีกรอบ +2 XP"}</b></div><button class="btn" id="vn">ต่อไป</button>`:""}</section>`;
+      ${ans?`<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?"ถูก +5 XP":"ยังไม่ใช่ ลองอ่านอีกรอบ +2 XP"}</b>
+        <p class="small"><b>คำถาม:</b> ${esc(q.qth)}</p>
+        <ul class="small" style="margin:0;padding-left:1.2em">${q.opts.map((o,k)=>`<li>${k===q.a?"✅ ":""}${esc(o)} = ${esc(q.optsTh[k])}</li>`).join("")}</ul>
+        <details class="small"><summary>ดูคำแปลทั้งเรื่อง</summary><p>${esc(V.read.th.text)}</p></details></div>
+        <button class="btn" id="vn">ต่อไป</button>`:""}</section>`;
     bindSay("say-r",V.read.text,true);
     if(!ans) $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{V.ans={choice:+b.dataset.k,correct:+b.dataset.k===q.a};renderVocab()});
     else document.getElementById("vn").onclick=()=>{ V.rres.push(ans.correct); V.ans=null; if(V.ri+1<V.read.qs.length){V.ri++;renderVocab()} else finishVocab() };
   }
 }
 async function finishVocab(){
+  V.active=false;
   try{ if(CAN_SPEAK) speechSynthesis.cancel() }catch(e){}
   $v.innerHTML=`<section class="card"><p class="muted">กำลังบันทึก…</p></section>`;
   const st=vocabState(), t=todayKey(), byWord={};
@@ -1078,7 +1297,8 @@ function renderParent(){
   const errs = {}; items.filter(x=>!x.correct).forEach(x=>{errs[x.errorType||"unspecified"]=(errs[x.errorType||"unspecified"]||0)+1});
   const talk = items.filter(x=>!x.correct && (x.errorType==="concept"||x.level===3)).slice(0,3);
   const ratings = all.map(a=>a.rating).filter(Boolean);
-  const hardRun = ratings.slice(0,3).filter(r=>r==="ยาก").length;
+  const hardRun = ratings.slice(0,3).filter(r=>r==="ยาก"||r==="ยากมาก").length;
+  const unclear = all.flatMap(a=>(a.items||[]).filter(x=>x.errorType==="unclear").map(x=>({...x,date:a.endedAt})));
   const empty = !all.length;
   $v.innerHTML = `
   <section class="card">
@@ -1118,14 +1338,20 @@ function renderParent(){
     ${(()=>{const miss={};vItems.filter(x=>!x.correct).forEach(x=>miss[x.word]=(miss[x.word]||0)+1);const m=Object.entries(miss).sort((a,b)=>b[1]-a[1]).slice(0,6);return m.length?`<p class="small muted">คำที่พลาดบ่อย: ${m.map(([w,n])=>`${esc(w)} (${n})`).join(", ")}</p>`:""})()}`:`<p class="muted small">ยังไม่ได้เริ่มคำศัพท์</p>`}
   </section>
   <section class="card"><h3>ลูกขอให้ช่วย</h3>
-    ${conf.length?conf.slice(0,5).map(c=>`<div class="logi"><span class="chip">${c.where==="concept"?"การ์ดสรุป":"โจทย์"} · ${esc(c.topic)}</span>${c.prompt?`<span class="small">${esc(c.prompt)}</span>`:`<span class="small muted">อ่านคำอธิบายครบทุกแบบแล้วยังงง</span>`}</div>`).join("")+`<p class="note">ถามผมในแชตได้ เช่น "ช่วยเขียนคำอธิบายใหม่เรื่องนี้" ผมจะใส่ไว้ในชุดถัดไป</p>`:`<p class="muted small">ยังไม่มีคำขอ</p>`}
+    ${conf.length?conf.slice(0,8).map((c,i)=>`<div class="logi"><span class="chip">${c.where==="concept"?"การ์ดสรุป":"โจทย์"} · ${esc(c.topic||"")}</span>
+      ${c.ask?`<span><b>ลูกถาม:</b> “${esc(c.ask)}”</span>`:""}${c.prompt?`<span class="small muted">${esc(c.prompt)}</span>`:""}
+      ${c.ask?`<button class="btn ghost" data-ans="${i}" hidden>ให้ Claude ช่วยร่างคำตอบ</button><p class="small analysis" id="ans-${i}"></p>`:""}</div>`).join("")
+      +`<p class="note">คำตอบที่ Claude ร่างให้ คุณพ่ออ่านแล้วเล่าให้ลูกฟัง หรือส่งทาง LINE ก็ได้ ถ้าเรื่องไหนงงซ้ำ บอกผมในแชต ผมจะเพิ่มคำอธิบายในบทเรียน</p>`:`<p class="muted small">ยังไม่มีคำถาม</p>`}
   </section>
+  ${unclear.length?`<section class="card"><h3>โจทย์ที่ลูกบอกว่ากำกวม</h3>
+    ${unclear.slice(0,8).map(x=>`<div class="logi"><span class="small">${esc(x.prompt||x.qid)}</span><span class="small muted">${esc(x.qid)}</span></div>`).join("")}
+    <p class="note">ส่งรายการนี้ให้ Claude ในแชตได้ ผมจะเขียนโจทย์ให้ชัดขึ้น</p></section>`:""}
   <section class="card"><h3>วันที่ขอพัก</h3>
     ${skips.length?skips.slice(0,7).map(k=>`<div class="logi"><span class="small muted">${new Date(k.endedAt).toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})}</span><span>${esc(k.reason||"-")}${k.memo?` · “${esc(k.memo)}”`:""}</span></div>`).join(""):`<p class="muted small">ยังไม่มีวันที่ขอพัก</p>`}
   </section>
   <section class="card"><h3>ข้อที่ควรนั่งคุยกัน</h3>
     ${talk.length?talk.map(x=>`<div class="logi"><span class="chip l${x.level}">${esc(x.topic)}</span><span class="small">${esc(x.prompt||x.qid)}</span></div>`).join(""):`<p class="muted small">ยังไม่มีข้อที่ต้องคุย</p>`}
-    ${hardRun>=2?`<p class="small" style="color:var(--warn)">ลูกกด "ยาก" ${hardRun} ครั้งจาก 3 ครั้งล่าสุด อาจถึงเวลาลดระดับหรือคุยกันก่อน</p>`:""}
+    ${hardRun>=2?`<p class="small" style="color:var(--warn)">ลูกกด "ยาก" หรือ "ยากมาก" ${hardRun} ครั้งจาก 3 ครั้งล่าสุด อาจถึงเวลาลดระดับหรือคุยกันก่อน</p>`:""}
   </section>
   <section class="card"><h3>บันทึกการฝึก</h3><div class="log">
     ${all.slice(0,10).map(a=>`<div class="logi"><div class="row" style="justify-content:space-between"><b>${esc(a.topic)}</b>${a.example?`<span class="example">ตัวอย่าง</span>`:a.test?`<span class="example">ทดสอบ</span>`:""}</div>
@@ -1151,8 +1377,20 @@ function renderParent(){
     try{const {n,k}=await importCode(document.getElementById("imp").value, document.getElementById("imptest").checked);msg.textContent=`นำเข้าแล้ว ${n} ครั้ง และข้อความ ${k} ข้อความ`;}
     catch(e){msg.textContent="รหัสไม่ถูกต้อง ตรวจว่าคัดลอกมาครบทั้งข้อความ"}ig.disabled=false;};
   setupAsk({all,lv,topics,errs,ratings,skips,conf});
+  setupAnswers(conf);
 }
 let samplerP=null;
+async function setupAnswers(conf){
+  const btns=[...$v.querySelectorAll("[data-ans]")]; if(!btns.length) return;
+  samplerP ??= (window.claude?.use?.("sample")??Promise.resolve(null)).catch(()=>null);
+  const sample=await samplerP; if(!sample) return;
+  btns.forEach(b=>{ if(!document.body.contains(b)) return; b.hidden=false; b.onclick=async()=>{
+    const c=conf[+b.dataset.ans], out=document.getElementById("ans-"+b.dataset.ans); b.disabled=true; out.textContent="กำลังร่างคำตอบ…";
+    try{ const {text}=await sample(`ลูกสาว ม.2 กำลังฝึกเรื่อง "${c.topic||""}" แล้วพิมพ์ถามว่า "${c.ask}"${c.prompt?` ระหว่างทำโจทย์นี้: "${c.prompt}"`:" ระหว่างอ่านการ์ดสรุปเนื้อหา"}
+เขียนคำตอบภาษาไทยให้พ่ออ่านให้ลูกฟังได้เลย สั้น 3–6 ประโยค ใช้ภาษาง่าย ยกตัวอย่างตัวเลขเล็กๆ 1 ตัวอย่าง ตอบตรงสิ่งที่ถาม ไม่เฉลยคำตอบของโจทย์ตรงๆ ถ้าคำถามกำกวมให้ตอบความหมายที่น่าจะเป็นที่สุด`,{onText:({text})=>{out.textContent=text}});
+      out.textContent=text }catch(e){ out.textContent="ยังร่างคำตอบไม่ได้ ลองใหม่อีกครั้ง" } b.disabled=false };
+  });
+}
 async function setupAsk(sum){ const skips=sum.skips||[], conf=sum.conf||[];
   const btn=document.getElementById("ask"); if(!btn) return;
   samplerP ??= (window.claude?.use?.("sample")??Promise.resolve(null)).catch(()=>null);
