@@ -460,5 +460,145 @@
   "ex": "Look at the small details in the background.",
   "exTh": "ดูรายละเอียดเล็กๆ ในฉากหลังสิ",
   "cat": "art"
+ },
+ {
+  "w": "pressure",
+  "th": "ความดัน",
+  "ex": "The pressure of water is greater at the bottom of the lake.",
+  "exTh": "ความดันของน้ำที่ก้นทะเลสาบมากกว่าที่ผิวน้ำ",
+  "cat": "sci"
+ },
+ {
+  "w": "float",
+  "th": "ลอย",
+  "ex": "A wooden boat can float on the river.",
+  "exTh": "เรือไม้ลอยอยู่บนแม่น้ำได้",
+  "cat": "sci"
+ },
+ {
+  "w": "sink",
+  "th": "จม",
+  "ex": "A small stone will sink in water.",
+  "exTh": "ก้อนหินเล็กๆ จะจมในน้ำ",
+  "cat": "sci"
+ },
+ {
+  "w": "weight",
+  "th": "น้ำหนัก",
+  "ex": "The robot checked the weight of each box.",
+  "exTh": "หุ่นยนต์ตรวจน้ำหนักของกล่องแต่ละใบ",
+  "cat": "sci"
+ },
+ {
+  "w": "surface",
+  "th": "ผิว / พื้นผิว",
+  "ex": "Leaves were floating on the surface of the pond.",
+  "exTh": "ใบไม้ลอยอยู่บนผิวน้ำในสระ",
+  "cat": "sci"
+ },
+ {
+  "w": "frequency",
+  "th": "ความถี่",
+  "ex": "Write the frequency of each score in the table.",
+  "exTh": "เขียนความถี่ของแต่ละคะแนนลงในตาราง",
+  "cat": "sci"
+ },
+ {
+  "w": "range",
+  "th": "พิสัย / ช่วง",
+  "ex": "The range of the scores is 34 points.",
+  "exTh": "พิสัยของคะแนนเท่ากับ 34 คะแนน",
+  "cat": "sci"
+ },
+ {
+  "w": "equation",
+  "th": "สมการ",
+  "ex": "She wrote an equation to find the missing number.",
+  "exTh": "เธอเขียนสมการเพื่อหาจำนวนที่หายไป",
+  "cat": "sci"
+ },
+ {
+  "w": "goal",
+  "th": "เป้าหมาย",
+  "ex": "Her goal is to pass the science-school exam.",
+  "exTh": "เป้าหมายของเธอคือสอบผ่านข้อสอบโรงเรียนวิทยาศาสตร์",
+  "cat": "gen"
+ },
+ {
+  "w": "mistake",
+  "th": "ความผิดพลาด",
+  "ex": "Everyone makes mistakes when they learn something new.",
+  "exTh": "ทุกคนทำพลาดได้ตอนเรียนเรื่องใหม่",
+  "cat": "gen"
+ },
+ {
+  "w": "confident",
+  "th": "มั่นใจ",
+  "ex": "After a week of practice, she felt more confident.",
+  "exTh": "หลังฝึกมาหนึ่งสัปดาห์ เธอรู้สึกมั่นใจขึ้น",
+  "cat": "gen"
+ },
+ {
+  "w": "support",
+  "th": "สนับสนุน / ช่วยเหลือ",
+  "ex": "Her teammates always support each other in a hard match.",
+  "exTh": "เพื่อนร่วมทีมของเธอช่วยกันเสมอเวลาแข่งเกมยากๆ",
+  "cat": "gen"
+ },
+ {
+  "w": "quickly",
+  "th": "อย่างรวดเร็ว",
+  "ex": "The creature quickly hid behind a rock.",
+  "exTh": "เจ้าสัตว์ตัวนั้นรีบหลบหลังก้อนหินอย่างรวดเร็ว",
+  "cat": "gen"
+ },
+ {
+  "w": "unusual",
+  "th": "ผิดปกติ / แปลก",
+  "ex": "The sensor recorded an unusual temperature.",
+  "exTh": "เซนเซอร์บันทึกอุณหภูมิที่ผิดปกติได้",
+  "cat": "gen"
+ },
+ {
+  "w": "remember",
+  "th": "จำได้ / จดจำ",
+  "ex": "Can you remember the rule for exponents?",
+  "exTh": "เธอจำกฎของเลขยกกำลังได้ไหม",
+  "cat": "gen"
+ },
+ {
+  "w": "palette",
+  "th": "จานสี",
+  "ex": "She mixed blue and yellow on her palette.",
+  "exTh": "เธอผสมสีฟ้ากับสีเหลืองบนจานสี",
+  "cat": "art"
+ },
+ {
+  "w": "canvas",
+  "th": "ผ้าใบวาดภาพ",
+  "ex": "The painter stretched a new canvas on the frame.",
+  "exTh": "จิตรกรขึงผ้าใบใหม่บนกรอบ",
+  "cat": "art"
+ },
+ {
+  "w": "hero",
+  "th": "วีรบุรุษ / ตัวเอก",
+  "ex": "The hero of the story is a young swordsman.",
+  "exTh": "ตัวเอกของเรื่องคือนักดาบหนุ่ม",
+  "cat": "art"
+ },
+ {
+  "w": "stage",
+  "th": "เวที",
+  "ex": "The dance group bowed on the stage.",
+  "exTh": "วงเต้นโค้งคำนับบนเวที",
+  "cat": "art"
+ },
+ {
+  "w": "bright",
+  "th": "สดใส / สว่าง",
+  "ex": "Use bright colours for a happy scene.",
+  "exTh": "ใช้สีสดใสสำหรับฉากที่มีความสุข",
+  "cat": "art"
  }
 ]
