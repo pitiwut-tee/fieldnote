@@ -1,0 +1,317 @@
+[
+ {
+  "w": "increase",
+  "th": "เพิ่มขึ้น",
+  "ex": "The number of fans increased after episode 5.",
+  "exTh": "จำนวนแฟนๆ เพิ่มขึ้นหลังตอนที่ 5",
+  "cat": "gen"
+ },
+ {
+  "w": "decrease",
+  "th": "ลดลง",
+  "ex": "Oxygen in water decreases when it gets hot.",
+  "exTh": "ออกซิเจนในน้ำลดลงเมื่อน้ำร้อนขึ้น",
+  "cat": "sci"
+ },
+ {
+  "w": "sketch",
+  "th": "ภาพร่าง",
+  "ex": "She made a quick sketch of the cat.",
+  "exTh": "เธอร่างภาพแมวอย่างเร็วๆ",
+  "cat": "art"
+ },
+ {
+  "w": "compare",
+  "th": "เปรียบเทียบ",
+  "ex": "Compare the two graphs.",
+  "exTh": "เปรียบเทียบกราฟสองอันนี้",
+  "cat": "gen"
+ },
+ {
+  "w": "ratio",
+  "th": "อัตราส่วน",
+  "ex": "Mix blue and yellow in a 2 : 5 ratio.",
+  "exTh": "ผสมสีฟ้ากับสีเหลืองในอัตราส่วน 2 : 5",
+  "cat": "sci"
+ },
+ {
+  "w": "spell",
+  "th": "คาถา",
+  "ex": "The mage learned a new spell.",
+  "exTh": "นักเวทเรียนคาถาใหม่",
+  "cat": "art"
+ },
+ {
+  "w": "average",
+  "th": "ค่าเฉลี่ย",
+  "ex": "The average score was 8.",
+  "exTh": "คะแนนเฉลี่ยคือ 8",
+  "cat": "sci"
+ },
+ {
+  "w": "journey",
+  "th": "การเดินทาง",
+  "ex": "Their journey took ten years.",
+  "exTh": "การเดินทางของพวกเขาใช้เวลาสิบปี",
+  "cat": "art"
+ },
+ {
+  "w": "describe",
+  "th": "บรรยาย อธิบายลักษณะ",
+  "ex": "Describe what you see in the picture.",
+  "exTh": "บรรยายสิ่งที่เห็นในภาพ",
+  "cat": "gen"
+ },
+ {
+  "w": "dissolve",
+  "th": "ละลาย",
+  "ex": "Sugar dissolves in warm water.",
+  "exTh": "น้ำตาลละลายในน้ำอุ่น",
+  "cat": "sci"
+ },
+ {
+  "w": "apprentice",
+  "th": "ลูกศิษย์ ผู้ฝึกหัด",
+  "ex": "The apprentice practiced every day.",
+  "exTh": "ลูกศิษย์ฝึกซ้อมทุกวัน",
+  "cat": "art"
+ },
+ {
+  "w": "measure",
+  "th": "วัด",
+  "ex": "Measure the length of the leaf.",
+  "exTh": "วัดความยาวของใบไม้",
+  "cat": "gen"
+ },
+ {
+  "w": "temperature",
+  "th": "อุณหภูมิ",
+  "ex": "The temperature dropped at night.",
+  "exTh": "อุณหภูมิลดลงตอนกลางคืน",
+  "cat": "sci"
+ },
+ {
+  "w": "brave",
+  "th": "กล้าหาญ",
+  "ex": "A brave hero is not always strong.",
+  "exTh": "ฮีโร่ที่กล้าหาญไม่จำเป็นต้องแข็งแรงเสมอไป",
+  "cat": "art"
+ },
+ {
+  "w": "result",
+  "th": "ผลลัพธ์",
+  "ex": "The result surprised everyone.",
+  "exTh": "ผลลัพธ์ทำให้ทุกคนประหลาดใจ",
+  "cat": "gen"
+ },
+ {
+  "w": "experiment",
+  "th": "การทดลอง",
+  "ex": "We did an experiment with salt water.",
+  "exTh": "เราทำการทดลองกับน้ำเกลือ",
+  "cat": "sci"
+ },
+ {
+  "w": "gentle",
+  "th": "อ่อนโยน",
+  "ex": "He was gentle with the small bird.",
+  "exTh": "เขาอ่อนโยนกับนกตัวเล็ก",
+  "cat": "art"
+ },
+ {
+  "w": "reason",
+  "th": "เหตุผล",
+  "ex": "What is the reason for your answer?",
+  "exTh": "คำตอบของเธอมีเหตุผลอะไร",
+  "cat": "gen"
+ },
+ {
+  "w": "percent",
+  "th": "ร้อยละ",
+  "ex": "Forty percent of the class likes anime.",
+  "exTh": "ร้อยละสี่สิบของห้องชอบอนิเมะ",
+  "cat": "sci"
+ },
+ {
+  "w": "ancient",
+  "th": "โบราณ",
+  "ex": "They found an ancient book.",
+  "exTh": "พวกเขาพบหนังสือโบราณเล่มหนึ่ง",
+  "cat": "art"
+ },
+ {
+  "w": "example",
+  "th": "ตัวอย่าง",
+  "ex": "Give one example of a mixture.",
+  "exTh": "ยกตัวอย่างสารผสมมาหนึ่งอย่าง",
+  "cat": "gen"
+ },
+ {
+  "w": "variable",
+  "th": "ตัวแปร",
+  "ex": "Change only one variable at a time.",
+  "exTh": "เปลี่ยนตัวแปรทีละตัวเท่านั้น",
+  "cat": "sci"
+ },
+ {
+  "w": "curious",
+  "th": "อยากรู้อยากเห็น",
+  "ex": "The curious cat opened the box.",
+  "exTh": "แมวขี้สงสัยเปิดกล่องออก",
+  "cat": "art"
+ },
+ {
+  "w": "difference",
+  "th": "ความแตกต่าง ผลต่าง",
+  "ex": "Find the difference between 15 and 9.",
+  "exTh": "หาผลต่างระหว่าง 15 กับ 9",
+  "cat": "gen"
+ },
+ {
+  "w": "graph",
+  "th": "กราฟ",
+  "ex": "The graph shows a rising line.",
+  "exTh": "กราฟแสดงเส้นที่สูงขึ้น",
+  "cat": "sci"
+ },
+ {
+  "w": "shadow",
+  "th": "เงา",
+  "ex": "Her shadow grew long in the evening.",
+  "exTh": "เงาของเธอยาวขึ้นในตอนเย็น",
+  "cat": "art"
+ },
+ {
+  "w": "amount",
+  "th": "ปริมาณ จำนวน",
+  "ex": "Use the same amount of water.",
+  "exTh": "ใช้น้ำในปริมาณเท่ากัน",
+  "cat": "gen"
+ },
+ {
+  "w": "estimate",
+  "th": "ประมาณ คาดคะเน",
+  "ex": "Estimate the number of fish in the pond.",
+  "exTh": "ประมาณจำนวนปลาในบ่อ",
+  "cat": "sci"
+ },
+ {
+  "w": "memory",
+  "th": "ความทรงจำ",
+  "ex": "She kept the memory of her teacher.",
+  "exTh": "เธอเก็บความทรงจำเกี่ยวกับครูของเธอไว้",
+  "cat": "art"
+ },
+ {
+  "w": "explain",
+  "th": "อธิบาย",
+  "ex": "Explain how you got the answer.",
+  "exTh": "อธิบายว่าได้คำตอบมาอย่างไร",
+  "cat": "gen"
+ },
+ {
+  "w": "data",
+  "th": "ข้อมูล",
+  "ex": "Collect data for one week.",
+  "exTh": "เก็บข้อมูลเป็นเวลาหนึ่งสัปดาห์",
+  "cat": "sci"
+ },
+ {
+  "w": "wander",
+  "th": "เดินเตร็ดเตร่",
+  "ex": "They wandered through the forest.",
+  "exTh": "พวกเขาเดินเตร็ดเตร่ไปในป่า",
+  "cat": "art"
+ },
+ {
+  "w": "predict",
+  "th": "ทำนาย คาดการณ์",
+  "ex": "Predict what will happen next.",
+  "exTh": "ทำนายว่าจะเกิดอะไรขึ้นต่อไป",
+  "cat": "gen"
+ },
+ {
+  "w": "evidence",
+  "th": "หลักฐาน",
+  "ex": "Use evidence to support your idea.",
+  "exTh": "ใช้หลักฐานสนับสนุนความคิดของเธอ",
+  "cat": "sci"
+ },
+ {
+  "w": "character",
+  "th": "ตัวละคร",
+  "ex": "My favorite character is quiet but kind.",
+  "exTh": "ตัวละครที่ชอบที่สุดเป็นคนเงียบแต่ใจดี",
+  "cat": "art"
+ },
+ {
+  "w": "observe",
+  "th": "สังเกต",
+  "ex": "Observe the color change carefully.",
+  "exTh": "สังเกตการเปลี่ยนสีอย่างตั้งใจ",
+  "cat": "gen"
+ },
+ {
+  "w": "density",
+  "th": "ความหนาแน่น",
+  "ex": "Ice has a lower density than water.",
+  "exTh": "น้ำแข็งมีความหนาแน่นน้อยกว่าน้ำ",
+  "cat": "sci"
+ },
+ {
+  "w": "shade",
+  "th": "ลงเงา แรเงา",
+  "ex": "Shade the left side of the apple.",
+  "exTh": "แรเงาด้านซ้ายของแอปเปิล",
+  "cat": "art"
+ },
+ {
+  "w": "total",
+  "th": "ทั้งหมด ผลรวม",
+  "ex": "The total is 40.",
+  "exTh": "ผลรวมคือ 40",
+  "cat": "gen"
+ },
+ {
+  "w": "energy",
+  "th": "พลังงาน",
+  "ex": "Plants get energy from sunlight.",
+  "exTh": "พืชได้พลังงานจากแสงแดด",
+  "cat": "sci"
+ },
+ {
+  "w": "adventure",
+  "th": "การผจญภัย",
+  "ex": "Every adventure starts with one step.",
+  "exTh": "การผจญภัยทุกครั้งเริ่มจากก้าวแรก",
+  "cat": "art"
+ },
+ {
+  "w": "similar",
+  "th": "คล้ายกัน",
+  "ex": "These two triangles are similar.",
+  "exTh": "สามเหลี่ยมสองรูปนี้คล้ายกัน",
+  "cat": "gen"
+ },
+ {
+  "w": "force",
+  "th": "แรง",
+  "ex": "A force can push or pull.",
+  "exTh": "แรงสามารถผลักหรือดึงได้",
+  "cat": "sci"
+ },
+ {
+  "w": "patient",
+  "th": "อดทน",
+  "ex": "Be patient. Good drawings take time.",
+  "exTh": "ใจเย็นๆ ภาพวาดที่ดีต้องใช้เวลา",
+  "cat": "art"
+ },
+ {
+  "w": "solve",
+  "th": "แก้ (ปัญหา โจทย์)",
+  "ex": "Can you solve this puzzle?",
+  "exTh": "เธอแก้ปริศนานี้ได้ไหม",
+  "cat": "gen"
+ }
+]

@@ -1,0 +1,1404 @@
+<title>สมุดคาถา</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one narrow column like a pocket field notebook; parent view is the same column with summary first. */
+:root{
+  --paper:#F2F6F4; --card:#FFFFFF; --ink:#16302B; --muted:#5B716B; --line:#D3E0DB;
+  --accent:#1F7A8C; --accent-ink:#FFFFFF; --beak:#D9822B; --good:#2E8B57; --bad:#C0453A; --warn:#B7841C;
+  --soft:#E3EEEA;
+  --display:"Mitr","IBM Plex Sans Thai",system-ui,sans-serif;
+  --body:"IBM Plex Sans Thai",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0F1A18; --card:#172623; --ink:#E2ECE8; --muted:#97ABA5; --line:#2A3D39;
+  --accent:#4FB3C6; --accent-ink:#0B1715; --beak:#E9A35A; --good:#5CC48A; --bad:#EF7C70; --warn:#E3B54E; --soft:#1E302C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0F1A18; --card:#172623; --ink:#E2ECE8; --muted:#97ABA5; --line:#2A3D39;
+  --accent:#4FB3C6; --accent-ink:#0B1715; --beak:#E9A35A; --good:#5CC48A; --bad:#EF7C70; --warn:#E3B54E; --soft:#1E302C; color-scheme:dark}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.65}
+.wrap{max-width:620px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--display);font-weight:500;line-height:1.3;margin:0;text-wrap:balance}
+h1{font-size:1.7rem} h2{font-size:1.3rem} h3{font-size:1.05rem}
+p{margin:0}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column}
+.brand small{color:var(--muted);font-size:.85rem}
+.tabs{display:flex;gap:6px;background:var(--soft);padding:4px;border-radius:999px}
+.tabs a{padding:6px 14px;border-radius:999px;color:var(--ink);text-decoration:none;font-size:.9rem}
+.tabs a[aria-current="page"]{background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.eyebrow{font-size:.78rem;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+.sets{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:560px){.sets{grid-template-columns:1fr 1fr}}
+.set{text-align:left;font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px;cursor:pointer}
+.set:hover{border-color:var(--accent)}
+.set .subj{font-family:var(--display);font-size:1.15rem}
+.set .meta{color:var(--muted);font-size:.88rem}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:.78rem;padding:2px 9px;border-radius:999px;background:var(--soft);color:var(--ink);width:fit-content}
+.chip.l1{background:color-mix(in srgb,var(--good) 18%,transparent)}
+.chip.l2{background:color-mix(in srgb,var(--warn) 22%,transparent)}
+.chip.l3{background:color-mix(in srgb,var(--beak) 26%,transparent)}
+.week{display:flex;gap:8px;flex-wrap:wrap}
+.day{width:38px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.75rem;color:var(--muted)}
+.dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--line)}
+.dot.on{background:var(--accent);border-color:var(--accent)}
+.dot.rest{border-style:dashed}
+.progress{height:6px;background:var(--soft);border-radius:99px;overflow:hidden}
+.progress>i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.stage{display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted)}
+.prompt{font-size:1.08rem}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{font:inherit;text-align:left;color:var(--ink);background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer}
+@media (hover:hover){.opt:hover:not(:disabled){border-color:var(--accent)}}   /* touch screens keep a "hover" after a tap, which looked like a hint */
+.optrow{display:flex;gap:6px;align-items:stretch}
+.optrow .opt{flex:1}
+.xopt{flex:none;width:40px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--muted);font:inherit;cursor:pointer}
+.opt.struck{opacity:.45;text-decoration:line-through;background:var(--soft)}
+.term{font:inherit;color:inherit;background:none;border:0;padding:0;border-bottom:2px dotted var(--accent);cursor:pointer}
+details.ask{display:flex;flex-direction:column;gap:6px}
+details.ask summary{cursor:pointer;color:var(--accent);font-size:.9rem;padding:4px 0}
+details.ask[open]{display:flex}
+.dot.leave{border-style:dashed;display:flex;align-items:center;justify-content:center;font-size:.8rem}
+.padfab{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:30;font:inherit;font-family:var(--display);border:0;border-radius:999px;padding:10px 16px;background:var(--beak);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer}
+.pad{position:fixed;left:0;right:0;bottom:0;height:48vh;z-index:20;background:var(--card);border-top:2px solid var(--line);display:flex;flex-direction:column;box-shadow:0 -4px 16px rgba(0,0,0,.12)}
+.pad[hidden]{display:none}
+.padbar{display:flex;gap:6px;padding:8px 12px;flex-wrap:wrap}
+.padbar button{font:inherit;font-size:.85rem;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.padbar button[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,var(--card))}
+#pad-canvas{flex:1;width:100%;touch-action:none;background-image:linear-gradient(var(--line) 1px,transparent 1px);background-size:100% 32px}
+body.padopen .wrap{padding-bottom:calc(48vh + 70px)}
+body.padopen .padfab{bottom:calc(48vh + 10px)}
+.flamebox{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:96px;padding:8px 12px;border-radius:14px;background:color-mix(in srgb,var(--beak) 16%,var(--card))}
+.flamebox.out{filter:grayscale(1);opacity:.6}
+.flamebig{font-family:var(--display);font-size:2.2rem;line-height:1.1}
+.badges{display:flex;gap:4px;flex-wrap:wrap}
+.badge{font-size:.75rem;padding:1px 7px;border-radius:999px;border:1px dashed var(--line);color:var(--muted)}
+.badge.on{border:1px solid var(--beak);color:var(--ink);background:color-mix(in srgb,var(--beak) 18%,transparent)}
+.daypanel{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border-radius:10px;background:var(--soft)}
+.btn.small{font-size:.82rem;padding:6px 12px}
+.dot.hol{border-color:color-mix(in srgb,var(--beak) 60%,var(--line))}
+.quest{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--line)}
+.quest:last-of-type{border-bottom:0}
+.combo{color:var(--beak)}
+.spellart{width:100%;max-height:180px;object-fit:cover;border-radius:10px}
+.spell.glow{box-shadow:0 0 0 3px color-mix(in srgb,var(--beak) 60%,transparent)}
+.celebrate{position:fixed;inset:0;z-index:50;background:rgba(10,20,18,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+.celecard{position:relative;z-index:2;background:var(--card);border-radius:18px;padding:24px 20px;max-width:360px;width:100%;text-align:center;display:flex;flex-direction:column;gap:10px;animation:pop .35s ease-out}
+.celeicon{font-size:3.4rem;line-height:1}
+.celeart{max-height:200px;object-fit:contain;border-radius:12px}
+@keyframes pop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+.confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
+.confetti i{position:absolute;top:-12px;width:8px;height:14px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+@media (min-width:700px){
+  .pad{left:auto;top:0;bottom:0;right:0;width:50vw;height:auto;border-top:0;border-left:2px solid var(--line);box-shadow:-4px 0 16px rgba(0,0,0,.12)}
+  body.padopen .wrap{padding-bottom:48px;margin-left:0;margin-right:50vw;max-width:none;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:20px}
+  body.padopen .padfab{top:calc(6px + env(safe-area-inset-top,0px));bottom:auto;right:14px;padding:7px 14px}
+}
+.opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 12%,var(--card))}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--card))}
+.opt:disabled{cursor:default}
+.num{display:flex;gap:8px;flex-wrap:wrap}
+.num input{font:inherit;font-family:var(--mono);padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);width:10ch}
+.btn{font:inherit;font-family:var(--display);border:0;text-decoration:none;display:inline-block;border-radius:12px;padding:11px 18px;background:var(--accent);color:var(--accent-ink);cursor:pointer;width:fit-content}
+.btn.ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
+.btn:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:3px solid var(--beak);outline-offset:2px}
+.feedback{border-radius:12px;padding:12px 14px;background:var(--soft);display:flex;flex-direction:column;gap:8px}
+.feedback b.ok{color:var(--good)} .feedback b.no{color:var(--bad)}
+.why{display:flex;gap:6px;flex-wrap:wrap}
+.why button{font:inherit;font-size:.85rem;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.why button[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,var(--card))}
+.concept{display:flex;flex-direction:column;gap:10px}
+.concept ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
+.formula{font-family:var(--mono);background:var(--soft);border-radius:10px;padding:10px 12px;overflow-x:auto;font-size:.92rem}
+.vocab{display:flex;gap:6px;flex-wrap:wrap}
+.vocab span{font-size:.85rem;border:1px dashed var(--line);border-radius:8px;padding:3px 9px}
+.vocab span i{font-style:normal;color:var(--muted)}
+.rate{display:flex;gap:8px;flex-wrap:wrap}
+.muted{color:var(--muted)}
+.small{font-size:.86rem}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{display:flex;flex-direction:column}
+.stat b{font-family:var(--mono);font-size:1.35rem;font-variant-numeric:tabular-nums}
+.stat span{font-size:.8rem;color:var(--muted)}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:7.5em 1fr 3.2em;gap:8px;align-items:center;font-size:.88rem}
+.bar .track{height:10px;background:var(--soft);border-radius:99px;overflow:hidden}
+.bar .track i{display:block;height:100%}
+.bar .v{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.topic{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:.92rem}
+.topic:last-child{border-bottom:0}
+.pill{font-size:.78rem;padding:2px 10px;border-radius:999px;white-space:nowrap}
+.pill.g{background:color-mix(in srgb,var(--good) 20%,transparent)}
+.pill.y{background:color-mix(in srgb,var(--warn) 24%,transparent)}
+.pill.r{background:color-mix(in srgb,var(--bad) 20%,transparent)}
+.log{display:flex;flex-direction:column;gap:10px}
+.logi{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.example{font-size:.75rem;color:var(--beak);border:1px solid var(--beak);border-radius:6px;padding:0 6px}
+.analysis{white-space:pre-wrap;font-size:.94rem}
+.note{font-size:.84rem;color:var(--muted)}
+.hero{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.flame{font-family:var(--display);font-size:1.6rem;display:flex;align-items:center;gap:6px}
+.flame.out{filter:grayscale(1);opacity:.55}
+.ice{font-size:.9rem;color:var(--muted)}
+.xpbar{flex:1;min-width:160px;display:flex;flex-direction:column;gap:4px}
+.xpbar .progress{height:10px}
+.xpbar .progress>i{background:var(--beak)}
+.dot.ice{border-color:#7DB9E8;background:color-mix(in srgb,#7DB9E8 35%,transparent)}
+.pick{border:2px solid var(--accent)}
+.mission{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
+.mission:first-of-type{border-top:0}
+.mission.done{opacity:.75}
+.mcheck{flex:none;width:30px;height:30px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-family:var(--display)}
+.realm summary{cursor:pointer;padding:6px 0}
+.realm h3 small{color:var(--muted);font-family:var(--body);font-size:.8rem;font-weight:400}
+.spells{display:grid;grid-template-columns:1fr;gap:8px}
+@media(min-width:560px){.spells{grid-template-columns:1fr 1fr}}
+.spell{font:inherit;text-align:left;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+button.spell{cursor:pointer} button.spell:hover{border-color:var(--accent)}
+.spell.shadow{background:transparent;border-style:dashed;color:var(--muted)}
+.spell.faded{opacity:.6}
+.spell b{font-family:var(--display);font-weight:500}
+.pips{display:flex;gap:4px;align-items:center}
+.pips i{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--line);display:inline-block}
+.pips i.on1{background:var(--good);border-color:var(--good)} .pips i.on2{background:var(--warn);border-color:var(--warn)} .pips i.on3{background:var(--beak);border-color:var(--beak)}
+.vword{font-family:var(--display);font-size:1.8rem}
+.vex{font-style:italic}
+.reading{background:var(--soft);border-radius:12px;padding:12px 14px;line-height:1.8}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap" id="app">
+  <header class="top">
+    <div class="brand"><h1>สมุดคาถา</h1><small>ฝึกวันละ 30–45 นาที · ต้นแบบรุ่นทดลอง</small></div>
+    <nav class="tabs"><a href="#home" id="tab-home" data-v="home">ฝึกวันนี้</a><a href="#map" id="tab-map" data-v="map">แผนที่คาถา</a><a href="#parent" id="tab-parent" data-v="parent">หน้าผู้ปกครอง</a></nav>
+  </header>
+  <main id="view" aria-live="polite"></main>
+</div>
+
+<script>
+const ERR = {concept:"ยังไม่เข้าใจหลัก", read:"อ่านโจทย์พลาด", misopt:"อ่านตัวเลือกผิด", unclear:"โจทย์กำกวม อ่านแล้วไม่เข้าใจ", calc:"คิดเลขผิด", guess:"เดา", dontknow:"คิดไม่ออก (กดดูเฉลย)"};
+const LV = {1:"ระดับ 1 · พื้นฐาน",2:"ระดับ 2 · ประยุกต์",3:"ระดับ 3 · แนวคิดวิเคราะห์"};
+
+/* ---------- content comes from content/*.json, injected at build time (tools/build.py) ---------- */
+const CONTENT=/*@@CONTENT@@*/null;
+const CAL=CONTENT.calendar;
+const SETS=CONTENT.sets.map(s=>{ const o=JSON.parse(JSON.stringify(s));
+  [...o.warm,...o.practice,...(o.challenge?[o.challenge]:[])].forEach(q=>q.hints=(s.hints||{})[q.id]||[]);
+  o.concept=o.concept||{title:"",points:[],formulas:[],vocab:[],alts:[]}; o.concept.alts=o.concept.alts||[];
+  o.current=CAL.currentSpells.includes(o.spell); return o });
+const SKIP_REASONS=["การบ้านเยอะ","มีสอบ/ต้องอ่านวิชาอื่น","ไม่สบาย","เหนื่อยมาก","มีธุระ/ไปข้างนอก","อื่นๆ"];
+/* ---------- spell map (from the curriculum map doc): id, realm, magic name, topic, grade, exam stars, school status ---------- */
+const REALMS=CONTENT.spells.realms, SCHOOL=CONTENT.spells.school, SPELLS=CONTENT.spells.spells;
+
+/* ---------- daily vocabulary: general academic words + science/math words + story/art words ---------- */
+const VOCAB=CONTENT.vocab.map(x=>({...x}));
+const READINGS=CONTENT.readings.map((r,i)=>({text:r.text,qs:r.qs.map(q=>({q:q.q,opts:q.opts,a:q.a})),th:{text:r.th,qs:r.qs.map(q=>({q:q.qth,opts:q.optsTh}))},idx:i}));
+
+/* ---------- test mode: open the page with #test once; results get a "test" tag ---------- */
+let TEST=false;
+try{ if(location.hash==="#test") localStorage.setItem("fieldnote.test","1"); TEST=localStorage.getItem("fieldnote.test")==="1" }catch(e){ TEST=location.hash==="#test" }
+function leaveTest(){
+  try{
+    localStorage.removeItem("fieldnote.test");
+    localStorage.setItem("fieldnote.attempts",JSON.stringify(JSON.parse(localStorage.getItem("fieldnote.attempts")||"[]").filter(x=>!x.test)));
+    localStorage.setItem("fieldnote.fb",JSON.stringify(JSON.parse(localStorage.getItem("fieldnote.fb")||"[]").filter(x=>!x.test)));
+  }catch(e){}
+  TEST=false; attempts=lsRead(); if(location.hash==="#test") location.hash="#home"; view="home"; render();
+}
+
+/* ---------- fresh start on 5 Nov 2026: the trial day (4 Nov) is cleared from this browser, once ---------- */
+const START_DAY=new Date(CAL.startDay+"T00:00:00").getTime();
+try{
+  if(Date.now()>=START_DAY&&localStorage.getItem("fieldnote.epoch")!=="2"){
+    ["fieldnote.attempts","fieldnote.fb","fieldnote.vocab","fieldnote.inprogress","fieldnote.test"].forEach(k=>localStorage.removeItem(k));
+    localStorage.setItem("fieldnote.epoch","2");
+  }
+  const keep=JSON.parse(localStorage.getItem("fieldnote.attempts")||"[]").filter(a=>new Date(a.endedAt).getTime()>=START_DAY);
+  localStorage.setItem("fieldnote.attempts",JSON.stringify(keep));
+}catch(e){}
+
+/* ---------- storage: shared db when available, otherwise this browser only ---------- */
+let db = null, store = "local", attempts = [], unsub = null;
+const LS = "fieldnote.attempts";
+function lsRead(){ try{ return JSON.parse(localStorage.getItem(LS)||"[]") }catch(e){ return [] } }
+function lsWrite(a){ try{ localStorage.setItem(LS, JSON.stringify(a)) }catch(e){} }
+attempts = lsRead();
+(async()=>{
+  try{
+    db = await window.claude?.use?.("db");
+  }catch(e){ db = null }
+  if(!db) return;
+  const t = setTimeout(()=>{}, 10000);
+  try{
+    unsub = db.collection("attempts").orderBy("endedAt","desc").limit(200).onSnapshot(s=>{
+      clearTimeout(t); store="db";
+      attempts = s.docs.map(d=>({id:d.id,...d.data()}));
+      if(view==="parent"||view==="home") render();
+    }, ()=>{ clearTimeout(t) });
+  }catch(e){ clearTimeout(t) }
+})();
+async function saveAttempt(rec){
+  if(TEST) rec.test=true;
+  if(db){
+    try{ await db.collection("attempts").add(rec); return "db" }catch(e){}
+  }
+  attempts = [rec, ...attempts]; lsWrite(attempts.filter(a=>!a.example)); return "local";
+}
+
+function b64e(str){const b=new TextEncoder().encode(str);let o="";for(let i=0;i<b.length;i+=0x8000)o+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(o)}
+function b64d(x){return new TextDecoder().decode(Uint8Array.from(atob(x),c=>c.charCodeAt(0)))}
+function lsFb(){ try{ return JSON.parse(localStorage.getItem("fieldnote.fb")||"[]") }catch(e){ return [] } }
+function unsent(){ return {a:lsRead().filter(x=>!x.sent), f:lsFb().filter(x=>!x.sent)} }
+function markSent(){ lsWrite(lsRead().map(x=>({...x,sent:true}))); try{localStorage.setItem("fieldnote.fb",JSON.stringify(lsFb().map(x=>({...x,sent:true}))))}catch(e){} attempts=lsRead() }
+/* short code: drop text the parent page can look up again by question id, then deflate */
+function slim(a){ const {sent,...x}=a; return {...x, items:(x.items||[]).map(({prompt,phase,topic,spell,...i})=>i), confused:(x.confused||[]).map(({prompt,...c})=>c)} }
+function fatten(a){ return {...a, items:(a.items||[]).map(i=>{const q=QBANK[i.qid]?.q; return q?{topic:q.topic,spell:q.spell,prompt:q.q,...i}:i}),
+  confused:(a.confused||[]).map(c=>{const q=QBANK[c.qid]?.q; return q&&!c.prompt?{...c,prompt:q.q}:c})} }
+async function packCode(obj){
+  const json=JSON.stringify(obj);
+  if(typeof CompressionStream==="function"){ try{
+    const buf=new Uint8Array(await new Response(new Blob([json]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
+    let t=""; for(let i=0;i<buf.length;i+=0x8000) t+=String.fromCharCode.apply(null,buf.subarray(i,i+0x8000));
+    return "SK2:"+btoa(t).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  }catch(e){} }
+  return "FIELDNOTE1:"+b64e(json);
+}
+async function exportCode(all){ const a=all?lsRead():unsent().a, f=all?lsFb():unsent().f; return (a.length||f.length)?await packCode({a:a.map(slim),f:f.map(({sent,...x})=>x)}):"" }
+
+async function renderSend(all){
+  const u=unsent(); const code=await exportCode(all);
+  $v.innerHTML=`<section class="card"><h2>ส่งผลให้พ่อ</h2>
+    ${code?`<p>มีผลฝึก <b>${all?lsRead().length:u.a.length}</b> ครั้ง และข้อความถึง Claude <b>${all?lsFb().length:u.f.length}</b> ข้อความ ที่ยังไม่ได้ส่ง</p>
+    <ol style="margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px">
+      <li>กด <b>คัดลอกรหัส</b></li><li>เปิด LINE แล้ววางส่งให้พ่อ</li><li>กลับมากด <b>ส่งเรียบร้อยแล้ว</b></li></ol>
+    <p class="small muted">รหัสยาว ${code.length.toLocaleString()} ตัวอักษร</p>
+    <textarea id="code" readonly rows="4" style="font-family:var(--mono);font-size:.75rem;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">${code}</textarea>
+    <div class="row"><button class="btn" id="copy">คัดลอกรหัส</button><button class="btn ghost" id="sent">ส่งเรียบร้อยแล้ว</button></div>
+    <p class="small" id="cmsg" aria-live="polite"></p>`:`<p class="muted">ส่งครบทุกครั้งแล้ว ไม่มีผลค้างส่ง</p>
+    <button class="btn ghost" id="resend">ต้องการส่งทั้งหมดอีกครั้ง</button>`}
+    <button class="btn ghost" id="sback" style="border:0;padding-left:0">← กลับหน้าแรก</button></section>`;
+  document.getElementById("sback").onclick=()=>{view="home";render()};
+  const rs=document.getElementById("resend"); if(rs) rs.onclick=()=>renderSend(true);
+  if(!code) return;
+  document.getElementById("copy").onclick=async()=>{const t=document.getElementById("code");const m=document.getElementById("cmsg");
+    try{await navigator.clipboard.writeText(t.value);m.textContent="คัดลอกแล้ว ไปวางใน LINE ได้เลย"}catch(e){t.focus();t.select();m.textContent="กดค้างที่กล่องรหัสแล้วเลือกคัดลอก"}};
+  document.getElementById("sent").onclick=()=>{markSent();view="home";render()};
+}
+async function importCode(raw, asTest){
+  let data; const m2=raw.match(/SK2:([A-Za-z0-9_-]+)/), m1=raw.match(/FIELDNOTE1:([A-Za-z0-9+/=\s]+)/);
+  if(m2){ const c=m2[1].replace(/-/g,"+").replace(/_/g,"/"); const bin=atob(c+"=".repeat((4-c.length%4)%4));
+    const bytes=Uint8Array.from(bin,ch=>ch.charCodeAt(0));
+    data=JSON.parse(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text()); }
+  else if(m1) data=JSON.parse(b64d(m1[1].replace(/\s/g,""))); else throw new Error("bad");
+  let n=0,k=0;
+  for(const a of (data.a||[])){ const id=("s-"+(a.setId||a.type)+"-"+a.endedAt).replace(/[^A-Za-z0-9_-]/g,""); const {example,...rest}=fatten(a); await db.collection("attempts").doc(id).set({...rest,via:"code",test:!!(a.test||asTest)}); n++ }
+  for(const f of (data.f||[])){ const id=("f-"+f.at).replace(/[^A-Za-z0-9_-]/g,""); await db.collection("feedback").doc(id).set({...f,test:!!(f.test||asTest)}); k++ }
+  return {n,k};
+}
+
+/* ---------- session state ---------- */
+let view = "home", S = null, V = null, showAll = false;
+const $v = document.getElementById("view");
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])) }
+
+/* warm-up questions review older topics, so they count toward those spells */
+
+const QBANK={};
+SETS.forEach(s=>[...s.warm,...s.practice,...(s.challenge?[s.challenge]:[])].forEach(q=>{q.spell=q.spell||s.spell;QBANK[q.id]={q,set:s}}));
+
+/* ---------- XP, streak and ice ---------- */
+const GOAL=60, FREEZE_MAX=2, DAY=86400000;
+function realAttempts(){ return attempts.filter(a=>!a.example&&!a.test) }
+function mine(){ return TEST ? attempts.filter(a=>!a.example) : realAttempts() }
+function isSkip(a){ return a.type==="skip" }
+function isLesson(a){ return !isSkip(a) && a.type!=="vocab" && a.type!=="daymode" }
+function dayKey(iso){ const d=new Date(iso); d.setHours(0,0,0,0); return d.getTime() }
+function todayKey(){ return dayKey(new Date().toISOString()) }
+function nextDay(d){ const t=new Date(d); t.setDate(t.getDate()+1); t.setHours(0,0,0,0); return t.getTime() }
+function weekStart(d){ const t=new Date(d); t.setHours(0,0,0,0); t.setDate(t.getDate()-((t.getDay()+6)%7)); return t.getTime() }
+function xpOf(a){ if(isSkip(a)||a.type==="daymode") return 0; if(typeof a.xp==="number") return a.xp; return (a.correct||0)*10+((a.total||0)-(a.correct||0))*5+20 }
+function itemXp(items){ return items.reduce((s,x)=>s+(x.skipped||x.dontknow?0:x.correct?10:5),0) }
+
+/* ---------- day types: school day or holiday (Thai public holidays, school days off, weekends), plus a manual switch ---------- */
+const LEVELS={full:{label:"เต็ม",mins:"ราว 90 นาที แบ่งทำ 3 ช่วง",units:3,probe:true},mid:{label:"กลาง",mins:"ราว 60 นาที",units:2,probe:true},light:{label:"เบา",mins:"ราว 40 นาที",units:1,probe:false}};
+const LOWER_REASONS=["มีธุระครอบครัว","ไปเที่ยว/ออกนอกบ้าน","การบ้านหรืองานเยอะ","เรียนพิเศษ/กิจกรรม","ไม่สบาย","อื่นๆ"];
+const MILESTONES=[3,7,14,30,50,100,200,365];
+function isoDay(dk){ const d=new Date(dk); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0") }
+function baseDay(dk){
+  const ds=isoDay(dk), wd=new Date(dk).getDay();
+  if(CAL.holidays&&CAL.holidays[ds]) return {kind:"holiday",name:CAL.holidays[ds]};
+  if(CAL.schoolOff&&CAL.schoolOff[ds]) return {kind:"holiday",name:CAL.schoolOff[ds]};
+  for(const b of CAL.schoolBreaks||[]) if(ds>=b.from&&ds<=b.to) return {kind:"holiday",name:b.name};
+  if(wd===0||wd===6) return {kind:"holiday",name:wd===6?"วันเสาร์":"วันอาทิตย์"};
+  return {kind:"school",name:"วันไปโรงเรียน"};
+}
+function dayModes(list){ const m={}; list.filter(a=>a.type==="daymode").sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt)).forEach(a=>{m[a.day]={...(m[a.day]||{}),...a}}); return m }
+function dayInfo(dk, modes){
+  const b=baseDay(dk), o=modes[isoDay(dk)]||{};
+  const kind=o.kind||b.kind, level=kind==="school"?"school":(o.level||"full");
+  const name=o.kind&&o.kind!==b.kind?(o.kind==="holiday"?"หยุดเรียน (แจ้งเอง)":"ไปโรงเรียน (แจ้งเอง)"):b.name;
+  return {kind,level,name,override:!!o.kind&&o.kind!==b.kind,lowered:kind==="holiday"&&level!=="full",reason:o.reason||""};
+}
+
+/* ---------- weekly quests ---------- */
+function questStatus(list, wk, upto, met){
+  const inWeek=a=>{const k=dayKey(a.endedAt); return k>=wk&&k<=upto};
+  let metDays=0; for(let d=wk; d<=upto; d=nextDay(d)) if(met.has(d)) metDays++;
+  const spelled=list.filter(a=>a.type==="vocab"&&inWeek(a)).reduce((s,a)=>s+(a.items||[]).filter(i=>i.kind==="spell"&&i.correct).length,0);
+  let tierUp=0;
+  if(metDays>=0){ const before=spellStats(list.filter(a=>dayKey(a.endedAt)<wk)), after=spellStats(list.filter(a=>dayKey(a.endedAt)<=upto));
+    for(const [k,v] of Object.entries(after)) if(v.tier>(before[k]?.tier||0)) tierUp++; }
+  const q=[{key:"days",label:"จุดไฟให้ครบ 5 วัน",have:metDays,need:5},{key:"tier",label:"ทำให้คาถาขึ้นขั้น 1 ครั้ง",have:tierUp,need:1},{key:"spell",label:"สะกดคำศัพท์ถูก 20 คำ",have:spelled,need:20}];
+  return {q,all:q.every(x=>x.have>=x.need)};
+}
+
+function progressOf(list){
+  const modes=dayModes(list);
+  const byDay=new Map(), skipDays=new Set(), leaveDays=new Set(), vocabDays=new Set(), units=new Map(), probes=new Map(), met=new Set();
+  list.forEach(a=>{ const k=dayKey(a.endedAt);
+    if(a.type==="daymode") return;
+    if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
+    byDay.set(k,(byDay.get(k)||0)+xpOf(a));
+    if(a.type==="vocab") vocabDays.add(k); else { units.set(k,(units.get(k)||0)+1); if(a.type==="probe") probes.set(k,(probes.get(k)||0)+1) } });
+  const probeCount=SETS.filter(s=>s.kind==="probe").length, firstProbe={};
+  list.filter(a=>a.type==="probe").forEach(a=>{const k=dayKey(a.endedAt); firstProbe[a.setId]=Math.min(firstProbe[a.setId]??Infinity,k)});
+  const probesLeft=d=>probeCount-Object.values(firstProbe).filter(x=>x<d).length>0;
+  const today=todayKey();
+  const noVocabToday=(()=>{try{const v=vocabToday();return !v.due.length&&!v.fresh.length}catch(e){return false}})();
+  const need=d=>{ const info=dayInfo(d,modes); if(info.level==="school") return {units:1,probe:false,info}; const L=LEVELS[info.level]; return {units:L.units,probe:L.probe&&probesLeft(d),info} };
+  const isMet=d=>{ const n=need(d); return (vocabDays.has(d)||(d===today&&noVocabToday))&&(units.get(d)||0)>=n.units&&(!n.probe||(probes.get(d)||0)>=1) };
+  const keys=[...byDay.keys(),...skipDays,...[...leaveDays].filter(d=>d<=today)];
+  let streak=0, best=0, freeze=0, goalDays=0; const frozen=new Set(), earned=[], questDone=new Set();
+  if(keys.length){
+    for(let d=Math.min(...keys); d<=today; d=nextDay(d)){
+      const xp=byDay.get(d)||0;
+      if(isMet(d)){ met.add(d); goalDays++; streak++; best=Math.max(best,streak);
+        if(goalDays%5===0&&freeze<FREEZE_MAX){freeze++;earned.push({d,why:"ทำภารกิจครบ 5 วัน"})}
+        if((units.get(d)||0)>need(d).units&&freeze<FREEZE_MAX){freeze++;earned.push({d,why:"ทำชุดฝึกเกินภารกิจของวันนั้น"})}
+      } else if(leaveDays.has(d)){
+        /* planned leave (camp, trip): the flame waits, no ice used */
+      } else if(d<today){
+        if(freeze>0&&streak>0){freeze--;frozen.add(d)} else streak=0;
+      }
+      const wk=weekStart(d);
+      if(!questDone.has(wk)&&met.has(d)&&questStatus(list,wk,d,met).all){ questDone.add(wk); if(freeze<FREEZE_MAX){freeze++;earned.push({d,why:"ภารกิจประจำสัปดาห์ครบ"})} }
+    }
+  }
+  const n=need(today), u=units.get(today)||0, pr=probes.get(today)||0;
+  return {streak,best,freeze,goalDays,frozen,skipDays,byDay,met,todayXp:byDay.get(today)||0,leaveDays,onLeave:leaveDays.has(today),
+    unitsToday:u,probesToday:pr,lessonToday:u-pr>=1||(u>=1&&!n.probe),vocabToday:vocabDays.has(today),noVocabToday,need:n,info:n.info,modes,
+    goalToday:met.has(today),earnedToday:earned.filter(e=>e.d===today),quests:questStatus(list,weekStart(today),today,met),questDoneThisWeek:questDone.has(weekStart(today))};
+}
+
+/* ---------- what to do today ---------- */
+function lastDone(list){ const last={}; list.filter(isLesson).forEach(a=>{if(a.setId) last[a.setId]=Math.max(last[a.setId]||0,dayKey(a.endedAt))}); return last }
+function pickLesson(list, preferCurrent, exclude){
+  const last=lastDone(list), t=todayKey(), ex=exclude||[];
+  const lessons=SETS.filter(s=>s.kind!=="probe"&&!ex.includes(s.id)); if(!lessons.length) return null;
+  const pool=lessons.filter(s=>last[s.id]!==t), use=pool.length?pool:lessons;
+  return use.slice().sort((a,b)=>(preferCurrent?(b.current?1:0)-(a.current?1:0):0)||(last[a.id]||0)-(last[b.id]||0))[0];
+}
+function pickProbe(list){ const done=new Set(list.filter(a=>a.type==="probe").map(a=>a.setId)); return SETS.find(s=>s.kind==="probe"&&!done.has(s.id))||null }
+function planToday(list, p){
+  const wd=new Date().getDay(), school=p.info.kind==="school";
+  const repair=school&&wd===5&&reviewPool(list).length>=4;
+  const doneToday=list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===todayKey()).map(a=>a.setId);
+  const lesson=repair?null:pickLesson(list, school);
+  const probe=school?null:pickProbe(list);
+  const extra=p.info.level==="full"?pickLesson(list,false,[...(lesson?[lesson.id]:[]),...doneToday]):null;
+  return {repair,lesson,probe,extra};
+}
+function recommend(list){ return pickLesson(list,true) }
+function reviewPool(list){
+  const wrong=new Map();
+  list.filter(isLesson).slice().sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt)).forEach(a=>(a.items||[]).forEach(x=>{
+    if(x.skipped||!QBANK[x.qid]) return;
+    if(x.correct===false) wrong.set(x.qid,+new Date(a.endedAt)); else if(x.correct) wrong.delete(x.qid);
+  }));
+  return [...wrong.entries()].sort((a,b)=>a[1]-b[1]).map(([qid])=>QBANK[qid].q);
+}
+function shuffleQ(q, perm){
+  if(q.num) return q;
+  let idx=perm&&perm.length===q.opts.length?perm:null;
+  if(!idx){ idx=q.opts.map((_,k)=>k); for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]]} }
+  return {...q,opts:idx.map(k=>q.opts[k]),a:idx.indexOf(q.a),perm:idx};
+}
+
+/* ---------- spell tiers ---------- */
+function spellStats(list){
+  const st={};
+  list.filter(isLesson).forEach(a=>{
+    const d=dayKey(a.endedAt);
+    (a.items||[]).forEach(x=>{
+      if(x.skipped) return; const sp=x.spell||QBANK[x.qid]?.q.spell; if(!sp||!x.level) return;
+      const o=st[sp]??={days:{},last:0}; const dd=o.days[d]??={1:[0,0],2:[0,0],3:[0,0]};
+      dd[x.level][0]++; if(x.correct) dd[x.level][1]++; o.last=Math.max(o.last,d);
+    });
+  });
+  const out={}, t=todayKey();
+  for(const [sp,o] of Object.entries(st)){
+    const days=Object.entries(o.days).map(([d,v])=>({d:+d,v}));
+    const n1=days.reduce((s,x)=>s+x.v[1][0],0), c1=days.reduce((s,x)=>s+x.v[1][1],0);
+    const t1=n1>=3&&c1/n1>=0.8;
+    const d2=days.filter(x=>x.v[2][0]>=2&&x.v[2][1]/x.v[2][0]>=0.7).length;
+    const t2=t1&&d2>=2;
+    const d3=days.filter(x=>x.v[3][0]>=1&&x.v[3][1]/x.v[3][0]>=0.6).map(x=>x.d).sort((a,b)=>a-b);
+    const t3=t2&&d3.length>=2&&d3[d3.length-1]-d3[0]>=7*DAY;
+    const tier=t3?3:t2?2:t1?1:0, idle=Math.round((t-o.last)/DAY);
+    out[sp]={tier,idle,faded:(tier===2&&idle>14)||(tier===3&&idle>21),n1,c1,d2,d3:d3.length};
+  }
+  return out;
+}
+const TIER=["ยังไม่ปลดล็อก","🌱 ฝึกหัด","✨ ชำนาญ","👑 ปรมาจารย์"];
+function nextStep(sp,info){
+  if(!info||info.tier===0) return "ตอบข้อพื้นฐานให้ถูก 80% (อย่างน้อย 3 ข้อ) เพื่อปลดล็อกขั้นฝึกหัด";
+  if(info.tier===1) return `ทำข้อประยุกต์ให้ถูก 70% ใน 2 วันที่ต่างกัน (ทำได้แล้ว ${info.d2} วัน)`;
+  if(info.tier===2) return "ทำข้อแนวข้อสอบโรงเรียนวิทยาศาสตร์ให้ถูก 60% ใน 2 วันที่ห่างกันอย่างน้อย 7 วัน";
+  return "ปรมาจารย์แล้ว แวะมาทบทวนบ้าง คาถาจะได้ไม่จาง";
+}
+
+/* ---------- lesson sessions ---------- */
+function startSet(set, conceptFirst, perms){
+  const warm = set.warm.map(q=>({kind:"q",phase:"อุ่นเครื่อง (ทบทวนของเก่า)",q}));
+  const card = {kind:"concept",phase:"การ์ดสรุปเนื้อหา"};
+  const probe=set.kind==="probe";
+  const steps = (probe?[
+    ...set.practice.map(q=>({kind:"q",phase:"ด่านสำรวจ",q})),
+    ...(set.concept&&set.concept.points&&set.concept.points.length?[{kind:"concept",phase:"สรุปหลังผ่านด่าน"}]:[]),
+    {kind:"rate",phase:"ปิดท้าย"}
+  ]:[
+    ...(conceptFirst?[card,...warm]:[...warm,card]),
+    ...set.practice.map(q=>({kind:"q",phase:"ฝึกทำ",q})),
+    ...(set.challenge?[{kind:"q",phase:"ข้อท้าทาย (ไม่บังคับ)",q:set.challenge,optional:true}]:[]),
+    {kind:"rate",phase:"ปิดท้าย"}
+  ]).map((st,k)=>st.q?{...st,q:shuffleQ(st.q,perms&&perms[k])}:st);   // the right answer is not always the first choice
+  S = {mode:"set", active:true, set, conceptFirst, steps, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, rating:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0};
+  PAD.strokes=[]; saveProgress();
+  view="session"; render(); window.scrollTo({top:0});
+}
+function startReview(n, title){
+  const qs=reviewPool(mine()).slice(0,n||5); if(!qs.length) return;
+  const t=title||"ทบทวนข้อที่เคยพลาด";
+  S = {mode:"review", set:{id:n>5?"repair":"review",subject:"ทบทวน",topic:t}, steps:[...qs.map(q=>({kind:"q",phase:t,q:shuffleQ(q)})),{kind:"finish",phase:"เสร็จ"}],
+       active:true, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0};
+  view="session"; render(); window.scrollTo({top:0});
+}
+
+function render(){
+  const tab = view==="parent"?"parent":view==="map"?"map":"home";
+  document.querySelectorAll(".tabs a").forEach(a=>a.setAttribute("aria-current", a.dataset.v===tab?"page":"false"));
+  if(view==="home") return renderHome();
+  if(view==="map") return renderMap();
+  if(view==="intro") return renderIntro();
+  if(view==="feedback") return renderFeedback();
+  if(view==="send") return renderSend(false);
+  if(view==="skip") return renderSkip();
+  if(view==="session") return renderStep();
+  if(view==="vocab") return renderVocab();
+  if(view==="done") return renderDone();
+  if(view==="parent") return renderParent();
+}
+
+function flameHtml(p){
+  const next=MILESTONES.find(m=>m>p.streak), got=MILESTONES.filter(m=>p.best>=m);
+  const total=p.need.units+(p.need.probe?0:0)+1, doneCount=missionsDone(p);
+  return `<div class="hero">
+    <div class="flamebox ${p.streak?"":"out"}"><span class="flamebig">🔥 ${p.streak}</span><span class="small">วันติดต่อกัน</span></div>
+    <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:150px">
+      <span class="small">สถิติสูงสุด <b>${p.best}</b> วัน · 🧊 น้ำแข็ง ${p.freeze}/${FREEZE_MAX}</span>
+      ${next?`<span class="small muted">อีก ${next-p.streak} วันถึง 🏅 ${next} วัน</span>`:""}
+      <div class="badges">${MILESTONES.slice(0,Math.max(got.length+2,4)).map(m=>`<span class="badge ${p.best>=m?"on":""}" title="${p.best>=m?"ได้แล้ว":"ยังไม่ถึง"}">🏅${m}</span>`).join("")}</div>
+    </div></div>
+    <div class="xpbar"><div class="stage"><span>ภารกิจวันนี้ ${doneCount.done}/${doneCount.total}</span><span>XP วันนี้ <b>${p.todayXp}</b></span></div>
+      <div class="progress"><i style="width:${doneCount.total?doneCount.done/doneCount.total*100:0}%"></i></div></div>`;
+}
+function missionList(p){
+  const lv=p.info.level, probeLeft=p.need.probe, u=p.unitsToday, nonProbe=u-p.probesToday;
+  const m=[{key:"lesson",done:nonProbe>=1||(!probeLeft&&u>=1)},{key:"vocab",done:p.vocabToday||p.noVocabToday}];
+  if(lv==="full"||lv==="mid") m.push({key:"probe",done:probeLeft?p.probesToday>=1:u>=2});
+  if(lv==="full") m.push({key:"extra",done:u>=3});
+  return m;
+}
+function missionsDone(p){ const m=missionList(p); return {done:m.filter(x=>x.done).length,total:m.length} }
+
+let dmOpen=null, dmLevel=null, dmReason=null;
+function dayPanel(p){
+  const i=p.info, L=LEVELS[i.level];
+  const head=i.kind==="school"?`<b>วันนี้: ${esc(i.name)}</b> · ภารกิจ 2 อย่าง ราว 40 นาที`
+    :`<b>วันนี้: วันหยุด (${esc(i.name)})</b> · ระดับ${L.label} ${L.mins}${i.lowered?` · ลดระดับเพราะ${esc(i.reason)}`:""}`;
+  let body="";
+  if(dmOpen==="lower"){
+    body=`<div class="why">${["mid","light"].map(l=>`<button data-lv="${l}" aria-pressed="${dmLevel===l}">ระดับ${LEVELS[l].label} · ${LEVELS[l].mins}</button>`).join("")}${i.lowered?`<button data-lv="full" aria-pressed="${dmLevel==="full"}">กลับเป็นระดับเต็ม</button>`:""}</div>
+      ${dmLevel&&dmLevel!=="full"?`<p class="small muted">เพราะอะไร</p><div class="why">${LOWER_REASONS.map(r=>`<button data-rs="${r}" aria-pressed="${dmReason===r}">${r}</button>`).join("")}</div>`:""}
+      <div class="row"><button class="btn" id="dm-save" ${dmLevel&&(dmLevel==="full"||dmReason)?"":"disabled"}>บันทึก</button><button class="btn ghost" id="dm-cancel">ยกเลิก</button></div>`;
+  } else if(dmOpen==="kind"){
+    body=`<p class="small">${i.kind==="school"?"วันนี้โรงเรียนหยุด (เช่น หยุดพิเศษ หยุดกลางภาค) ใช่ไหม ภารกิจจะเป็นแบบวันหยุด":"วันนี้ต้องไปโรงเรียน (เช่น เรียนชดเชย) ใช่ไหม ภารกิจจะเหลือ 2 อย่าง"} พ่อจะเห็นว่าเปลี่ยนไว้</p>
+      <div class="row"><button class="btn" id="dm-kind">${i.kind==="school"?"ใช่ วันนี้หยุดเรียน":"ใช่ วันนี้ไปโรงเรียน"}</button><button class="btn ghost" id="dm-cancel">ยกเลิก</button></div>`;
+  } else {
+    body=`<div class="row" style="gap:6px">${i.kind==="holiday"?`<button class="btn ghost small" id="dm-lower">${i.lowered?"เปลี่ยนระดับ":"วันนี้มีธุระ ขอลดระดับ"}</button>`:""}
+      <button class="btn ghost small" id="dm-switch">${i.kind==="school"?"วันนี้โรงเรียนหยุด":"วันนี้ต้องไปโรงเรียน"}</button></div>`;
+  }
+  return `<div class="daypanel"><p class="small">${head}</p>${p.goalToday?"":body}</div>`;
+}
+function bindDayPanel(p){
+  const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
+  on("dm-lower",()=>{dmOpen="lower";dmLevel=null;dmReason=null;renderHome()});
+  on("dm-switch",()=>{dmOpen="kind";renderHome()});
+  on("dm-cancel",()=>{dmOpen=null;renderHome()});
+  $v.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{dmLevel=b.dataset.lv;renderHome()});
+  $v.querySelectorAll("[data-rs]").forEach(b=>b.onclick=()=>{dmReason=b.dataset.rs;renderHome()});
+  const save=async rec=>{ const now=new Date().toISOString(); await saveAttempt({type:"daymode",setId:"daymode",topic:"ประเภทวัน",day:isoDay(todayKey()),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[],...rec}); dmOpen=null; renderHome() };
+  on("dm-save",()=>save({kind:"holiday",level:dmLevel,reason:dmLevel==="full"?"":dmReason}));
+  on("dm-kind",()=>save(p.info.kind==="school"?{kind:"holiday",level:"full",reason:"โรงเรียนหยุด"}:{kind:"school",reason:"ต้องไปโรงเรียน"}));
+}
+
+function renderHome(){
+  const list=mine(), p=progressOf(list), today=todayKey(), plan=planToday(list,p);
+  const days=["จ","อ","พ","พฤ","ศ","ส","อา"];
+  const mon=new Date(weekStart(today));
+  const dots=days.map((d,k)=>{const t=new Date(mon);t.setDate(mon.getDate()+k);const tk=t.getTime();
+    const on=p.met.has(tk), ice=p.frozen.has(tk), lv=!on&&p.leaveDays.has(tk), sk=!on&&!lv&&p.skipDays.has(tk), hol=dayInfo(tk,p.modes).kind==="holiday";
+    return `<div class="day"><span class="dot ${on?"on":ice?"ice":lv?"leave":""} ${sk&&!ice?"rest":""} ${hol&&!on&&!ice&&!lv?"hol":""}" title="${on?"ภารกิจครบ":ice?"ใช้น้ำแข็งกันไฟดับ":lv?"ลาไว้":sk?"ขอพัก":hol?"วันหยุด":"วันเรียน"}">${lv?"🏕":""}</span>${tk===today?"<b>วันนี้</b>":d}</div>`}).join("");
+  const pool=reviewPool(list), vt=vocabToday(), skippedToday=p.skipDays.has(today);
+  const ms=missionList(p), md=Object.fromEntries(ms.map(x=>[x.key,x.done]));
+  const setCard=(s,k)=>`<button class="set" data-k="${k}">
+        <span class="row" style="gap:6px"><span class="chip">${s.subject} · ${s.grade}</span>${s.current?`<span class="chip l2">เรียนอยู่ตอนนี้</span>`:""}</span>
+        <span class="subj">${esc(s.topic)}</span>
+        <span class="meta">${s.kind==="probe"?"ด่านสำรวจ ":""}ฝึก ${s.practice.length} ข้อ · ${s.mins}</span></button>`;
+  const mission=(n,key,label,title,btn,extraHtml)=>`<div class="mission ${md[key]?"done":""}"><span class="mcheck">${md[key]?"✅":n}</span>
+      <div style="display:flex;flex-direction:column;gap:6px;flex:1"><span class="small muted">${label}</span>${title}${btn}${extraHtml||""}</div></div>`;
+  const doneToday=list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===today).sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt));
+  const doneNP=doneToday.filter(a=>a.type!=="probe"), doneProbe=doneToday.find(a=>a.type==="probe");
+  const doneTitle=a=>`<h2>${esc(a.topic)}</h2><p class="small muted">ทำแล้ว ✓</p>`;
+  const lessonTitle=md.lesson&&doneNP[0]?doneTitle(doneNP[0]):plan.repair?`<h2>ชุดซ่อมจุดอ่อน</h2><p class="small muted">8 ข้อจากที่เคยพลาด ตัวเลือกสลับที่ใหม่</p>`
+    :plan.lesson?`<span class="row" style="gap:6px"><span class="chip">${plan.lesson.subject} · ${plan.lesson.grade}</span>${plan.lesson.current?`<span class="chip l2">เรียนอยู่ตอนนี้</span>`:""}</span><h2>${esc(plan.lesson.topic)}</h2>`:"";
+  const quests=p.quests;
+  $v.innerHTML = `
+  ${TEST?`<section class="card" style="border-color:var(--beak)"><b style="color:var(--beak)">โหมดทดสอบ</b>
+    <p class="small">ผลจากเครื่องนี้จะติดป้าย "ทดสอบ" และไม่ถูกนับในการวิเคราะห์ ลองกดทุกอย่างได้ตามสบาย</p>
+    <button class="btn ghost" id="leave-test">ออกจากโหมดทดสอบ และล้างผลทดสอบในเครื่องนี้</button></section>`:""}
+  <section class="card">
+    ${flameHtml(p)}
+    <div class="week">${dots}</div>
+    <p class="small muted">${p.goalToday?"วันนี้ภารกิจครบแล้ว ไฟยังลุกอยู่ 🔥":"ทำภารกิจวันนี้ให้ครบ ไฟถึงจะติด"} · ทำครบทุก 5 วัน ทำชุดฝึกเกินภารกิจของวัน หรือทำภารกิจประจำสัปดาห์ครบ ได้น้ำแข็ง 1 ก้อน (เก็บได้สูงสุด ${FREEZE_MAX}) วันที่ไม่ได้ทำ น้ำแข็งจะละลายแทนไฟ</p>
+    ${p.onLeave&&!p.goalToday?`<p class="small">🏕 ช่วงนี้ลาไว้ ไฟหยุดรออยู่ กลับมาเมื่อไรก็ทำต่อได้เลย (ทำระหว่างลาก็นับนะ)</p>`
+      :p.goalToday||skippedToday?(skippedToday&&!p.goalToday?`<p class="small muted">วันนี้บอกพักไว้แล้ว พรุ่งนี้มาต่อนะ</p>`:""):`<button class="btn ghost" id="skip-open">ขอพัก (วันเดียว หรือ ไปค่ายหลายวัน)</button>`}
+  </section>
+  ${V&&V.active&&view!=="vocab"?`<section class="card" style="border:2px solid var(--beak)"><b>คำศัพท์วันนี้ทำค้างไว้</b><div class="row"><button class="btn" id="resume-v">ทำต่อ</button></div></section>`:""}
+  ${(()=>{const pd=pendingSet(); return pd?`<section class="card" style="border:2px solid var(--beak)"><b>ทำชุด "${esc(pd.set.topic)}" ค้างไว้</b>
+    <p class="small muted">ทำต่อจากข้อที่ค้างได้เลย ข้อที่ตอบไปแล้วยังอยู่ครบ</p>
+    <div class="row"><button class="btn" id="resume">ทำต่อ</button><button class="btn ghost" id="discard">เริ่มชุดใหม่แทน</button></div></section>`:""})()}
+  <section class="card pick">
+    <span class="eyebrow">ภารกิจวันนี้ · ทำให้ครบ ${ms.length} อย่าง</span>
+    ${dayPanel(p)}
+    ${mission(1,"lesson",plan.repair?"ชุดซ่อมจุดอ่อน (วันศุกร์) · ราว 20 นาที":"ชุดฝึก"+(md.lesson?" · ทำแล้ว":" · ราว 30 นาที"),lessonTitle,
+      `<div class="row"><button class="btn ${md.lesson?"ghost":""}" id="go-rec">${plan.repair?"เริ่มซ่อม":"เริ่มชุดนี้"}</button><button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"อยากทำเรื่องอื่น"}</button></div>`,
+      showAll?`<div class="sets">${SETS.map((s,k)=>s===plan.lesson?"":setCard(s,k)).join("")}</div>`:"")}
+    ${mission(2,"vocab","คำศัพท์อังกฤษ · ราว 10 นาที",`<h2>คำศัพท์วันนี้</h2><p class="small muted">${md.vocab?"ทำแล้ว เก่งมาก":vt.fresh.length||vt.due.length?`คำใหม่ ${vt.fresh.length} คำ · ทบทวน ${vt.due.length} คำ · ฟังเสียง ฝึกสะกด${isWeekend()?" · อ่านภาษาอังกฤษสั้นๆ":""}`:"วันนี้ไม่มีคำค้าง ข้ามได้"}</p>`,
+      !p.vocabToday&&(vt.fresh.length||vt.due.length)?`<button class="btn" id="vocab-go">เริ่มคำศัพท์</button>`:"")}
+    ${ms.some(x=>x.key==="probe")?mission(3,"probe",plan.probe?"ด่านสำรวจ · เช็กเรื่องที่เรียนมาแล้ว ราว 20 นาที":"ชุดฝึกเพิ่ม (ด่านสำรวจครบแล้ว)",
+      md.probe&&doneProbe?doneTitle(doneProbe):plan.probe?`<h2>${esc(plan.probe.topic)}</h2><p class="small muted">${plan.probe.practice.length} ข้อ ไม่มีการ์ดก่อนทำ ทำได้ดีคาถาขึ้นขั้นทันที</p>`:`<p class="small muted">ทำชุดไหนก็ได้อีก 1 ชุด</p>`,
+      `<button class="btn ${md.probe?"ghost":""}" id="${plan.probe?"go-probe":"go-extra2"}">${plan.probe?"เข้าด่าน":"เลือกชุด"}</button>`):""}
+    ${ms.some(x=>x.key==="extra")?mission(4,"extra","ชุดเพิ่มวันหยุด · ราว 25 นาที (พักก่อนค่อยทำก็ได้)",
+      md.extra&&doneNP[1]?doneTitle(doneNP[1]):plan.extra?`<h2>${esc(plan.extra.topic)}</h2>`:"",`<button class="btn ${md.extra?"ghost":""}" id="go-extra">เริ่มชุดนี้</button>`):""}
+  </section>
+  <section class="card"><h3>ภารกิจประจำสัปดาห์ ${p.questDoneThisWeek?"✅ ครบแล้ว ได้น้ำแข็ง 🧊":""}</h3>
+    ${quests.q.map(q=>`<div class="quest"><span>${q.have>=q.need?"✅":"⬜"} ${q.label}</span><span class="small muted">${Math.min(q.have,q.need)}/${q.need}</span></div>`).join("")}
+    <p class="small muted">ครบทั้ง 3 ข้อได้น้ำแข็ง 1 ก้อน เริ่มใหม่ทุกวันจันทร์</p></section>
+  <span class="eyebrow">เก็บ XP เพิ่ม (ไม่บังคับ)</span>
+  <section class="sets">
+    <div class="card"><h3>ทบทวนข้อที่เคยพลาด</h3>
+      <p class="small muted">${pool.length?`มีค้างอยู่ ${pool.length} ข้อ ครั้งนี้ทำ ${Math.min(5,pool.length)} ข้อ ตัวเลือกจะสลับที่ใหม่`:"ยังไม่มีข้อค้าง"}</p>
+      ${pool.length?`<button class="btn ghost" id="review-go">ทบทวน</button>`:""}</div>
+  </section>
+  ${store!=="db"&&(unsent().a.length||unsent().f.length)?`<section class="card"><h3>มีผลที่ยังไม่ได้ส่งให้พ่อ ${unsent().a.length} ครั้ง</h3>
+    <p class="small muted">เครื่องนี้ยังไม่ได้เชื่อมบัญชี ผลจึงเก็บไว้ในเครื่อง ส่งให้พ่อผ่าน LINE ได้ในไม่กี่วินาที</p>
+    <button class="btn" id="send-open">ส่งผลให้พ่อ</button></section>`:""}
+  ${store!=="db"?`<details class="small muted"><summary>ตั้งค่าเครื่องนี้</summary>
+    <p style="margin:8px 0">ลบเฉพาะผลที่<b>ยังไม่ได้ส่งให้พ่อ</b> (${unsent().a.length} ครั้ง) เช่น ตอนผู้ใหญ่ลองเล่น ผลที่ส่งแล้ว สตรีคจากวันเหล่านั้น และคำศัพท์ที่เรียนไว้ยังอยู่ครบ</p>
+    <button class="btn ghost" id="wipe" ${unsent().a.length||unsent().f.length?"":"disabled"}>ลบผลที่ยังไม่ได้ส่ง</button> <span id="wipemsg"></span></details>`:""}`;
+  bindDayPanel(p);
+  const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
+  on("go-rec",()=>{ if(plan.repair) return startReview(8,"ชุดซ่อมจุดอ่อน"); if(plan.lesson){introSet=plan.lesson;view="intro";render()} });
+  on("go-probe",()=>{introSet=plan.probe;view="intro";render()});
+  on("go-extra",()=>{ if(plan.extra){introSet=plan.extra;view="intro";render()} });
+  on("go-extra2",()=>{showAll=true;renderHome();window.scrollTo({top:0})});
+  on("other",()=>{showAll=!showAll;renderHome()});
+  $v.querySelectorAll(".set").forEach(b=>b.onclick=()=>{introSet=SETS[+b.dataset.k];view="intro";render()});
+  on("send-open",()=>{view="send";render()});
+  on("leave-test",leaveTest);
+  on("skip-open",()=>{view="skip";render()});
+  on("resume",resumeSet);
+  on("resume-v",()=>{view="vocab";render()});
+  on("discard",e=>{const b=e.target; if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="กดอีกครั้ง ข้อที่ทำไว้จะหาย";return} clearProgress(); if(S&&S.mode==="set") S.active=false; renderHome()});
+  on("vocab-go",startVocab);
+  on("review-go",()=>startReview());
+  on("wipe",e=>{const b=e.target; if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="กดอีกครั้งเพื่อยืนยัน ลบแล้วกู้คืนไม่ได้";return}
+    try{
+      lsWrite(lsRead().filter(x=>x.sent));
+      localStorage.setItem("fieldnote.fb",JSON.stringify(lsFb().filter(x=>x.sent)));
+      localStorage.removeItem("fieldnote.inprogress");
+      rebuildVocabState(lsRead());
+    }catch(err){}
+    if(S) S.active=false; if(V) V.active=false;
+    attempts=lsRead(); showAll=false; view="home"; render(); window.scrollTo({top:0}) });
+}
+
+let skipPick=null, skipMode="one", leaveDaysN=3;
+const LEAVE_REASONS=["ไปค่าย","ทัศนศึกษา","ไปต่างจังหวัด/ต่างประเทศ","สอบ/งานโรงเรียนช่วงยาว","ไม่สบายหลายวัน","อื่นๆ"];
+function renderSkip(){
+  const p=progressOf(mine());
+  const reasons=skipMode==="one"?SKIP_REASONS:LEAVE_REASONS;
+  const until=new Date(); until.setDate(until.getDate()+leaveDaysN-1);
+  $v.innerHTML=`<section class="card"><h2>ขอพัก</h2>
+    <div class="why" role="tablist"><button data-mode="one" aria-pressed="${skipMode==="one"}">วันนี้วันเดียว</button><button data-mode="leave" aria-pressed="${skipMode==="leave"}">ไม่อยู่หลายวัน (ค่าย ทัศนศึกษา)</button></div>
+    ${skipMode==="one"?`<p class="small">${p.streak?(p.freeze?`มีน้ำแข็ง 🧊 ${p.freeze} ก้อน พรุ่งนี้จะใช้ 1 ก้อนกันไฟ ${p.streak} วันไม่ให้ดับ`:`ตอนนี้ไม่มีน้ำแข็ง ไฟ ${p.streak} วันจะดับ แต่ไม่เป็นไร เริ่มใหม่ได้เสมอ`):"ไม่เป็นไร พรุ่งนี้เริ่มจุดไฟใหม่กัน"}</p>`
+    :`<p class="small">ช่วงที่ลาไว้ ไฟ ${p.streak} วันจะ<b>หยุดรอ</b> ไม่ดับและไม่ใช้น้ำแข็ง กลับมาแล้วทำต่อได้เลย ลาได้ครั้งละไม่เกิน 14 วัน พ่อจะเห็นในหน้าผู้ปกครอง</p>
+      <label class="small" for="ldays">กี่วัน (นับวันนี้ด้วย)</label>
+      <div class="row"><button class="btn ghost" id="lminus" ${leaveDaysN<=2?"disabled":""}>−</button><b id="ldays" style="font-family:var(--mono);font-size:1.3rem">${leaveDaysN}</b><button class="btn ghost" id="lplus" ${leaveDaysN>=14?"disabled":""}>+</button>
+      <span class="small muted">ถึง ${until.toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})}</span></div>`}
+    <p class="small muted">เพราะอะไร</p>
+    <div class="why">${reasons.map(x=>`<button data-sr="${x}" aria-pressed="${skipPick===x}">${x}</button>`).join("")}</div>
+    <label class="small muted" for="skipnote">อยากเล่าเพิ่มไหม (ไม่บังคับ)</label>
+    <input id="skipnote" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)" placeholder="${skipMode==="one"?"เช่น มีงานกลุ่มส่งพรุ่งนี้":"เช่น ค่ายลูกเสือที่กาญจนบุรี ห้ามใช้มือถือ"}">
+    <div class="row"><button class="btn" id="skipsave" ${skipPick?"":"disabled"}>บันทึก</button><button class="btn ghost" id="skipback">กลับ</button></div></section>`;
+  const keep=f=>()=>{const n=document.getElementById("skipnote").value; f(); renderSkip(); document.getElementById("skipnote").value=n};
+  $v.querySelectorAll("[data-mode]").forEach(b=>b.onclick=keep(()=>{skipMode=b.dataset.mode;skipPick=null}));
+  $v.querySelectorAll("[data-sr]").forEach(b=>b.onclick=keep(()=>{skipPick=b.dataset.sr}));
+  const lm=document.getElementById("lminus"); if(lm) lm.onclick=keep(()=>{leaveDaysN=Math.max(2,leaveDaysN-1)});
+  const lp=document.getElementById("lplus"); if(lp) lp.onclick=keep(()=>{leaveDaysN=Math.min(14,leaveDaysN+1)});
+  document.getElementById("skipback").onclick=()=>{view="home";render()};
+  document.getElementById("skipsave").onclick=async e=>{e.target.disabled=true;
+    const now=new Date().toISOString(), from=todayKey(); let to=from; for(let i=1;i<leaveDaysN;i++) to=nextDay(to);
+    const base={type:"skip",reason:skipPick,memo:document.getElementById("skipnote").value.trim(),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]};
+    await saveAttempt(skipMode==="one"?{...base,setId:"skip",topic:"ขอพัก"}:{...base,setId:"leave",topic:"ลาหลายวัน",leave:true,days:leaveDaysN,from,to});
+    skipPick=null; skipMode="one"; view="home"; render();};
+}
+
+let introSet=null;
+function renderIntro(){
+  const s=introSet, sp=SPELLS.find(x=>x.id===s.spell), info=spellStats(mine())[s.spell];
+  $v.innerHTML=`<section class="card"><span class="eyebrow">${s.subject} · ${s.grade}${sp?` · ${esc(sp.name)}`:""}</span><h2>${esc(s.topic)}</h2>
+    ${sp?`<p class="small muted">ขั้นตอนนี้: ${TIER[info?.tier||0]} · ${nextStep(sp,info)}</p>`:""}
+    ${s.kind==="probe"?`<p><b>ด่านสำรวจ</b> เช็กว่าเรื่องนี้ที่เคยเรียนมา ยังแน่นอยู่ไหม</p>
+    <ul style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px">
+      <li>${s.practice.length} ข้อ ไล่จากง่ายไปยาก ไม่มีการ์ดสรุปก่อน เพราะอยากรู้ว่าตอนนี้จำได้แค่ไหน</li>
+      <li>คิดไม่ออกกด "ยังคิดไม่ออก" ได้เลย ไม่ต้องเดา ผลจะช่วยให้รู้ว่าต้องซ่อมตรงไหน</li>
+      <li>ทำได้ดี คาถานี้ขึ้นขั้นทันที ทำพลาดเยอะ เรื่องนี้จะถูกใส่ในชุดซ่อมวันศุกร์</li></ul>
+    <div class="row"><button class="btn" id="go">เข้าด่าน</button></div>`:`<p>วันนี้มีอะไรบ้าง</p>
+    <ol style="margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px">
+      <li><b>อุ่นเครื่อง ${s.warm.length} ข้อ</b> <span class="muted small">เรื่องเก่าที่เคยเรียน ให้สมองดึงความจำออกมาก่อน ผิดได้ไม่เป็นไร</span></li>
+      <li><b>การ์ดสรุปเนื้อหา</b> <span class="muted small">อ่านสั้นๆ ราว 3 นาที</span></li>
+      <li><b>ฝึกทำ ${s.practice.length} ข้อ</b> <span class="muted small">ไล่จากง่ายไปยาก มีเฉลยทุกข้อ มีข้อภาษาอังกฤษแทรก 1 ข้อ</span></li>
+      ${s.challenge?`<li><b>ข้อท้าทาย 1 ข้อ</b> <span class="muted small">จะข้ามก็ได้</span></li>`:""}
+    </ol>
+    <p class="small muted">ข้อถูกได้ 10 XP ข้อผิดก็ได้ 5 XP เพราะได้ลองแล้ว ทำจบชุดได้โบนัส 20 XP · อย่าลืมภารกิจที่ 2 คำศัพท์วันนี้</p>
+    <div class="row"><button class="btn" id="go">เริ่มเลย</button><button class="btn ghost" id="go-card">ขออ่านสรุปก่อน</button></div>
+    <p class="note">ถ้าเป็นเรื่องที่ยังไม่ได้เรียน หรือช่วงที่ขาดเรียน กด "ขออ่านสรุปก่อน" ได้เลย</p>`}
+    <button class="btn ghost" id="back" style="border:0;padding-left:0">← กลับ</button></section>`;
+  document.getElementById("go").onclick=()=>startSet(s,false);
+  const gc=document.getElementById("go-card"); if(gc) gc.onclick=()=>startSet(s,true);
+  document.getElementById("back").onclick=()=>{view="home";render()};
+}
+async function saveFeedback(text){
+  const rec={text,at:new Date().toISOString(),after:S?.set?.id||null}; if(TEST) rec.test=true;
+  if(db){ try{ await db.collection("feedback").add(rec); return "db" }catch(e){} }
+  try{ const a=JSON.parse(localStorage.getItem("fieldnote.fb")||"[]"); a.unshift(rec); localStorage.setItem("fieldnote.fb",JSON.stringify(a)) }catch(e){}
+  return "local";
+}
+function renderFeedback(){
+  $v.innerHTML=`<section class="card"><h2>เขียนถึง Claude</h2>
+    <p class="small muted">ไม่มีถูกผิด ตัวอย่าง: "ข้อเอลฟ์ขำดี อยากได้แบบนี้อีก" "การ์ดสรุปยาวไป" "อยากตั้งชื่อสมุดว่า…"</p>
+    <textarea id="fbtext" rows="5" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);resize:vertical"></textarea>
+    <div class="row"><button class="btn" id="fbsend">ส่ง</button><button class="btn ghost" id="fbback">กลับ</button></div>
+    <p class="small" id="fbmsg" aria-live="polite"></p></section>`;
+  document.getElementById("fbback").onclick=()=>{view="home";render()};
+  document.getElementById("fbsend").onclick=async e=>{const t=document.getElementById("fbtext").value.trim();if(!t)return;
+    e.target.disabled=true;const w=await saveFeedback(t);
+    document.getElementById("fbmsg").textContent=w==="db"?"ส่งแล้ว ขอบคุณนะ Claude จะอ่านตอนปรับรุ่นถัดไป":"บันทึกไว้ในเครื่องนี้แล้ว (บอกพ่อให้ช่วยส่งต่อด้วยนะ)";
+    document.getElementById("fbtext").value="";e.target.disabled=false;};
+}
+const YAY=["ถูกต้อง +10 XP","ถูกต้อง เก่งมาก +10 XP","เป๊ะ! +10 XP","ถูก เวทนี้ใช้ได้ +10 XP","ใช่เลย +10 XP"];
+const OOPS=["ยังไม่ใช่ แต่ได้ลองแล้ว +5 XP","เกือบแล้ว +5 XP","ยังไม่ถูก ลองดูเฉลยกัน +5 XP","พลาดนิดเดียว +5 XP"];
+function header(){
+  const pct = Math.round(S.i/(S.steps.length-1)*100);
+  const combo=(()=>{let c=0; for(let k=S.items.length-1;k>=0;k--){ if(S.items[k].correct) c++; else if(!S.items[k].skipped) break } return c})();
+  return `<div class="stage"><span>${esc(S.set.topic)}</span><span>${S.steps[S.i].phase} · ${itemXp(S.items)} XP${combo>=3?` · <b class="combo">ถูกติดกัน ${combo} ข้อ ✨</b>`:""}</span></div>
+  <div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div>`;
+}
+
+/* ---------- glossary: tap a dotted word in a card or question to see what it means ---------- */
+const GLOSS={
+ "จำนวนคู่":"จำนวนที่หารด้วย 2 ลงตัว เช่น 2, 4, 6, 8 · ในเรื่องมัธยฐาน \"ข้อมูลมีจำนวนคู่\" แปลว่านับข้อมูลได้ 2, 4, 6, … ตัว เช่น คะแนน 6 คน พอเรียงแล้วตรงกลางจะมี 2 ตัว (ตัวที่ 3 กับตัวที่ 4) จึงต้องเอาสองตัวนั้นมาเฉลี่ยกัน",
+ "จำนวนคี่":"จำนวนที่หารด้วย 2 ไม่ลงตัว เช่น 1, 3, 5, 7 · ถ้าข้อมูลมีจำนวนคี่ เช่น 7 ตัว ตรงกลางจะมีตัวเดียวพอดี คือตัวที่ 4",
+ "เรียงข้อมูล":"เอาตัวเลขทั้งหมดมาเรียงจากน้อยไปมาก เช่น 5, 2, 9 เรียงได้ 2, 5, 9",
+ "ตัวกลาง":"ตัวที่อยู่ตรงกลางพอดีหลังเรียงข้อมูลแล้ว มีจำนวนตัวทางซ้ายเท่ากับทางขวา",
+ "ค่าผิดปกติ":"ค่าที่สูงหรือต่ำกว่าตัวอื่นมากๆ เช่น 3, 4, 5, 100 ตัว 100 คือค่าผิดปกติ",
+ "ข้อมูล":"ตัวเลขหรือข้อเท็จจริงที่เก็บมา เช่น คะแนนสอบของเพื่อนแต่ละคน",
+ "ผลรวม":"เอาทุกตัวมาบวกกัน",
+ "อัตราส่วนอย่างต่ำ":"อัตราส่วนที่หารทั้งสองข้างต่อไม่ได้แล้ว เช่น 24 : 16 หารด้วย 8 ได้ 3 : 2 ซึ่งเป็นอย่างต่ำ",
+ "อัตราส่วน":"การเทียบปริมาณสองอย่าง เช่น แมว 2 ตัว ต่อ หมา 3 ตัว เขียนว่า 2 : 3",
+ "ร้อยละ":"ส่วนในทุก 100 · ร้อยละ 25 แปลว่า ทุก 100 เอามา 25",
+ "สัดส่วน":"อัตราส่วนสองชุดที่เท่ากัน เช่น 1 : 2 = 3 : 6",
+ "ตัวทำละลาย":"สารที่ทำหน้าที่ละลายของอื่น มักเป็นสารที่มีมากที่สุดและมีสถานะเดียวกับสารละลาย เช่น น้ำในน้ำเชื่อม",
+ "ตัวละลาย":"สารที่ถูกละลายหายเข้าไป เช่น น้ำตาลในน้ำเชื่อม",
+ "เนื้อเดียว":"มองแล้วเหมือนกันทุกส่วน แยกด้วยตาไม่ออก",
+ "สถานะ":"รูปแบบของสาร คือ ของแข็ง ของเหลว หรือแก๊ส",
+ "สภาพละลายได้":"ปริมาณมากที่สุดที่สารละลายในน้ำได้ ที่อุณหภูมินั้น",
+ "ความเข้มข้น":"บอกว่าในสารละลายมีตัวละลายอยู่มากหรือน้อย",
+ "สารละลายอิ่มตัว":"สารละลายที่ละลายตัวละลายไว้มากที่สุดแล้วที่อุณหภูมินั้น ใส่เพิ่มจะไม่ละลาย เหลือก้นแก้ว",
+ "ตกผลึก":"ตัวละลายส่วนที่เกินแยกออกมาเป็นเม็ดของแข็งรูปร่างชัดเจน มักเกิดตอนสารละลายเย็นลง",
+ "ผลึก":"ของแข็งที่อนุภาคเรียงตัวเป็นระเบียบ เห็นเป็นเม็ดมีเหลี่ยม เช่น เม็ดน้ำตาลทราย เกลือ",
+ "ตำแหน่ง":"ลำดับที่ของข้อมูลหลังเรียงแล้ว เช่น ตัวที่ 1 ตัวที่ 2",
+ "cm³":"ลูกบาศก์เซนติเมตร หน่วยปริมาตร 1 cm³ เท่ากับ 1 มิลลิลิตร",
+ "% w/v":"ร้อยละโดยมวลต่อปริมาตร คือ มีตัวละลายกี่กรัม ในสารละลายทุก 100 cm³"
+};
+const GLOSS_KEYS=Object.keys(GLOSS).sort((a,b)=>b.length-a.length);
+function gloss(raw){
+  let t=esc(raw); const marks=[];
+  GLOSS_KEYS.forEach(k=>{ const ek=esc(k), i=t.indexOf(ek); if(i<0) return;
+    marks.push(k); t=t.slice(0,i)+"\u0001"+(marks.length-1)+"\u0002"+t.slice(i+ek.length) });
+  return t.replace(/\u0001(\d+)\u0002/g,(_,n)=>`<button class="term" type="button" data-t="${esc(marks[+n])}">${esc(marks[+n])}</button>`);
+}
+function bindGloss(){
+  $v.querySelectorAll(".term").forEach(b=>b.onclick=()=>{
+    const box=document.getElementById("gloss-box"); if(!box) return;
+    const k=b.dataset.t; box.hidden=false; box.innerHTML=`<b>${esc(k)}</b> <span class="small">${esc(GLOSS[k]||"")}</span> <button class="btn ghost" id="gloss-x" style="border:0;padding:0 4px">ปิด</button>`;
+    document.getElementById("gloss-x").onclick=()=>{box.hidden=true};
+    if(S&&!S.glossed.includes(k)) S.glossed.push(k);
+  });
+}
+
+/* ---------- ask about the exact thing that is confusing; goes to dad (and Claude) with the results ---------- */
+function askHtml(where){
+  const done=S.confused.find(c=>c.where===where&&c.ask&&c.key===askKey(where));
+  return `<details class="ask"${S.askOpen===askKey(where)?" open":""}><summary>✍️ พิมพ์ถามตรงจุดที่งง</summary>
+    ${done?`<p class="small">ส่งคำถามแล้ว: “${esc(done.ask)}” พ่อกับ Claude จะช่วยตอบ</p>`:""}
+    <textarea id="ask-text" rows="2" placeholder="เช่น จำนวนคู่ คืออะไร / ทำไมต้องหาร 5" style="font:inherit;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);width:100%;box-sizing:border-box"></textarea>
+    <button class="btn ghost" id="ask-send">ส่งคำถาม</button>
+    <p class="small muted">คำว่าที่มีเส้นประใต้ กดดูความหมายได้ทันทีนะ</p></details>`;
+}
+function askKey(where){ const st=S.steps[S.i]; return where==="concept"?"concept":(st.q?.id||"q") }
+function bindAsk(where, extra){
+  const d=$v.querySelector("details.ask"); if(d) d.ontoggle=()=>{S.askOpen=d.open?askKey(where):null};
+  const b=document.getElementById("ask-send"); if(!b) return;
+  b.onclick=()=>{ const t=document.getElementById("ask-text").value.trim(); if(!t) return;
+    S.confused.push({where,key:askKey(where),topic:extra.topic,qid:extra.qid,prompt:extra.prompt,ask:t}); saveProgress(); S.askOpen=askKey(where); renderStep() };
+}
+
+/* ---------- scratch paper for the pencil ---------- */
+const PAD={open:false,strokes:[],tool:"pen",penSeen:false};
+function padHtml(){
+  return `<button class="padfab" id="pad-toggle" type="button">${PAD.open?"✕ ปิดกระดาษทด":"✏️ กระดาษทด"}</button>
+  <div class="pad" id="pad" ${PAD.open?"":"hidden"}>
+    <div class="padbar"><button type="button" data-tool="pen" aria-pressed="${PAD.tool==="pen"}">✏️ ปากกา</button><button type="button" data-tool="eraser" aria-pressed="${PAD.tool==="eraser"}">🧽 ยางลบ</button>
+      <button type="button" id="pad-undo">↶ ย้อน</button><button type="button" id="pad-clear">🗑 ล้าง</button></div>
+    <canvas id="pad-canvas"></canvas></div>`;
+}
+function padSetup(){
+  const tg=document.getElementById("pad-toggle"); if(!tg) return;
+  tg.onclick=()=>{PAD.open=!PAD.open; document.body.classList.toggle("padopen",PAD.open); const p=document.getElementById("pad"); p.hidden=!PAD.open; tg.textContent=PAD.open?"✕ ปิดกระดาษทด":"✏️ กระดาษทด"; if(PAD.open) padDraw(true)};
+  document.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>{PAD.tool=b.dataset.tool;document.querySelectorAll("[data-tool]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.tool===PAD.tool))});
+  document.getElementById("pad-undo").onclick=()=>{PAD.strokes.pop();padDraw()};
+  document.getElementById("pad-clear").onclick=()=>{PAD.strokes=[];padDraw()};
+  const cv=document.getElementById("pad-canvas"); let cur=null;
+  const pt=e=>{const r=cv.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top,e.pressure||0.5]};
+  cv.onpointerdown=e=>{ if(e.pointerType==="pen") PAD.penSeen=true; if(PAD.penSeen&&e.pointerType==="touch") return; // palm rests while writing with the pencil
+    cv.setPointerCapture(e.pointerId); cur={tool:PAD.tool,pts:[pt(e)]}; PAD.strokes.push(cur); e.preventDefault() };
+  cv.onpointermove=e=>{ if(!cur) return; (e.getCoalescedEvents?e.getCoalescedEvents():[e]).forEach(ev=>cur.pts.push(pt(ev))); padDraw() };
+  cv.onpointerup=cv.onpointercancel=()=>{cur=null};
+  if(PAD.open){ document.body.classList.add("padopen"); padDraw(true) }
+}
+function padDraw(resize){
+  const cv=document.getElementById("pad-canvas"); if(!cv||cv.offsetParent===null) return;
+  const dpr=window.devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight;
+  if(resize||cv.width!==Math.round(w*dpr)){ cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr) }
+  const g=cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,w,h);
+  const ink=getComputedStyle(document.documentElement).getPropertyValue("--ink").trim()||"#16302B";
+  PAD.strokes.forEach(s=>{ g.globalCompositeOperation=s.tool==="eraser"?"destination-out":"source-over"; g.strokeStyle=ink; g.lineCap="round"; g.lineJoin="round";
+    for(let i=1;i<s.pts.length;i++){ const [x0,y0]=s.pts[i-1],[x1,y1,p]=s.pts[i]; g.lineWidth=s.tool==="eraser"?22:1.2+p*2.6; g.beginPath(); g.moveTo(x0,y0); g.lineTo(x1,y1); g.stroke() } });
+  g.globalCompositeOperation="source-over";
+}
+window.addEventListener("resize",()=>padDraw(true));
+
+/* ---------- one question ---------- */
+function renderStep(){
+  const st = S.steps[S.i];
+  if(st.kind==="concept") return renderConcept();
+  if(st.kind==="rate") return renderRate();
+  if(st.kind==="finish") return finishReview();
+  const q = st.q, ans = S.answered;
+  let body;
+  if(q.num){
+    body = `<div class="num"><input id="numin" inputmode="decimal" aria-label="คำตอบ" ${ans?"disabled":""} value="${ans&&!ans.dontknow?esc(ans.raw):""}"><span class="muted" style="align-self:center">${q.unit}</span>
+      ${ans?"":`<button class="btn" id="check">ตรวจคำตอบ</button>`}</div>`;
+  } else {
+    body = `<div class="opts">${q.opts.map((o,k)=>{
+      let c=""; if(ans){ if(k===q.a) c="right"; else if(k===ans.choice) c="wrong"; }
+      const struck=!ans&&S.struck.includes(k);
+      return `<div class="optrow"><button class="opt ${c} ${struck?"struck":""}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>
+        ${ans?"":`<button class="xopt" type="button" data-x="${k}" aria-pressed="${struck}" aria-label="${struck?"เอาคืน":"ตัดตัวเลือกนี้"}" title="${struck?"เอาคืน":"ตัดตัวเลือกนี้"}">${struck?"↺":"✕"}</button>`}</div>`}).join("")}</div>
+      ${ans?"":`<p class="small muted">กด ✕ ท้ายข้อเพื่อตัดตัวเลือกที่ไม่ใช่แน่ๆ</p>`}`;
+  }
+  let fb = "";
+  if(ans){
+    const head = ans.dontknow?"ไม่เป็นไร มาดูวิธีคิดกัน (0 XP)":ans.correct?YAY[S.i%YAY.length]:OOPS[S.i%OOPS.length];
+    fb = `<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answer} ${q.unit}`:""}</b><p>${gloss(q.ex)}</p>
+      ${ans.correct||ans.dontknow?"":`<span class="small muted">พลาดเพราะอะไร เลือกได้หลายข้อ (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
+      <div class="why">${Object.entries(ERR).filter(([k])=>k!=="dontknow").map(([k,v])=>`<button data-why="${k}" aria-pressed="${(S.why||[]).includes(k)}">${v}</button>`).join("")}</div>`}
+      ${ans.correct?"":askHtml("question")}
+    </div>
+    <button class="btn" id="next">ต่อไป</button>`;
+  }
+  $v.innerHTML = `<section class="card">${header()}
+    <span class="row" style="gap:6px"><span class="chip l${q.level}">${LV[q.level]} · ${esc(q.topic)}</span>${q.en?`<span class="chip">English corner</span>`:""}</span>
+    <p class="prompt">${gloss(q.q)}</p>
+    <div class="feedback" id="gloss-box" hidden></div>
+    ${S.hints?`<div class="feedback">${q.hints.slice(0,S.hints).map((h,k)=>`<span class="small"><b>คำใบ้ ${k+1}</b> ${esc(h)}</span>`).join("")}</div>`:""}
+    ${body}${fb}
+    <div class="row">${!ans&&S.hints<q.hints.length?`<button class="btn ghost" id="hint">ขอคำใบ้ (${S.hints}/${q.hints.length})</button>`:""}
+    ${!ans?`<button class="btn ghost" id="dontknow">🤔 ยังคิดไม่ออก ดูเฉลย</button>`:""}
+    ${st.optional&&!ans?`<button class="btn ghost" id="skip">ข้ามข้อนี้</button>`:""}</div>
+  </section>${padHtml()}`;
+  bindGloss(); padSetup();
+  if(!ans){
+    if(q.num){
+      const go=()=>{const raw=document.getElementById("numin").value.trim().replace(/,/g,"");const v=parseFloat(raw);if(raw===""||isNaN(v))return;
+        answer({raw, correct:Math.abs(v-q.answer)<=q.tol});};
+      document.getElementById("check").onclick=go;
+      document.getElementById("numin").onkeydown=e=>{if(e.key==="Enter")go()};
+    } else {
+      $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer({choice:+b.dataset.k,correct:+b.dataset.k===q.a}));
+      $v.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{const k=+b.dataset.x; S.struck=S.struck.includes(k)?S.struck.filter(x=>x!==k):[...S.struck,k]; const y=window.scrollY; renderStep(); window.scrollTo({top:y})});
+    }
+    const hb=document.getElementById("hint"); if(hb) hb.onclick=()=>{S.hints++;const y=window.scrollY;renderStep();window.scrollTo({top:y})};
+    document.getElementById("dontknow").onclick=()=>{S.why=["dontknow"]; answer({choice:-1,raw:"",correct:false,dontknow:true})};
+    const sk=document.getElementById("skip"); if(sk) sk.onclick=()=>{S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,skipped:true,timeSec:0});advance()};
+  } else {
+    $v.querySelectorAll("[data-why]").forEach(b=>b.onclick=()=>{const k=b.dataset.why; S.why=(S.why||[]).includes(k)?S.why.filter(x=>x!==k):[...(S.why||[]),k];const y=window.scrollY;renderStep();window.scrollTo({top:y})});
+    bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
+    document.getElementById("next").onclick=()=>{
+      S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q});
+      advance();
+    };
+  }
+}
+function answer(a){ S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
+function advance(){ S.i++; S.answered=null; S.why=[]; S.hints=0; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
+
+function renderConcept(){
+  const c=S.set.concept;
+  $v.innerHTML=`<section class="card concept">${header()}
+    <h2>${esc(c.title)}</h2>
+    <ul>${c.points.map(p=>`<li>${gloss(p)}</li>`).join("")}</ul>
+    <div class="feedback" id="gloss-box" hidden></div>
+    ${c.formulas.map(f=>`<div class="formula">${esc(f)}</div>`).join("")}
+    <div><span class="eyebrow">คำศัพท์อังกฤษของบทนี้</span><div class="vocab">${c.vocab.map(([e,t])=>`<span>${e} <i>${t}</i></span>`).join("")}</div></div>
+    ${c.alts.slice(0,S.altShown).map(a=>`<div class="feedback"><b>${esc(a.label)}</b>${a.lines.map(l=>`<p class="small">${gloss(l)}</p>`).join("")}</div>`).join("")}
+    <div class="row"><button class="btn" id="next">เข้าใจแล้ว ไปต่อ</button>
+    ${S.altShown<c.alts.length?`<button class="btn ghost" id="alt">อธิบายอีกแบบ</button>`:""}</div>
+    ${askHtml("concept")}</section>${padHtml()}`;
+  bindGloss(); padSetup(); bindAsk("concept",{topic:S.set.topic});
+  const al=document.getElementById("alt"); if(al) al.onclick=()=>{S.altShown++;renderConcept()};
+  document.getElementById("next").onclick=()=>{S.conceptSec=Math.round((Date.now()-S.qStart)/1000);advance()};
+}
+
+const RATINGS=["ง่ายมาก","ง่าย","พอดี","ยาก","ยากมาก"];
+function renderRate(){
+  $v.innerHTML=`<section class="card">${header()}
+    <h2>วันนี้รู้สึกอย่างไร</h2>
+    <div class="rate">${RATINGS.map(r=>`<button class="btn ${S.rating===r?"":"ghost"}" data-r="${r}">${r}</button>`).join("")}</div>
+    <label class="small muted" for="memo">อยากบอกอะไรเพิ่มไหม (ไม่บังคับ)</label>
+    <input id="memo" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)" placeholder="เช่น ข้อปลาสนุกดี / การ์ดสรุปยาวไป">
+    <button class="btn" id="save" ${S.rating?"":"disabled"}>บันทึกและรับ XP</button></section>`;
+  $v.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{const m=document.getElementById("memo").value;S.rating=b.dataset.r;renderRate();document.getElementById("memo").value=m});
+  document.getElementById("save").onclick=async e=>{
+    e.target.disabled=true; e.target.textContent="กำลังบันทึก…";
+    const items=S.items, scored=items.filter(x=>!x.skipped);
+    const rec={type:S.set.kind==="probe"?"probe":"set",setId:S.set.id,spell:S.set.spell,subject:S.set.subject,topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
+      durationSec:Math.round((Date.now()-S.start)/1000),conceptSec:S.conceptSec||0,rating:S.rating,memo:document.getElementById("memo").value.trim(),
+      correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items)+20,altShown:S.altShown,glossed:S.glossed,confused:S.confused,items};
+    await finishWith(rec);
+  };
+}
+
+/* ---------- unfinished set survives a tab switch or a reload (same day) ---------- */
+function saveProgress(){
+  if(!S||S.mode!=="set") return;
+  try{ localStorage.setItem("fieldnote.inprogress",JSON.stringify({setId:S.set.id,conceptFirst:S.conceptFirst,day:todayKey(),i:S.i,start:S.start,items:S.items,confused:S.confused,altShown:S.altShown,conceptSec:S.conceptSec||0,glossed:S.glossed,
+    perms:S.steps.map(x=>x.q?.perm||null)})) }catch(e){}
+}
+function clearProgress(){ try{ localStorage.removeItem("fieldnote.inprogress") }catch(e){} }
+function pendingSet(){
+  if(S&&S.mode==="set"&&S.active) return {live:true,set:S.set,i:S.i,n:S.steps.length};
+  try{ const p=JSON.parse(localStorage.getItem("fieldnote.inprogress")||"null"); if(!p||p.day!==todayKey()) return null;
+    const set=SETS.find(s=>s.id===p.setId); return set?{live:false,set,i:p.i,n:null,saved:p}:null }catch(e){ return null }
+}
+function resumeSet(){
+  const p=pendingSet(); if(!p) return;
+  if(p.live){ view="session"; render(); return }
+  const sv=p.saved; startSet(p.set, sv.conceptFirst, sv.perms);
+  Object.assign(S,{i:sv.i,start:sv.start,items:sv.items||[],confused:sv.confused||[],altShown:sv.altShown||0,conceptSec:sv.conceptSec,glossed:sv.glossed||[]});
+  render();
+}
+
+async function finishReview(){
+  $v.innerHTML=`<section class="card"><p class="muted">กำลังบันทึก…</p></section>`;
+  const items=S.items, scored=items.filter(x=>!x.skipped);
+  await finishWith({type:"review",setId:S.set.id,subject:"ทบทวน",topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
+    durationSec:Math.round((Date.now()-S.start)/1000),correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items),confused:S.confused,items});
+}
+async function finishWith(rec){
+  if(S&&rec.type!=="vocab"){ S.active=false; if(S.mode==="set") clearProgress() }
+  PAD.open=false; document.body.classList.remove("padopen");
+  const prevList=mine(), before=progressOf(prevList), ssB=spellStats(prevList);
+  const where=await saveAttempt(rec);
+  const list=attempts.includes(rec)?mine():[rec,...mine()];
+  const after=progressOf(list), ssA=spellStats(list);
+  /* celebrations: only for things that matter, so they stay special */
+  const cele=[];
+  SPELLS.forEach(sp=>{ const tA=ssA[sp.id]?.tier||0, tB=ssB[sp.id]?.tier||0; if(tA>tB) cele.push({kind:"tier",sp,tier:tA}) });
+  Object.keys(REALMS).forEach(rk=>{ const sps=SPELLS.filter(s=>s.realm===rk);
+    if(sps.every(s=>(ssA[s.id]?.tier||0)>=1)&&!sps.every(s=>(ssB[s.id]?.tier||0)>=1)) cele.push({kind:"realm",rk}) });
+  MILESTONES.filter(m=>after.best>=m&&before.best<m).forEach(m=>cele.push({kind:"milestone",m}));
+  if(after.questDoneThisWeek&&!before.questDoneThisWeek) cele.push({kind:"quest"});
+  if(after.freeze>before.freeze) cele.push({kind:"ice",why:after.earnedToday.map(e=>e.why).join(", ")});
+  S={...S,where,rec,before,after,list,cele,ci:0}; view="done"; render(); window.scrollTo({top:0});
+}
+function confetti(){ if(matchMedia("(prefers-reduced-motion: reduce)").matches) return "";
+  const c=["#D9822B","#1F7A8C","#2E8B57","#B7841C","#7DB9E8","#C0453A"];
+  return `<div class="confetti" aria-hidden="true">${Array.from({length:36},(_,i)=>`<i style="left:${(i*37)%100}%;background:${c[i%c.length]};animation-delay:${(i%9)*0.08}s;animation-duration:${1.6+(i%5)*0.25}s"></i>`).join("")}</div>` }
+function celeHtml(e){
+  if(e.kind==="tier"){ const art=getArt(e.sp.id);
+    return {icon:["","🌱","✨","👑"][e.tier],title:`${e.sp.name} ขึ้นขั้น${["","ฝึกหัด","ชำนาญ","ปรมาจารย์"][e.tier]}!`,
+      text:`${e.sp.topic}${e.tier===1?" · เปิดการ์ดคาถาใบใหม่ในสมุดแล้ว":""}`,art,btn:e.tier===1&&!art?"🎨 วาดการ์ดใบนี้":null} }
+  if(e.kind==="realm") return {icon:"🏯",title:`พิชิต${REALMS[e.rk]}ครบทุกคาถา!`,text:"ทุกคาถาในสำนักนี้ปลดล็อกแล้วอย่างน้อยขั้นฝึกหัด"};
+  if(e.kind==="milestone") return {icon:"🏅",title:`จุดไฟติดต่อกัน ${e.m} วัน!`,text:"เหรียญนี้เป็นของเธอตลอดไป ต่อให้ไฟดับก็ไม่หาย"};
+  if(e.kind==="quest") return {icon:"📜",title:"ภารกิจประจำสัปดาห์ครบ!",text:"ได้น้ำแข็งกันไฟดับ 1 ก้อน"};
+  return {icon:"🧊",title:"ได้น้ำแข็งกันไฟดับ!",text:e.why||""};
+}
+function renderDone(){
+  const r=S.rec, mins=Math.max(1,Math.round(r.durationSec/60)), a=S.after, b=S.before;
+  const lessonish=r.type!=="vocab";
+  const byL=lessonish?[1,2,3].map(l=>{const it=r.items.filter(x=>x.level===l&&!x.skipped);return it.length?`${LV[l].split(" · ")[0]}: ${it.filter(x=>x.correct).length}/${it.length}`:""}).filter(Boolean).join(" · "):"";
+  const reached=!b.goalToday&&a.goalToday;
+  const pool=reviewPool(S.list), vt=vocabToday();
+  const left=missionList(a).filter(m=>!m.done).map(m=>({lesson:"ชุดฝึก",vocab:"คำศัพท์วันนี้",probe:"ด่านสำรวจ",extra:"ชุดเพิ่มวันหยุด"})[m.key]);
+  const sp=r.spell&&SPELLS.find(x=>x.id===r.spell), info=sp&&spellStats(S.list)[sp.id];
+  const ce=S.cele&&S.ci<S.cele.length?celeHtml(S.cele[S.ci]):null;
+  $v.innerHTML=`<section class="card"><span class="eyebrow">เสร็จแล้ว</span>
+    <h2>+${r.xp} XP</h2>
+    <p>${r.type==="vocab"?`คำศัพท์ถูก ${r.correct} จาก ${r.total}`:`ทำได้ ${r.correct} จาก ${r.total} ข้อ`} ใน ${mins} นาที</p>
+    ${byL?`<p class="small muted">${byL}</p>`:""}
+    ${flameHtml(a)}
+    ${reached?`<p><b>ภารกิจวันนี้ครบแล้ว ไฟ ${a.streak} วันยังลุกอยู่ 🔥</b></p>`:left.length?`<p><b style="color:var(--beak)">เหลืออีก ${left.length} ภารกิจ: ${left.join(" · ")}</b> ทำให้ครบแล้วไฟจะติด</p>`:""}
+    ${sp&&!(S.cele||[]).some(e=>e.kind==="tier"&&e.sp.id===sp.id)?`<p class="small muted">${esc(sp.name)}: ${TIER[info?.tier||0]} · ${nextStep(sp,info)}</p>`:""}
+    <p class="small muted">${S.where==="db"?"บันทึกแล้ว พ่อเห็นสรุปได้จากหน้าผู้ปกครอง":"บันทึกไว้ในเครื่องนี้แล้ว อย่าลืมส่งผลให้พ่อนะ"}</p>
+    <div class="row">
+      ${r.type!=="vocab"&&!a.vocabToday&&(vt.fresh.length||vt.due.length)?`<button class="btn" id="d-vocab">ต่อเลย: คำศัพท์วันนี้</button>`:""}
+      ${r.type!=="review"&&pool.length?`<button class="btn ghost" id="d-review">ทบทวนข้อที่เคยพลาด ${Math.min(5,pool.length)} ข้อ</button>`:""}
+      ${S.where==="local"?`<button class="btn ghost" id="send2">ส่งผลให้พ่อ</button>`:""}
+      <button class="btn ghost" id="home">กลับหน้าแรก</button>
+    </div></section>
+  ${ce?`<div class="celebrate" role="dialog" aria-modal="true" aria-label="${esc(ce.title)}">${confetti()}
+    <div class="celecard"><div class="celeicon">${ce.icon}</div>${ce.art?`<img src="${ce.art}" alt="" class="celeart">`:""}
+      <h2>${esc(ce.title)}</h2><p class="small">${esc(ce.text)}</p>
+      <div class="row" style="justify-content:center">${ce.btn?`<button class="btn ghost" id="ce-art">${ce.btn}</button>`:""}<button class="btn" id="ce-next">${S.ci+1<S.cele.length?"ต่อไป":"เยี่ยม!"}</button></div></div></div>`:""}`;
+  const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
+  on("send2",()=>{view="send";render()});
+  on("d-review",()=>startReview());
+  on("d-vocab",startVocab);
+  on("home",()=>{location.hash="#home";view="home";render()});
+  on("ce-next",()=>{S.ci++;renderDone()});
+  on("ce-art",()=>{const id=S.cele[S.ci].sp.id; S.ci=S.cele.length; artTarget=id; location.hash="#map"});
+}
+
+/* ---------- spell card art: her own drawings, kept in this browser ---------- */
+let artTarget=null;
+function getArt(id){ try{ return localStorage.getItem("fieldnote.art."+id) }catch(e){ return null } }
+function pickArt(id, done){
+  const inp=document.createElement("input"); inp.type="file"; inp.accept="image/*";
+  inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(!f) return; const url=URL.createObjectURL(f), img=new Image();
+    img.onload=()=>{ const max=360, k=Math.min(1,max/Math.max(img.width,img.height)), c=document.createElement("canvas");
+      c.width=Math.round(img.width*k); c.height=Math.round(img.height*k); c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      try{ localStorage.setItem("fieldnote.art."+id,c.toDataURL("image/jpeg",0.72)); done(true) }catch(e){ done(false) } };
+    img.src=url };
+  inp.click();
+}
+
+/* ---------- vocabulary (spaced boxes: 1, 2, 4, 7, 14 days) ---------- */
+const BOX_DAYS=[1,2,4,7,14];
+
+function vocabState(){ try{ return JSON.parse(localStorage.getItem("fieldnote.vocab")||"{}") }catch(e){ return {} } }
+function saveVocabState(v){ try{ localStorage.setItem("fieldnote.vocab",JSON.stringify(v)) }catch(e){} }
+function isWeekend(){ const d=new Date().getDay(); return d===0||d===3||d===6 }
+function vocabToday(){
+  const st=vocabState(), t=todayKey();
+  return {due:VOCAB.filter(x=>st[x.w]&&st[x.w].due<=t).sort((a,b)=>st[a.w].due-st[b.w].due).slice(0,8), fresh:VOCAB.filter(x=>!st[x.w]).slice(0,5)};
+}
+/* pronunciation: the browser's own English voice (works on iPad and Android Chrome) */
+/* Some in-app browsers (LINE, Facebook, the Claude app) hide the voice engine, so detect it and offer a way out */
+const CAN_SPEAK = typeof speechSynthesis!=="undefined" && typeof SpeechSynthesisUtterance!=="undefined";
+const UA = navigator.userAgent||"";
+const IN_APP = /Line\/|FBAN|FBAV|Instagram|; wv\)|Claude/i.test(UA);
+const IS_ANDROID = /Android/i.test(UA);
+let speechBroken = !CAN_SPEAK;
+try{ if(CAN_SPEAK) speechSynthesis.getVoices(); }catch(e){}
+function speak(text, slow){
+  if(!CAN_SPEAK){ speechBroken=true; showSpeechHelp(); return }
+  try{
+    if(speechSynthesis.speaking||speechSynthesis.pending) speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text); u.lang="en-US"; u.rate=slow?0.42:0.9;
+    const v=pickVoice(); if(v){ u.voice=v; u.lang=v.lang }
+    let started=false; u.onstart=()=>{started=true;speechBroken=false;hideSpeechHelp()}; u.onerror=e=>{ if(e.error!=="interrupted"&&e.error!=="canceled"){speechBroken=true;showSpeechHelp()} };
+    speechSynthesis.speak(u);
+    setTimeout(()=>{ if(!started&&!speechSynthesis.speaking){ speechBroken=true; showSpeechHelp() } },2500);
+  }catch(e){ speechBroken=true; showSpeechHelp() }
+}
+function enVoices(){ try{ return speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)) }catch(e){ return [] } }
+function pickVoice(){ const vs=enVoices(); let want=null; try{ want=localStorage.getItem("fieldnote.voice") }catch(e){}
+  return vs.find(v=>v.voiceURI===want)||vs.find(v=>/^en(-|_)US/i.test(v.lang)&&v.localService)||vs.find(v=>/^en(-|_)US/i.test(v.lang))||vs[0]||null }
+function voicePicker(){
+  const vs=enVoices(); if(!vs.length) return "";
+  const cur=pickVoice();
+  return `<details class="small"><summary>🎙 เลือกเสียงผู้อ่าน (${esc(cur?cur.name:"ค่าเริ่มต้น")})</summary>
+    <div class="row" style="margin-top:6px"><select id="voice-sel" style="font:inherit;padding:6px;border-radius:8px;max-width:100%">${vs.map(v=>`<option value="${esc(v.voiceURI)}" ${cur&&v.voiceURI===cur.voiceURI?"selected":""}>${esc(v.name)} · ${esc(v.lang)}</option>`).join("")}</select>
+    <button class="btn ghost" id="voice-try" type="button">ลองฟัง</button></div></details>`;
+}
+function bindVoicePicker(){
+  const sel=document.getElementById("voice-sel"); if(!sel) return;
+  sel.onchange=()=>{ try{ localStorage.setItem("fieldnote.voice",sel.value) }catch(e){} speak("Hello! Let's learn new words.") };
+  document.getElementById("voice-try").onclick=()=>speak("Hello! Let's learn new words.");
+}
+try{ if(CAN_SPEAK) speechSynthesis.onvoiceschanged=()=>{ if(view==="vocab"&&!document.getElementById("voice-sel")) renderVocab() } }catch(e){}
+function speechHelpHtml(){
+  const page=location.href.split("#")[0].split("?")[0];
+  const chrome=IS_ANDROID?`<a class="btn" href="intent://${page.replace(/^https?:\/\//,"")}#Intent;scheme=https;package=com.android.chrome;end">เปิดใน Chrome</a>`:"";
+  return `<div class="feedback" id="speech-help" style="border:1.5px solid var(--beak)"><b style="color:var(--beak)">เสียงยังไม่ดังในหน้านี้</b>
+    <p class="small">${IN_APP?"น่าจะเปิดลิงก์จากในแอป เช่น LINE ซึ่งปิดเสียงอ่านไว้":"ลองเปิดเสียงเครื่อง และปิดโหมดเงียบก่อน"} ${IS_ANDROID?"กดปุ่มด้านล่างเพื่อเปิดใน Chrome":"แตะปุ่ม ⋯ หรือ ↗ มุมจอ แล้วเลือก \"เปิดใน Safari\""} ผลที่ทำไว้จะอยู่ในเบราว์เซอร์ที่เปิด ใช้เบราว์เซอร์เดียวตลอดนะ</p>
+    ${chrome}<p class="small muted">ระหว่างนี้อ่านออกเสียงเองไปก่อนได้ ปุ่มต่อไปจะกดได้ตามปกติ</p></div>`;
+}
+function showSpeechHelp(){ if(document.getElementById("speech-help")) return; const box=document.getElementById("speech-slot"); if(box){ box.innerHTML=speechHelpHtml(); } const vn=document.getElementById("vn"); if(vn&&V&&V.phase==="learn") vn.disabled=false }
+function hideSpeechHelp(){ const h=document.getElementById("speech-help"); if(h) h.remove() }
+function vOpts(word,dir){
+  const others=VOCAB.filter(x=>x.w!==word.w).sort(()=>Math.random()-.5).slice(0,3);
+  const all=[word,...others].sort(()=>Math.random()-.5);
+  return {opts:all.map(x=>dir==="en"?x.th:x.w), a:all.indexOf(word)};
+}
+function startVocab(){
+  const {due,fresh}=vocabToday(); if(!due.length&&!fresh.length) return;
+  const st=vocabState();
+  // new words: meaning first, spelling later in the round; review words: spelling once they have been seen twice
+  const meaning=[...fresh.map(w=>({w,kind:"mc",dir:"en",fresh:true})),...due.map((w,k)=>({w,kind:"mc",dir:k%2?"en":"th"}))].map(x=>({...x,...vOpts(x.w,x.dir)}));
+  const spellNew=fresh.map(w=>({w,kind:"spell",fresh:true}));
+  const spellDue=due.filter(w=>(st[w.w]?.box||0)>=2||Math.random()<.5).map(w=>({w,kind:"spell"}));
+  const quiz=[...meaning.sort(()=>Math.random()-.5),...[...spellNew,...spellDue].sort(()=>Math.random()-.5)];
+  const base=isWeekend()?READINGS[Math.floor(todayKey()/DAY)%READINGS.length]:null;
+  const read=base?{...base,qs:base.qs.map((q,qi)=>{const sq=shuffleQ(q); return {...sq,qth:base.th.qs[qi].q,optsTh:sq.perm.map(k=>base.th.qs[qi].opts[k])}})}:null;
+  V={active:true,fresh,quiz,read,phase:fresh.length?"learn":"quiz",li:0,qi:0,ri:0,ans:null,results:[],rres:[],heard:new Set(),showTh:false,start:Date.now()};
+  view="vocab"; render(); window.scrollTo({top:0});
+}
+const sayBtn=(id,label)=>`<button class="btn ghost" id="${id}" type="button">🔊 ${label}</button>`;
+function bindSay(id,text,slow,after){ const b=document.getElementById(id); if(b) b.onclick=()=>{speak(text,slow); if(after) after()} }
+function renderVocab(){
+  const top=`<div class="stage"><span>คำศัพท์วันนี้</span><span>${V.phase==="learn"?`คำใหม่ ${V.li+1}/${V.fresh.length}`:V.phase==="quiz"?`ทดสอบ ${V.qi+1}/${V.quiz.length}`:`อ่านสั้นๆ`}</span></div>${voicePicker()}`;
+  setTimeout(bindVoicePicker,0);
+  if(V.phase==="learn"){
+    const w=V.fresh[V.li], heard=speechBroken||V.heard.has(w.w);
+    $v.innerHTML=`<section class="card">${top}<span class="eyebrow">คำใหม่</span>
+      <span class="vword">${esc(w.w)}</span><p><b>${esc(w.th)}</b></p>
+      <div class="row">${sayBtn("say-w","ฟังคำนี้")}${sayBtn("say-slow","ฟังช้าๆ")}</div>
+      <p class="small ${heard?"muted":""}" style="${heard?"":"color:var(--beak)"}">${speechBroken?"อ่านออกเสียงเองดังๆ หนึ่งรอบ":heard?"ฟังแล้ว ลองพูดตามดังๆ หนึ่งรอบ":"กดฟังเสียงก่อนนะ แล้วพูดตามดังๆ"}</p>
+      <div id="speech-slot">${speechBroken?speechHelpHtml():""}</div>
+      <div class="feedback"><p class="vex">“${esc(w.ex)}”</p>
+        ${V.showTh?`<p class="small">${esc(w.exTh)}</p>`:`<button class="btn ghost" id="show-th" style="border:0;padding:0">ลองเดาความหมายก่อน แล้วกดดูคำแปล</button>`}
+        <div class="row">${sayBtn("say-ex","ฟังประโยค")}${sayBtn("say-ex-slow","ฟังช้าๆ")}</div></div>
+      <button class="btn" id="vn" ${heard?"":"disabled"}>${V.li+1<V.fresh.length?"ต่อไป":"ไปทดสอบ"}</button></section>`;
+    bindSay("say-w",w.w,false,()=>{if(!V.heard.has(w.w)){V.heard.add(w.w);renderVocab()}});
+    bindSay("say-slow",w.w,true,()=>{if(!V.heard.has(w.w)){V.heard.add(w.w);renderVocab()}});
+    bindSay("say-ex",w.ex,false); bindSay("say-ex-slow",w.ex,true);
+    const st=document.getElementById("show-th"); if(st) st.onclick=()=>{V.showTh=true;renderVocab()};
+    document.getElementById("vn").onclick=()=>{ V.showTh=false; if(V.li+1<V.fresh.length) V.li++; else V.phase="quiz"; renderVocab() };
+    return;
+  }
+  if(V.phase==="quiz"){
+    const it=V.quiz[V.qi], ans=V.ans;
+    const next=()=>{ V.results.push({w:it.w.w,kind:it.kind,correct:ans.correct,fresh:!!it.fresh}); V.ans=null;
+      if(V.qi+1<V.quiz.length) V.qi++; else if(V.read) V.phase="read"; else return finishVocab();
+      renderVocab(); window.scrollTo({top:0}); };
+    if(it.kind==="spell"){
+      const hint=it.w.w[0]+" "+"_ ".repeat(it.w.w.length-1).trim();
+      $v.innerHTML=`<section class="card">${top}
+        <p class="small muted">ฝึกสะกด${it.fresh?" · คำใหม่":" · ทบทวน"} · ฟังเสียงแล้วพิมพ์คำภาษาอังกฤษ</p>
+        <p><b>${esc(it.w.th)}</b></p>
+        <p style="font-family:var(--mono);letter-spacing:.15em">${esc(hint)} <span class="small muted" style="letter-spacing:0">(${it.w.w.length} ตัว)</span></p>
+        <div class="row">${sayBtn("say-w","ฟังเสียง")}${sayBtn("say-slow","ฟังช้าๆ")}</div><div id="speech-slot"></div>
+        <div class="num"><input id="spin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="พิมพ์คำศัพท์" style="width:14ch" ${ans&&!ans.retype?"disabled":""} value="${ans&&!ans.retype?esc(ans.raw):""}">
+        ${ans?"":`<button class="btn" id="check">ตรวจ</button>`}</div>
+        ${ans?`<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?"สะกดถูก +5 XP":"ยังไม่ถูก +2 XP"}</b>
+          <p>คำที่ถูกคือ <b style="font-family:var(--mono);font-size:1.1rem">${esc(it.w.w)}</b>${ans.correct?"":` · ที่พิมพ์มา <span style="font-family:var(--mono)">${esc(ans.raw)}</span>`}</p>
+          ${ans.correct?"":`<p class="small">${ans.retype?"ลองพิมพ์คำที่ถูกอีกครั้ง ช่วยให้มือจำตัวสะกด":""}</p>`}</div>
+          ${!ans.correct&&ans.retype?`<p class="small" id="rmsg" aria-live="polite"></p>`:""}
+          <button class="btn" id="vn" ${!ans.correct&&ans.retype?"disabled":""}>ต่อไป</button>`:""}
+      </section>`;
+      bindSay("say-w",it.w.w,false); bindSay("say-slow",it.w.w,true);
+      const inp=document.getElementById("spin");
+      if(!ans){
+        if(!speechBroken) setTimeout(()=>speak(it.w.w),150);
+        const go=()=>{const raw=inp.value.trim(); if(!raw) return; const ok=raw.toLowerCase()===it.w.w.toLowerCase(); V.ans={raw,correct:ok,retype:!ok}; renderVocab(); const i2=document.getElementById("spin"); if(i2&&!ok) i2.focus()};
+        document.getElementById("check").onclick=go; inp.onkeydown=e=>{if(e.key==="Enter")go()}; inp.focus();
+      } else {
+        if(!ans.correct&&ans.retype){
+          const ok=()=>inp.value.trim().toLowerCase()===it.w.w.toLowerCase();
+          inp.oninput=()=>{ const good=ok(); document.getElementById("vn").disabled=!good; document.getElementById("rmsg").textContent=good?"เยี่ยม จำตัวสะกดได้แล้ว":(inp.value.trim()?"ยังไม่ตรง ลองดูตัวสะกดด้านบนอีกที":"") };
+          inp.onkeydown=e=>{ if(e.key==="Enter"&&ok()) next() };
+          document.getElementById("vn").onclick=()=>{ if(ok()) next() };
+          inp.focus();
+        } else document.getElementById("vn").onclick=next;
+      }
+      return;
+    }
+    $v.innerHTML=`<section class="card">${top}
+      <p class="small muted">${it.dir==="en"?"คำนี้แปลว่าอะไร":"คำภาษาอังกฤษของคำนี้คืออะไร"}${it.fresh?" · คำใหม่":" · ทบทวน"}</p>
+      <div class="row"><span class="vword">${esc(it.dir==="en"?it.w.w:it.w.th)}</span>${it.dir==="en"?sayBtn("say-w","ฟัง"):""}</div><div id="speech-slot"></div>
+      <div class="opts">${it.opts.map((o,k)=>{let c="";if(ans){if(k===it.a)c="right";else if(k===ans.choice)c="wrong"}return `<button class="opt ${c}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>`}).join("")}</div>
+      ${ans?`<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?"ถูก +5 XP":"ยังไม่ใช่ +2 XP"}</b><p><b>${esc(it.w.w)}</b> = ${esc(it.w.th)}</p><p class="vex small">“${esc(it.w.ex)}”</p><p class="small muted">${esc(it.w.exTh)}</p>
+        <div class="row">${sayBtn("say-a","ฟังคำนี้")}</div></div>
+      <button class="btn" id="vn">ต่อไป</button>`:""}</section>`;
+    bindSay("say-w",it.w.w,false); bindSay("say-a",it.w.w,false);
+    if(!ans) $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{V.ans={choice:+b.dataset.k,correct:+b.dataset.k===it.a};renderVocab()});
+    else document.getElementById("vn").onclick=next;
+    return;
+  }
+  if(V.phase==="read"){
+    const q=V.read.qs[V.ri], ans=V.ans;
+    $v.innerHTML=`<section class="card">${top}<span class="eyebrow">อ่านภาษาอังกฤษสั้นๆ (พุธ เสาร์ อาทิตย์)</span>
+      <div class="reading">${esc(V.read.text)}</div>
+      <div class="row">${sayBtn("say-r","ฟังทั้งเรื่อง")}</div><div id="speech-slot"></div>
+      <p class="prompt">${esc(q.q)}</p>
+      <div class="opts">${q.opts.map((o,k)=>{let c="";if(ans){if(k===q.a)c="right";else if(k===ans.choice)c="wrong"}return `<button class="opt ${c}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>`}).join("")}</div>
+      ${ans?`<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?"ถูก +5 XP":"ยังไม่ใช่ ลองอ่านอีกรอบ +2 XP"}</b>
+        <p class="small"><b>คำถาม:</b> ${esc(q.qth)}</p>
+        <ul class="small" style="margin:0;padding-left:1.2em">${q.opts.map((o,k)=>`<li>${k===q.a?"✅ ":""}${esc(o)} = ${esc(q.optsTh[k])}</li>`).join("")}</ul>
+        <details class="small"><summary>ดูคำแปลทั้งเรื่อง</summary><p>${esc(V.read.th.text)}</p></details></div>
+        <button class="btn" id="vn">ต่อไป</button>`:""}</section>`;
+    bindSay("say-r",V.read.text,true);
+    if(!ans) $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{V.ans={choice:+b.dataset.k,correct:+b.dataset.k===q.a};renderVocab()});
+    else document.getElementById("vn").onclick=()=>{ V.rres.push(ans.correct); V.ans=null; if(V.ri+1<V.read.qs.length){V.ri++;renderVocab()} else finishVocab() };
+  }
+}
+/* replay the vocabulary sessions that are kept, so removed tries do not leave words half-learned */
+function rebuildVocabState(list){
+  const st={};
+  list.filter(a=>a.type==="vocab").sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt)).forEach(a=>{
+    const t=dayKey(a.endedAt), byWord={};
+    (a.items||[]).forEach(i=>{ if(i.word) byWord[i.word]=(byWord[i.word]??true)&&i.correct });
+    Object.entries(byWord).forEach(([w,ok])=>{ const cur=st[w]?.box||0, box=ok?Math.min(BOX_DAYS.length,cur+1):1; let due=t; for(let k=0;k<BOX_DAYS[box-1];k++) due=nextDay(due); st[w]={box,due} });
+  });
+  saveVocabState(st);
+}
+async function finishVocab(){
+  V.active=false;
+  try{ if(CAN_SPEAK) speechSynthesis.cancel() }catch(e){}
+  $v.innerHTML=`<section class="card"><p class="muted">กำลังบันทึก…</p></section>`;
+  const st=vocabState(), t=todayKey(), byWord={};
+  V.results.forEach(r=>{ byWord[r.w]=(byWord[r.w]??true)&&r.correct });   // a word moves up only if every item on it was right
+  Object.entries(byWord).forEach(([w,ok])=>{ const cur=st[w]?.box||0; const box=ok?Math.min(BOX_DAYS.length,cur+1):1;
+    let due=t; for(let i=0;i<BOX_DAYS[box-1];i++) due=nextDay(due); st[w]={box,due} });
+  saveVocabState(st);
+  const c=V.results.filter(r=>r.correct).length, rc=V.rres.filter(Boolean).length;
+  const sp=V.results.filter(r=>r.kind==="spell");
+  await finishWith({type:"vocab",setId:"vocab",subject:"อังกฤษ",topic:"คำศัพท์วันนี้",startedAt:new Date(V.start).toISOString(),endedAt:new Date().toISOString(),
+    durationSec:Math.round((Date.now()-V.start)/1000),correct:c,total:V.results.length,newWords:V.fresh.length,
+    spelling:{correct:sp.filter(r=>r.correct).length,total:sp.length},
+    reading:V.read?{correct:rc,total:V.rres.length}:null,xp:c*5+(V.results.length-c)*2+rc*5+(V.rres.length-rc)*2,
+    items:V.results.map(r=>({qid:"v:"+r.w,word:r.w,kind:r.kind,fresh:r.fresh,correct:r.correct}))});
+}
+
+/* ---------- spell map ---------- */
+function renderMap(){
+  const ss=spellStats(mine());
+  const realmOrder=Object.keys(REALMS).sort((a,b)=>(SPELLS.some(s=>s.realm===b&&CAL.currentSpells.includes(s.id))?1:0)-(SPELLS.some(s=>s.realm===a&&CAL.currentSpells.includes(s.id))?1:0));
+  const got=SPELLS.filter(s=>(ss[s.id]?.tier||0)>=1).length;
+  const cnt=[1,2,3].map(t=>SPELLS.filter(s=>(ss[s.id]?.tier||0)===t).length);
+  $v.innerHTML=`<section class="card"><span class="eyebrow">แผนที่คาถา</span>
+    <h2>เก็บคาถาได้ ${got} จาก ${SPELLS.length}</h2>
+    <p class="small">🌱 ฝึกหัด ${cnt[0]} · ✨ ชำนาญ ${cnt[1]} · 👑 ปรมาจารย์ ${cnt[2]}</p>
+    <p class="small muted">ทุกคาถามี 3 ขั้น ฝึกหัด (พื้นฐาน) → ชำนาญ (ประยุกต์ ต้องทำได้ 2 วัน) → ปรมาจารย์ (แนวข้อสอบโรงเรียนวิทยาศาสตร์ ต้องทำได้ห่างกัน 1 สัปดาห์) คาถาที่ไม่ได้ใช้นานจะจางลง ทบทวนสั้นๆ ก็กลับมาเต็ม ★ คือความถี่ที่ออกสอบคณิต · คาถาที่ปลดล็อกแล้ว ใส่รูปที่วาดเองเป็นการ์ดได้</p>
+    <p class="small" id="artmsg" aria-live="polite"></p>
+  </section>
+  ${realmOrder.map(rk=>{const sps=SPELLS.filter(s=>s.realm===rk);const g=sps.filter(s=>(ss[s.id]?.tier||0)>=1).length;
+    const open=sps.some(sp=>SETS.some(s=>s.spell===sp.id)||ss[sp.id]||sp.id===artTarget);
+    return `<details class="realm" ${open?"open":""}><summary><h3 style="display:inline">${REALMS[rk]} <small>เก็บแล้ว ${g}/${sps.length}${open?"":" · แตะเพื่อดู"}</small></h3></summary><div class="spells" style="margin-top:8px">
+    ${sps.map(sp=>{const sets=SETS.filter(s=>s.spell===sp.id), info=ss[sp.id], tier=info?.tier||0, art=tier>=1?getArt(sp.id):null;
+      const pips=[1,2,3].map(t=>`<i class="${tier>=t?"on"+t:""}"></i>`).join("");
+      const stars=sp.stars?` <span class="small" style="color:var(--beak)">${"★".repeat(sp.stars)}</span>`:"";
+      const school=sp.school==="not"?`<span class="chip">ยังไม่ได้เรียนที่โรงเรียน</span>`:CAL.currentSpells.includes(sp.id)?`<span class="chip l2">กำลังเรียนอยู่</span>`:"";
+      if(!sets.length&&!info) return `<div class="spell shadow"><b>${esc(sp.name)}${stars}</b><span class="small">${esc(sp.topic)} · ${sp.grade}</span>
+        <span class="row" style="gap:6px"><span class="small">🔒 คาถาที่รอให้ค้นพบ</span>${school}</span></div>`;
+      return `<div class="spell ${info?.faded?"faded":""} ${sp.id===artTarget?"glow":""}" id="sp-${sp.id}">
+        ${art?`<img class="spellart" src="${art}" alt="การ์ดคาถา ${esc(sp.name)}">`:""}
+        <b>${esc(sp.name)}${stars}</b>
+        <span class="small muted">${esc(sp.topic)} · ${sp.grade}</span>
+        <span class="row" style="gap:8px"><span class="pips" aria-label="${TIER[tier]}">${pips}</span><span class="small">${TIER[tier]}</span>${school}</span>
+        ${info?.faded?`<span class="small" style="color:var(--warn)">จางลงแล้ว ทบทวนสั้นๆ เพื่อเติมพลัง</span>`:`<span class="small muted">${sets.length?nextStep(sp,info):"บทเรียนกำลังมา"}</span>`}
+        <span class="row" style="gap:6px">${sets.map(s=>`<button class="btn ghost small" data-set="${s.id}">${s.kind==="probe"?"ด่านสำรวจ":"ฝึก"}${sets.length>1&&s.kind!=="probe"?" "+(sets.filter(x=>x.kind!=="probe").indexOf(s)+1):""}</button>`).join("")}
+        ${tier>=1&&store!=="db"?`<button class="btn ghost small" data-art="${sp.id}">🎨 ${art?"เปลี่ยนรูป":"ใส่รูปที่วาดเอง"}</button>`:""}</span></div>`}).join("")}
+    </div></details>`}).join("")}`;
+  $v.querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>{introSet=SETS.find(s=>s.id===b.dataset.set);view="intro";render()});
+  $v.querySelectorAll("[data-art]").forEach(b=>b.onclick=()=>pickArt(b.dataset.art,ok=>{ if(ok){artTarget=b.dataset.art;renderMap();document.getElementById("sp-"+b.dataset.art)?.scrollIntoView({block:"center"})} else document.getElementById("artmsg").textContent="เก็บรูปไม่ได้ เครื่องอาจเต็ม ลองรูปที่เล็กลง" }));
+  if(artTarget){ const el=document.getElementById("sp-"+artTarget); if(el) setTimeout(()=>el.scrollIntoView({block:"center"}),50) }
+}
+
+/* ---------- parent view ---------- */
+let showExamples = true, analysisText = "", fbList = [];
+(async()=>{ const d=await (window.claude?.use?.("db")??Promise.resolve(null)).catch(()=>null); if(!d) return;
+  try{ d.collection("feedback").orderBy("at","desc").limit(30).onSnapshot(s=>{fbList=s.docs.map(x=>({id:x.id,...x.data()}));if(view==="parent")render()},()=>{}) }catch(e){} })();
+function renderParent(){
+  const pool = showExamples ? attempts : realAttempts();
+  const all = pool.filter(isLesson), skips = pool.filter(isSkip), voc = pool.filter(a=>a.type==="vocab");
+  const prog = progressOf(realAttempts()); const vItems = voc.flatMap(a=>a.items||[]); const vAcc = vItems.length?Math.round(vItems.filter(x=>x.correct).length/vItems.length*100):0;
+  const conf = all.flatMap(a=>(a.confused||[]).map(c=>({...c,date:a.endedAt})));
+  const hasEx = attempts.some(a=>a.example||a.test); const nTest = attempts.filter(a=>a.test).length + fbList.filter(f=>f.test).length;
+  const items = all.flatMap(a=>a.items||[]).filter(x=>!x.skipped);
+  const mins = Math.round(all.reduce((s,a)=>s+(a.durationSec||0),0)/60);
+  const acc = items.length? Math.round(items.filter(x=>x.correct).length/items.length*100):0;
+  const lv = [1,2,3].map(l=>{const it=items.filter(x=>x.level===l);return {l,n:it.length,p:it.length?Math.round(it.filter(x=>x.correct).length/it.length*100):0}});
+  const topics = {}; items.forEach(x=>{(topics[x.topic]??={n:0,c:0}).n++; if(x.correct) topics[x.topic].c++});
+  const errs = {}; items.filter(x=>!x.correct).forEach(x=>(x.errorTypes&&x.errorTypes.length?x.errorTypes:[x.errorType||"unspecified"]).forEach(k=>{errs[k]=(errs[k]||0)+1}));
+  const talk = items.filter(x=>!x.correct && (x.errorType==="concept"||x.level===3)).slice(0,3);
+  const ratings = all.map(a=>a.rating).filter(Boolean);
+  const hardRun = ratings.slice(0,3).filter(r=>r==="ยาก"||r==="ยากมาก").length;
+  const unclear = all.flatMap(a=>(a.items||[]).filter(x=>(x.errorType==="unclear"||(x.errorTypes||[]).includes("unclear"))).map(x=>({...x,date:a.endedAt})));
+  const empty = !all.length;
+  $v.innerHTML = `
+  <section class="card">
+    <div class="row" style="justify-content:space-between"><h2>ภาพรวม</h2>
+      ${hasEx?`<label class="small row" style="gap:6px"><input type="checkbox" id="ex" ${showExamples?"checked":""}> แสดงข้อมูลตัวอย่างและทดสอบ</label>`:""}</div>
+    ${db&&nTest?`<div class="row"><button class="btn ghost" id="deltest">ลบข้อมูลทดสอบ (${nTest} รายการ)</button><span class="small" id="delmsg"></span></div>`:""}
+    ${empty?`<p class="muted">ยังไม่มีการฝึก เมื่อลูกทำชุดแรกเสร็จ หรือนำเข้ารหัสจากเครื่องลูก สรุปจะขึ้นที่นี่</p>`:`
+    <div class="stats">
+      <div class="stat"><b>${all.length}</b><span>ครั้งที่ฝึก</span></div>
+      <div class="stat"><b>${mins}</b><span>นาทีรวม</span></div>
+      <div class="stat"><b>${acc}%</b><span>ตอบถูก</span></div>
+      <div class="stat"><b>🔥 ${prog.streak}</b><span>วันติดต่อกัน</span></div>
+      <div class="stat"><b>🧊 ${prog.freeze}</b><span>น้ำแข็งในมือ</span></div>
+      <div class="stat"><b>${prog.goalDays}</b><span>วันที่ถึงเป้า</span></div>
+    </div>
+    <p class="note">เวลาคือช่วงที่เปิดหน้าเว็บ ใช้ดูแนวโน้ม ไม่ใช่เวลาที่ตั้งใจจริงทั้งหมด</p>`}
+  </section>
+  ${db?`<section class="card"><h3>นำเข้าผลจากเครื่องลูก</h3>
+    <p class="small muted">วางรหัสที่ลูกส่งมาทาง LINE (ขึ้นต้นด้วย SK2: หรือ FIELDNOTE1:) ส่งรหัสเดิมซ้ำได้ ระบบไม่นับซ้ำ</p>
+    <textarea id="imp" rows="3" style="font-family:var(--mono);font-size:.75rem;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)"></textarea>
+    <label class="small row" style="gap:6px"><input type="checkbox" id="imptest"> นี่คือรหัสจากการทดลองเล่น (ติดป้ายทดสอบ ไม่นับในการวิเคราะห์)</label>
+    <div class="row"><button class="btn" id="impgo">นำเข้า</button><span class="small" id="impmsg" aria-live="polite"></span></div></section>`:""}
+  ${empty?"":`
+  <section class="card"><h3>ความแม่นตามระดับความยาก</h3><div class="bars">
+    ${lv.map(x=>`<div class="bar"><span>${LV[x.l].split(" · ")[1]}</span><span class="track"><i style="width:${x.p}%;background:var(${x.l===1?"--good":x.l===2?"--warn":"--beak"})"></i></span><span class="v">${x.n?x.p+"%":"–"}</span></div>`).join("")}
+  </div></section>
+  <section class="card"><h3>แผนที่หัวข้อ</h3><div>
+    ${Object.entries(topics).sort((a,b)=>a[1].c/a[1].n-b[1].c/b[1].n).map(([t,v])=>{const p=v.c/v.n;const cls=p>=.8?"g":p>=.5?"y":"r";const lab=p>=.8?"แน่น":p>=.5?"พอได้":"ต้องทบทวน";
+      return `<div class="topic"><span>${esc(t)} <span class="muted small">(${v.c}/${v.n})</span></span><span class="pill ${cls}">${lab}</span></div>`}).join("")}
+  </div></section>
+  <section class="card"><h3>ข้อที่ผิด ผิดเพราะอะไร</h3><div class="bars">
+    ${Object.keys(errs).length?Object.entries(errs).map(([k,n])=>`<div class="bar"><span>${ERR[k]||"ไม่ระบุ"}</span><span class="track"><i style="width:${Math.min(100,n*20)}%;background:var(--bad)"></i></span><span class="v">${n}</span></div>`).join(""):`<p class="muted small">ยังไม่มีข้อผิด</p>`}
+  </div>
+  <p class="note">ผิดเพราะไม่เข้าใจหลัก ต้องอธิบายใหม่ ผิดเพราะอ่านพลาดหรือคิดเลขผิด ต้องฝึกความรอบคอบ คนละวิธีแก้กัน</p></section>
+  <section class="card"><h3>คำศัพท์อังกฤษ</h3>
+    ${voc.length?`<p>ทำ ${voc.length} ครั้ง · เรียนคำใหม่ ${voc.reduce((s,a)=>s+(a.newWords||0),0)} คำ · ตอบถูก ${vAcc}%</p>
+    ${(()=>{const miss={};vItems.filter(x=>!x.correct).forEach(x=>miss[x.word]=(miss[x.word]||0)+1);const m=Object.entries(miss).sort((a,b)=>b[1]-a[1]).slice(0,6);return m.length?`<p class="small muted">คำที่พลาดบ่อย: ${m.map(([w,n])=>`${esc(w)} (${n})`).join(", ")}</p>`:""})()}`:`<p class="muted small">ยังไม่ได้เริ่มคำศัพท์</p>`}
+  </section>
+  <section class="card"><h3>ลูกขอให้ช่วย</h3>
+    ${conf.length?conf.slice(0,8).map((c,i)=>`<div class="logi"><span class="chip">${c.where==="concept"?"การ์ดสรุป":"โจทย์"} · ${esc(c.topic||"")}</span>
+      ${c.ask?`<span><b>ลูกถาม:</b> “${esc(c.ask)}”</span>`:""}${c.prompt?`<span class="small muted">${esc(c.prompt)}</span>`:""}
+      ${c.ask?`<button class="btn ghost" data-ans="${i}" hidden>ให้ Claude ช่วยร่างคำตอบ</button><p class="small analysis" id="ans-${i}"></p>`:""}</div>`).join("")
+      +`<p class="note">คำตอบที่ Claude ร่างให้ คุณพ่ออ่านแล้วเล่าให้ลูกฟัง หรือส่งทาง LINE ก็ได้ ถ้าเรื่องไหนงงซ้ำ บอกผมในแชต ผมจะเพิ่มคำอธิบายในบทเรียน</p>`:`<p class="muted small">ยังไม่มีคำถาม</p>`}
+  </section>
+  ${unclear.length?`<section class="card"><h3>โจทย์ที่ลูกบอกว่ากำกวม</h3>
+    ${unclear.slice(0,8).map(x=>`<div class="logi"><span class="small">${esc(x.prompt||x.qid)}</span><span class="small muted">${esc(x.qid)}</span></div>`).join("")}
+    <p class="note">ส่งรายการนี้ให้ Claude ในแชตได้ ผมจะเขียนโจทย์ให้ชัดขึ้น</p></section>`:""}
+  ${(()=>{const dm=pool.filter(a=>a.type==="daymode"); return dm.length?`<section class="card"><h3>เปลี่ยนประเภทวันหรือลดระดับ</h3>
+    ${dm.slice(0,10).map(k=>`<div class="logi"><span class="small muted">${esc(k.day)}</span><span>${k.kind==="school"?"แจ้งว่าไปโรงเรียน":k.level&&k.level!=="full"?`วันหยุด ลดเป็นระดับ${LEVELS[k.level].label}`:"แจ้งว่าวันหยุด/หยุดเรียน"}${k.reason?` · ${esc(k.reason)}`:""}</span></div>`).join("")}
+    <p class="note">วันหยุดปกติเป็นระดับเต็ม ราว 90 นาที ถ้าลดระดับบ่อย อาจถึงเวลาคุยกันเรื่องปริมาณ</p></section>`:""})()}
+  <section class="card"><h3>วันที่ขอพัก</h3>
+    ${skips.length?skips.slice(0,7).map(k=>`<div class="logi"><span class="small muted">${new Date(k.endedAt).toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})}</span><span>${esc(k.reason||"-")}${k.memo?` · “${esc(k.memo)}”`:""}</span></div>`).join(""):`<p class="muted small">ยังไม่มีวันที่ขอพัก</p>`}
+  </section>
+  <section class="card"><h3>ข้อที่ควรนั่งคุยกัน</h3>
+    ${talk.length?talk.map(x=>`<div class="logi"><span class="chip l${x.level}">${esc(x.topic)}</span><span class="small">${esc(x.prompt||x.qid)}</span></div>`).join(""):`<p class="muted small">ยังไม่มีข้อที่ต้องคุย</p>`}
+    ${hardRun>=2?`<p class="small" style="color:var(--warn)">ลูกกด "ยาก" หรือ "ยากมาก" ${hardRun} ครั้งจาก 3 ครั้งล่าสุด อาจถึงเวลาลดระดับหรือคุยกันก่อน</p>`:""}
+  </section>
+  <section class="card"><h3>บันทึกการฝึก</h3><div class="log">
+    ${all.slice(0,10).map(a=>`<div class="logi"><div class="row" style="justify-content:space-between"><b>${esc(a.topic)}</b>${a.example?`<span class="example">ตัวอย่าง</span>`:a.test?`<span class="example">ทดสอบ</span>`:""}</div>
+      <span class="small muted">${new Date(a.endedAt).toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})} · ${Math.round(a.durationSec/60)} นาที · ถูก ${a.correct}/${a.total} · รู้สึก${a.rating||"-"}</span>
+      ${a.memo?`<span class="small">“${esc(a.memo)}”</span>`:""}</div>`).join("")}
+  </div></section>
+  <section class="card"><h3>ข้อความที่ลูกเขียนถึง Claude</h3>
+    ${fbList.filter(f=>showExamples||!f.test).length?fbList.filter(f=>showExamples||!f.test).slice(0,5).map(f=>`<div class="logi"><span class="small muted">${new Date(f.at).toLocaleDateString("th-TH",{day:"numeric",month:"short"})}${f.test?` <span class="example">ทดสอบ</span>`:""}</span><span>${esc(f.text)}</span></div>`).join(""):`<p class="muted small">ยังไม่มีข้อความ</p>`}
+  </section>
+  <section class="card"><h3>ให้ Claude วิเคราะห์</h3>
+    <p class="small muted">สรุปจุดแข็ง จุดที่ต้องระวัง และคำแนะนำสำหรับพ่อ จากข้อมูลด้านบน</p>
+    <button class="btn" id="ask" hidden>วิเคราะห์ตอนนี้</button>
+    <p class="analysis" id="out">${esc(analysisText)}</p>
+  </section>`}`;
+  const ex=document.getElementById("ex"); if(ex) ex.onchange=()=>{showExamples=ex.checked;renderParent()};
+  const dt=document.getElementById("deltest"); if(dt) dt.onclick=async()=>{
+    if(dt.dataset.armed!=="1"){dt.dataset.armed="1";dt.textContent="กดอีกครั้งเพื่อยืนยันการลบ";return}
+    dt.disabled=true; const m=document.getElementById("delmsg"); m.textContent="กำลังลบ…";
+    try{ for(const a of attempts.filter(a=>a.test&&a.id)) await db.collection("attempts").doc(a.id).delete();
+         for(const f of fbList.filter(f=>f.test&&f.id)) await db.collection("feedback").doc(f.id).delete();
+         m.textContent="ลบแล้ว"; }catch(e){ m.textContent="ลบไม่สำเร็จ ลองใหม่อีกครั้ง"; dt.disabled=false } };
+  const ig=document.getElementById("impgo"); if(ig) ig.onclick=async()=>{const msg=document.getElementById("impmsg");ig.disabled=true;msg.textContent="กำลังนำเข้า…";
+    try{const {n,k}=await importCode(document.getElementById("imp").value, document.getElementById("imptest").checked);msg.textContent=`นำเข้าแล้ว ${n} ครั้ง และข้อความ ${k} ข้อความ`;}
+    catch(e){msg.textContent="รหัสไม่ถูกต้อง ตรวจว่าคัดลอกมาครบทั้งข้อความ"}ig.disabled=false;};
+  setupAsk({all,lv,topics,errs,ratings,skips,conf});
+  setupAnswers(conf);
+}
+let samplerP=null;
+async function setupAnswers(conf){
+  const btns=[...$v.querySelectorAll("[data-ans]")]; if(!btns.length) return;
+  samplerP ??= (window.claude?.use?.("sample")??Promise.resolve(null)).catch(()=>null);
+  const sample=await samplerP; if(!sample) return;
+  btns.forEach(b=>{ if(!document.body.contains(b)) return; b.hidden=false; b.onclick=async()=>{
+    const c=conf[+b.dataset.ans], out=document.getElementById("ans-"+b.dataset.ans); b.disabled=true; out.textContent="กำลังร่างคำตอบ…";
+    try{ const {text}=await sample(`ลูกสาว ม.2 กำลังฝึกเรื่อง "${c.topic||""}" แล้วพิมพ์ถามว่า "${c.ask}"${c.prompt?` ระหว่างทำโจทย์นี้: "${c.prompt}"`:" ระหว่างอ่านการ์ดสรุปเนื้อหา"}
+เขียนคำตอบภาษาไทยให้พ่ออ่านให้ลูกฟังได้เลย สั้น 3–6 ประโยค ใช้ภาษาง่าย ยกตัวอย่างตัวเลขเล็กๆ 1 ตัวอย่าง ตอบตรงสิ่งที่ถาม ไม่เฉลยคำตอบของโจทย์ตรงๆ ถ้าคำถามกำกวมให้ตอบความหมายที่น่าจะเป็นที่สุด`,{onText:({text})=>{out.textContent=text}});
+      out.textContent=text }catch(e){ out.textContent="ยังร่างคำตอบไม่ได้ ลองใหม่อีกครั้ง" } b.disabled=false };
+  });
+}
+async function setupAsk(sum){ const skips=sum.skips||[], conf=sum.conf||[];
+  const btn=document.getElementById("ask"); if(!btn) return;
+  samplerP ??= (window.claude?.use?.("sample")??Promise.resolve(null)).catch(()=>null);
+  const sample=await samplerP; if(!sample||!document.body.contains(btn)) return;
+  btn.hidden=false;
+  btn.onclick=async()=>{
+    const out=document.getElementById("out"); btn.disabled=true; out.textContent="กำลังวิเคราะห์ อาจใช้เวลาราวครึ่งนาที…";
+    const real=realAttempts(), rs=real.filter(isLesson), rk=real.filter(isSkip), rv=real.filter(a=>a.type==="vocab"), rp=progressOf(real);
+    const rItems=rs.flatMap(a=>a.items||[]).filter(x=>!x.skipped);
+    if(!rs.length&&!rk.length){ out.textContent="ยังไม่มีข้อมูลจริงให้วิเคราะห์ ข้อมูลตัวอย่างและข้อมูลทดสอบไม่ถูกนับ"; btn.disabled=false; return; }
+    const rLv=[1,2,3].map(l=>{const it=rItems.filter(x=>x.level===l);return {level:l,n:it.length,correct:it.filter(x=>x.correct).length}});
+    const rErr={}; rItems.filter(x=>!x.correct).forEach(x=>(x.errorTypes&&x.errorTypes.length?x.errorTypes:[x.errorType||"unspecified"]).forEach(k=>{rErr[k]=(rErr[k]||0)+1}));
+    const data={skips:rk.map(k=>({date:k.endedAt,reason:k.reason,memo:k.memo})),confused:rs.flatMap(a=>(a.confused||[]).map(c=>({...c,date:a.endedAt}))),notes:fbList.filter(f=>!f.test).slice(0,10).map(f=>f.text),
+      sessions:rs.map(a=>({topic:a.topic,date:a.endedAt,minutes:Math.round(a.durationSec/60),correct:a.correct,total:a.total,rating:a.rating,memo:a.memo,
+      wrong:(a.items||[]).filter(x=>x.correct===false).map(x=>({topic:x.topic,level:x.level,error:x.errorType,hints:x.hints}))})),accuracyByLevel:rLv,errors:rErr,streak:{days:rp.streak,freezeLeft:rp.freeze,goalDays:rp.goalDays},vocab:{sessions:rv.length,correct:rv.reduce((s,a)=>s+a.correct,0),total:rv.reduce((s,a)=>s+a.total,0)}};
+    const _unused={skips:skips.map(k=>({date:k.endedAt,reason:k.reason,memo:k.memo})),confused:conf,sessions:sum.all.map(a=>({topic:a.topic,date:a.endedAt,minutes:Math.round(a.durationSec/60),correct:a.correct,total:a.total,rating:a.rating,memo:a.memo,example:!!a.example,
+      wrong:(a.items||[]).filter(x=>x.correct===false).map(x=>({topic:x.topic,level:x.level,error:x.errorType}))})),accuracyByLevel:sum.lv,errors:sum.errs};
+    try{
+      const {text}=await sample(`คุณเป็นโค้ชการเรียนที่ช่วยพ่อติดตามลูกสาว ม.2 ที่เตรียมสอบเข้า ม.4 แนวโรงเรียนวิทยาศาสตร์ เขียนภาษาไทย สั้น ชัด ไม่เกิน 180 คำ แบ่ง 3 หัวข้อ: "ทำได้ดี", "ต้องระวัง", "พ่อควรทำอะไรสัปดาห์นี้" (2–3 ข้อ ทำได้จริง น้ำเสียงให้กำลังใจ ไม่กดดันลูก) ถ้าข้อมูลน้อย ให้บอกตรงๆ ว่ายังสรุปไม่ได้มาก ใช้เฉพาะข้อมูลที่ให้มา ซึ่งเป็นข้อมูลจริงทั้งหมด\n\nข้อมูล:\n${JSON.stringify(data)}`,
+        {onText:({text})=>{out.textContent=text}});
+      analysisText=text; out.textContent=text;
+    }catch(e){ out.textContent = e.code==="rate_limited"?"เรียกใช้ถี่เกินไป ลองใหม่อีกสักครู่":"ยังวิเคราะห์ไม่ได้ในตอนนี้"; }
+    btn.disabled=false;
+  };
+}
+
+function route(){ const h=location.hash.replace("#",""); if(h==="parent"){view="parent"} else if(h==="map"){view="map"} else if(!["session","intro","feedback","done","skip","send","vocab"].includes(view)){view="home"} else if(view==="done"){view="home"} render() }
+window.addEventListener("hashchange",route);
+route();
+</script>

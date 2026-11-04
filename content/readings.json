@@ -1,0 +1,242 @@
+[
+ {
+  "text": "Mina wanted to draw her cat. First, she made a quick sketch. Then she looked closely to observe the shadow under its chin. She did not get it right the first time, but she was patient. After three tries, the result looked almost alive.",
+  "th": "มินาอยากวาดแมวของเธอ อย่างแรก เธอร่างภาพอย่างเร็วๆ แล้วมองให้ดีเพื่อสังเกตเงาใต้คางของมัน ครั้งแรกเธอยังทำไม่ได้ แต่เธออดทน หลังลองไปสามครั้ง ผลงานก็ดูเกือบเหมือนมีชีวิต",
+  "qs": [
+   {
+    "q": "What did Mina do first?",
+    "opts": [
+     "She made a quick sketch.",
+     "She shaded the shadow.",
+     "She bought a cat.",
+     "She gave up."
+    ],
+    "a": 0,
+    "qth": "มินาทำอะไรเป็นอย่างแรก",
+    "optsTh": [
+     "เธอร่างภาพอย่างเร็วๆ",
+     "เธอแรเงาส่วนที่เป็นเงา",
+     "เธอซื้อแมว",
+     "เธอยอมแพ้"
+    ]
+   },
+   {
+    "q": "Which word means she did not give up easily?",
+    "opts": [
+     "patient",
+     "curious",
+     "ancient",
+     "gentle"
+    ],
+    "a": 0,
+    "qth": "คำไหนแปลว่าเธอไม่ยอมแพ้ง่ายๆ",
+    "optsTh": [
+     "อดทน",
+     "อยากรู้อยากเห็น",
+     "โบราณ",
+     "อ่อนโยน"
+    ]
+   }
+  ]
+ },
+ {
+  "text": "In an experiment, a class put the same amount of sugar into three cups of water. The only variable they changed was the temperature. The sugar dissolved fastest in the hottest cup. Their data shows that heat can increase how fast sugar dissolves.",
+  "th": "ในการทดลอง ห้องเรียนหนึ่งใส่น้ำตาลปริมาณเท่ากันลงในน้ำสามแก้ว ตัวแปรเดียวที่เปลี่ยนคืออุณหภูมิ น้ำตาลละลายเร็วที่สุดในแก้วที่ร้อนที่สุด ข้อมูลของพวกเขาแสดงว่าความร้อนช่วยให้น้ำตาลละลายเร็วขึ้น",
+  "qs": [
+   {
+    "q": "What did the class change?",
+    "opts": [
+     "The temperature",
+     "The amount of sugar",
+     "The type of cup",
+     "The amount of water"
+    ],
+    "a": 0,
+    "qth": "ห้องเรียนเปลี่ยนอะไร",
+    "optsTh": [
+     "อุณหภูมิ",
+     "ปริมาณน้ำตาล",
+     "ชนิดของแก้ว",
+     "ปริมาณน้ำ"
+    ]
+   },
+   {
+    "q": "What does the evidence show?",
+    "opts": [
+     "Heat makes sugar dissolve faster.",
+     "Cold makes sugar dissolve faster.",
+     "Sugar never dissolves.",
+     "All cups were the same."
+    ],
+    "a": 0,
+    "qth": "หลักฐานแสดงว่าอะไร",
+    "optsTh": [
+     "ความร้อนทำให้น้ำตาลละลายเร็วขึ้น",
+     "ความเย็นทำให้น้ำตาลละลายเร็วขึ้น",
+     "น้ำตาลไม่ละลายเลย",
+     "ทุกแก้วเหมือนกันหมด"
+    ]
+   }
+  ]
+ },
+ {
+  "text": "A small robot woke up alone on an island. It did not know how to live there, so it decided to observe the animals. Every day it recorded data: when the birds ate, where the deer slept, and how the weather changed. After one month, the robot could predict the rain one day before it came.",
+  "th": "หุ่นยนต์ตัวเล็กตื่นขึ้นมาตัวคนเดียวบนเกาะ มันไม่รู้ว่าจะอยู่ที่นั่นอย่างไร จึงตัดสินใจสังเกตสัตว์ต่างๆ ทุกวันมันจดข้อมูลไว้ว่า นกกินอาหารเมื่อไร กวางนอนที่ไหน และอากาศเปลี่ยนไปอย่างไร ผ่านไปหนึ่งเดือน หุ่นยนต์ทำนายได้ว่าฝนจะตกล่วงหน้าหนึ่งวัน",
+  "qs": [
+   {
+    "q": "How did the robot learn about the island?",
+    "opts": [
+     "It observed the animals and recorded data.",
+     "It read a book.",
+     "It asked a teacher.",
+     "It already knew everything."
+    ],
+    "a": 0,
+    "qth": "หุ่นยนต์เรียนรู้เรื่องเกาะได้อย่างไร",
+    "optsTh": [
+     "มันสังเกตสัตว์และจดข้อมูลไว้",
+     "มันอ่านหนังสือ",
+     "มันถามครู",
+     "มันรู้ทุกอย่างอยู่แล้ว"
+    ]
+   },
+   {
+    "q": "What does 'predict' mean in this story?",
+    "opts": [
+     "say what will happen before it happens",
+     "forget something",
+     "draw a picture",
+     "sleep for a long time"
+    ],
+    "a": 0,
+    "qth": "คำว่า predict ในเรื่องนี้หมายถึงอะไร",
+    "optsTh": [
+     "บอกว่าจะเกิดอะไรก่อนที่จะเกิดขึ้น",
+     "ลืมบางอย่าง",
+     "วาดรูป",
+     "นอนหลับนานๆ"
+    ]
+   }
+  ]
+ },
+ {
+  "text": "In a 5 vs 5 online game, Mali's team played 20 matches this week. They won 14 matches. Her friend said, \"Our win rate is 14 percent.\" Mali laughed and explained the correct answer. The total was 20, not 100, so the win rate was 14 out of 20.",
+  "th": "ในเกมออนไลน์แบบ 5 ต่อ 5 ทีมของมะลิเล่นไป 20 แมตช์ในสัปดาห์นี้ ชนะ 14 แมตช์ เพื่อนของเธอบอกว่า \"อัตราชนะของเราคือ 14 เปอร์เซ็นต์\" มะลิหัวเราะแล้วอธิบายคำตอบที่ถูก ทั้งหมดคือ 20 ไม่ใช่ 100 อัตราชนะจึงเป็น 14 จาก 20",
+  "qs": [
+   {
+    "q": "What is the team's real win rate?",
+    "opts": [
+     "70 percent",
+     "14 percent",
+     "20 percent",
+     "34 percent"
+    ],
+    "a": 0,
+    "qth": "อัตราชนะจริงของทีมคือเท่าไร",
+    "optsTh": [
+     "70 เปอร์เซ็นต์",
+     "14 เปอร์เซ็นต์",
+     "20 เปอร์เซ็นต์",
+     "34 เปอร์เซ็นต์"
+    ]
+   },
+   {
+    "q": "What mistake did the friend make?",
+    "opts": [
+     "He thought the total was 100.",
+     "He counted the wins wrong.",
+     "He forgot to play.",
+     "He used the average."
+    ],
+    "a": 0,
+    "qth": "เพื่อนผิดตรงไหน",
+    "optsTh": [
+     "เขาคิดว่าทั้งหมดคือ 100",
+     "เขานับจำนวนที่ชนะผิด",
+     "เขาลืมเล่น",
+     "เขาใช้ค่าเฉลี่ย"
+    ]
+   }
+  ]
+ },
+ {
+  "text": "Scientists study pocket-sized creatures in a forest. They estimate the population by catching 40 creatures, putting a small tag on each one, and letting them go. A week later they catch 50 creatures, and 10 of them have tags. Using this ratio, they estimate that about 200 creatures live in the forest.",
+  "th": "นักวิทยาศาสตร์ศึกษาสัตว์ตัวจิ๋วในป่า พวกเขาประมาณจำนวนประชากรโดยจับมา 40 ตัว ติดป้ายเล็กๆ ไว้ทุกตัว แล้วปล่อยไป หนึ่งสัปดาห์ต่อมาจับใหม่ 50 ตัว มี 10 ตัวที่มีป้าย เมื่อใช้อัตราส่วนนี้ พวกเขาประมาณว่ามีสัตว์อยู่ในป่าราว 200 ตัว",
+  "qs": [
+   {
+    "q": "Why did the scientists put tags on the creatures?",
+    "opts": [
+     "To estimate how many live in the forest",
+     "To give them names",
+     "To make them faster",
+     "To sell them"
+    ],
+    "a": 0,
+    "qth": "ทำไมนักวิทยาศาสตร์ต้องติดป้ายให้สัตว์",
+    "optsTh": [
+     "เพื่อประมาณว่ามีสัตว์อยู่ในป่ากี่ตัว",
+     "เพื่อตั้งชื่อให้",
+     "เพื่อให้มันวิ่งเร็วขึ้น",
+     "เพื่อเอาไปขาย"
+    ]
+   },
+   {
+    "q": "Which number shows the ratio of tagged creatures in the second catch?",
+    "opts": [
+     "10 out of 50",
+     "40 out of 50",
+     "10 out of 40",
+     "50 out of 200"
+    ],
+    "a": 0,
+    "qth": "ตัวเลขไหนคืออัตราส่วนของสัตว์ที่มีป้ายในการจับครั้งที่สอง",
+    "optsTh": [
+     "10 จาก 50",
+     "40 จาก 50",
+     "10 จาก 40",
+     "50 จาก 200"
+    ]
+   }
+  ]
+ },
+ {
+  "text": "A dance group of five members practices for a new song. Their teacher measures each member's practice time in hours: 3, 4, 4, 5, and 9. The member who practiced 9 hours was preparing a solo part. The teacher says the median is a better way to describe the usual practice time than the mean.",
+  "th": "วงเต้นที่มีสมาชิกห้าคนซ้อมเพลงใหม่ ครูจดเวลาซ้อมของสมาชิกแต่ละคนเป็นชั่วโมงได้ 3, 4, 4, 5 และ 9 คนที่ซ้อม 9 ชั่วโมงกำลังเตรียมท่อนโซโล่ ครูบอกว่ามัธยฐานบอกเวลาซ้อมตามปกติได้ดีกว่าค่าเฉลี่ย",
+  "qs": [
+   {
+    "q": "What is the median practice time?",
+    "opts": [
+     "4 hours",
+     "5 hours",
+     "9 hours",
+     "3 hours"
+    ],
+    "a": 0,
+    "qth": "มัธยฐานของเวลาซ้อมคือเท่าไร",
+    "optsTh": [
+     "4 ชั่วโมง",
+     "5 ชั่วโมง",
+     "9 ชั่วโมง",
+     "3 ชั่วโมง"
+    ]
+   },
+   {
+    "q": "Why is the median better here?",
+    "opts": [
+     "Because 9 hours is much larger than the others",
+     "Because the mean is always wrong",
+     "Because there are five members",
+     "Because the song is new"
+    ],
+    "a": 0,
+    "qth": "ทำไมมัธยฐานจึงเหมาะกว่าในกรณีนี้",
+    "optsTh": [
+     "เพราะ 9 ชั่วโมงมากกว่าคนอื่นมาก",
+     "เพราะค่าเฉลี่ยผิดเสมอ",
+     "เพราะมีสมาชิกห้าคน",
+     "เพราะเป็นเพลงใหม่"
+    ]
+   }
+  ]
+ }
+]
