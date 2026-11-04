@@ -220,6 +220,18 @@ const ALTS={
 SETS.forEach(s=>{[...s.warm,...s.practice,s.challenge].forEach(q=>q.hints=HINTS[q.id]||[]);s.concept.alts=ALTS[s.id]||[]});
 const SKIP_REASONS=["การบ้านเยอะ","มีสอบ/ต้องอ่านวิชาอื่น","ไม่สบาย","เหนื่อยมาก","มีธุระ/ไปข้างนอก","อื่นๆ"];
 
+/* ---------- test mode: open the page with #test once; results get a "test" tag ---------- */
+let TEST=false;
+try{ if(location.hash==="#test") localStorage.setItem("fieldnote.test","1"); TEST=localStorage.getItem("fieldnote.test")==="1" }catch(e){ TEST=location.hash==="#test" }
+function leaveTest(){
+  try{
+    localStorage.removeItem("fieldnote.test");
+    localStorage.setItem("fieldnote.attempts",JSON.stringify(JSON.parse(localStorage.getItem("fieldnote.attempts")||"[]").filter(x=>!x.test)));
+    localStorage.setItem("fieldnote.fb",JSON.stringify(JSON.parse(localStorage.getItem("fieldnote.fb")||"[]").filter(x=>!x.test)));
+  }catch(e){}
+  TEST=false; attempts=lsRead(); if(location.hash==="#test") location.hash="#home"; view="home"; render();
+}
+
 /* ---------- storage: shared db when available, otherwise this browser only ---------- */
 let db = null, store = "local", attempts = [], unsub = null;
 const LS = "fieldnote.attempts";
@@ -241,6 +253,7 @@ attempts = lsRead();
   }catch(e){ clearTimeout(t) }
 })();
 async function saveAttempt(rec){
+  if(TEST) rec.test=true;
   if(db){
     try{ await db.collection("attempts").add(rec); return "db" }catch(e){}
   }
@@ -272,12 +285,12 @@ function renderSend(all){
     try{await navigator.clipboard.writeText(t.value);m.textContent="คัดลอกแล้ว ไปวางใน LINE ได้เลย"}catch(e){t.focus();t.select();m.textContent="กดค้างที่กล่องรหัสแล้วเลือกคัดลอก"}};
   document.getElementById("sent").onclick=()=>{markSent();view="home";render()};
 }
-async function importCode(raw){
+async function importCode(raw, asTest){
   const m=raw.match(/FIELDNOTE1:([A-Za-z0-9+/=\s]+)/); if(!m) throw new Error("bad");
   const data=JSON.parse(b64d(m[1].replace(/\s/g,"")));
   let n=0,k=0;
-  for(const a of (data.a||[])){ const id=("s-"+(a.setId||a.type)+"-"+a.endedAt).replace(/[^A-Za-z0-9_-]/g,""); const {example,...rest}=a; await db.collection("attempts").doc(id).set({...rest,via:"code"}); n++ }
-  for(const f of (data.f||[])){ const id=("f-"+f.at).replace(/[^A-Za-z0-9_-]/g,""); await db.collection("feedback").doc(id).set(f); k++ }
+  for(const a of (data.a||[])){ const id=("s-"+(a.setId||a.type)+"-"+a.endedAt).replace(/[^A-Za-z0-9_-]/g,""); const {example,...rest}=a; await db.collection("attempts").doc(id).set({...rest,via:"code",test:!!(a.test||asTest)}); n++ }
+  for(const f of (data.f||[])){ const id=("f-"+f.at).replace(/[^A-Za-z0-9_-]/g,""); await db.collection("feedback").doc(id).set({...f,test:!!(f.test||asTest)}); k++ }
   return {n,k};
 }
 
@@ -312,20 +325,24 @@ function render(){
   if(view==="parent") return renderParent();
 }
 
-function realAttempts(){ return attempts.filter(a=>!a.example) }
+function realAttempts(){ return attempts.filter(a=>!a.example&&!a.test) }
 function isSkip(a){ return a.type==="skip" }
 function dayKey(iso){ const d=new Date(iso); d.setHours(0,0,0,0); return d.getTime() }
 
 function renderHome(){
   const days = ["จ","อ","พ","พฤ","ศ","ส","อา"];
   const now = new Date(); const mon = new Date(now); mon.setHours(0,0,0,0); mon.setDate(now.getDate()-((now.getDay()+6)%7));
-  const done = new Set(realAttempts().filter(a=>!isSkip(a)).map(a=>dayKey(a.endedAt)));
-  const skipped = new Set(realAttempts().filter(isSkip).map(a=>dayKey(a.endedAt)));
+  const mine = TEST ? attempts.filter(a=>!a.example) : realAttempts();
+  const done = new Set(mine.filter(a=>!isSkip(a)).map(a=>dayKey(a.endedAt)));
+  const skipped = new Set(mine.filter(isSkip).map(a=>dayKey(a.endedAt)));
   const today = dayKey(new Date().toISOString());
   const dots = days.map((d,k)=>{const t=new Date(mon);t.setDate(mon.getDate()+k);const tk=t.getTime();const on=done.has(tk);const sk=!on&&skipped.has(tk);
     return `<div class="day"><span class="dot ${on?"on":""} ${sk?"rest":""}" title="${on?"ทำแล้ว":sk?"บอกพักไว้แล้ว":"ยังไม่ได้ทำ"}"></span>${tk===today?"<b>วันนี้</b>":d}</div>`}).join("");
   const todayDone = done.has(today)||skipped.has(today);
   $v.innerHTML = `
+  ${TEST?`<section class="card" style="border-color:var(--beak)"><b style="color:var(--beak)">โหมดทดสอบ</b>
+    <p class="small">ผลจากเครื่องนี้จะติดป้าย "ทดสอบ" และไม่ถูกนับในการวิเคราะห์ ลองกดทุกอย่างได้ตามสบาย</p>
+    <button class="btn ghost" id="leave-test">ออกจากโหมดทดสอบ และล้างผลทดสอบในเครื่องนี้</button></section>`:""}
   <section class="card">
     <span class="eyebrow">สัปดาห์นี้</span>
     <div class="week">${dots}</div>
@@ -350,6 +367,7 @@ function renderHome(){
   $v.querySelectorAll(".set").forEach(b=>b.onclick=()=>{introSet=SETS[+b.dataset.k];view="intro";render()});
   document.getElementById("fb-open").onclick=()=>{view="feedback";render()};
   const so=document.getElementById("send-open"); if(so) so.onclick=()=>{view="send";render()};
+  const lt=document.getElementById("leave-test"); if(lt) lt.onclick=leaveTest;
   const sko=document.getElementById("skip-open"); if(sko) sko.onclick=()=>{view="skip";render()};
 }
 let skipPick=null;
@@ -387,7 +405,7 @@ function renderIntro(){
   document.getElementById("back").onclick=()=>{view="home";render()};
 }
 async function saveFeedback(text){
-  const rec={text,at:new Date().toISOString(),after:S?.set?.id||null};
+  const rec={text,at:new Date().toISOString(),after:S?.set?.id||null}; if(TEST) rec.test=true;
   if(db){ try{ await db.collection("feedback").add(rec); return "db" }catch(e){} }
   try{ const a=JSON.parse(localStorage.getItem("fieldnote.fb")||"[]"); a.unshift(rec); localStorage.setItem("fieldnote.fb",JSON.stringify(a)) }catch(e){}
   return "local";
@@ -513,12 +531,12 @@ function renderDone(){
 /* ---------- parent view ---------- */
 let showExamples = true, analysisText = "", fbList = [];
 (async()=>{ const d=await (window.claude?.use?.("db")??Promise.resolve(null)).catch(()=>null); if(!d) return;
-  try{ d.collection("feedback").orderBy("at","desc").limit(30).onSnapshot(s=>{fbList=s.docs.map(x=>x.data());if(view==="parent")render()},()=>{}) }catch(e){} })();
+  try{ d.collection("feedback").orderBy("at","desc").limit(30).onSnapshot(s=>{fbList=s.docs.map(x=>({id:x.id,...x.data()}));if(view==="parent")render()},()=>{}) }catch(e){} })();
 function renderParent(){
   const pool = showExamples ? attempts : realAttempts();
   const all = pool.filter(a=>!isSkip(a)), skips = pool.filter(isSkip);
   const conf = all.flatMap(a=>(a.confused||[]).map(c=>({...c,date:a.endedAt})));
-  const hasEx = attempts.some(a=>a.example);
+  const hasEx = attempts.some(a=>a.example||a.test); const nTest = attempts.filter(a=>a.test).length + fbList.filter(f=>f.test).length;
   const items = all.flatMap(a=>a.items||[]).filter(x=>!x.skipped);
   const mins = Math.round(all.reduce((s,a)=>s+(a.durationSec||0),0)/60);
   const acc = items.length? Math.round(items.filter(x=>x.correct).length/items.length*100):0;
@@ -532,7 +550,8 @@ function renderParent(){
   $v.innerHTML = `
   <section class="card">
     <div class="row" style="justify-content:space-between"><h2>ภาพรวม</h2>
-      ${hasEx?`<label class="small row" style="gap:6px"><input type="checkbox" id="ex" ${showExamples?"checked":""}> แสดงข้อมูลตัวอย่าง</label>`:""}</div>
+      ${hasEx?`<label class="small row" style="gap:6px"><input type="checkbox" id="ex" ${showExamples?"checked":""}> แสดงข้อมูลตัวอย่างและทดสอบ</label>`:""}</div>
+    ${db&&nTest?`<div class="row"><button class="btn ghost" id="deltest">ลบข้อมูลทดสอบ (${nTest} รายการ)</button><span class="small" id="delmsg"></span></div>`:""}
     ${empty?`<p class="muted">ยังไม่มีการฝึก เมื่อลูกทำชุดแรกเสร็จ หรือนำเข้ารหัสจากเครื่องลูก สรุปจะขึ้นที่นี่</p>`:`
     <div class="stats">
       <div class="stat"><b>${all.length}</b><span>ครั้งที่ฝึก</span></div>
@@ -544,6 +563,7 @@ function renderParent(){
   ${db?`<section class="card"><h3>นำเข้าผลจากเครื่องลูก</h3>
     <p class="small muted">วางรหัสที่ลูกส่งมาทาง LINE (ขึ้นต้นด้วย FIELDNOTE1:) ส่งรหัสเดิมซ้ำได้ ระบบไม่นับซ้ำ</p>
     <textarea id="imp" rows="3" style="font-family:var(--mono);font-size:.75rem;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)"></textarea>
+    <label class="small row" style="gap:6px"><input type="checkbox" id="imptest"> นี่คือรหัสจากการทดลองเล่น (ติดป้ายทดสอบ ไม่นับในการวิเคราะห์)</label>
     <div class="row"><button class="btn" id="impgo">นำเข้า</button><span class="small" id="impmsg" aria-live="polite"></span></div></section>`:""}
   ${empty?"":`
   <section class="card"><h3>ความแม่นตามระดับความยาก</h3><div class="bars">
@@ -568,12 +588,12 @@ function renderParent(){
     ${hardRun>=2?`<p class="small" style="color:var(--warn)">ลูกกด "ยาก" ${hardRun} ครั้งจาก 3 ครั้งล่าสุด อาจถึงเวลาลดระดับหรือคุยกันก่อน</p>`:""}
   </section>
   <section class="card"><h3>บันทึกการฝึก</h3><div class="log">
-    ${all.slice(0,10).map(a=>`<div class="logi"><div class="row" style="justify-content:space-between"><b>${esc(a.topic)}</b>${a.example?`<span class="example">ตัวอย่าง</span>`:""}</div>
+    ${all.slice(0,10).map(a=>`<div class="logi"><div class="row" style="justify-content:space-between"><b>${esc(a.topic)}</b>${a.example?`<span class="example">ตัวอย่าง</span>`:a.test?`<span class="example">ทดสอบ</span>`:""}</div>
       <span class="small muted">${new Date(a.endedAt).toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})} · ${Math.round(a.durationSec/60)} นาที · ถูก ${a.correct}/${a.total} · รู้สึก${a.rating||"-"}</span>
       ${a.memo?`<span class="small">“${esc(a.memo)}”</span>`:""}</div>`).join("")}
   </div></section>
   <section class="card"><h3>ข้อความที่ลูกเขียนถึง Claude</h3>
-    ${fbList.length?fbList.slice(0,5).map(f=>`<div class="logi"><span class="small muted">${new Date(f.at).toLocaleDateString("th-TH",{day:"numeric",month:"short"})}</span><span>${esc(f.text)}</span></div>`).join(""):`<p class="muted small">ยังไม่มีข้อความ</p>`}
+    ${fbList.filter(f=>showExamples||!f.test).length?fbList.filter(f=>showExamples||!f.test).slice(0,5).map(f=>`<div class="logi"><span class="small muted">${new Date(f.at).toLocaleDateString("th-TH",{day:"numeric",month:"short"})}${f.test?` <span class="example">ทดสอบ</span>`:""}</span><span>${esc(f.text)}</span></div>`).join(""):`<p class="muted small">ยังไม่มีข้อความ</p>`}
   </section>
   <section class="card"><h3>ให้ Claude วิเคราะห์</h3>
     <p class="small muted">สรุปจุดแข็ง จุดที่ต้องระวัง และคำแนะนำสำหรับพ่อ จากข้อมูลด้านบน</p>
@@ -581,8 +601,14 @@ function renderParent(){
     <p class="analysis" id="out">${esc(analysisText)}</p>
   </section>`}`;
   const ex=document.getElementById("ex"); if(ex) ex.onchange=()=>{showExamples=ex.checked;renderParent()};
+  const dt=document.getElementById("deltest"); if(dt) dt.onclick=async()=>{
+    if(dt.dataset.armed!=="1"){dt.dataset.armed="1";dt.textContent="กดอีกครั้งเพื่อยืนยันการลบ";return}
+    dt.disabled=true; const m=document.getElementById("delmsg"); m.textContent="กำลังลบ…";
+    try{ for(const a of attempts.filter(a=>a.test&&a.id)) await db.collection("attempts").doc(a.id).delete();
+         for(const f of fbList.filter(f=>f.test&&f.id)) await db.collection("feedback").doc(f.id).delete();
+         m.textContent="ลบแล้ว"; }catch(e){ m.textContent="ลบไม่สำเร็จ ลองใหม่อีกครั้ง"; dt.disabled=false } };
   const ig=document.getElementById("impgo"); if(ig) ig.onclick=async()=>{const msg=document.getElementById("impmsg");ig.disabled=true;msg.textContent="กำลังนำเข้า…";
-    try{const {n,k}=await importCode(document.getElementById("imp").value);msg.textContent=`นำเข้าแล้ว ${n} ครั้ง และข้อความ ${k} ข้อความ`;}
+    try{const {n,k}=await importCode(document.getElementById("imp").value, document.getElementById("imptest").checked);msg.textContent=`นำเข้าแล้ว ${n} ครั้ง และข้อความ ${k} ข้อความ`;}
     catch(e){msg.textContent="รหัสไม่ถูกต้อง ตรวจว่าคัดลอกมาครบทั้งข้อความ"}ig.disabled=false;};
   setupAsk({all,lv,topics,errs,ratings,skips,conf});
 }
@@ -594,10 +620,18 @@ async function setupAsk(sum){ const skips=sum.skips||[], conf=sum.conf||[];
   btn.hidden=false;
   btn.onclick=async()=>{
     const out=document.getElementById("out"); btn.disabled=true; out.textContent="กำลังวิเคราะห์ อาจใช้เวลาราวครึ่งนาที…";
-    const data={skips:skips.map(k=>({date:k.endedAt,reason:k.reason,memo:k.memo})),confused:conf,sessions:sum.all.map(a=>({topic:a.topic,date:a.endedAt,minutes:Math.round(a.durationSec/60),correct:a.correct,total:a.total,rating:a.rating,memo:a.memo,example:!!a.example,
+    const real=realAttempts(), rs=real.filter(a=>!isSkip(a)), rk=real.filter(isSkip);
+    const rItems=rs.flatMap(a=>a.items||[]).filter(x=>!x.skipped);
+    if(!rs.length&&!rk.length){ out.textContent="ยังไม่มีข้อมูลจริงให้วิเคราะห์ ข้อมูลตัวอย่างและข้อมูลทดสอบไม่ถูกนับ"; btn.disabled=false; return; }
+    const rLv=[1,2,3].map(l=>{const it=rItems.filter(x=>x.level===l);return {level:l,n:it.length,correct:it.filter(x=>x.correct).length}});
+    const rErr={}; rItems.filter(x=>!x.correct).forEach(x=>{rErr[x.errorType||"unspecified"]=(rErr[x.errorType||"unspecified"]||0)+1});
+    const data={skips:rk.map(k=>({date:k.endedAt,reason:k.reason,memo:k.memo})),confused:rs.flatMap(a=>(a.confused||[]).map(c=>({...c,date:a.endedAt}))),notes:fbList.filter(f=>!f.test).slice(0,10).map(f=>f.text),
+      sessions:rs.map(a=>({topic:a.topic,date:a.endedAt,minutes:Math.round(a.durationSec/60),correct:a.correct,total:a.total,rating:a.rating,memo:a.memo,
+      wrong:(a.items||[]).filter(x=>x.correct===false).map(x=>({topic:x.topic,level:x.level,error:x.errorType,hints:x.hints}))})),accuracyByLevel:rLv,errors:rErr};
+    const _unused={skips:skips.map(k=>({date:k.endedAt,reason:k.reason,memo:k.memo})),confused:conf,sessions:sum.all.map(a=>({topic:a.topic,date:a.endedAt,minutes:Math.round(a.durationSec/60),correct:a.correct,total:a.total,rating:a.rating,memo:a.memo,example:!!a.example,
       wrong:(a.items||[]).filter(x=>x.correct===false).map(x=>({topic:x.topic,level:x.level,error:x.errorType}))})),accuracyByLevel:sum.lv,errors:sum.errs};
     try{
-      const {text}=await sample(`คุณเป็นโค้ชการเรียนที่ช่วยพ่อติดตามลูกสาว ม.2 ที่เตรียมสอบเข้า ม.4 แนวโรงเรียนวิทยาศาสตร์ เขียนภาษาไทย สั้น ชัด ไม่เกิน 180 คำ แบ่ง 3 หัวข้อ: "ทำได้ดี", "ต้องระวัง", "พ่อควรทำอะไรสัปดาห์นี้" (2–3 ข้อ ทำได้จริง น้ำเสียงให้กำลังใจ ไม่กดดันลูก) ถ้าข้อมูลน้อย ให้บอกตรงๆ ว่ายังสรุปไม่ได้มาก ข้อมูลที่ example=true เป็นข้อมูลตัวอย่าง ให้ระบุว่าเป็นตัวอย่าง\n\nข้อมูล:\n${JSON.stringify(data)}`,
+      const {text}=await sample(`คุณเป็นโค้ชการเรียนที่ช่วยพ่อติดตามลูกสาว ม.2 ที่เตรียมสอบเข้า ม.4 แนวโรงเรียนวิทยาศาสตร์ เขียนภาษาไทย สั้น ชัด ไม่เกิน 180 คำ แบ่ง 3 หัวข้อ: "ทำได้ดี", "ต้องระวัง", "พ่อควรทำอะไรสัปดาห์นี้" (2–3 ข้อ ทำได้จริง น้ำเสียงให้กำลังใจ ไม่กดดันลูก) ถ้าข้อมูลน้อย ให้บอกตรงๆ ว่ายังสรุปไม่ได้มาก ใช้เฉพาะข้อมูลที่ให้มา ซึ่งเป็นข้อมูลจริงทั้งหมด\n\nข้อมูล:\n${JSON.stringify(data)}`,
         {onText:({text})=>{out.textContent=text}});
       analysisText=text; out.textContent=text;
     }catch(e){ out.textContent = e.code==="rate_limited"?"เรียกใช้ถี่เกินไป ลองใหม่อีกสักครู่":"ยังวิเคราะห์ไม่ได้ในตอนนี้"; }
