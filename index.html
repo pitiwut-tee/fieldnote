@@ -414,9 +414,9 @@ const SPELLS=[
 /* ---------- daily vocabulary: general academic words + science/math words + story/art words ---------- */
 const VOCAB=[
 ["increase","เพิ่มขึ้น","The number of fans increased after episode 5.","gen"],["decrease","ลดลง","Oxygen in water decreases when it gets hot.","sci"],
-["sketch","ภาพร่าง","She made a quick sketch of the cat.","art"],["average","ค่าเฉลี่ย","The average score was 8.","sci"],
-["journey","การเดินทาง","Their journey took ten years.","art"],["compare","เปรียบเทียบ","Compare the two graphs.","gen"],
+["sketch","ภาพร่าง","She made a quick sketch of the cat.","art"],["compare","เปรียบเทียบ","Compare the two graphs.","gen"],
 ["ratio","อัตราส่วน","Mix blue and yellow in a 2 : 5 ratio.","sci"],["spell","คาถา","The mage learned a new spell.","art"],
+["average","ค่าเฉลี่ย","The average score was 8.","sci"],["journey","การเดินทาง","Their journey took ten years.","art"],
 ["describe","บรรยาย อธิบายลักษณะ","Describe what you see in the picture.","gen"],["dissolve","ละลาย","Sugar dissolves in warm water.","sci"],
 ["apprentice","ลูกศิษย์ ผู้ฝึกหัด","The apprentice practiced every day.","art"],["measure","วัด","Measure the length of the leaf.","gen"],
 ["temperature","อุณหภูมิ","The temperature dropped at night.","sci"],["brave","กล้าหาญ","A brave hero is not always strong.","art"],
@@ -786,17 +786,12 @@ function renderHome(){
   ${store!=="db"&&(unsent().a.length||unsent().f.length)?`<section class="card"><h3>มีผลที่ยังไม่ได้ส่งให้พ่อ ${unsent().a.length} ครั้ง</h3>
     <p class="small muted">ผลเก็บไว้ในเครื่องนี้ ส่งให้พ่อผ่าน LINE ได้ในไม่กี่วินาที ส่งสะสมหลายวันทีเดียวก็ได้</p>
     <button class="btn" id="send-open">ส่งผลให้พ่อ</button></section>`:""}
-  <section class="card"><h3>อยากบอกอะไร Claude ไหม</h3>
-    <p class="small muted">นี่คือรุ่นทดลอง ตรงไหนน่าเบื่อ ยากไป อยากได้โจทย์แบบไหน หรืออยากเปลี่ยนชื่อ เปลี่ยนหน้าตา พิมพ์บอกได้ตรงนี้ ข้อความจะส่งไปพร้อมผลฝึกตอนกดส่งให้พ่อ แล้วพ่อจะเอาไปให้ Claude ปรับรุ่นถัดไป (พ่ออ่านได้ด้วยนะ)</p>
-    <p class="small">ชื่อ "สมุดคาถา" เป็นชื่อชั่วคราว ถ้าอยากตั้งชื่อเอง เขียนบอกได้เลย</p>
-    <button class="btn ghost" id="fb-open">เขียนถึง Claude</button></section>
   ${store!=="db"?`<details class="small muted"><summary>ตั้งค่าเครื่องนี้</summary>
     <p style="margin:8px 0">ลบเฉพาะผลที่<b>ยังไม่ได้ส่งให้พ่อ</b> (${unsent().a.length} ครั้ง) เช่น ตอนผู้ใหญ่ลองเล่น ผลที่ส่งแล้ว สตรีคจากวันเหล่านั้น และคำศัพท์ที่เรียนไว้ยังอยู่ครบ</p>
     <button class="btn ghost" id="wipe" ${unsent().a.length||unsent().f.length?"":"disabled"}>ลบผลที่ยังไม่ได้ส่ง</button> <span id="wipemsg"></span></details>`:""}`;
   document.getElementById("go-rec").onclick=()=>{introSet=rec;view="intro";render()};
   document.getElementById("other").onclick=()=>{showAll=!showAll;renderHome()};
   $v.querySelectorAll(".set").forEach(b=>b.onclick=()=>{introSet=SETS[+b.dataset.k];view="intro";render()});
-  document.getElementById("fb-open").onclick=()=>{view="feedback";render()};
   const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
   on("send-open",()=>{view="send";render()});
   on("leave-test",leaveTest);
@@ -1147,8 +1142,7 @@ function renderDone(){
       ${r.type!=="review"&&pool.length?`<button class="btn ghost" id="d-review">ทบทวนข้อที่เคยพลาด ${Math.min(5,pool.length)} ข้อ</button>`:""}
       ${S.where==="local"?`<button class="btn ghost" id="send2">ส่งผลให้พ่อ</button>`:""}
       <button class="btn ghost" id="home">กลับหน้าแรก</button>
-    </div>
-    <button class="btn ghost" id="fb2" style="border:0;padding-left:0">เขียนถึง Claude</button></section>`;
+    </div></section>`;
   const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
   on("send2",()=>{view="send";render()});
   on("fb2",()=>{view="feedback";render()});
