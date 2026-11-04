@@ -71,6 +71,11 @@ details.ask[open]{display:flex}
 #pad-canvas{flex:1;width:100%;touch-action:none;background-image:linear-gradient(var(--line) 1px,transparent 1px);background-size:100% 32px}
 body.padopen .wrap{padding-bottom:calc(48vh + 70px)}
 body.padopen .padfab{bottom:calc(48vh + 10px)}
+@media (min-width:700px){
+  .pad{left:auto;top:0;bottom:0;right:0;width:50vw;height:auto;border-top:0;border-left:2px solid var(--line);box-shadow:-4px 0 16px rgba(0,0,0,.12)}
+  body.padopen .wrap{padding-bottom:48px;margin-left:0;margin-right:50vw;max-width:none;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:20px}
+  body.padopen .padfab{top:calc(6px + env(safe-area-inset-top,0px));bottom:auto;right:14px;padding:7px 14px}
+}
 .opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 12%,var(--card))}
 .opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--card))}
 .opt:disabled{cursor:default}
@@ -155,7 +160,7 @@ button.spell{cursor:pointer} button.spell:hover{border-color:var(--accent)}
 </div>
 
 <script>
-const ERR = {concept:"ยังไม่เข้าใจหลัก", read:"อ่านโจทย์พลาด", unclear:"โจทย์กำกวม อ่านแล้วไม่เข้าใจ", calc:"คิดเลขผิด", guess:"เดา", dontknow:"คิดไม่ออก (กดดูเฉลย)"};
+const ERR = {concept:"ยังไม่เข้าใจหลัก", read:"อ่านโจทย์พลาด", misopt:"อ่านตัวเลือกผิด", unclear:"โจทย์กำกวม อ่านแล้วไม่เข้าใจ", calc:"คิดเลขผิด", guess:"เดา", dontknow:"คิดไม่ออก (กดดูเฉลย)"};
 const LV = {1:"ระดับ 1 · พื้นฐาน",2:"ระดับ 2 · ประยุกต์",3:"ระดับ 3 · แนวคิดวิเคราะห์"};
 
 const SETS = [
@@ -414,6 +419,17 @@ function leaveTest(){
   }catch(e){}
   TEST=false; attempts=lsRead(); if(location.hash==="#test") location.hash="#home"; view="home"; render();
 }
+
+/* ---------- fresh start on 5 Nov 2026: the trial day (4 Nov) is cleared from this browser, once ---------- */
+const START_DAY=new Date(2026,10,5).getTime();
+try{
+  if(Date.now()>=START_DAY&&localStorage.getItem("fieldnote.epoch")!=="2"){
+    ["fieldnote.attempts","fieldnote.fb","fieldnote.vocab","fieldnote.inprogress","fieldnote.test"].forEach(k=>localStorage.removeItem(k));
+    localStorage.setItem("fieldnote.epoch","2");
+  }
+  const keep=JSON.parse(localStorage.getItem("fieldnote.attempts")||"[]").filter(a=>new Date(a.endedAt).getTime()>=START_DAY);
+  localStorage.setItem("fieldnote.attempts",JSON.stringify(keep));
+}catch(e){}
 
 /* ---------- storage: shared db when available, otherwise this browser only ---------- */
 let db = null, store = "local", attempts = [], unsub = null;
@@ -703,8 +719,8 @@ function renderHome(){
     <p class="small">ชื่อ "สมุดคาถา" เป็นชื่อชั่วคราว ถ้าอยากตั้งชื่อเอง เขียนบอกได้เลย</p>
     <button class="btn ghost" id="fb-open">เขียนถึง Claude</button></section>
   ${store!=="db"?`<details class="small muted"><summary>ตั้งค่าเครื่องนี้</summary>
-    <p style="margin:8px 0">ล้างผลฝึก คำศัพท์ และสตรีคทั้งหมดที่เก็บในเบราว์เซอร์นี้ ใช้ตอนผู้ใหญ่ลองเล่นแล้วอยากเริ่มใหม่ให้น้อง (ข้อมูลที่ส่งให้พ่อแล้วไม่หาย)</p>
-    <button class="btn ghost" id="wipe">ล้างข้อมูลในเครื่องนี้</button> <span id="wipemsg"></span></details>`:""}`;
+    <p style="margin:8px 0">ลบเฉพาะผลที่<b>ยังไม่ได้ส่งให้พ่อ</b> (${unsent().a.length} ครั้ง) เช่น ตอนผู้ใหญ่ลองเล่น ผลที่ส่งแล้ว สตรีคจากวันเหล่านั้น และคำศัพท์ที่เรียนไว้ยังอยู่ครบ</p>
+    <button class="btn ghost" id="wipe" ${unsent().a.length||unsent().f.length?"":"disabled"}>ลบผลที่ยังไม่ได้ส่ง</button> <span id="wipemsg"></span></details>`:""}`;
   document.getElementById("go-rec").onclick=()=>{introSet=rec;view="intro";render()};
   document.getElementById("other").onclick=()=>{showAll=!showAll;renderHome()};
   $v.querySelectorAll(".set").forEach(b=>b.onclick=()=>{introSet=SETS[+b.dataset.k];view="intro";render()});
@@ -719,8 +735,14 @@ function renderHome(){
   on("vocab-go",startVocab);
   on("review-go",startReview);
   on("wipe",e=>{const b=e.target; if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="กดอีกครั้งเพื่อยืนยัน ลบแล้วกู้คืนไม่ได้";return}
-    try{ Object.keys(localStorage).filter(k=>k.startsWith("fieldnote.")).forEach(k=>localStorage.removeItem(k)) }catch(err){}
-    TEST=false; attempts=[]; showAll=false; view="home"; render(); window.scrollTo({top:0}) });
+    try{
+      lsWrite(lsRead().filter(x=>x.sent));
+      localStorage.setItem("fieldnote.fb",JSON.stringify(lsFb().filter(x=>x.sent)));
+      localStorage.removeItem("fieldnote.inprogress");
+      rebuildVocabState(lsRead());
+    }catch(err){}
+    if(S) S.active=false; if(V) V.active=false;
+    attempts=lsRead(); showAll=false; view="home"; render(); window.scrollTo({top:0}) });
 }
 
 let skipPick=null, skipMode="one", leaveDaysN=3;
@@ -913,8 +935,8 @@ function renderStep(){
   if(ans){
     const head = ans.dontknow?"ไม่เป็นไร มาดูวิธีคิดกัน (0 XP)":ans.correct?YAY[S.i%YAY.length]:OOPS[S.i%OOPS.length];
     fb = `<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answer} ${q.unit}`:""}</b><p>${gloss(q.ex)}</p>
-      ${ans.correct||ans.dontknow?"":`<span class="small muted">พลาดเพราะอะไร (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
-      <div class="why">${Object.entries(ERR).filter(([k])=>k!=="dontknow").map(([k,v])=>`<button data-why="${k}" aria-pressed="${S.why===k}">${v}</button>`).join("")}</div>`}
+      ${ans.correct||ans.dontknow?"":`<span class="small muted">พลาดเพราะอะไร เลือกได้หลายข้อ (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
+      <div class="why">${Object.entries(ERR).filter(([k])=>k!=="dontknow").map(([k,v])=>`<button data-why="${k}" aria-pressed="${(S.why||[]).includes(k)}">${v}</button>`).join("")}</div>`}
       ${ans.correct?"":askHtml("question")}
     </div>
     <button class="btn" id="next">ต่อไป</button>`;
@@ -941,19 +963,19 @@ function renderStep(){
       $v.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{const k=+b.dataset.x; S.struck=S.struck.includes(k)?S.struck.filter(x=>x!==k):[...S.struck,k]; const y=window.scrollY; renderStep(); window.scrollTo({top:y})});
     }
     const hb=document.getElementById("hint"); if(hb) hb.onclick=()=>{S.hints++;const y=window.scrollY;renderStep();window.scrollTo({top:y})};
-    document.getElementById("dontknow").onclick=()=>{S.why="dontknow"; answer({choice:-1,raw:"",correct:false,dontknow:true})};
+    document.getElementById("dontknow").onclick=()=>{S.why=["dontknow"]; answer({choice:-1,raw:"",correct:false,dontknow:true})};
     const sk=document.getElementById("skip"); if(sk) sk.onclick=()=>{S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,skipped:true,timeSec:0});advance()};
   } else {
-    $v.querySelectorAll("[data-why]").forEach(b=>b.onclick=()=>{S.why=b.dataset.why;const y=window.scrollY;renderStep();window.scrollTo({top:y})});
+    $v.querySelectorAll("[data-why]").forEach(b=>b.onclick=()=>{const k=b.dataset.why; S.why=(S.why||[]).includes(k)?S.why.filter(x=>x!==k):[...(S.why||[]),k];const y=window.scrollY;renderStep();window.scrollTo({top:y})});
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
     document.getElementById("next").onclick=()=>{
-      S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":(S.why||"unspecified")),hints:S.hints,struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q});
+      S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q});
       advance();
     };
   }
 }
-function answer(a){ S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=null; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
-function advance(){ S.i++; S.answered=null; S.why=null; S.hints=0; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
+function answer(a){ S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
+function advance(){ S.i++; S.answered=null; S.why=[]; S.hints=0; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
 
 function renderConcept(){
   const c=S.set.concept;
@@ -1232,6 +1254,16 @@ function renderVocab(){
     else document.getElementById("vn").onclick=()=>{ V.rres.push(ans.correct); V.ans=null; if(V.ri+1<V.read.qs.length){V.ri++;renderVocab()} else finishVocab() };
   }
 }
+/* replay the vocabulary sessions that are kept, so removed tries do not leave words half-learned */
+function rebuildVocabState(list){
+  const st={};
+  list.filter(a=>a.type==="vocab").sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt)).forEach(a=>{
+    const t=dayKey(a.endedAt), byWord={};
+    (a.items||[]).forEach(i=>{ if(i.word) byWord[i.word]=(byWord[i.word]??true)&&i.correct });
+    Object.entries(byWord).forEach(([w,ok])=>{ const cur=st[w]?.box||0, box=ok?Math.min(BOX_DAYS.length,cur+1):1; let due=t; for(let k=0;k<BOX_DAYS[box-1];k++) due=nextDay(due); st[w]={box,due} });
+  });
+  saveVocabState(st);
+}
 async function finishVocab(){
   V.active=false;
   try{ if(CAN_SPEAK) speechSynthesis.cancel() }catch(e){}
@@ -1294,11 +1326,11 @@ function renderParent(){
   const acc = items.length? Math.round(items.filter(x=>x.correct).length/items.length*100):0;
   const lv = [1,2,3].map(l=>{const it=items.filter(x=>x.level===l);return {l,n:it.length,p:it.length?Math.round(it.filter(x=>x.correct).length/it.length*100):0}});
   const topics = {}; items.forEach(x=>{(topics[x.topic]??={n:0,c:0}).n++; if(x.correct) topics[x.topic].c++});
-  const errs = {}; items.filter(x=>!x.correct).forEach(x=>{errs[x.errorType||"unspecified"]=(errs[x.errorType||"unspecified"]||0)+1});
+  const errs = {}; items.filter(x=>!x.correct).forEach(x=>(x.errorTypes&&x.errorTypes.length?x.errorTypes:[x.errorType||"unspecified"]).forEach(k=>{errs[k]=(errs[k]||0)+1}));
   const talk = items.filter(x=>!x.correct && (x.errorType==="concept"||x.level===3)).slice(0,3);
   const ratings = all.map(a=>a.rating).filter(Boolean);
   const hardRun = ratings.slice(0,3).filter(r=>r==="ยาก"||r==="ยากมาก").length;
-  const unclear = all.flatMap(a=>(a.items||[]).filter(x=>x.errorType==="unclear").map(x=>({...x,date:a.endedAt})));
+  const unclear = all.flatMap(a=>(a.items||[]).filter(x=>(x.errorType==="unclear"||(x.errorTypes||[]).includes("unclear"))).map(x=>({...x,date:a.endedAt})));
   const empty = !all.length;
   $v.innerHTML = `
   <section class="card">
@@ -1402,7 +1434,7 @@ async function setupAsk(sum){ const skips=sum.skips||[], conf=sum.conf||[];
     const rItems=rs.flatMap(a=>a.items||[]).filter(x=>!x.skipped);
     if(!rs.length&&!rk.length){ out.textContent="ยังไม่มีข้อมูลจริงให้วิเคราะห์ ข้อมูลตัวอย่างและข้อมูลทดสอบไม่ถูกนับ"; btn.disabled=false; return; }
     const rLv=[1,2,3].map(l=>{const it=rItems.filter(x=>x.level===l);return {level:l,n:it.length,correct:it.filter(x=>x.correct).length}});
-    const rErr={}; rItems.filter(x=>!x.correct).forEach(x=>{rErr[x.errorType||"unspecified"]=(rErr[x.errorType||"unspecified"]||0)+1});
+    const rErr={}; rItems.filter(x=>!x.correct).forEach(x=>(x.errorTypes&&x.errorTypes.length?x.errorTypes:[x.errorType||"unspecified"]).forEach(k=>{rErr[k]=(rErr[k]||0)+1}));
     const data={skips:rk.map(k=>({date:k.endedAt,reason:k.reason,memo:k.memo})),confused:rs.flatMap(a=>(a.confused||[]).map(c=>({...c,date:a.endedAt}))),notes:fbList.filter(f=>!f.test).slice(0,10).map(f=>f.text),
       sessions:rs.map(a=>({topic:a.topic,date:a.endedAt,minutes:Math.round(a.durationSec/60),correct:a.correct,total:a.total,rating:a.rating,memo:a.memo,
       wrong:(a.items||[]).filter(x=>x.correct===false).map(x=>({topic:x.topic,level:x.level,error:x.errorType,hints:x.hints}))})),accuracyByLevel:rLv,errors:rErr,streak:{days:rp.streak,freezeLeft:rp.freeze,goalDays:rp.goalDays},vocab:{sessions:rv.length,correct:rv.reduce((s,a)=>s+a.correct,0),total:rv.reduce((s,a)=>s+a.total,0)}};
