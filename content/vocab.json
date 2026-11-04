@@ -313,5 +313,152 @@
   "ex": "Can you solve this puzzle?",
   "exTh": "เธอแก้ปริศนานี้ได้ไหม",
   "cat": "gen"
+ },
+ {
+  "w": "mixture",
+  "th": "ของผสม",
+  "ex": "The apprentice made a mixture of salt and sand by mistake.",
+  "exTh": "ศิษย์ฝึกหัดทำเกลือกับทรายปนกันเป็นของผสมโดยไม่ตั้งใจ",
+  "cat": "sci"
+ },
+ {
+  "w": "separate",
+  "th": "แยกออกจากกัน",
+  "ex": "We can separate sand from water with filter paper.",
+  "exTh": "เราแยกทรายออกจากน้ำได้ด้วยกระดาษกรอง",
+  "cat": "sci"
+ },
+ {
+  "w": "filter",
+  "th": "กรอง / ที่กรอง",
+  "ex": "Filter the muddy water before you boil it.",
+  "exTh": "กรองน้ำขุ่นก่อนนำไปต้ม",
+  "cat": "sci"
+ },
+ {
+  "w": "crystal",
+  "th": "ผลึก",
+  "ex": "Blue crystals grew slowly in the cooling solution.",
+  "exTh": "ผลึกสีฟ้าค่อยๆ โตขึ้นในสารละลายที่เย็นลง",
+  "cat": "sci"
+ },
+ {
+  "w": "boil",
+  "th": "ต้ม / เดือด",
+  "ex": "Water boils at about 100 °C at sea level.",
+  "exTh": "น้ำเดือดที่ประมาณ 100 องศาเซลเซียสที่ระดับน้ำทะเล",
+  "cat": "sci"
+ },
+ {
+  "w": "volume",
+  "th": "ปริมาตร",
+  "ex": "The volume of the cube is 27 cubic centimetres.",
+  "exTh": "ลูกบาศก์นี้มีปริมาตร 27 ลูกบาศก์เซนติเมตร",
+  "cat": "sci"
+ },
+ {
+  "w": "distance",
+  "th": "ระยะทาง",
+  "ex": "The robot measured the distance to the lighthouse.",
+  "exTh": "หุ่นยนต์วัดระยะทางไปถึงประภาคาร",
+  "cat": "sci"
+ },
+ {
+  "w": "practice",
+  "th": "ฝึกซ้อม",
+  "ex": "The dance group practices every evening after school.",
+  "exTh": "ทีมเต้นฝึกซ้อมทุกเย็นหลังเลิกเรียน",
+  "cat": "gen"
+ },
+ {
+  "w": "improve",
+  "th": "พัฒนาให้ดีขึ้น",
+  "ex": "Her drawings improve a little every week.",
+  "exTh": "ภาพวาดของเธอดีขึ้นทีละนิดทุกสัปดาห์",
+  "cat": "gen"
+ },
+ {
+  "w": "choose",
+  "th": "เลือก",
+  "ex": "Choose the answer that makes the most sense.",
+  "exTh": "เลือกคำตอบที่สมเหตุสมผลที่สุด",
+  "cat": "gen"
+ },
+ {
+  "w": "careful",
+  "th": "ระมัดระวัง",
+  "ex": "Be careful when you pour hot water.",
+  "exTh": "ระวังตอนเทน้ำร้อนด้วยนะ",
+  "cat": "gen"
+ },
+ {
+  "w": "discover",
+  "th": "ค้นพบ",
+  "ex": "The explorers discovered a cave full of glowing stones.",
+  "exTh": "นักสำรวจค้นพบถ้ำที่เต็มไปด้วยหินเรืองแสง",
+  "cat": "gen"
+ },
+ {
+  "w": "protect",
+  "th": "ปกป้อง",
+  "ex": "The swordsman promised to protect the village.",
+  "exTh": "นักดาบสัญญาว่าจะปกป้องหมู่บ้าน",
+  "cat": "gen"
+ },
+ {
+  "w": "prepare",
+  "th": "เตรียม",
+  "ex": "She prepared her pencils the night before the exam.",
+  "exTh": "เธอเตรียมดินสอไว้ตั้งแต่คืนก่อนสอบ",
+  "cat": "gen"
+ },
+ {
+  "w": "outline",
+  "th": "เส้นโครงร่าง",
+  "ex": "Draw a light outline first, then add the details.",
+  "exTh": "วาดเส้นโครงร่างบางๆ ก่อน แล้วค่อยเติมรายละเอียด",
+  "cat": "art"
+ },
+ {
+  "w": "brush",
+  "th": "พู่กัน / แปรง",
+  "ex": "Use a soft brush for the sky.",
+  "exTh": "ใช้พู่กันขนนุ่มระบายท้องฟ้า",
+  "cat": "art"
+ },
+ {
+  "w": "rhythm",
+  "th": "จังหวะ",
+  "ex": "The dancers moved together to the rhythm.",
+  "exTh": "นักเต้นขยับพร้อมกันตามจังหวะ",
+  "cat": "art"
+ },
+ {
+  "w": "glow",
+  "th": "เรืองแสง",
+  "ex": "The magic stone began to glow in the dark.",
+  "exTh": "หินเวทเริ่มเรืองแสงในความมืด",
+  "cat": "art"
+ },
+ {
+  "w": "costume",
+  "th": "ชุดแต่งกาย / ชุดคอสตูม",
+  "ex": "She designed a costume for the mage character.",
+  "exTh": "เธอออกแบบชุดให้ตัวละครจอมเวท",
+  "cat": "art"
+ },
+ {
+  "w": "scene",
+  "th": "ฉาก",
+  "ex": "The last scene of the story made everyone cry.",
+  "exTh": "ฉากสุดท้ายของเรื่องทำให้ทุกคนร้องไห้",
+  "cat": "art"
+ },
+ {
+  "w": "detail",
+  "th": "รายละเอียด",
+  "ex": "Look at the small details in the background.",
+  "exTh": "ดูรายละเอียดเล็กๆ ในฉากหลังสิ",
+  "cat": "art"
  }
 ]

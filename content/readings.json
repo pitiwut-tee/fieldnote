@@ -238,5 +238,85 @@
     ]
    }
   ]
+ },
+ {
+  "text": "An apprentice dropped two jars, and the salt and sand spilled out and got mixed together. Her teacher was not angry. \"Let's separate them,\" he said. First, they added water and stirred until the salt dissolved. Then they used a filter to catch the sand. Last, they left the salty water near a warm window. After a few days, small white crystals appeared.",
+  "th": "ศิษย์ฝึกหัดทำโหลหล่นสองใบ เกลือกับทรายจึงหล่นปนกันเป็นของผสม อาจารย์ไม่โกรธ \"มาแยกมันกันเถอะ\" เขาพูด อย่างแรก พวกเขาเติมน้ำแล้วคนจนเกลือละลาย จากนั้นใช้ที่กรองดักทรายไว้ สุดท้าย พวกเขาวางน้ำเกลือไว้ใกล้หน้าต่างที่อุ่นๆ ผ่านไปไม่กี่วัน ผลึกสีขาวเล็กๆ ก็ปรากฏขึ้น",
+  "qs": [
+   {
+    "q": "What did they use to catch the sand?",
+    "opts": [
+     "a filter",
+     "a magnet",
+     "a brush",
+     "a warm window"
+    ],
+    "a": 0,
+    "qth": "พวกเขาใช้อะไรดักทราย",
+    "optsTh": [
+     "ที่กรอง",
+     "แม่เหล็ก",
+     "พู่กัน",
+     "หน้าต่างที่อุ่นๆ"
+    ]
+   },
+   {
+    "q": "Where did the white crystals come from?",
+    "opts": [
+     "the salty water",
+     "the sand",
+     "the broken jar",
+     "the teacher's pocket"
+    ],
+    "a": 0,
+    "qth": "ผลึกสีขาวมาจากไหน",
+    "optsTh": [
+     "น้ำเกลือ",
+     "ทราย",
+     "โหลที่แตก",
+     "กระเป๋าของอาจารย์"
+    ]
+   }
+  ]
+ },
+ {
+  "text": "Ploy is drawing a map for her fantasy story. On her map, 1 centimetre stands for 2 kilometres. On the map, the castle and the forest are 5 centimetres apart. She draws a light outline of the river first. Then she adds small details, like bridges and boats, with a thin brush.",
+  "th": "พลอยกำลังวาดแผนที่สำหรับเรื่องแฟนตาซีของเธอ บนแผนที่ 1 เซนติเมตรแทนระยะ 2 กิโลเมตร บนแผนที่ ปราสาทกับป่าห่างกัน 5 เซนติเมตร เธอวาดเส้นโครงร่างของแม่น้ำบางๆ ก่อน แล้วจึงเติมรายละเอียดเล็กๆ อย่างสะพานและเรือด้วยพู่กันเส้นเล็ก",
+  "qs": [
+   {
+    "q": "How far is the castle from the forest in the story world?",
+    "opts": [
+     "10 kilometres",
+     "5 kilometres",
+     "2 kilometres",
+     "7 kilometres"
+    ],
+    "a": 0,
+    "qth": "ในโลกของเรื่อง ปราสาทอยู่ห่างจากป่าเท่าไร",
+    "optsTh": [
+     "10 กิโลเมตร",
+     "5 กิโลเมตร",
+     "2 กิโลเมตร",
+     "7 กิโลเมตร"
+    ]
+   },
+   {
+    "q": "What does Ploy draw first?",
+    "opts": [
+     "a light outline of the river",
+     "the bridges",
+     "the boats",
+     "the castle walls"
+    ],
+    "a": 0,
+    "qth": "พลอยวาดอะไรก่อน",
+    "optsTh": [
+     "เส้นโครงร่างบางๆ ของแม่น้ำ",
+     "สะพาน",
+     "เรือ",
+     "กำแพงปราสาท"
+    ]
+   }
+  ]
  }
 ]
