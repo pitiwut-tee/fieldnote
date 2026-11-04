@@ -256,7 +256,7 @@ const ALTS={
 SETS.forEach(s=>{[...s.warm,...s.practice,s.challenge].forEach(q=>q.hints=HINTS[q.id]||[]);s.concept.alts=ALTS[s.id]||[]});
 const SKIP_REASONS=["การบ้านเยอะ","มีสอบ/ต้องอ่านวิชาอื่น","ไม่สบาย","เหนื่อยมาก","มีธุระ/ไปข้างนอก","อื่นๆ"];
 /* ---------- spell map (from the curriculum map doc): id, realm, magic name, topic, grade, exam stars, school status ---------- */
-const REALMS={num:"🔢 สำนักตัวเลข",alg:"📜 สำนักอักษรลับ",geo:"📐 สำนักรูปทรง",dat:"🔭 สำนักพยากรณ์",mat:"🧪 สำนักแปรธาตุ",life:"🌱 สำนักชีวิต",pow:"⚡ สำนักพลัง",sky:"🌏 สำนักดวงดาว",lab:"🔎 สำนักนักสังเกต"};
+const REALMS={num:"🔢 สำนักตัวเลข",alg:"📜 สำนักอักษรลับ",geo:"📐 สำนักรูปทรง",dat:"🔭 สำนักพยากรณ์",mat:"🧪 สำนักแปรธาตุ",life:"🌱 สำนักชีวิต",pow:"⚡ สำนักพลัง",sky:"🌏 สำนักดวงดาว",lab:"🔎 สำนักนักสังเกต",tech:"⚙️ สำนักกลไก (วมว. รอบสอง)"};
 const SCHOOL={done:"เรียนแล้ว",maybe:"น่าจะเรียนแล้ว",now:"กำลังเรียนอยู่",part:"เรียนบางส่วน",not:"ยังไม่ได้เรียนที่โรงเรียน"};
 const SPELLS=[
 ["m1","num","คาถานับไม่พลาด","จำนวนเต็ม เศษส่วน ทศนิยม","ม.1",2,"done"],
@@ -291,21 +291,25 @@ const SPELLS=[
 ["s7","life","คาถาผ่านเยื่อ","เซลล์และการลำเลียงสาร","ม.1",0,"done"],
 ["s8","life","คาถาใบไม้กินแสง","พืช: สังเคราะห์แสง ลำเลียง สืบพันธุ์","ม.1",0,"done"],
 ["s9","life","คาถารู้จักร่างกาย","ระบบร่างกายมนุษย์","ม.2",0,"maybe"],
-["s10","life","คาถาสืบสายเลือด","พันธุศาสตร์","ม.3",0,"not"],
+["s10","life","คาถาสืบสายเลือด","พันธุศาสตร์และเทคโนโลยีชีวภาพ","ม.3",0,"not"],
 ["s11","life","คาถาสายใยป่า","ระบบนิเวศ","ม.3",0,"not"],
 ["s12","pow","คาถาไฟอุ่น","อุณหภูมิและความร้อน","ม.1",0,"done"],
 ["s13","pow","คาถาผลักดึง","แรงลัพธ์และแรงเสียดทาน","ม.2",0,"maybe"],
 ["s14","pow","คาถาลอยน้ำ","ความดันและแรงลอยตัว","ม.2",0,"maybe"],
 ["s15","pow","คาถาคานงัด","โมเมนต์และคาน","ม.2",0,"part"],
 ["s16","pow","คาถาพลังเคลื่อนไหว","การเคลื่อนที่ งาน พลังงาน","ม.2",0,"part"],
-["s17","pow","คาถาสายฟ้า","ไฟฟ้าและวงจร","ม.3",0,"not"],
+["s17","pow","คาถาสายฟ้า","ไฟฟ้า วงจร และอิเล็กทรอนิกส์เบื้องต้น","ม.3",0,"not"],
 ["s18","pow","คาถาหักเหแสง","คลื่นและแสง","ม.3",0,"not"],
 ["s19","sky","คาถาเรียกลม","บรรยากาศและลมฟ้าอากาศ","ม.1",0,"done"],
 ["s20","sky","คาถาฟังเสียงหิน","ดิน หิน น้ำ ธรณีพิบัติ","ม.2",0,"part"],
 ["s21","sky","คาถาดวงดาว","ระบบสุริยะและอวกาศ","ม.3",0,"not"],
+["s25","sky","คาถาอ่านแผนที่โลก","ภูมิศาสตร์: แผนที่ ภูมิอากาศ ภัยธรรมชาติ","ม.1–3",0,"part"],
 ["s22","lab","คาถาทดลองยุติธรรม","ตัวแปรและการออกแบบการทดลอง","ทุกชั้น",0,"done"],
 ["s23","lab","คาถาอ่านกราฟ","อ่านกราฟ ตาราง แปลผลข้อมูล","ทุกชั้น",0,"done"],
-["s24","lab","คาถาสรุปจากหลักฐาน","อ่านบทความวิทย์แล้วลงข้อสรุป","ทุกชั้น",0,"not"]
+["s24","lab","คาถาสรุปจากหลักฐาน","อ่านบทความวิทย์แล้วลงข้อสรุป","ทุกชั้น",0,"not"],
+["t1","tech","คาถาลำดับขั้น","วิทยาการคำนวณ: อัลกอริทึม เงื่อนไข การวนซ้ำ","ม.1–3",0,"part"],
+["t2","tech","คาถานักประดิษฐ์","กระบวนการออกแบบเชิงวิศวกรรม","ม.1–3",0,"part"],
+["t3","tech","คาถาข้อมูลปลอดภัย","ข้อมูล สารสนเทศ และการใช้เทคโนโลยีอย่างปลอดภัย","ม.1–3",0,"part"]
 ].map(([id,realm,name,topic,grade,stars,school])=>({id,realm,name,topic,grade,stars,school}));
 
 /* ---------- daily vocabulary: general academic words + science/math words + story/art words ---------- */
@@ -340,7 +344,19 @@ const READINGS=[
      {q:"Which word means she did not give up easily?",opts:["patient","curious","ancient","gentle"],a:0}]},
 {text:"In an experiment, a class put the same amount of sugar into three cups of water. The only variable they changed was the temperature. The sugar dissolved fastest in the hottest cup. Their data shows that heat can increase how fast sugar dissolves.",
  qs:[{q:"What did the class change?",opts:["The temperature","The amount of sugar","The type of cup","The amount of water"],a:0},
-     {q:"What does the evidence show?",opts:["Heat makes sugar dissolve faster.","Cold makes sugar dissolve faster.","Sugar never dissolves.","All cups were the same."],a:0}]}
+     {q:"What does the evidence show?",opts:["Heat makes sugar dissolve faster.","Cold makes sugar dissolve faster.","Sugar never dissolves.","All cups were the same."],a:0}]},
+{text:"A small robot woke up alone on an island. It did not know how to live there, so it decided to observe the animals. Every day it recorded data: when the birds ate, where the deer slept, and how the weather changed. After one month, the robot could predict the rain one day before it came.",
+ qs:[{q:"How did the robot learn about the island?",opts:["It observed the animals and recorded data.","It read a book.","It asked a teacher.","It already knew everything."],a:0},
+     {q:"What does 'predict' mean in this story?",opts:["say what will happen before it happens","forget something","draw a picture","sleep for a long time"],a:0}]},
+{text:"In a 5 vs 5 online game, Mali's team played 20 matches this week. They won 14 matches. Her friend said, \"Our win rate is 14 percent.\" Mali laughed and explained the correct answer. The total was 20, not 100, so the win rate was 14 out of 20.",
+ qs:[{q:"What is the team's real win rate?",opts:["70 percent","14 percent","20 percent","34 percent"],a:0},
+     {q:"What mistake did the friend make?",opts:["He thought the total was 100.","He counted the wins wrong.","He forgot to play.","He used the average."],a:0}]},
+{text:"Scientists study pocket-sized creatures in a forest. They estimate the population by catching 40 creatures, putting a small tag on each one, and letting them go. A week later they catch 50 creatures, and 10 of them have tags. Using this ratio, they estimate that about 200 creatures live in the forest.",
+ qs:[{q:"Why did the scientists put tags on the creatures?",opts:["To estimate how many live in the forest","To give them names","To make them faster","To sell them"],a:0},
+     {q:"Which number shows the ratio of tagged creatures in the second catch?",opts:["10 out of 50","40 out of 50","10 out of 40","50 out of 200"],a:0}]},
+{text:"A dance group of five members practices for a new song. Their teacher measures each member's practice time in hours: 3, 4, 4, 5, and 9. The member who practiced 9 hours was preparing a solo part. The teacher says the median is a better way to describe the usual practice time than the mean.",
+ qs:[{q:"What is the median practice time?",opts:["4 hours","5 hours","9 hours","3 hours"],a:0},
+     {q:"Why is the median better here?",opts:["Because 9 hours is much larger than the others","Because the mean is always wrong","Because there are five members","Because the song is new"],a:0}]}
 ];
 
 
@@ -389,14 +405,28 @@ function b64d(x){return new TextDecoder().decode(Uint8Array.from(atob(x),c=>c.ch
 function lsFb(){ try{ return JSON.parse(localStorage.getItem("fieldnote.fb")||"[]") }catch(e){ return [] } }
 function unsent(){ return {a:lsRead().filter(x=>!x.sent), f:lsFb().filter(x=>!x.sent)} }
 function markSent(){ lsWrite(lsRead().map(x=>({...x,sent:true}))); try{localStorage.setItem("fieldnote.fb",JSON.stringify(lsFb().map(x=>({...x,sent:true}))))}catch(e){} attempts=lsRead() }
-function exportCode(all){ const a=all?lsRead():unsent().a, f=all?lsFb():unsent().f; return (a.length||f.length)?"FIELDNOTE1:"+b64e(JSON.stringify({a:a.map(({sent,...x})=>x),f:f.map(({sent,...x})=>x)})):"" }
+/* short code: drop text the parent page can look up again by question id, then deflate */
+function slim(a){ const {sent,...x}=a; return {...x, items:(x.items||[]).map(({prompt,phase,topic,spell,...i})=>i), confused:(x.confused||[]).map(({prompt,...c})=>c)} }
+function fatten(a){ return {...a, items:(a.items||[]).map(i=>{const q=QBANK[i.qid]?.q; return q?{topic:q.topic,spell:q.spell,prompt:q.q,...i}:i}),
+  confused:(a.confused||[]).map(c=>{const q=QBANK[c.qid]?.q; return q&&!c.prompt?{...c,prompt:q.q}:c})} }
+async function packCode(obj){
+  const json=JSON.stringify(obj);
+  if(typeof CompressionStream==="function"){ try{
+    const buf=new Uint8Array(await new Response(new Blob([json]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
+    let t=""; for(let i=0;i<buf.length;i+=0x8000) t+=String.fromCharCode.apply(null,buf.subarray(i,i+0x8000));
+    return "SK2:"+btoa(t).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  }catch(e){} }
+  return "FIELDNOTE1:"+b64e(json);
+}
+async function exportCode(all){ const a=all?lsRead():unsent().a, f=all?lsFb():unsent().f; return (a.length||f.length)?await packCode({a:a.map(slim),f:f.map(({sent,...x})=>x)}):"" }
 
-function renderSend(all){
-  const u=unsent(); const code=exportCode(all);
+async function renderSend(all){
+  const u=unsent(); const code=await exportCode(all);
   $v.innerHTML=`<section class="card"><h2>ส่งผลให้พ่อ</h2>
     ${code?`<p>มีผลฝึก <b>${all?lsRead().length:u.a.length}</b> ครั้ง และข้อความถึง Claude <b>${all?lsFb().length:u.f.length}</b> ข้อความ ที่ยังไม่ได้ส่ง</p>
     <ol style="margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px">
       <li>กด <b>คัดลอกรหัส</b></li><li>เปิด LINE แล้ววางส่งให้พ่อ</li><li>กลับมากด <b>ส่งเรียบร้อยแล้ว</b></li></ol>
+    <p class="small muted">รหัสยาว ${code.length.toLocaleString()} ตัวอักษร</p>
     <textarea id="code" readonly rows="4" style="font-family:var(--mono);font-size:.75rem;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">${code}</textarea>
     <div class="row"><button class="btn" id="copy">คัดลอกรหัส</button><button class="btn ghost" id="sent">ส่งเรียบร้อยแล้ว</button></div>
     <p class="small" id="cmsg" aria-live="polite"></p>`:`<p class="muted">ส่งครบทุกครั้งแล้ว ไม่มีผลค้างส่ง</p>
@@ -410,10 +440,13 @@ function renderSend(all){
   document.getElementById("sent").onclick=()=>{markSent();view="home";render()};
 }
 async function importCode(raw, asTest){
-  const m=raw.match(/FIELDNOTE1:([A-Za-z0-9+/=\s]+)/); if(!m) throw new Error("bad");
-  const data=JSON.parse(b64d(m[1].replace(/\s/g,"")));
+  let data; const m2=raw.match(/SK2:([A-Za-z0-9_-]+)/), m1=raw.match(/FIELDNOTE1:([A-Za-z0-9+/=\s]+)/);
+  if(m2){ const c=m2[1].replace(/-/g,"+").replace(/_/g,"/"); const bin=atob(c+"=".repeat((4-c.length%4)%4));
+    const bytes=Uint8Array.from(bin,ch=>ch.charCodeAt(0));
+    data=JSON.parse(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text()); }
+  else if(m1) data=JSON.parse(b64d(m1[1].replace(/\s/g,""))); else throw new Error("bad");
   let n=0,k=0;
-  for(const a of (data.a||[])){ const id=("s-"+(a.setId||a.type)+"-"+a.endedAt).replace(/[^A-Za-z0-9_-]/g,""); const {example,...rest}=a; await db.collection("attempts").doc(id).set({...rest,via:"code",test:!!(a.test||asTest)}); n++ }
+  for(const a of (data.a||[])){ const id=("s-"+(a.setId||a.type)+"-"+a.endedAt).replace(/[^A-Za-z0-9_-]/g,""); const {example,...rest}=fatten(a); await db.collection("attempts").doc(id).set({...rest,via:"code",test:!!(a.test||asTest)}); n++ }
   for(const f of (data.f||[])){ const id=("f-"+f.at).replace(/[^A-Za-z0-9_-]/g,""); await db.collection("feedback").doc(id).set({...f,test:!!(f.test||asTest)}); k++ }
   return {n,k};
 }
@@ -589,7 +622,7 @@ function renderHome(){
   ${showAll?`<section class="sets">${SETS.map((s,k)=>s===rec?"":setCard(s,k)).join("")}</section>`:""}
   <section class="sets">
     <div class="card"><h3>คำศัพท์วันนี้ <span class="small muted" style="font-family:var(--body)">· ราว 5 นาที</span></h3>
-      <p class="small muted">${vocabDone?"วันนี้ทำแล้ว เก่งมาก":vt.fresh.length||vt.due.length?`คำใหม่ ${vt.fresh.length} คำ · ทบทวน ${vt.due.length} คำ${isWeekend()?" · มีอ่านสั้นๆ วันหยุด":""}`:"วันนี้ไม่มีคำค้าง"}</p>
+      <p class="small muted">${vocabDone?"วันนี้ทำแล้ว เก่งมาก":vt.fresh.length||vt.due.length?`คำใหม่ ${vt.fresh.length} คำ · ทบทวน ${vt.due.length} คำ${isWeekend()?" · มีอ่านภาษาอังกฤษสั้นๆ":""}`:"วันนี้ไม่มีคำค้าง"}</p>
       ${!vocabDone&&(vt.fresh.length||vt.due.length)?`<button class="btn ghost" id="vocab-go">เริ่มคำศัพท์</button>`:""}</div>
     <div class="card"><h3>ทบทวนข้อที่เคยพลาด</h3>
       <p class="small muted">${pool.length?`มีค้างอยู่ ${pool.length} ข้อ ครั้งนี้ทำ ${Math.min(5,pool.length)} ข้อ ตัวเลือกจะสลับที่ใหม่`:"ยังไม่มีข้อค้าง"}</p>
@@ -814,7 +847,7 @@ function renderDone(){
 const BOX_DAYS=[1,2,4,7,14];
 function vocabState(){ try{ return JSON.parse(localStorage.getItem("fieldnote.vocab")||"{}") }catch(e){ return {} } }
 function saveVocabState(v){ try{ localStorage.setItem("fieldnote.vocab",JSON.stringify(v)) }catch(e){} }
-function isWeekend(){ const d=new Date().getDay(); return d===0||d===6 }
+function isWeekend(){ const d=new Date().getDay(); return d===0||d===3||d===6 }
 function vocabToday(){
   const st=vocabState(), t=todayKey();
   return {due:VOCAB.filter(x=>st[x.w]&&st[x.w].due<=t).sort((a,b)=>st[a.w].due-st[b.w].due).slice(0,10), fresh:VOCAB.filter(x=>!st[x.w]).slice(0,5)};
@@ -827,7 +860,7 @@ function vOpts(word,dir){
 function startVocab(){
   const {due,fresh}=vocabToday(); if(!due.length&&!fresh.length) return;
   const quiz=[...fresh.map(w=>({w,dir:"en",fresh:true})),...due.map((w,k)=>({w,dir:k%2?"en":"th"}))].sort(()=>Math.random()-.5).map(x=>({...x,...vOpts(x.w,x.dir)}));
-  const read=isWeekend()?READINGS[Math.floor(todayKey()/DAY/7)%READINGS.length]:null;
+  const read=isWeekend()?READINGS[Math.floor(todayKey()/DAY)%READINGS.length]:null;
   V={fresh,quiz,read,phase:fresh.length?"learn":"quiz",li:0,qi:0,ri:0,ans:null,results:[],rres:[],start:Date.now()};
   view="vocab"; render(); window.scrollTo({top:0});
 }
@@ -860,7 +893,7 @@ function renderVocab(){
   }
   if(V.phase==="read"){
     const q=V.read.qs[V.ri], ans=V.ans;
-    $v.innerHTML=`<section class="card">${top}<span class="eyebrow">อ่านสั้นๆ วันหยุด</span>
+    $v.innerHTML=`<section class="card">${top}<span class="eyebrow">อ่านภาษาอังกฤษสั้นๆ (พุธ เสาร์ อาทิตย์)</span>
       <div class="reading">${esc(V.read.text)}</div>
       <p class="prompt">${esc(q.q)}</p>
       <div class="opts">${q.opts.map((o,k)=>{let c="";if(ans){if(k===q.a)c="right";else if(k===ans.choice)c="wrong"}return `<button class="opt ${c}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>`}).join("")}</div>
@@ -948,7 +981,7 @@ function renderParent(){
     <p class="note">เวลาคือช่วงที่เปิดหน้าเว็บ ใช้ดูแนวโน้ม ไม่ใช่เวลาที่ตั้งใจจริงทั้งหมด</p>`}
   </section>
   ${db?`<section class="card"><h3>นำเข้าผลจากเครื่องลูก</h3>
-    <p class="small muted">วางรหัสที่ลูกส่งมาทาง LINE (ขึ้นต้นด้วย FIELDNOTE1:) ส่งรหัสเดิมซ้ำได้ ระบบไม่นับซ้ำ</p>
+    <p class="small muted">วางรหัสที่ลูกส่งมาทาง LINE (ขึ้นต้นด้วย SK2: หรือ FIELDNOTE1:) ส่งรหัสเดิมซ้ำได้ ระบบไม่นับซ้ำ</p>
     <textarea id="imp" rows="3" style="font-family:var(--mono);font-size:.75rem;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)"></textarea>
     <label class="small row" style="gap:6px"><input type="checkbox" id="imptest"> นี่คือรหัสจากการทดลองเล่น (ติดป้ายทดสอบ ไม่นับในการวิเคราะห์)</label>
     <div class="row"><button class="btn" id="impgo">นำเข้า</button><span class="small" id="impmsg" aria-live="polite"></span></div></section>`:""}
