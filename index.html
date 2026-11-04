@@ -650,7 +650,10 @@ function renderHome(){
   <section class="card"><h3>อยากบอกอะไร Claude ไหม</h3>
     <p class="small muted">นี่คือรุ่นทดลอง ตรงไหนน่าเบื่อ ยากไป อยากได้โจทย์แบบไหน หรืออยากเปลี่ยนชื่อ เปลี่ยนหน้าตา พิมพ์บอกได้ตรงนี้ ข้อความจะส่งไปพร้อมผลฝึกตอนกดส่งให้พ่อ แล้วพ่อจะเอาไปให้ Claude ปรับรุ่นถัดไป (พ่ออ่านได้ด้วยนะ)</p>
     <p class="small">ชื่อ "สมุดคาถา" เป็นชื่อชั่วคราว ถ้าอยากตั้งชื่อเอง เขียนบอกได้เลย</p>
-    <button class="btn ghost" id="fb-open">เขียนถึง Claude</button></section>`;
+    <button class="btn ghost" id="fb-open">เขียนถึง Claude</button></section>
+  ${store!=="db"?`<details class="small muted"><summary>ตั้งค่าเครื่องนี้</summary>
+    <p style="margin:8px 0">ล้างผลฝึก คำศัพท์ และสตรีคทั้งหมดที่เก็บในเบราว์เซอร์นี้ ใช้ตอนผู้ใหญ่ลองเล่นแล้วอยากเริ่มใหม่ให้น้อง (ข้อมูลที่ส่งให้พ่อแล้วไม่หาย)</p>
+    <button class="btn ghost" id="wipe">ล้างข้อมูลในเครื่องนี้</button> <span id="wipemsg"></span></details>`:""}`;
   document.getElementById("go-rec").onclick=()=>{introSet=rec;view="intro";render()};
   document.getElementById("other").onclick=()=>{showAll=!showAll;renderHome()};
   $v.querySelectorAll(".set").forEach(b=>b.onclick=()=>{introSet=SETS[+b.dataset.k];view="intro";render()});
@@ -661,6 +664,9 @@ function renderHome(){
   on("skip-open",()=>{view="skip";render()});
   on("vocab-go",startVocab);
   on("review-go",startReview);
+  on("wipe",e=>{const b=e.target; if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="กดอีกครั้งเพื่อยืนยัน ลบแล้วกู้คืนไม่ได้";return}
+    try{ Object.keys(localStorage).filter(k=>k.startsWith("fieldnote.")).forEach(k=>localStorage.removeItem(k)) }catch(err){}
+    TEST=false; attempts=[]; showAll=false; view="home"; render(); window.scrollTo({top:0}) });
 }
 
 let skipPick=null;
