@@ -58,7 +58,7 @@ p{margin:0}
 .opt:disabled{cursor:default}
 .num{display:flex;gap:8px;flex-wrap:wrap}
 .num input{font:inherit;font-family:var(--mono);padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);width:10ch}
-.btn{font:inherit;font-family:var(--display);border:0;border-radius:12px;padding:11px 18px;background:var(--accent);color:var(--accent-ink);cursor:pointer;width:fit-content}
+.btn{font:inherit;font-family:var(--display);border:0;text-decoration:none;display:inline-block;border-radius:12px;padding:11px 18px;background:var(--accent);color:var(--accent-ink);cursor:pointer;width:fit-content}
 .btn.ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
 .btn:disabled{opacity:.5;cursor:default}
 :focus-visible{outline:3px solid var(--beak);outline-offset:2px}
@@ -882,13 +882,33 @@ function vocabToday(){
   return {due:VOCAB.filter(x=>st[x.w]&&st[x.w].due<=t).sort((a,b)=>st[a.w].due-st[b.w].due).slice(0,8), fresh:VOCAB.filter(x=>!st[x.w]).slice(0,5)};
 }
 /* pronunciation: the browser's own English voice (works on iPad and Android Chrome) */
+/* Some in-app browsers (LINE, Facebook, the Claude app) hide the voice engine, so detect it and offer a way out */
 const CAN_SPEAK = typeof speechSynthesis!=="undefined" && typeof SpeechSynthesisUtterance!=="undefined";
+const UA = navigator.userAgent||"";
+const IN_APP = /Line\/|FBAN|FBAV|Instagram|; wv\)|Claude/i.test(UA);
+const IS_ANDROID = /Android/i.test(UA);
+let speechBroken = !CAN_SPEAK;
+try{ if(CAN_SPEAK) speechSynthesis.getVoices(); }catch(e){}
 function speak(text, slow){
-  if(!CAN_SPEAK) return;
-  try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.lang="en-US"; u.rate=slow?0.7:0.9;
-    const v=speechSynthesis.getVoices().find(v=>/^en(-|_)US/i.test(v.lang))||speechSynthesis.getVoices().find(v=>/^en/i.test(v.lang)); if(v) u.voice=v;
-    speechSynthesis.speak(u) }catch(e){}
+  if(!CAN_SPEAK){ speechBroken=true; showSpeechHelp(); return }
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text); u.lang="en-US"; u.rate=slow?0.7:0.9;
+    const vs=speechSynthesis.getVoices(); const v=vs.find(v=>/^en(-|_)US/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang)); if(v) u.voice=v;
+    let started=false; u.onstart=()=>{started=true;speechBroken=false;hideSpeechHelp()}; u.onerror=e=>{ if(e.error!=="interrupted"&&e.error!=="canceled"){speechBroken=true;showSpeechHelp()} };
+    speechSynthesis.speak(u);
+    setTimeout(()=>{ if(!started&&!speechSynthesis.speaking){ speechBroken=true; showSpeechHelp() } },2500);
+  }catch(e){ speechBroken=true; showSpeechHelp() }
 }
+function speechHelpHtml(){
+  const page=location.href.split("#")[0].split("?")[0];
+  const chrome=IS_ANDROID?`<a class="btn" href="intent://${page.replace(/^https?:\/\//,"")}#Intent;scheme=https;package=com.android.chrome;end">เปิดใน Chrome</a>`:"";
+  return `<div class="feedback" id="speech-help" style="border:1.5px solid var(--beak)"><b style="color:var(--beak)">เสียงยังไม่ดังในหน้านี้</b>
+    <p class="small">${IN_APP?"น่าจะเปิดลิงก์จากในแอป เช่น LINE ซึ่งปิดเสียงอ่านไว้":"ลองเปิดเสียงเครื่อง และปิดโหมดเงียบก่อน"} ${IS_ANDROID?"กดปุ่มด้านล่างเพื่อเปิดใน Chrome":"แตะปุ่ม ⋯ หรือ ↗ มุมจอ แล้วเลือก \"เปิดใน Safari\""} ผลที่ทำไว้จะอยู่ในเบราว์เซอร์ที่เปิด ใช้เบราว์เซอร์เดียวตลอดนะ</p>
+    ${chrome}<p class="small muted">ระหว่างนี้อ่านออกเสียงเองไปก่อนได้ ปุ่มต่อไปจะกดได้ตามปกติ</p></div>`;
+}
+function showSpeechHelp(){ if(document.getElementById("speech-help")) return; const box=document.getElementById("speech-slot"); if(box){ box.innerHTML=speechHelpHtml(); } const vn=document.getElementById("vn"); if(vn&&V&&V.phase==="learn") vn.disabled=false }
+function hideSpeechHelp(){ const h=document.getElementById("speech-help"); if(h) h.remove() }
 function vOpts(word,dir){
   const others=VOCAB.filter(x=>x.w!==word.w).sort(()=>Math.random()-.5).slice(0,3);
   const all=[word,...others].sort(()=>Math.random()-.5);
@@ -911,14 +931,15 @@ function bindSay(id,text,slow,after){ const b=document.getElementById(id); if(b)
 function renderVocab(){
   const top=`<div class="stage"><span>คำศัพท์วันนี้</span><span>${V.phase==="learn"?`คำใหม่ ${V.li+1}/${V.fresh.length}`:V.phase==="quiz"?`ทดสอบ ${V.qi+1}/${V.quiz.length}`:`อ่านสั้นๆ`}</span></div>`;
   if(V.phase==="learn"){
-    const w=V.fresh[V.li], heard=!CAN_SPEAK||V.heard.has(w.w);
+    const w=V.fresh[V.li], heard=speechBroken||V.heard.has(w.w);
     $v.innerHTML=`<section class="card">${top}<span class="eyebrow">คำใหม่</span>
       <span class="vword">${esc(w.w)}</span><p><b>${esc(w.th)}</b></p>
-      ${CAN_SPEAK?`<div class="row">${sayBtn("say-w","ฟังคำนี้")}${sayBtn("say-slow","ฟังช้าๆ")}</div>
-      <p class="small ${heard?"muted":""}" style="${heard?"":"color:var(--beak)"}">${heard?"ฟังแล้ว ลองพูดตามดังๆ หนึ่งรอบ":"กดฟังเสียงก่อนนะ แล้วพูดตามดังๆ"}</p>`:`<p class="small muted">เครื่องนี้เล่นเสียงไม่ได้ ลองอ่านออกเสียงเองหนึ่งรอบ</p>`}
+      <div class="row">${sayBtn("say-w","ฟังคำนี้")}${sayBtn("say-slow","ฟังช้าๆ")}</div>
+      <p class="small ${heard?"muted":""}" style="${heard?"":"color:var(--beak)"}">${speechBroken?"อ่านออกเสียงเองดังๆ หนึ่งรอบ":heard?"ฟังแล้ว ลองพูดตามดังๆ หนึ่งรอบ":"กดฟังเสียงก่อนนะ แล้วพูดตามดังๆ"}</p>
+      <div id="speech-slot">${speechBroken?speechHelpHtml():""}</div>
       <div class="feedback"><p class="vex">“${esc(w.ex)}”</p>
         ${V.showTh?`<p class="small">${esc(w.exTh)}</p>`:`<button class="btn ghost" id="show-th" style="border:0;padding:0">ลองเดาความหมายก่อน แล้วกดดูคำแปล</button>`}
-        ${CAN_SPEAK?sayBtn("say-ex","ฟังประโยค"):""}</div>
+        ${sayBtn("say-ex","ฟังประโยค")}</div>
       <button class="btn" id="vn" ${heard?"":"disabled"}>${V.li+1<V.fresh.length?"ต่อไป":"ไปทดสอบ"}</button></section>`;
     bindSay("say-w",w.w,false,()=>{if(!V.heard.has(w.w)){V.heard.add(w.w);renderVocab()}});
     bindSay("say-slow",w.w,true,()=>{if(!V.heard.has(w.w)){V.heard.add(w.w);renderVocab()}});
@@ -938,7 +959,7 @@ function renderVocab(){
         <p class="small muted">ฝึกสะกด${it.fresh?" · คำใหม่":" · ทบทวน"} · ฟังเสียงแล้วพิมพ์คำภาษาอังกฤษ</p>
         <p><b>${esc(it.w.th)}</b></p>
         <p style="font-family:var(--mono);letter-spacing:.15em">${esc(hint)} <span class="small muted" style="letter-spacing:0">(${it.w.w.length} ตัว)</span></p>
-        ${CAN_SPEAK?`<div class="row">${sayBtn("say-w","ฟังเสียง")}${sayBtn("say-slow","ฟังช้าๆ")}</div>`:""}
+        <div class="row">${sayBtn("say-w","ฟังเสียง")}${sayBtn("say-slow","ฟังช้าๆ")}</div><div id="speech-slot"></div>
         <div class="num"><input id="spin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="พิมพ์คำศัพท์" style="width:14ch" ${ans&&!ans.retype?"disabled":""} value="${ans&&!ans.retype?esc(ans.raw):""}">
         ${ans?"":`<button class="btn" id="check">ตรวจ</button>`}</div>
         ${ans?`<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?"สะกดถูก +5 XP":"ยังไม่ถูก +2 XP"}</b>
@@ -950,7 +971,7 @@ function renderVocab(){
       bindSay("say-w",it.w.w,false); bindSay("say-slow",it.w.w,true);
       const inp=document.getElementById("spin");
       if(!ans){
-        if(CAN_SPEAK) setTimeout(()=>speak(it.w.w),150);
+        if(!speechBroken) setTimeout(()=>speak(it.w.w),150);
         const go=()=>{const raw=inp.value.trim(); if(!raw) return; const ok=raw.toLowerCase()===it.w.w.toLowerCase(); V.ans={raw,correct:ok,retype:!ok}; renderVocab(); const i2=document.getElementById("spin"); if(i2&&!ok) i2.focus()};
         document.getElementById("check").onclick=go; inp.onkeydown=e=>{if(e.key==="Enter")go()}; inp.focus();
       } else {
@@ -964,10 +985,10 @@ function renderVocab(){
     }
     $v.innerHTML=`<section class="card">${top}
       <p class="small muted">${it.dir==="en"?"คำนี้แปลว่าอะไร":"คำภาษาอังกฤษของคำนี้คืออะไร"}${it.fresh?" · คำใหม่":" · ทบทวน"}</p>
-      <div class="row"><span class="vword">${esc(it.dir==="en"?it.w.w:it.w.th)}</span>${it.dir==="en"&&CAN_SPEAK?sayBtn("say-w","ฟัง"):""}</div>
+      <div class="row"><span class="vword">${esc(it.dir==="en"?it.w.w:it.w.th)}</span>${it.dir==="en"?sayBtn("say-w","ฟัง"):""}</div><div id="speech-slot"></div>
       <div class="opts">${it.opts.map((o,k)=>{let c="";if(ans){if(k===it.a)c="right";else if(k===ans.choice)c="wrong"}return `<button class="opt ${c}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>`}).join("")}</div>
       ${ans?`<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?"ถูก +5 XP":"ยังไม่ใช่ +2 XP"}</b><p><b>${esc(it.w.w)}</b> = ${esc(it.w.th)}</p><p class="vex small">“${esc(it.w.ex)}”</p><p class="small muted">${esc(it.w.exTh)}</p>
-        ${CAN_SPEAK?`<div class="row">${sayBtn("say-a","ฟังคำนี้")}</div>`:""}</div>
+        <div class="row">${sayBtn("say-a","ฟังคำนี้")}</div></div>
       <button class="btn" id="vn">ต่อไป</button>`:""}</section>`;
     bindSay("say-w",it.w.w,false); bindSay("say-a",it.w.w,false);
     if(!ans) $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{V.ans={choice:+b.dataset.k,correct:+b.dataset.k===it.a};renderVocab()});
@@ -978,7 +999,7 @@ function renderVocab(){
     const q=V.read.qs[V.ri], ans=V.ans;
     $v.innerHTML=`<section class="card">${top}<span class="eyebrow">อ่านภาษาอังกฤษสั้นๆ (พุธ เสาร์ อาทิตย์)</span>
       <div class="reading">${esc(V.read.text)}</div>
-      ${CAN_SPEAK?`<div class="row">${sayBtn("say-r","ฟังทั้งเรื่อง")}</div>`:""}
+      <div class="row">${sayBtn("say-r","ฟังทั้งเรื่อง")}</div><div id="speech-slot"></div>
       <p class="prompt">${esc(q.q)}</p>
       <div class="opts">${q.opts.map((o,k)=>{let c="";if(ans){if(k===q.a)c="right";else if(k===ans.choice)c="wrong"}return `<button class="opt ${c}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>`}).join("")}</div>
       ${ans?`<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?"ถูก +5 XP":"ยังไม่ใช่ ลองอ่านอีกรอบ +2 XP"}</b></div><button class="btn" id="vn">ต่อไป</button>`:""}</section>`;
