@@ -1,4 +1,4 @@
-<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>สมุดภาคสนาม</title>
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>สมุดคาถา</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
@@ -97,13 +97,37 @@ p{margin:0}
 .example{font-size:.75rem;color:var(--beak);border:1px solid var(--beak);border-radius:6px;padding:0 6px}
 .analysis{white-space:pre-wrap;font-size:.94rem}
 .note{font-size:.84rem;color:var(--muted)}
+.hero{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.flame{font-family:var(--display);font-size:1.6rem;display:flex;align-items:center;gap:6px}
+.flame.out{filter:grayscale(1);opacity:.55}
+.ice{font-size:.9rem;color:var(--muted)}
+.xpbar{flex:1;min-width:160px;display:flex;flex-direction:column;gap:4px}
+.xpbar .progress{height:10px}
+.xpbar .progress>i{background:var(--beak)}
+.dot.ice{border-color:#7DB9E8;background:color-mix(in srgb,#7DB9E8 35%,transparent)}
+.pick{border:2px solid var(--accent)}
+.realm summary{cursor:pointer;padding:6px 0}
+.realm h3 small{color:var(--muted);font-family:var(--body);font-size:.8rem;font-weight:400}
+.spells{display:grid;grid-template-columns:1fr;gap:8px}
+@media(min-width:560px){.spells{grid-template-columns:1fr 1fr}}
+.spell{font:inherit;text-align:left;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+button.spell{cursor:pointer} button.spell:hover{border-color:var(--accent)}
+.spell.shadow{background:transparent;border-style:dashed;color:var(--muted)}
+.spell.faded{opacity:.6}
+.spell b{font-family:var(--display);font-weight:500}
+.pips{display:flex;gap:4px;align-items:center}
+.pips i{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--line);display:inline-block}
+.pips i.on1{background:var(--good);border-color:var(--good)} .pips i.on2{background:var(--warn);border-color:var(--warn)} .pips i.on3{background:var(--beak);border-color:var(--beak)}
+.vword{font-family:var(--display);font-size:1.8rem}
+.vex{font-style:italic}
+.reading{background:var(--soft);border-radius:12px;padding:12px 14px;line-height:1.8}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
 
 <div class="wrap" id="app">
   <header class="top">
-    <div class="brand"><h1>สมุดภาคสนาม</h1><small>ฝึกวันละ 30–45 นาที</small></div>
-    <nav class="tabs"><a href="#home" id="tab-home">ฝึกวันนี้</a></nav>
+    <div class="brand"><h1>สมุดคาถา</h1><small>ฝึกวันละ 30–45 นาที</small></div>
+    <nav class="tabs"><a href="#home" id="tab-home" data-v="home">ฝึกวันนี้</a><a href="#map" id="tab-map" data-v="map">แผนที่คาถา</a></nav>
   </header>
   <main id="view" aria-live="polite"></main>
 </div>
@@ -113,7 +137,7 @@ const ERR = {concept:"ยังไม่เข้าใจหลัก", read:"�
 const LV = {1:"ระดับ 1 · พื้นฐาน",2:"ระดับ 2 · ประยุกต์",3:"ระดับ 3 · แนวคิดวิเคราะห์"};
 
 const SETS = [
-{ id:"math-stats-1", subject:"คณิตศาสตร์", topic:"สถิติ: ค่าเฉลี่ย มัธยฐาน ฐานนิยม", grade:"ม.2", mins:"30–40 นาที", current:true,
+{ id:"math-stats-1", spell:"m22", subject:"คณิตศาสตร์", topic:"สถิติ: ค่าเฉลี่ย มัธยฐาน ฐานนิยม", grade:"ม.2", mins:"30–40 นาที", current:true,
   warm:[
     {id:"tw1",topic:"ร้อยละ",level:1,q:"ร้อยละ 40 ของ 35 คือเท่าใด",opts:["14","87.5","12","21"],a:0,ex:"(40 ÷ 100) × 35 = 14 หรือคิดว่า 10% ของ 35 คือ 3.5 แล้วคูณ 4"},
     {id:"tw2",topic:"จำนวนเต็ม",level:1,q:"เช้านี้บนภูเขาอุณหภูมิ −4 °C ตอนบ่ายสูงขึ้น 11 °C ตอนบ่ายอุณหภูมิกี่องศา",opts:["7","−15","15","−7"],a:0,ex:"−4 + 11 = 7 °C"}
@@ -130,14 +154,16 @@ const SETS = [
     {id:"tp2",topic:"มัธยฐาน",level:1,q:"จำนวนภาพสเก็ตช์ที่วาดในแต่ละวันของสัปดาห์: 3, 8, 2, 5, 4, 9, 1 มัธยฐานคือเท่าใด",opts:["4","5","4.57","9"],a:0,ex:"เรียงก่อน: 1, 2, 3, 4, 5, 8, 9 ตัวกลาง (ตัวที่ 4) คือ 4 ข้อ 5 คือตัวกลางของรายการที่ยังไม่ได้เรียง ซึ่งเป็นกับดักที่เจอบ่อยมาก"},
     {id:"tp3",topic:"ฐานนิยม",level:1,q:"จำนวนตอนอนิเมะที่เพื่อน 8 คนดูจบในสัปดาห์นี้: 4, 6, 4, 7, 2, 4, 6, 3 ฐานนิยมคือเท่าใด",opts:["4","6","4.5","5"],a:0,ex:"4 ปรากฏ 3 ครั้ง มากที่สุด ส่วน 4.5 คือค่าเฉลี่ย (36 ÷ 8)"},
     {id:"tp4",topic:"มัธยฐาน",level:2,q:"ความสูง (ซม.) ของต้นอ่อน 6 ต้น: 12, 15, 9, 20, 14, 11 มัธยฐานคือเท่าใด",opts:["13","12","14","13.5"],a:0,ex:"เรียง: 9, 11, 12, 14, 15, 20 ข้อมูลมี 6 ตัว (จำนวนคู่) ตัวกลางคือ 12 กับ 14 เฉลี่ยกันได้ (12 + 14) ÷ 2 = 13 ส่วน 13.5 คือค่าเฉลี่ยทั้งชุด"},
+    {id:"tp7",topic:"มัธยฐาน",level:2,en:true,q:"English corner: Five numbers are 8, 15, x, 10, 20 (not in order). Their median is 12. What is x?  (median = มัธยฐาน · not in order = ยังไม่ได้เรียง)",opts:["12","13","11","10"],a:0,ex:"เรียงตัวที่รู้ค่า: 8, 10, 15, 20 มัธยฐานของ 5 ตัวคือตัวที่ 3 ถ้าให้ตัวที่ 3 เป็น 12 ได้ x ต้องอยู่ระหว่าง 10 กับ 15 และเท่ากับ 12 พอดี ลองแทน 11: เรียงเป็น 8, 10, 11, 15, 20 มัธยฐานคือ 11 ไม่ใช่ 12"},
     {id:"tp5",topic:"ค่าเฉลี่ย",level:2,q:"ศิษย์จอมเวทสอบภาคปฏิบัติ 4 ครั้งได้ 72, 85, 78, 81 คะแนน ครั้งที่ 5 ต้องได้กี่คะแนน ค่าเฉลี่ยทั้ง 5 ครั้งจึงเท่ากับ 80 พอดี (อาจารย์ไม่ปัดเศษให้นะ)",opts:["84","80","79","86"],a:0,ex:"ค่าเฉลี่ย 80 จาก 5 ครั้ง แปลว่าผลรวมต้องเป็น 80 × 5 = 400 ตอนนี้มี 72 + 85 + 78 + 81 = 316 ครั้งที่ 5 ต้องได้ 400 − 316 = 84"},
-    {id:"tp6",topic:"เลือกค่ากลาง",level:3,q:"ร้านกาแฟเล็กๆ มีคน 5 คน เงินเดือน (บาท) 12,000 / 13,000 / 14,000 / 15,000 / 96,000 (คนสุดท้ายคือเจ้าของร้าน จ่ายให้ตัวเอง) ถ้าอยากบอกคนมาสมัครงานว่า \"พนักงานทั่วไปได้เงินประมาณเท่าไร\" ควรใช้ค่าใด",opts:["มัธยฐาน 14,000 บาท เพราะไม่ถูกค่าที่สูงผิดปกติดึงขึ้น","ค่าเฉลี่ย 30,000 บาท เพราะใช้ข้อมูลครบทุกคน","ค่าเฉลี่ยของค่าต่ำสุดกับสูงสุด 54,000 บาท","ฐานนิยม เพราะเป็นค่าที่พบบ่อยที่สุด"],a:0,ex:"ค่าเฉลี่ยคือ 150,000 ÷ 5 = 30,000 บาท ซึ่งสูงกว่าเงินเดือนของพนักงานทุกคน เพราะ 96,000 ดึงขึ้น มัธยฐาน 14,000 บอกภาพจริงได้ดีกว่า ส่วนฐานนิยมใช้ไม่ได้ เพราะไม่มีค่าซ้ำ"}
+    {id:"tp6",topic:"เลือกค่ากลาง",level:3,q:"ร้านกาแฟเล็กๆ มีคน 5 คน เงินเดือน (บาท) 12,000 / 13,000 / 14,000 / 15,000 / 96,000 (คนสุดท้ายคือเจ้าของร้าน จ่ายให้ตัวเอง) ถ้าอยากบอกคนมาสมัครงานว่า \"พนักงานทั่วไปได้เงินประมาณเท่าไร\" ควรใช้ค่าใด",opts:["มัธยฐาน 14,000 บาท เพราะไม่ถูกค่าที่สูงผิดปกติดึงขึ้น","ค่าเฉลี่ย 30,000 บาท เพราะใช้ข้อมูลครบทุกคน","ค่าเฉลี่ยของค่าต่ำสุดกับสูงสุด 54,000 บาท","ฐานนิยม เพราะเป็นค่าที่พบบ่อยที่สุด"],a:0,ex:"ค่าเฉลี่ยคือ 150,000 ÷ 5 = 30,000 บาท ซึ่งสูงกว่าเงินเดือนของพนักงานทุกคน เพราะ 96,000 ดึงขึ้น มัธยฐาน 14,000 บอกภาพจริงได้ดีกว่า ส่วนฐานนิยมใช้ไม่ได้ เพราะไม่มีค่าซ้ำ"},
+    {id:"tp8",topic:"ค่ากลางเปลี่ยนเมื่อข้อมูลเปลี่ยน",level:3,q:"ปาร์ตี้ผู้กล้า 5 คนมีเลเวล 3, 5, 7, 9, 11 (ค่าเฉลี่ย 7 มัธยฐาน 7) แล้วคนเลเวล 11 แอบไปฟาร์มมอนสเตอร์คนเดียวทั้งคืนจนเป็นเลเวล 41 ข้อใดถูกต้อง",opts:["ค่าเฉลี่ยกลายเป็น 13 แต่มัธยฐานยังเป็น 7","ทั้งค่าเฉลี่ยและมัธยฐานกลายเป็น 13","ค่าเฉลี่ยกลายเป็น 13 และมัธยฐานกลายเป็น 9","ค่าเฉลี่ยกลายเป็น 37 แต่มัธยฐานยังเป็น 7"],a:0,ex:"ผลรวมใหม่ 3 + 5 + 7 + 9 + 41 = 65 แล้ว 65 ÷ 5 = 13 ส่วนตัวกลางของ 3, 5, 7, 9, 41 ยังเป็น 7 เพราะเปลี่ยนแค่ตัวท้ายสุด ค่าเฉลี่ยไวต่อค่าสุดโต่ง มัธยฐานไม่ไว"}
   ],
   challenge:{id:"tc1",topic:"ค่าเฉลี่ย (ประยุกต์)",level:3,num:true,answer:63,tol:0,unit:"หน่วย",
     q:"กิลด์นักผจญภัยมีสมาชิก 30 คน วัดพลังเวทได้ค่าเฉลี่ย 62 หน่วย ภายหลังพบว่าลูกแก้ววัดพลังเสีย อ่านค่าของ 3 คนต่ำไปคนละ 10 หน่วย ค่าเฉลี่ยที่ถูกต้องของกิลด์คือกี่หน่วย",
     ex:"ผลรวมเดิม 30 × 62 = 1,860 หน่วย ต้องเพิ่ม 3 × 10 = 30 หน่วย ได้ 1,890 แล้ว 1,890 ÷ 30 = 63 หน่วย ทางลัด: ผลรวมเพิ่ม 30 หน่วย แบ่งให้ 30 คน ค่าเฉลี่ยจึงเพิ่มคนละ 1"}
 },
-{ id:"math-ratio-1", subject:"คณิตศาสตร์", topic:"อัตราส่วนและร้อยละ", grade:"ม.1", mins:"30–40 นาที",
+{ id:"math-ratio-1", spell:"m3", subject:"คณิตศาสตร์", topic:"อัตราส่วนและร้อยละ", grade:"ม.1", mins:"30–40 นาที",
   warm:[
     {id:"mw1",topic:"จำนวนเต็ม",level:1,q:"(−8) + 15 − (−3) มีค่าเท่าใด",opts:["10","4","−20","26"],a:0,ex:"ลบด้วยจำนวนลบ เท่ากับบวกจำนวนบวก: −8 + 15 + 3 = 10"},
     {id:"mw2",topic:"เศษส่วน",level:1,q:"3/4 ของ 36 คือเท่าใด",opts:["27","9","48","12"],a:0,ex:"36 ÷ 4 = 9 แล้ว 9 × 3 = 27"}
@@ -151,16 +177,18 @@ const SETS = [
   practice:[
     {id:"mp1",topic:"อัตราส่วน",level:1,q:"จอมเวทสายเก็บของสะสมคาถาได้ 40 บท เป็นคาถาไร้สาระ (เช่น คาถาทำให้ดอกไม้บานทั้งทุ่ง) 24 บท ที่เหลือเป็นคาถาต่อสู้ อัตราส่วนอย่างต่ำของคาถาไร้สาระต่อคาถาต่อสู้คือข้อใด",opts:["3 : 2","2 : 3","24 : 40","3 : 5"],a:0,ex:"คาถาต่อสู้ = 40 − 24 = 16 บท ได้ 24 : 16 หารทั้งสองข้างด้วย 8 เป็น 3 : 2 ข้อ 3 : 5 คือไร้สาระต่อทั้งหมด ซึ่งโจทย์ไม่ได้ถาม"},
     {id:"mp2",topic:"ร้อยละ",level:1,q:"กล่องสีไม้มี 80 แท่ง หักไปแล้วร้อยละ 25 (ใครทำตก ยอมรับมาซะดีๆ) สีที่หักมีกี่แท่ง",opts:["20","25","32","60"],a:0,ex:"(25 ÷ 100) × 80 = 20 หรือคิดว่าร้อยละ 25 คือหนึ่งในสี่ของ 80"},
+    {id:"mp7",topic:"อัตราส่วน",level:1,en:true,q:"English corner: A shelter has 12 cats and 18 dogs. What is the ratio of cats to dogs in simplest form?  (shelter = สถานพักพิงสัตว์ · simplest form = อย่างต่ำ)",opts:["2 : 3","3 : 2","12 : 30","2 : 5"],a:0,ex:"cats : dogs = 12 : 18 หารด้วย 6 ทั้งสองข้าง ได้ 2 : 3 ระวังลำดับ cats to dogs คือแมวขึ้นก่อน ส่วน 2 : 5 คือแมวต่อสัตว์ทั้งหมด"},
     {id:"mp3",topic:"ร้อยละ",level:2,q:"นับนกในบึงได้ 250 ตัว เป็นนกกระยาง 60 ตัว นกกระยางคิดเป็นร้อยละเท่าใดของนกทั้งหมด",opts:["24","60","25","40"],a:0,ex:"(60 ÷ 250) × 100 = 24"},
     {id:"mp4",topic:"อัตราส่วน",level:2,q:"ผสมสีน้ำโทนเขียวพาสเทลด้วยสีฟ้าต่อสีเหลืองในอัตราส่วน 2 : 5 ถ้าใช้สีเหลือง 350 หยด ต้องใช้สีฟ้ากี่หยด จึงได้สีเดิมเป๊ะ",opts:["140","175","875","70"],a:0,ex:"สีเหลือง 5 ส่วน = 350 หยด ดังนั้น 1 ส่วน = 70 หยด สีฟ้า 2 ส่วน = 140 หยด คนวาดรูปใช้อัตราส่วนแบบนี้เวลาผสมสีให้ได้โทนเดิมซ้ำ"},
     {id:"mp5",topic:"ร้อยละ",level:2,q:"ลูกแมวหนัก 800 กรัม ผ่านไปหนึ่งเดือนน้ำหนักเพิ่มขึ้นร้อยละ 25 ตอนนี้ลูกแมวหนักกี่กรัม",opts:["1,000","825","200","1,025"],a:0,ex:"เพิ่มขึ้น 25% ของ 800 = 200 กรัม รวมเป็น 800 + 200 = 1,000 กรัม ข้อ 200 คือส่วนที่เพิ่ม ไม่ใช่น้ำหนักใหม่"},
-    {id:"mp6",topic:"อัตราส่วน",level:3,q:"หมู่บ้านกลางป่ามีมนุษย์และเอลฟ์รวม 84 คน อัตราส่วนมนุษย์ต่อเอลฟ์เป็น 4 : 3 ต้องมีเอลฟ์ย้ายเข้ามาเพิ่มกี่คน อัตราส่วนจึงจะเป็น 1 : 1 (ระหว่างนี้ไม่มีใครย้ายออก เอลฟ์อายุยืน ไม่ต้องห่วง)",opts:["12","6","16","48"],a:0,ex:"84 แบ่งเป็น 7 ส่วน ส่วนละ 12 คน มนุษย์ 48 คน เอลฟ์ 36 คน ต้องเพิ่มเอลฟ์ 48 − 36 = 12 คน"}
+    {id:"mp6",topic:"อัตราส่วน",level:3,q:"หมู่บ้านกลางป่ามีมนุษย์และเอลฟ์รวม 84 คน อัตราส่วนมนุษย์ต่อเอลฟ์เป็น 4 : 3 ต้องมีเอลฟ์ย้ายเข้ามาเพิ่มกี่คน อัตราส่วนจึงจะเป็น 1 : 1 (ระหว่างนี้ไม่มีใครย้ายออก เอลฟ์อายุยืน ไม่ต้องห่วง)",opts:["12","6","16","48"],a:0,ex:"84 แบ่งเป็น 7 ส่วน ส่วนละ 12 คน มนุษย์ 48 คน เอลฟ์ 36 คน ต้องเพิ่มเอลฟ์ 48 − 36 = 12 คน"},
+    {id:"mp8",topic:"ร้อยละ",level:3,q:"ร้านเครื่องเขียนลดราคาพู่กันชุดหนึ่ง 20% แล้วช่วงปลายเดือนลดอีก 10% จากราคาที่ลดแล้ว สรุปว่าราคาสุดท้ายถูกกว่าราคาเดิมกี่เปอร์เซ็นต์",opts:["28","30","25","32"],a:0,ex:"สมมติราคาเดิม 100 บาท ลด 20% เหลือ 80 บาท ลดอีก 10% ของ 80 คือ 8 บาท เหลือ 72 บาท จึงถูกลง 100 − 72 = 28% ไม่ใช่ 30% เพราะครั้งที่สองลดจากราคาที่ต่ำลงแล้ว"}
   ],
   challenge:{id:"mc1",topic:"อัตราส่วน (ประยุกต์)",level:3,num:true,answer:400,tol:0,unit:"ตัว",
     q:"นักวิจัยประมาณจำนวนปลาในบ่อด้วยวิธี \"จับ-ติดแท็ก-ปล่อย\": รอบแรกจับปลา 60 ตัว ติดแท็กแล้วปล่อยคืน ไม่กี่วันต่อมาจับใหม่ 80 ตัว พบว่ามีแท็ก 12 ตัว ถ้าสัดส่วนปลาติดแท็กในการจับรอบสองเท่ากับในบ่อทั้งหมด บ่อนี้มีปลาประมาณกี่ตัว",
     ex:"ในรอบสอง 12 จาก 80 ตัวติดแท็ก ทั้งบ่อจึงควรเป็น 60 จาก N ตัว: 12/80 = 60/N ได้ N = 60 × 80 ÷ 12 = 400 ตัว นักนิเวศวิทยาใช้วิธีนี้จริงกับปลา นก และค้างคาว"}
 },
-{ id:"sci-solution-1", subject:"วิทยาศาสตร์", topic:"สารรอบตัว: สารละลายและความเข้มข้น", grade:"ม.2", mins:"30–40 นาที",
+{ id:"sci-solution-1", spell:"s4", subject:"วิทยาศาสตร์", topic:"สารรอบตัว: สารละลายและความเข้มข้น", grade:"ม.2", mins:"30–40 นาที",
   warm:[
     {id:"sw1",topic:"เซลล์",level:1,q:"ส่วนประกอบใดพบในเซลล์พืช แต่ไม่พบในเซลล์สัตว์",opts:["ผนังเซลล์","เยื่อหุ้มเซลล์","นิวเคลียส","ไมโทคอนเดรีย"],a:0,ex:"เซลล์สัตว์มีเยื่อหุ้มเซลล์ นิวเคลียส และไมโทคอนเดรีย แต่ไม่มีผนังเซลล์และคลอโรพลาสต์"},
     {id:"sw2",topic:"สารบริสุทธิ์และสารผสม",level:1,q:"ข้อใดเป็นสารบริสุทธิ์",opts:["น้ำกลั่น","น้ำเกลือ","อากาศ","น้ำนม"],a:0,ex:"น้ำกลั่นมีน้ำเพียงชนิดเดียว ส่วนข้ออื่นเป็นสารผสมหลายชนิด"}
@@ -174,10 +202,12 @@ const SETS = [
   practice:[
     {id:"sp1",topic:"องค์ประกอบสารละลาย",level:1,q:"น้ำเชื่อมในชานมไข่มุกเกิดจากน้ำตาลทรายละลายในน้ำ ข้อใดคือตัวทำละลาย",opts:["น้ำ","น้ำตาลทราย","ทั้งน้ำและน้ำตาล","ไม่มีตัวทำละลาย"],a:0,ex:"น้ำเชื่อมเป็นของเหลว น้ำมีสถานะเดียวกับสารละลาย จึงเป็นตัวทำละลาย"},
     {id:"sp2",topic:"องค์ประกอบสารละลาย",level:1,q:"ทิงเจอร์ไอโอดีนทำจากไอโอดีน (ของแข็ง) ละลายในเอทานอล ข้อใดคือตัวละลาย",opts:["ไอโอดีน","เอทานอล","น้ำ","ไม่มีตัวละลาย"],a:0,ex:"ไอโอดีนเป็นของแข็ง สถานะต่างจากสารละลายที่เป็นของเหลว จึงเป็นตัวละลาย"},
+    {id:"sp7",topic:"องค์ประกอบสารละลาย",level:1,en:true,q:"English corner: When sugar dissolves in water, the sugar is the ____.  (dissolve = ละลาย)",opts:["solute","solvent","solution","mixture only"],a:0,ex:"solute = ตัวละลาย (น้ำตาล) · solvent = ตัวทำละลาย (น้ำ) · solution = สารละลายทั้งแก้ว จำง่ายๆ: solvent มี -vent เหมือนตัวที่ 'ทำงาน' ละลายของอื่น"},
     {id:"sp3",topic:"ความเข้มข้น",level:2,q:"ละลายเกลือ 9 กรัมในน้ำ ได้น้ำเกลือ 1,000 cm³ น้ำเกลือนี้เข้มข้นร้อยละโดยมวลต่อปริมาตรเท่าใด",opts:["0.9","9","0.09","90"],a:0,ex:"(9 ÷ 1,000) × 100 = 0.9% w/v ซึ่งเป็นความเข้มข้นของน้ำเกลือล้างแผลจริง"},
     {id:"sp4",topic:"ความเข้มข้น",level:2,q:"ต้องการเตรียมน้ำหวานเลี้ยงผีเสื้อ 250 cm³ ให้เข้มข้น 20% w/v ต้องใช้น้ำตาลกี่กรัม",opts:["50","20","12.5","200"],a:0,ex:"20% w/v คือ น้ำตาล 20 g ในสารละลาย 100 cm³ ถ้า 250 cm³ ต้องใช้ 20 × 2.5 = 50 g"},
     {id:"sp5",topic:"สภาพละลายได้",level:2,q:"ตารางแสดงออกซิเจนที่ละลายในน้ำจืดได้มากที่สุด: 10 °C ≈ 11.3 mg/L, 20 °C ≈ 9.1 mg/L, 30 °C ≈ 7.6 mg/L ข้อสรุปใดถูกต้องตามข้อมูล",opts:["เมื่ออุณหภูมิสูงขึ้น ออกซิเจนละลายในน้ำได้น้อยลง","เมื่ออุณหภูมิสูงขึ้น ออกซิเจนละลายในน้ำได้มากขึ้น","อุณหภูมิไม่มีผลต่อการละลายของออกซิเจน","ที่ 40 °C ออกซิเจนจะไม่ละลายในน้ำเลย"],a:0,ex:"ค่าลดลงทุกครั้งที่อุณหภูมิเพิ่ม ส่วนข้อ 40 °C สรุปเกินข้อมูล เพราะตารางไม่ได้วัดถึง และแนวโน้มก็ไม่ได้บอกว่าจะเป็นศูนย์"},
-    {id:"sp6",topic:"สภาพละลายได้",level:3,q:"วันที่อากาศร้อนจัดหลายวันติดกัน ปลาในบ่อตื้นลอยขึ้นมาฮุบอากาศที่ผิวน้ำ คำอธิบายใดสอดคล้องกับข้อมูลในข้อที่แล้วมากที่สุด",opts:["น้ำอุ่นขึ้น ออกซิเจนละลายได้น้อยลง ปลาจึงขาดออกซิเจน","น้ำร้อนทำให้ปลาหิวจึงขึ้นมาหาอาหาร","น้ำระเหยไปจนเกลือในน้ำหมด","แสงแดดทำให้ปลามองไม่เห็นใต้น้ำ"],a:0,ex:"นี่คือการนำข้อมูลจากตารางมาอธิบายปรากฏการณ์จริง ซึ่งเป็นทักษะที่ข้อสอบแนวคิดวิเคราะห์ชอบถาม"}
+    {id:"sp6",topic:"สภาพละลายได้",level:3,q:"วันที่อากาศร้อนจัดหลายวันติดกัน ปลาในบ่อตื้นลอยขึ้นมาฮุบอากาศที่ผิวน้ำ คำอธิบายใดสอดคล้องกับข้อมูลในข้อที่แล้วมากที่สุด",opts:["น้ำอุ่นขึ้น ออกซิเจนละลายได้น้อยลง ปลาจึงขาดออกซิเจน","น้ำร้อนทำให้ปลาหิวจึงขึ้นมาหาอาหาร","น้ำระเหยไปจนเกลือในน้ำหมด","แสงแดดทำให้ปลามองไม่เห็นใต้น้ำ"],a:0,ex:"นี่คือการนำข้อมูลจากตารางมาอธิบายปรากฏการณ์จริง ซึ่งเป็นทักษะที่ข้อสอบแนวคิดวิเคราะห์ชอบถาม"},
+    {id:"sp8",topic:"ออกแบบการทดลอง",level:3,q:"อยากทดสอบว่า \"อุณหภูมิของน้ำมีผลต่อความเร็วในการละลายของน้ำตาลก้อน\" การทดลองใดออกแบบได้ดีที่สุด",opts:["น้ำ 3 แก้ว ปริมาตรเท่ากัน อุณหภูมิ 10, 30, 60 °C ใส่น้ำตาลก้อนเท่ากันแก้วละ 1 ก้อน ไม่คน แล้วจับเวลาจนละลายหมด","น้ำ 3 แก้ว อุณหภูมิต่างกัน ใส่น้ำตาลแก้วละจำนวนไม่เท่ากัน แล้วดูว่าแก้วไหนหวานสุด","น้ำแก้วเดียว ค่อยๆ อุ่นไปเรื่อยๆ แล้วเติมน้ำตาลทีละก้อน","น้ำ 3 แก้ว อุณหภูมิเท่ากัน แต่คนด้วยความแรงต่างกัน"],a:0,ex:"การทดลองที่ดีเปลี่ยนแค่ตัวแปรต้นตัวเดียว (อุณหภูมิ) ควบคุมอย่างอื่นให้เท่ากัน (ปริมาตรน้ำ จำนวนน้ำตาล การคน) แล้ววัดตัวแปรตาม (เวลาที่ละลายหมด) ข้อสุดท้ายเปลี่ยนการคนแทนอุณหภูมิ จึงตอบคำถามนี้ไม่ได้"}
   ],
   challenge:{id:"sc1",topic:"ความเข้มข้น (ประยุกต์)",level:3,num:true,answer:5.2,tol:0.05,unit:"% w/v",
     q:"ศิษย์จอมเวทเทยาฟื้นพลังเข้มข้น 10% w/v ปริมาตร 200 cm³ ลงหม้อเดียวกับยาเข้มข้น 2% w/v ปริมาตร 300 cm³ (เพราะขี้เกียจล้างหม้อ) ยาในหม้อเข้มข้นกี่ % w/v (ให้ถือว่าปริมาตรรวมเท่ากับ 500 cm³)",
@@ -204,6 +234,12 @@ const HINTS={
  sp4:["20% w/v คือ น้ำตาล 20 g ในทุก 100 cm³","250 cm³ เป็นกี่เท่าของ 100 cm³"],
  sp5:["ดูว่าตัวเลขขึ้นหรือลงเมื่ออุณหภูมิสูงขึ้น","ระวังข้อที่สรุปเกินกว่าข้อมูลที่มี"],
  sp6:["ใช้ข้อมูลจากข้อที่แล้ว: น้ำที่อุ่นขึ้นมีออกซิเจนละลายอยู่มากหรือน้อย"],
+ tp7:["เรียงตัวเลขที่รู้ค่าก่อน: 8, 10, 15, 20","ข้อมูล 5 ตัว มัธยฐานคือตัวที่ 3 หลังเรียง"],
+ tp8:["หาผลรวมใหม่ก่อน แล้วหารด้วย 5","มัธยฐาน: เรียงแล้วดูตัวกลาง ตัวกลางเปลี่ยนไหม"],
+ mp7:["cats to dogs = 12 : 18","หารทั้งสองข้างด้วยจำนวนที่ใหญ่ที่สุดที่หารลงตัว"],
+ mp8:["ลองสมมติราคาเดิมเป็น 100 บาท","ครั้งที่สองลด 10% ของราคาที่ลดแล้ว ไม่ใช่ของ 100"],
+ sp7:["solute กับ solvent ตัวไหนคือของที่ถูกละลาย"],
+ sp8:["การทดลองที่ดีเปลี่ยนแค่อย่างเดียว คืออย่างไหน","ข้อไหนควบคุมสิ่งอื่นให้เท่ากันหมด"],
  sc1:["หามวลตัวยาในแต่ละหม้อก่อน: 10% ของ 200 และ 2% ของ 300","เอามวลรวมหารด้วย 500 แล้วคูณ 100"]
 };
 const ALTS={
@@ -219,6 +255,94 @@ const ALTS={
 };
 SETS.forEach(s=>{[...s.warm,...s.practice,s.challenge].forEach(q=>q.hints=HINTS[q.id]||[]);s.concept.alts=ALTS[s.id]||[]});
 const SKIP_REASONS=["การบ้านเยอะ","มีสอบ/ต้องอ่านวิชาอื่น","ไม่สบาย","เหนื่อยมาก","มีธุระ/ไปข้างนอก","อื่นๆ"];
+/* ---------- spell map (from the curriculum map doc): id, realm, magic name, topic, grade, exam stars, school status ---------- */
+const REALMS={num:"🔢 สำนักตัวเลข",alg:"📜 สำนักอักษรลับ",geo:"📐 สำนักรูปทรง",dat:"🔭 สำนักพยากรณ์",mat:"🧪 สำนักแปรธาตุ",life:"🌱 สำนักชีวิต",pow:"⚡ สำนักพลัง",sky:"🌏 สำนักดวงดาว",lab:"🔎 สำนักนักสังเกต"};
+const SCHOOL={done:"เรียนแล้ว",maybe:"น่าจะเรียนแล้ว",now:"กำลังเรียนอยู่",part:"เรียนบางส่วน",not:"ยังไม่ได้เรียนที่โรงเรียน"};
+const SPELLS=[
+["m1","num","คาถานับไม่พลาด","จำนวนเต็ม เศษส่วน ทศนิยม","ม.1",2,"done"],
+["m2","num","คาถาทวีคูณ","เลขยกกำลัง","ม.1–2",3,"done"],
+["m3","num","คาถาผสมสีเป๊ะ","อัตราส่วน สัดส่วน ร้อยละ","ม.1",3,"done"],
+["m4","num","คาถาถอดราก","จำนวนจริง รากที่สอง รากที่สาม","ม.2",2,"maybe"],
+["m5","num","คาถาแบ่งลงตัว","ทฤษฎีจำนวน","ม.1+เสริม",3,"part"],
+["m6","alg","คาถาเห็นลวดลาย","แบบรูปและอนุกรม","ม.1+เสริม",3,"part"],
+["m7","alg","คาถาตาชั่งสมดุล","สมการเชิงเส้นตัวแปรเดียว","ม.1–2",2,"done"],
+["m8","alg","คาถาเส้นตรง","กราฟและความสัมพันธ์เชิงเส้น","ม.1",2,"done"],
+["m9","alg","คาถาพจน์ซ้อน","พหุนาม","ม.2",1,"maybe"],
+["m10","alg","คาถาแกะปม","การแยกตัวประกอบ","ม.2–3",2,"not"],
+["m11","alg","คาถาขอบเขต","อสมการเชิงเส้น","ม.3",1,"not"],
+["m12","alg","คาถาโค้งพาราโบลา","สมการกำลังสองและพาราโบลา","ม.3",2,"not"],
+["m13","alg","คาถาสองเงื่อนไข","ระบบสมการสองตัวแปร","ม.3",2,"not"],
+["m14","geo","คาถามองสามมิติ","การสร้างและมิติสัมพันธ์","ม.1",1,"done"],
+["m15","geo","คาถาเส้นขนาน","เส้นขนานและมุม","ม.2",2,"maybe"],
+["m16","geo","คาถาฝาแฝด","ความเท่ากันทุกประการ","ม.2",3,"maybe"],
+["m17","geo","คาถามุมฉาก","ทฤษฎีบทพีทาโกรัส","ม.2",3,"maybe"],
+["m18","geo","คาถาเลื่อน สะท้อน หมุน","การแปลงทางเรขาคณิต","ม.2",1,"maybe"],
+["m19","geo","คาถาบรรจุ","พื้นที่ผิวและปริมาตร","ม.2–3",2,"part"],
+["m20","geo","คาถาย่อขยาย","ความคล้าย","ม.3",3,"not"],
+["m21","geo","คาถาวงเวท","วงกลมและตรีโกณมิติเบื้องต้น","ม.3",1,"not"],
+["m22","dat","คาถาหาค่ากลาง","สถิติ","ม.1–3",3,"now"],
+["m23","dat","คาถาทำนายโอกาส","ความน่าจะเป็น","ม.3",2,"not"],
+["s1","mat","คาถามองอนุภาค","สมบัติของสารและแบบจำลองอนุภาค","ม.1",0,"done"],
+["s2","mat","คาถาตาชั่งสสาร","สารบริสุทธิ์ สารผสม ความหนาแน่น","ม.1",0,"done"],
+["s3","mat","คาถาแยกธาตุ","การแยกสารผสม","ม.2",0,"maybe"],
+["s4","mat","คาถาปรุงยา","สารละลายและความเข้มข้น","ม.2",0,"now"],
+["s5","mat","คาถาแปรธาตุ","ปฏิกิริยาเคมี","ม.3",0,"not"],
+["s6","mat","คาถาวัดกรด","กรด เบส และ pH","ม.3",0,"not"],
+["s7","life","คาถาผ่านเยื่อ","เซลล์และการลำเลียงสาร","ม.1",0,"done"],
+["s8","life","คาถาใบไม้กินแสง","พืช: สังเคราะห์แสง ลำเลียง สืบพันธุ์","ม.1",0,"done"],
+["s9","life","คาถารู้จักร่างกาย","ระบบร่างกายมนุษย์","ม.2",0,"maybe"],
+["s10","life","คาถาสืบสายเลือด","พันธุศาสตร์","ม.3",0,"not"],
+["s11","life","คาถาสายใยป่า","ระบบนิเวศ","ม.3",0,"not"],
+["s12","pow","คาถาไฟอุ่น","อุณหภูมิและความร้อน","ม.1",0,"done"],
+["s13","pow","คาถาผลักดึง","แรงลัพธ์และแรงเสียดทาน","ม.2",0,"maybe"],
+["s14","pow","คาถาลอยน้ำ","ความดันและแรงลอยตัว","ม.2",0,"maybe"],
+["s15","pow","คาถาคานงัด","โมเมนต์และคาน","ม.2",0,"part"],
+["s16","pow","คาถาพลังเคลื่อนไหว","การเคลื่อนที่ งาน พลังงาน","ม.2",0,"part"],
+["s17","pow","คาถาสายฟ้า","ไฟฟ้าและวงจร","ม.3",0,"not"],
+["s18","pow","คาถาหักเหแสง","คลื่นและแสง","ม.3",0,"not"],
+["s19","sky","คาถาเรียกลม","บรรยากาศและลมฟ้าอากาศ","ม.1",0,"done"],
+["s20","sky","คาถาฟังเสียงหิน","ดิน หิน น้ำ ธรณีพิบัติ","ม.2",0,"part"],
+["s21","sky","คาถาดวงดาว","ระบบสุริยะและอวกาศ","ม.3",0,"not"],
+["s22","lab","คาถาทดลองยุติธรรม","ตัวแปรและการออกแบบการทดลอง","ทุกชั้น",0,"done"],
+["s23","lab","คาถาอ่านกราฟ","อ่านกราฟ ตาราง แปลผลข้อมูล","ทุกชั้น",0,"done"],
+["s24","lab","คาถาสรุปจากหลักฐาน","อ่านบทความวิทย์แล้วลงข้อสรุป","ทุกชั้น",0,"not"]
+].map(([id,realm,name,topic,grade,stars,school])=>({id,realm,name,topic,grade,stars,school}));
+
+/* ---------- daily vocabulary: general academic words + science/math words + story/art words ---------- */
+const VOCAB=[
+["increase","เพิ่มขึ้น","The number of fans increased after episode 5.","gen"],["decrease","ลดลง","Oxygen in water decreases when it gets hot.","sci"],
+["sketch","ภาพร่าง","She made a quick sketch of the cat.","art"],["average","ค่าเฉลี่ย","The average score was 8.","sci"],
+["journey","การเดินทาง","Their journey took ten years.","art"],["compare","เปรียบเทียบ","Compare the two graphs.","gen"],
+["ratio","อัตราส่วน","Mix blue and yellow in a 2 : 5 ratio.","sci"],["spell","คาถา","The mage learned a new spell.","art"],
+["describe","บรรยาย อธิบายลักษณะ","Describe what you see in the picture.","gen"],["dissolve","ละลาย","Sugar dissolves in warm water.","sci"],
+["apprentice","ลูกศิษย์ ผู้ฝึกหัด","The apprentice practiced every day.","art"],["measure","วัด","Measure the length of the leaf.","gen"],
+["temperature","อุณหภูมิ","The temperature dropped at night.","sci"],["brave","กล้าหาญ","A brave hero is not always strong.","art"],
+["result","ผลลัพธ์","The result surprised everyone.","gen"],["experiment","การทดลอง","We did an experiment with salt water.","sci"],
+["gentle","อ่อนโยน","He was gentle with the small bird.","art"],["reason","เหตุผล","What is the reason for your answer?","gen"],
+["percent","ร้อยละ","Forty percent of the class likes anime.","sci"],["ancient","โบราณ","They found an ancient book.","art"],
+["example","ตัวอย่าง","Give one example of a mixture.","gen"],["variable","ตัวแปร","Change only one variable at a time.","sci"],
+["curious","อยากรู้อยากเห็น","The curious cat opened the box.","art"],["difference","ความแตกต่าง ผลต่าง","Find the difference between 15 and 9.","gen"],
+["graph","กราฟ","The graph shows a rising line.","sci"],["shadow","เงา","Her shadow grew long in the evening.","art"],
+["amount","ปริมาณ จำนวน","Use the same amount of water.","gen"],["estimate","ประมาณ คาดคะเน","Estimate the number of fish in the pond.","sci"],
+["memory","ความทรงจำ","She kept the memory of her teacher.","art"],["explain","อธิบาย","Explain how you got the answer.","gen"],
+["data","ข้อมูล","Collect data for one week.","sci"],["wander","เดินเตร็ดเตร่","They wandered through the forest.","art"],
+["predict","ทำนาย คาดการณ์","Predict what will happen next.","gen"],["evidence","หลักฐาน","Use evidence to support your idea.","sci"],
+["character","ตัวละคร","My favorite character is quiet but kind.","art"],["observe","สังเกต","Observe the color change carefully.","gen"],
+["density","ความหนาแน่น","Ice has a lower density than water.","sci"],["shade","ลงเงา แรเงา","Shade the left side of the apple.","art"],
+["total","ทั้งหมด ผลรวม","The total is 40.","gen"],["energy","พลังงาน","Plants get energy from sunlight.","sci"],
+["adventure","การผจญภัย","Every adventure starts with one step.","art"],["similar","คล้ายกัน","These two triangles are similar.","gen"],
+["force","แรง","A force can push or pull.","sci"],["patient","อดทน","Be patient. Good drawings take time.","art"],
+["solve","แก้ (ปัญหา โจทย์)","Can you solve this puzzle?","gen"]
+].map(([w,th,ex,cat])=>({w,th,ex,cat}));
+const READINGS=[
+{text:"Mina wanted to draw her cat. First, she made a quick sketch. Then she looked closely to observe the shadow under its chin. She did not get it right the first time, but she was patient. After three tries, the result looked almost alive.",
+ qs:[{q:"What did Mina do first?",opts:["She made a quick sketch.","She shaded the shadow.","She bought a cat.","She gave up."],a:0},
+     {q:"Which word means she did not give up easily?",opts:["patient","curious","ancient","gentle"],a:0}]},
+{text:"In an experiment, a class put the same amount of sugar into three cups of water. The only variable they changed was the temperature. The sugar dissolved fastest in the hottest cup. Their data shows that heat can increase how fast sugar dissolves.",
+ qs:[{q:"What did the class change?",opts:["The temperature","The amount of sugar","The type of cup","The amount of water"],a:0},
+     {q:"What does the evidence show?",opts:["Heat makes sugar dissolve faster.","Cold makes sugar dissolve faster.","Sugar never dissolves.","All cups were the same."],a:0}]}
+];
+
 
 /* ---------- test mode: open the page with #test once; results get a "test" tag ---------- */
 let TEST=false;
@@ -295,10 +419,101 @@ async function importCode(raw, asTest){
 }
 
 /* ---------- session state ---------- */
-let view = "home", S = null;
+let view = "home", S = null, V = null, showAll = false;
 const $v = document.getElementById("view");
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])) }
 
+/* warm-up questions review older topics, so they count toward those spells */
+const WARM_SPELL={tw1:"m3",tw2:"m1",mw1:"m1",mw2:"m1",sw1:"s7",sw2:"s2"};
+const QBANK={};
+SETS.forEach(s=>[...s.warm,...s.practice,s.challenge].forEach(q=>{q.spell=WARM_SPELL[q.id]||s.spell;QBANK[q.id]={q,set:s}}));
+
+/* ---------- XP, streak and ice ---------- */
+const GOAL=60, FREEZE_MAX=2, DAY=86400000;
+function realAttempts(){ return attempts.filter(a=>!a.example&&!a.test) }
+function mine(){ return TEST ? attempts.filter(a=>!a.example) : realAttempts() }
+function isSkip(a){ return a.type==="skip" }
+function isLesson(a){ return !isSkip(a) && a.type!=="vocab" }
+function dayKey(iso){ const d=new Date(iso); d.setHours(0,0,0,0); return d.getTime() }
+function todayKey(){ return dayKey(new Date().toISOString()) }
+function nextDay(d){ const t=new Date(d); t.setDate(t.getDate()+1); t.setHours(0,0,0,0); return t.getTime() }
+function xpOf(a){ if(isSkip(a)) return 0; if(typeof a.xp==="number") return a.xp; return (a.correct||0)*10+((a.total||0)-(a.correct||0))*5+20 }
+function itemXp(items){ return items.reduce((s,x)=>s+(x.skipped?0:x.correct?10:5),0) }
+function progressOf(list){
+  const byDay=new Map(), skipDays=new Set();
+  list.forEach(a=>{const k=dayKey(a.endedAt); if(isSkip(a)){skipDays.add(k);return} byDay.set(k,(byDay.get(k)||0)+xpOf(a))});
+  const today=todayKey(), keys=[...byDay.keys(),...skipDays];
+  let streak=0, freeze=0, goalDays=0; const frozen=new Set(), earned=[];
+  if(keys.length){
+    for(let d=Math.min(...keys); d<=today; d=nextDay(d)){
+      const xp=byDay.get(d)||0;
+      if(xp>=GOAL){
+        goalDays++; streak++;
+        if(goalDays%5===0&&freeze<FREEZE_MAX){freeze++;earned.push({d,why:"ถึงเป้าครบ 5 วัน"})}
+        if(xp>=GOAL*2&&freeze<FREEZE_MAX){freeze++;earned.push({d,why:"เก็บ XP ได้เกิน 2 เท่าของเป้า"})}
+      } else if(d<today){
+        if(freeze>0&&streak>0){freeze--;frozen.add(d)} else streak=0;
+      }
+    }
+  }
+  const todayXp=byDay.get(today)||0;
+  return {streak,freeze,goalDays,frozen,skipDays,byDay,todayXp,goalToday:todayXp>=GOAL,earnedToday:earned.filter(e=>e.d===today)};
+}
+
+/* ---------- what to do today ---------- */
+function recommend(list){
+  const last={}; list.filter(isLesson).forEach(a=>{if(a.setId) last[a.setId]=Math.max(last[a.setId]||0,dayKey(a.endedAt))});
+  const t=todayKey(), pool=SETS.filter(s=>last[s.id]!==t);
+  return (pool.length?pool:SETS).slice().sort((a,b)=>(last[a.id]||0)-(last[b.id]||0)||(b.current?1:0)-(a.current?1:0))[0];
+}
+function reviewPool(list){
+  const wrong=new Map();
+  list.filter(isLesson).slice().sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt)).forEach(a=>(a.items||[]).forEach(x=>{
+    if(x.skipped||!QBANK[x.qid]) return;
+    if(x.correct===false) wrong.set(x.qid,+new Date(a.endedAt)); else if(x.correct) wrong.delete(x.qid);
+  }));
+  return [...wrong.entries()].sort((a,b)=>a[1]-b[1]).map(([qid])=>QBANK[qid].q);
+}
+function shuffleQ(q){
+  if(q.num) return q;
+  const idx=q.opts.map((_,k)=>k); for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]]}
+  return {...q,opts:idx.map(k=>q.opts[k]),a:idx.indexOf(q.a)};
+}
+
+/* ---------- spell tiers ---------- */
+function spellStats(list){
+  const st={};
+  list.filter(isLesson).forEach(a=>{
+    const d=dayKey(a.endedAt);
+    (a.items||[]).forEach(x=>{
+      if(x.skipped) return; const sp=x.spell||QBANK[x.qid]?.q.spell; if(!sp||!x.level) return;
+      const o=st[sp]??={days:{},last:0}; const dd=o.days[d]??={1:[0,0],2:[0,0],3:[0,0]};
+      dd[x.level][0]++; if(x.correct) dd[x.level][1]++; o.last=Math.max(o.last,d);
+    });
+  });
+  const out={}, t=todayKey();
+  for(const [sp,o] of Object.entries(st)){
+    const days=Object.entries(o.days).map(([d,v])=>({d:+d,v}));
+    const n1=days.reduce((s,x)=>s+x.v[1][0],0), c1=days.reduce((s,x)=>s+x.v[1][1],0);
+    const t1=n1>=3&&c1/n1>=0.8;
+    const d2=days.filter(x=>x.v[2][0]>=2&&x.v[2][1]/x.v[2][0]>=0.7).length;
+    const t2=t1&&d2>=2;
+    const d3=days.filter(x=>x.v[3][0]>=1&&x.v[3][1]/x.v[3][0]>=0.6).map(x=>x.d).sort((a,b)=>a-b);
+    const t3=t2&&d3.length>=2&&d3[d3.length-1]-d3[0]>=7*DAY;
+    const tier=t3?3:t2?2:t1?1:0, idle=Math.round((t-o.last)/DAY);
+    out[sp]={tier,idle,faded:(tier===2&&idle>14)||(tier===3&&idle>21),n1,c1,d2,d3:d3.length};
+  }
+  return out;
+}
+const TIER=["ยังไม่ปลดล็อก","🌱 ฝึกหัด","✨ ชำนาญ","👑 ปรมาจารย์"];
+function nextStep(sp,info){
+  if(!info||info.tier===0) return "ตอบข้อพื้นฐานให้ถูก 80% (อย่างน้อย 3 ข้อ) เพื่อปลดล็อกขั้นฝึกหัด";
+  if(info.tier===1) return `ทำข้อประยุกต์ให้ถูก 70% ใน 2 วันที่ต่างกัน (ทำได้แล้ว ${info.d2} วัน)`;
+  if(info.tier===2) return "ทำข้อแนว MWIT ให้ถูก 60% ใน 2 วันที่ห่างกันอย่างน้อย 7 วัน";
+  return "ปรมาจารย์แล้ว แวะมาทบทวนบ้าง คาถาจะได้ไม่จาง";
+}
+
+/* ---------- lesson sessions ---------- */
 function startSet(set, conceptFirst){
   const warm = set.warm.map(q=>({kind:"q",phase:"อุ่นเครื่อง (ทบทวนของเก่า)",q}));
   const card = {kind:"concept",phase:"การ์ดสรุปเนื้อหา"};
@@ -308,72 +523,103 @@ function startSet(set, conceptFirst){
     {kind:"q",phase:"ข้อท้าทาย (ไม่บังคับ)",q:set.challenge,optional:true},
     {kind:"rate",phase:"ปิดท้าย"}
   ];
-  S = {set, conceptFirst, steps, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, rating:null, hints:0, confused:[], altShown:0};
-  view="session"; render();
+  S = {mode:"set", set, conceptFirst, steps, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, rating:null, hints:0, confused:[], altShown:0};
+  view="session"; render(); window.scrollTo({top:0});
+}
+function startReview(){
+  const qs=reviewPool(mine()).slice(0,5); if(!qs.length) return;
+  S = {mode:"review", set:{id:"review",subject:"ทบทวน",topic:"ทบทวนข้อที่เคยพลาด"}, steps:[...qs.map(q=>({kind:"q",phase:"ทบทวนข้อที่เคยพลาด",q:shuffleQ(q)})),{kind:"finish",phase:"เสร็จ"}],
+       i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, confused:[], altShown:0};
+  view="session"; render(); window.scrollTo({top:0});
 }
 
 function render(){
-  document.getElementById("tab-home").setAttribute("aria-current", view==="parent"?"false":"page");
-  document.getElementById("tab-parent")?.setAttribute("aria-current", view==="parent"?"page":"false");
+  const tab = view==="parent"?"parent":view==="map"?"map":"home";
+  document.querySelectorAll(".tabs a").forEach(a=>a.setAttribute("aria-current", a.dataset.v===tab?"page":"false"));
   if(view==="home") return renderHome();
+  if(view==="map") return renderMap();
   if(view==="intro") return renderIntro();
   if(view==="feedback") return renderFeedback();
   if(view==="send") return renderSend(false);
   if(view==="skip") return renderSkip();
   if(view==="session") return renderStep();
+  if(view==="vocab") return renderVocab();
   if(view==="done") return renderDone();
   if(view==="parent") return renderParent();
 }
 
-function realAttempts(){ return attempts.filter(a=>!a.example&&!a.test) }
-function isSkip(a){ return a.type==="skip" }
-function dayKey(iso){ const d=new Date(iso); d.setHours(0,0,0,0); return d.getTime() }
+function flameHtml(p){
+  return `<div class="hero">
+    <div class="flame ${p.streak?"":"out"}" title="จำนวนวันติดต่อกันที่ถึงเป้า">🔥 ${p.streak} <span class="small muted" style="font-family:var(--body)">วัน</span></div>
+    <div class="ice" title="น้ำแข็งกันไฟดับ">🧊 ${p.freeze}/${FREEZE_MAX}</div>
+    <div class="xpbar"><div class="stage"><span>XP วันนี้</span><span><b>${p.todayXp}</b> / ${GOAL}</span></div>
+      <div class="progress"><i style="width:${Math.min(100,p.todayXp/GOAL*100)}%"></i></div></div></div>`;
+}
 
 function renderHome(){
-  const days = ["จ","อ","พ","พฤ","ศ","ส","อา"];
-  const now = new Date(); const mon = new Date(now); mon.setHours(0,0,0,0); mon.setDate(now.getDate()-((now.getDay()+6)%7));
-  const mine = TEST ? attempts.filter(a=>!a.example) : realAttempts();
-  const done = new Set(mine.filter(a=>!isSkip(a)).map(a=>dayKey(a.endedAt)));
-  const skipped = new Set(mine.filter(isSkip).map(a=>dayKey(a.endedAt)));
-  const today = dayKey(new Date().toISOString());
-  const dots = days.map((d,k)=>{const t=new Date(mon);t.setDate(mon.getDate()+k);const tk=t.getTime();const on=done.has(tk);const sk=!on&&skipped.has(tk);
-    return `<div class="day"><span class="dot ${on?"on":""} ${sk?"rest":""}" title="${on?"ทำแล้ว":sk?"บอกพักไว้แล้ว":"ยังไม่ได้ทำ"}"></span>${tk===today?"<b>วันนี้</b>":d}</div>`}).join("");
-  const todayDone = done.has(today)||skipped.has(today);
+  const list=mine(), p=progressOf(list), today=todayKey();
+  const days=["จ","อ","พ","พฤ","ศ","ส","อา"];
+  const mon=new Date(); mon.setHours(0,0,0,0); mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
+  const dots=days.map((d,k)=>{const t=new Date(mon);t.setDate(mon.getDate()+k);const tk=t.getTime();
+    const on=(p.byDay.get(tk)||0)>=GOAL, ice=p.frozen.has(tk), sk=!on&&p.skipDays.has(tk);
+    return `<div class="day"><span class="dot ${on?"on":ice?"ice":""} ${sk&&!ice?"rest":""}" title="${on?"ถึงเป้า":ice?"ใช้น้ำแข็งกันไฟดับ":sk?"ขอพัก":"ยังไม่ถึงเป้า"}"></span>${tk===today?"<b>วันนี้</b>":d}</div>`}).join("");
+  const rec=recommend(list), pool=reviewPool(list), vt=vocabToday(), vocabDone=list.some(a=>a.type==="vocab"&&dayKey(a.endedAt)===today);
+  const skippedToday=p.skipDays.has(today);
+  const setCard=(s,k)=>`<button class="set" data-k="${k}">
+        <span class="row" style="gap:6px"><span class="chip">${s.subject} · ${s.grade}</span>${s.current?`<span class="chip l2">เรียนอยู่ตอนนี้</span>`:""}</span>
+        <span class="subj">${esc(s.topic)}</span>
+        <span class="meta">อุ่นเครื่อง ${s.warm.length} · การ์ดสรุป · ฝึก ${s.practice.length} ข้อ · ข้อท้าทาย 1 · ${s.mins}</span></button>`;
   $v.innerHTML = `
   ${TEST?`<section class="card" style="border-color:var(--beak)"><b style="color:var(--beak)">โหมดทดสอบ</b>
     <p class="small">ผลจากเครื่องนี้จะติดป้าย "ทดสอบ" และไม่ถูกนับในการวิเคราะห์ ลองกดทุกอย่างได้ตามสบาย</p>
     <button class="btn ghost" id="leave-test">ออกจากโหมดทดสอบ และล้างผลทดสอบในเครื่องนี้</button></section>`:""}
   <section class="card">
-    <span class="eyebrow">สัปดาห์นี้</span>
+    ${flameHtml(p)}
     <div class="week">${dots}</div>
-    <p class="small muted">เป้าคือทุกวัน วงทึบคือทำแล้ว เส้นประคือมาบอกพักไว้ ถ้าวันไหนไม่สะดวก แค่กด "วันนี้ขอพัก" แล้วบอกเหตุผล</p>
-    ${todayDone?"":`<button class="btn ghost" id="skip-open">วันนี้ขอพัก</button>`}
+    <p class="small muted">${p.goalToday?"วันนี้ถึงเป้าแล้ว ไฟยังลุกอยู่ 🔥":`ทำชุดหลักให้จบ 1 ชุดก็ถึงเป้า ${GOAL} XP แล้ว`} · ถึงเป้าครบทุก 5 วัน หรือเก็บ XP ได้ ${GOAL*2} ในวันเดียว ได้น้ำแข็ง 1 ก้อน (เก็บได้สูงสุด ${FREEZE_MAX}) วันที่ไม่ได้ทำ น้ำแข็งจะละลายแทนไฟ</p>
+    ${p.goalToday||skippedToday?(skippedToday&&!p.goalToday?`<p class="small muted">วันนี้บอกพักไว้แล้ว พรุ่งนี้มาต่อนะ</p>`:""):`<button class="btn ghost" id="skip-open">วันนี้ขอพัก</button>`}
   </section>
-  <section style="display:flex;flex-direction:column;gap:10px">
-    <h2>เลือกชุดของวันนี้</h2>
-    <div class="sets">${SETS.map((s,k)=>`
-      <button class="set" data-k="${k}" id="set-${s.id}">
-        <span class="row" style="gap:6px"><span class="chip">${s.subject} · ${s.grade}</span>${s.current?`<span class="chip l2">เรียนอยู่ตอนนี้</span>`:""}</span>
-        <span class="subj">${esc(s.topic)}</span>
-        <span class="meta">อุ่นเครื่อง ${s.warm.length} ข้อ · การ์ดสรุป · ฝึก ${s.practice.length} ข้อ · ข้อท้าทาย 1 ข้อ · ${s.mins}</span>
-      </button>`).join("")}</div>
+  <section class="card pick">
+    <span class="eyebrow">${p.goalToday?"ถึงเป้าแล้ว อยากเก็บ XP เพิ่มไหม":"แนะนำวันนี้"}</span>
+    <span class="row" style="gap:6px"><span class="chip">${rec.subject} · ${rec.grade}</span>${rec.current?`<span class="chip l2">เรียนอยู่ตอนนี้</span>`:""}</span>
+    <h2>${esc(rec.topic)}</h2>
+    <p class="small muted">อุ่นเครื่อง ${rec.warm.length} ข้อ · การ์ดสรุป · ฝึก ${rec.practice.length} ข้อ · ข้อท้าทาย 1 ข้อ · ${rec.mins}</p>
+    <div class="row"><button class="btn" id="go-rec">เริ่มชุดนี้</button><button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"อยากทำเรื่องอื่น"}</button></div>
+  </section>
+  ${showAll?`<section class="sets">${SETS.map((s,k)=>s===rec?"":setCard(s,k)).join("")}</section>`:""}
+  <section class="sets">
+    <div class="card"><h3>คำศัพท์วันนี้ <span class="small muted" style="font-family:var(--body)">· ราว 5 นาที</span></h3>
+      <p class="small muted">${vocabDone?"วันนี้ทำแล้ว เก่งมาก":vt.fresh.length||vt.due.length?`คำใหม่ ${vt.fresh.length} คำ · ทบทวน ${vt.due.length} คำ${isWeekend()?" · มีอ่านสั้นๆ วันหยุด":""}`:"วันนี้ไม่มีคำค้าง"}</p>
+      ${!vocabDone&&(vt.fresh.length||vt.due.length)?`<button class="btn ghost" id="vocab-go">เริ่มคำศัพท์</button>`:""}</div>
+    <div class="card"><h3>ทบทวนข้อที่เคยพลาด</h3>
+      <p class="small muted">${pool.length?`มีค้างอยู่ ${pool.length} ข้อ ครั้งนี้ทำ ${Math.min(5,pool.length)} ข้อ ตัวเลือกจะสลับที่ใหม่`:"ยังไม่มีข้อค้าง"}</p>
+      ${pool.length?`<button class="btn ghost" id="review-go">ทบทวน</button>`:""}</div>
   </section>
   ${store!=="db"&&(unsent().a.length||unsent().f.length)?`<section class="card"><h3>มีผลที่ยังไม่ได้ส่งให้พ่อ ${unsent().a.length} ครั้ง</h3>
     <p class="small muted">ผลเก็บไว้ในเครื่องนี้ ส่งให้พ่อผ่าน LINE ได้ในไม่กี่วินาที ส่งสะสมหลายวันทีเดียวก็ได้</p>
     <button class="btn" id="send-open">ส่งผลให้พ่อ</button></section>`:""}
   <section class="card"><h3>อยากบอกอะไร Claude ไหม</h3>
     <p class="small muted">นี่คือรุ่นทดลอง ตรงไหนน่าเบื่อ ยากไป อยากได้โจทย์แบบไหน หรืออยากเปลี่ยนชื่อ เปลี่ยนหน้าตา พิมพ์บอกได้ตรงนี้ ข้อความจะส่งไปพร้อมผลฝึกตอนกดส่งให้พ่อ แล้วพ่อจะเอาไปให้ Claude ปรับรุ่นถัดไป (พ่ออ่านได้ด้วยนะ)</p>
+    <p class="small">ชื่อ "สมุดคาถา" เป็นชื่อชั่วคราว ถ้าอยากตั้งชื่อเอง เขียนบอกได้เลย</p>
     <button class="btn ghost" id="fb-open">เขียนถึง Claude</button></section>`;
+  document.getElementById("go-rec").onclick=()=>{introSet=rec;view="intro";render()};
+  document.getElementById("other").onclick=()=>{showAll=!showAll;renderHome()};
   $v.querySelectorAll(".set").forEach(b=>b.onclick=()=>{introSet=SETS[+b.dataset.k];view="intro";render()});
   document.getElementById("fb-open").onclick=()=>{view="feedback";render()};
-  const so=document.getElementById("send-open"); if(so) so.onclick=()=>{view="send";render()};
-  const lt=document.getElementById("leave-test"); if(lt) lt.onclick=leaveTest;
-  const sko=document.getElementById("skip-open"); if(sko) sko.onclick=()=>{view="skip";render()};
+  const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
+  on("send-open",()=>{view="send";render()});
+  on("leave-test",leaveTest);
+  on("skip-open",()=>{view="skip";render()});
+  on("vocab-go",startVocab);
+  on("review-go",startReview);
 }
+
 let skipPick=null;
 function renderSkip(){
+  const p=progressOf(mine());
   $v.innerHTML=`<section class="card"><h2>วันนี้ขอพัก</h2>
     <p class="small muted">ได้เลย บอกไว้หน่อยว่าเพราะอะไร พรุ่งนี้ค่อยมาต่อ</p>
+    <p class="small">${p.streak?(p.freeze?`มีน้ำแข็ง 🧊 ${p.freeze} ก้อน พรุ่งนี้จะใช้ 1 ก้อนกันไฟ ${p.streak} วันไม่ให้ดับ`:`ตอนนี้ไม่มีน้ำแข็ง ไฟ ${p.streak} วันจะดับ แต่ไม่เป็นไร เริ่มใหม่ได้เสมอ`):"ไม่เป็นไร พรุ่งนี้เริ่มจุดไฟใหม่กัน"}</p>
     <div class="why">${SKIP_REASONS.map(x=>`<button data-sr="${x}" aria-pressed="${skipPick===x}">${x}</button>`).join("")}</div>
     <label class="small muted" for="skipnote">อยากเล่าเพิ่มไหม (ไม่บังคับ)</label>
     <input id="skipnote" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)" placeholder="เช่น มีงานกลุ่มส่งพรุ่งนี้">
@@ -382,21 +628,23 @@ function renderSkip(){
   document.getElementById("skipback").onclick=()=>{view="home";render()};
   document.getElementById("skipsave").onclick=async e=>{e.target.disabled=true;
     const now=new Date().toISOString();
-    await saveAttempt({type:"skip",setId:"skip",topic:"ขอพัก",reason:skipPick,memo:document.getElementById("skipnote").value.trim(),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,items:[]});
+    await saveAttempt({type:"skip",setId:"skip",topic:"ขอพัก",reason:skipPick,memo:document.getElementById("skipnote").value.trim(),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
     skipPick=null; view="home"; render();};
 }
 
 let introSet=null;
 function renderIntro(){
-  const s=introSet;
-  $v.innerHTML=`<section class="card"><span class="eyebrow">${s.subject} · ${s.grade}</span><h2>${esc(s.topic)}</h2>
+  const s=introSet, sp=SPELLS.find(x=>x.id===s.spell), info=spellStats(mine())[s.spell];
+  $v.innerHTML=`<section class="card"><span class="eyebrow">${s.subject} · ${s.grade}${sp?` · ${esc(sp.name)}`:""}</span><h2>${esc(s.topic)}</h2>
+    ${sp?`<p class="small muted">ขั้นตอนนี้: ${TIER[info?.tier||0]} · ${nextStep(sp,info)}</p>`:""}
     <p>วันนี้มีอะไรบ้าง</p>
     <ol style="margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px">
       <li><b>อุ่นเครื่อง ${s.warm.length} ข้อ</b> <span class="muted small">เรื่องเก่าที่เคยเรียน ให้สมองดึงความจำออกมาก่อน ผิดได้ไม่เป็นไร</span></li>
       <li><b>การ์ดสรุปเนื้อหา</b> <span class="muted small">อ่านสั้นๆ ราว 3 นาที</span></li>
-      <li><b>ฝึกทำ ${s.practice.length} ข้อ</b> <span class="muted small">ไล่จากง่ายไปยาก มีเฉลยทุกข้อ</span></li>
+      <li><b>ฝึกทำ ${s.practice.length} ข้อ</b> <span class="muted small">ไล่จากง่ายไปยาก มีเฉลยทุกข้อ มีข้อภาษาอังกฤษแทรก 1 ข้อ</span></li>
       <li><b>ข้อท้าทาย 1 ข้อ</b> <span class="muted small">จะข้ามก็ได้</span></li>
     </ol>
+    <p class="small muted">ข้อถูกได้ 10 XP ข้อผิดก็ได้ 5 XP เพราะได้ลองแล้ว ทำจบชุดได้โบนัส 20 XP</p>
     <div class="row"><button class="btn" id="go">เริ่มเลย</button><button class="btn ghost" id="go-card">ขออ่านสรุปก่อน</button></div>
     <p class="note">ถ้าเป็นเรื่องที่ยังไม่ได้เรียน หรือช่วงที่ขาดเรียน กด "ขออ่านสรุปก่อน" ได้เลย</p>
     <button class="btn ghost" id="back" style="border:0;padding-left:0">← กลับ</button></section>`;
@@ -412,7 +660,7 @@ async function saveFeedback(text){
 }
 function renderFeedback(){
   $v.innerHTML=`<section class="card"><h2>เขียนถึง Claude</h2>
-    <p class="small muted">ไม่มีถูกผิด ตัวอย่าง: "ข้อเอลฟ์ขำดี อยากได้แบบนี้อีก" "การ์ดสรุปยาวไป" "อยากเปลี่ยนสีเป็นโทนม่วง"</p>
+    <p class="small muted">ไม่มีถูกผิด ตัวอย่าง: "ข้อเอลฟ์ขำดี อยากได้แบบนี้อีก" "การ์ดสรุปยาวไป" "อยากตั้งชื่อสมุดว่า…"</p>
     <textarea id="fbtext" rows="5" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);resize:vertical"></textarea>
     <div class="row"><button class="btn" id="fbsend">ส่ง</button><button class="btn ghost" id="fbback">กลับ</button></div>
     <p class="small" id="fbmsg" aria-live="polite"></p></section>`;
@@ -422,11 +670,11 @@ function renderFeedback(){
     document.getElementById("fbmsg").textContent=w==="db"?"ส่งแล้ว ขอบคุณนะ Claude จะอ่านตอนปรับรุ่นถัดไป":"บันทึกแล้ว จะส่งไปพร้อมผลฝึกรอบหน้า";
     document.getElementById("fbtext").value="";e.target.disabled=false;};
 }
-const YAY=["ถูกต้อง","ถูกต้อง เก่งมาก","เป๊ะ!","ถูก เวทนี้ใช้ได้","ใช่เลย"];
-const OOPS=["ยังไม่ใช่ แต่ไม่เป็นไร","เกือบแล้ว","ยังไม่ถูก ลองดูเฉลยกัน","พลาดนิดเดียว"];
+const YAY=["ถูกต้อง +10 XP","ถูกต้อง เก่งมาก +10 XP","เป๊ะ! +10 XP","ถูก เวทนี้ใช้ได้ +10 XP","ใช่เลย +10 XP"];
+const OOPS=["ยังไม่ใช่ แต่ได้ลองแล้ว +5 XP","เกือบแล้ว +5 XP","ยังไม่ถูก ลองดูเฉลยกัน +5 XP","พลาดนิดเดียว +5 XP"];
 function header(){
   const pct = Math.round(S.i/(S.steps.length-1)*100);
-  return `<div class="stage"><span>${esc(S.set.topic)}</span><span>${S.steps[S.i].phase}</span></div>
+  return `<div class="stage"><span>${esc(S.set.topic)}</span><span>${S.steps[S.i].phase} · ${itemXp(S.items)} XP</span></div>
   <div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div>`;
 }
 
@@ -434,6 +682,7 @@ function renderStep(){
   const st = S.steps[S.i];
   if(st.kind==="concept") return renderConcept();
   if(st.kind==="rate") return renderRate();
+  if(st.kind==="finish") return finishReview();
   const q = st.q, ans = S.answered;
   let body;
   if(q.num){
@@ -446,14 +695,14 @@ function renderStep(){
   }
   let fb = "";
   if(ans){
-    fb = `<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?YAY[S.i%YAY.length]:OOPS[S.i%OOPS.length]}${q.num&&!ans.correct?` คำตอบคือ ${q.answer} ${q.unit}`:""}</b><p>${esc(q.ex)}</p>
+    fb = `<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?YAY[S.i%YAY.length]:OOPS[S.i%OOPS.length]}${q.num&&!ans.correct?` · คำตอบคือ ${q.answer} ${q.unit}`:""}</b><p>${esc(q.ex)}</p>
       ${ans.correct?"":`<span class="small muted">พลาดเพราะอะไร (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
       <div class="why">${Object.entries(ERR).map(([k,v])=>`<button data-why="${k}" aria-pressed="${S.why===k}">${v}</button>`).join("")}</div>`}
     </div>
     <button class="btn" id="next">ต่อไป</button>`;
   }
   $v.innerHTML = `<section class="card">${header()}
-    <span class="chip l${q.level}">${LV[q.level]} · ${esc(q.topic)}</span>
+    <span class="row" style="gap:6px"><span class="chip l${q.level}">${LV[q.level]} · ${esc(q.topic)}</span>${q.en?`<span class="chip">English corner</span>`:""}</span>
     <p class="prompt">${esc(q.q)}</p>
     ${S.hints?`<div class="feedback">${q.hints.slice(0,S.hints).map((h,k)=>`<span class="small"><b>คำใบ้ ${k+1}</b> ${esc(h)}</span>`).join("")}</div>`:""}
     ${body}${fb}
@@ -470,12 +719,12 @@ function renderStep(){
       document.getElementById("numin").focus();
     } else $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer({choice:+b.dataset.k,correct:+b.dataset.k===q.a}));
     const hb=document.getElementById("hint"); if(hb) hb.onclick=()=>{S.hints++;renderStep()};
-    const sk=document.getElementById("skip"); if(sk) sk.onclick=()=>{S.items.push({qid:q.id,topic:q.topic,level:q.level,skipped:true,timeSec:0});advance()};
+    const sk=document.getElementById("skip"); if(sk) sk.onclick=()=>{S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,skipped:true,timeSec:0});advance()};
   } else {
     $v.querySelectorAll("[data-why]").forEach(b=>b.onclick=()=>{S.why=b.dataset.why;renderStep()});
     const cq=document.getElementById("confq"); if(cq) cq.onclick=()=>{if(!S.confused.some(c=>c.qid===q.id))S.confused.push({where:"question",qid:q.id,topic:q.topic,prompt:q.q});renderStep()};
     document.getElementById("next").onclick=()=>{
-      S.items.push({qid:q.id,topic:q.topic,level:q.level,phase:st.phase,correct:ans.correct,errorType:ans.correct?null:(S.why||"unspecified"),hints:S.hints,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q});
+      S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,errorType:ans.correct?null:(S.why||"unspecified"),hints:S.hints,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q});
       advance();
     };
   }
@@ -489,7 +738,7 @@ function renderConcept(){
     <h2>${esc(c.title)}</h2>
     <ul>${c.points.map(p=>`<li>${esc(p)}</li>`).join("")}</ul>
     ${c.formulas.map(f=>`<div class="formula">${esc(f)}</div>`).join("")}
-    <div><span class="eyebrow">คำศัพท์อังกฤษวันนี้</span><div class="vocab">${c.vocab.map(([e,t])=>`<span>${e} <i>${t}</i></span>`).join("")}</div></div>
+    <div><span class="eyebrow">คำศัพท์อังกฤษของบทนี้</span><div class="vocab">${c.vocab.map(([e,t])=>`<span>${e} <i>${t}</i></span>`).join("")}</div></div>
     ${c.alts.slice(0,S.altShown).map(a=>`<div class="feedback"><b>${esc(a.label)}</b>${a.lines.map(l=>`<p class="small">${esc(l)}</p>`).join("")}</div>`).join("")}
     <div class="row"><button class="btn" id="next">เข้าใจแล้ว ไปต่อ</button>
     ${S.altShown<c.alts.length?`<button class="btn ghost" id="alt">ยังไม่เข้าใจ อธิบายอีกแบบ</button>`:`<button class="btn ghost" id="confc">${S.confused.some(x=>x.where==="concept")?"บันทึกแล้ว พ่อกับ Claude จะช่วยดู":"ยังงงอยู่ ขอให้ช่วย"}</button>`}</div></section>`;
@@ -504,28 +753,162 @@ function renderRate(){
     <div class="rate">${["ง่าย","พอดี","ยาก"].map(r=>`<button class="btn ${S.rating===r?"":"ghost"}" data-r="${r}">${r}</button>`).join("")}</div>
     <label class="small muted" for="memo">อยากบอกอะไรเพิ่มไหม (ไม่บังคับ)</label>
     <input id="memo" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)" placeholder="เช่น ข้อปลาสนุกดี / การ์ดสรุปยาวไป">
-    <button class="btn" id="save" ${S.rating?"":"disabled"}>บันทึกและจบวันนี้</button></section>`;
+    <button class="btn" id="save" ${S.rating?"":"disabled"}>บันทึกและรับ XP</button></section>`;
   $v.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{const m=document.getElementById("memo").value;S.rating=b.dataset.r;renderRate();document.getElementById("memo").value=m});
   document.getElementById("save").onclick=async e=>{
     e.target.disabled=true; e.target.textContent="กำลังบันทึก…";
     const items=S.items, scored=items.filter(x=>!x.skipped);
-    const rec={setId:S.set.id,subject:S.set.subject,topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
+    const rec={type:"set",setId:S.set.id,spell:S.set.spell,subject:S.set.subject,topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
       durationSec:Math.round((Date.now()-S.start)/1000),conceptSec:S.conceptSec||0,rating:S.rating,memo:document.getElementById("memo").value.trim(),
-      correct:scored.filter(x=>x.correct).length,total:scored.length,altShown:S.altShown,confused:S.confused,items};
-    S.where = await saveAttempt(rec); S.rec=rec; view="done"; render();
+      correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items)+20,altShown:S.altShown,confused:S.confused,items};
+    await finishWith(rec);
   };
+}
+async function finishReview(){
+  $v.innerHTML=`<section class="card"><p class="muted">กำลังบันทึก…</p></section>`;
+  const items=S.items, scored=items.filter(x=>!x.skipped);
+  await finishWith({type:"review",setId:"review",subject:"ทบทวน",topic:"ทบทวนข้อที่เคยพลาด",startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
+    durationSec:Math.round((Date.now()-S.start)/1000),correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items),confused:S.confused,items});
+}
+async function finishWith(rec){
+  const before=progressOf(mine());
+  const where=await saveAttempt(rec);
+  const list=attempts.includes(rec)?mine():[rec,...mine()];
+  S={...S,where,rec,before,after:progressOf(list),list}; view="done"; render(); window.scrollTo({top:0});
 }
 
 function renderDone(){
-  const r=S.rec, mins=Math.max(1,Math.round(r.durationSec/60));
-  const byL=[1,2,3].map(l=>{const it=r.items.filter(x=>x.level===l&&!x.skipped);return `${LV[l].split(" · ")[0]}: ${it.filter(x=>x.correct).length}/${it.length}`}).join(" · ");
-  $v.innerHTML=`<section class="card"><span class="eyebrow">เสร็จแล้ว</span><h2>ทำได้ ${r.correct} จาก ${r.total} ข้อ ใน ${mins} นาที</h2>
-    <p class="muted">${byL}</p>
+  const r=S.rec, mins=Math.max(1,Math.round(r.durationSec/60)), a=S.after, b=S.before;
+  const lessonish=r.type!=="vocab";
+  const byL=lessonish?[1,2,3].map(l=>{const it=r.items.filter(x=>x.level===l&&!x.skipped);return it.length?`${LV[l].split(" · ")[0]}: ${it.filter(x=>x.correct).length}/${it.length}`:""}).filter(Boolean).join(" · "):"";
+  const reached=!b.goalToday&&a.goalToday;
+  const pool=reviewPool(S.list), today=todayKey(), vocabDone=S.list.some(x=>x.type==="vocab"&&dayKey(x.endedAt)===today), vt=vocabToday();
+  const ss=spellStats(S.list), sp=r.spell&&SPELLS.find(x=>x.id===r.spell), info=sp&&ss[sp.id];
+  const before=sp&&spellStats(S.list.filter(x=>x!==r))[sp.id];
+  const up=sp&&info&&info.tier>(before?.tier||0);
+  $v.innerHTML=`<section class="card"><span class="eyebrow">เสร็จแล้ว</span>
+    <h2>+${r.xp} XP</h2>
+    <p>${r.type==="vocab"?`คำศัพท์ถูก ${r.correct} จาก ${r.total}`:`ทำได้ ${r.correct} จาก ${r.total} ข้อ`} ใน ${mins} นาที</p>
+    ${byL?`<p class="small muted">${byL}</p>`:""}
+    ${flameHtml(a)}
+    ${reached?`<p><b>ถึงเป้าวันนี้แล้ว ไฟ ${a.streak} วันยังลุกอยู่ 🔥</b></p>`:""}
+    ${a.earnedToday.length&&a.freeze>b.freeze?`<p><b>ได้น้ำแข็งกันไฟดับ 🧊</b> <span class="small muted">(${a.earnedToday.map(e=>e.why).join(", ")})</span></p>`:""}
+    ${up?`<p><b>${esc(sp.name)} ขึ้นขั้น ${TIER[info.tier]}!</b></p>`:sp?`<p class="small muted">${esc(sp.name)}: ${TIER[info?.tier||0]} · ${nextStep(sp,info)}</p>`:""}
     <p class="small muted">${S.where==="db"?"บันทึกแล้ว พ่อเห็นสรุปได้จากหน้าผู้ปกครอง":"บันทึกไว้ในเครื่องนี้แล้ว อย่าลืมส่งผลให้พ่อนะ"}</p>
-    <div class="row"><button class="btn" id="home">กลับหน้าแรก</button><button class="btn ghost" id="fb2">เขียนถึง Claude</button>${S.where==="local"?`<button class="btn" id="send2">ส่งผลให้พ่อ</button>`:""}</div></section>`;
-  const s2=document.getElementById("send2"); if(s2) s2.onclick=()=>{view="send";render()};
-  document.getElementById("fb2").onclick=()=>{view="feedback";render()};
-  document.getElementById("home").onclick=()=>{location.hash="#home";view="home";render()};
+    <div class="row">
+      ${r.type!=="review"&&pool.length?`<button class="btn" id="d-review">ทบทวนข้อที่เคยพลาด ${Math.min(5,pool.length)} ข้อ</button>`:""}
+      ${r.type!=="vocab"&&!vocabDone&&(vt.fresh.length||vt.due.length)?`<button class="btn ghost" id="d-vocab">คำศัพท์วันนี้ (5 นาที)</button>`:""}
+      ${S.where==="local"?`<button class="btn ghost" id="send2">ส่งผลให้พ่อ</button>`:""}
+      <button class="btn ghost" id="home">กลับหน้าแรก</button>
+    </div>
+    <button class="btn ghost" id="fb2" style="border:0;padding-left:0">เขียนถึง Claude</button></section>`;
+  const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
+  on("send2",()=>{view="send";render()});
+  on("fb2",()=>{view="feedback";render()});
+  on("d-review",startReview);
+  on("d-vocab",startVocab);
+  on("home",()=>{location.hash="#home";view="home";render()});
+}
+
+/* ---------- vocabulary (spaced boxes: 1, 2, 4, 7, 14 days) ---------- */
+const BOX_DAYS=[1,2,4,7,14];
+function vocabState(){ try{ return JSON.parse(localStorage.getItem("fieldnote.vocab")||"{}") }catch(e){ return {} } }
+function saveVocabState(v){ try{ localStorage.setItem("fieldnote.vocab",JSON.stringify(v)) }catch(e){} }
+function isWeekend(){ const d=new Date().getDay(); return d===0||d===6 }
+function vocabToday(){
+  const st=vocabState(), t=todayKey();
+  return {due:VOCAB.filter(x=>st[x.w]&&st[x.w].due<=t).sort((a,b)=>st[a.w].due-st[b.w].due).slice(0,10), fresh:VOCAB.filter(x=>!st[x.w]).slice(0,5)};
+}
+function vOpts(word,dir){
+  const others=VOCAB.filter(x=>x.w!==word.w).sort(()=>Math.random()-.5).slice(0,3);
+  const all=[word,...others].sort(()=>Math.random()-.5);
+  return {opts:all.map(x=>dir==="en"?x.th:x.w), a:all.indexOf(word)};
+}
+function startVocab(){
+  const {due,fresh}=vocabToday(); if(!due.length&&!fresh.length) return;
+  const quiz=[...fresh.map(w=>({w,dir:"en",fresh:true})),...due.map((w,k)=>({w,dir:k%2?"en":"th"}))].sort(()=>Math.random()-.5).map(x=>({...x,...vOpts(x.w,x.dir)}));
+  const read=isWeekend()?READINGS[Math.floor(todayKey()/DAY/7)%READINGS.length]:null;
+  V={fresh,quiz,read,phase:fresh.length?"learn":"quiz",li:0,qi:0,ri:0,ans:null,results:[],rres:[],start:Date.now()};
+  view="vocab"; render(); window.scrollTo({top:0});
+}
+function renderVocab(){
+  const top=`<div class="stage"><span>คำศัพท์วันนี้</span><span>${V.phase==="learn"?`คำใหม่ ${V.li+1}/${V.fresh.length}`:V.phase==="quiz"?`ทดสอบ ${V.qi+1}/${V.quiz.length}`:`อ่านสั้นๆ`}</span></div>`;
+  if(V.phase==="learn"){
+    const w=V.fresh[V.li];
+    $v.innerHTML=`<section class="card">${top}<span class="eyebrow">คำใหม่</span>
+      <span class="vword">${esc(w.w)}</span><p><b>${esc(w.th)}</b></p><p class="vex">“${esc(w.ex)}”</p>
+      <p class="small muted">อ่านออกเสียงประโยคตัวอย่างหนึ่งรอบ แล้วกดต่อไป</p>
+      <button class="btn" id="vn">${V.li+1<V.fresh.length?"ต่อไป":"ไปทดสอบ"}</button></section>`;
+    document.getElementById("vn").onclick=()=>{ if(V.li+1<V.fresh.length) V.li++; else V.phase="quiz"; renderVocab() };
+    return;
+  }
+  if(V.phase==="quiz"){
+    const it=V.quiz[V.qi], ans=V.ans;
+    $v.innerHTML=`<section class="card">${top}
+      <p class="small muted">${it.dir==="en"?"คำนี้แปลว่าอะไร":"คำภาษาอังกฤษของคำนี้คืออะไร"}${it.fresh?" · คำใหม่":" · ทบทวน"}</p>
+      <span class="vword">${esc(it.dir==="en"?it.w.w:it.w.th)}</span>
+      <div class="opts">${it.opts.map((o,k)=>{let c="";if(ans){if(k===it.a)c="right";else if(k===ans.choice)c="wrong"}return `<button class="opt ${c}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>`}).join("")}</div>
+      ${ans?`<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?"ถูก +5 XP":"ยังไม่ใช่ +2 XP"}</b><p><b>${esc(it.w.w)}</b> = ${esc(it.w.th)}</p><p class="vex small">“${esc(it.w.ex)}”</p></div>
+      <button class="btn" id="vn">ต่อไป</button>`:""}</section>`;
+    if(!ans) $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{V.ans={choice:+b.dataset.k,correct:+b.dataset.k===it.a};renderVocab()});
+    else document.getElementById("vn").onclick=()=>{
+      V.results.push({w:it.w.w,correct:ans.correct,fresh:!!it.fresh}); V.ans=null;
+      if(V.qi+1<V.quiz.length) V.qi++; else if(V.read) V.phase="read"; else return finishVocab();
+      renderVocab(); window.scrollTo({top:0});
+    };
+    return;
+  }
+  if(V.phase==="read"){
+    const q=V.read.qs[V.ri], ans=V.ans;
+    $v.innerHTML=`<section class="card">${top}<span class="eyebrow">อ่านสั้นๆ วันหยุด</span>
+      <div class="reading">${esc(V.read.text)}</div>
+      <p class="prompt">${esc(q.q)}</p>
+      <div class="opts">${q.opts.map((o,k)=>{let c="";if(ans){if(k===q.a)c="right";else if(k===ans.choice)c="wrong"}return `<button class="opt ${c}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>`}).join("")}</div>
+      ${ans?`<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?"ถูก +5 XP":"ยังไม่ใช่ ลองอ่านอีกรอบ +2 XP"}</b></div><button class="btn" id="vn">ต่อไป</button>`:""}</section>`;
+    if(!ans) $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{V.ans={choice:+b.dataset.k,correct:+b.dataset.k===q.a};renderVocab()});
+    else document.getElementById("vn").onclick=()=>{ V.rres.push(ans.correct); V.ans=null; if(V.ri+1<V.read.qs.length){V.ri++;renderVocab()} else finishVocab() };
+  }
+}
+async function finishVocab(){
+  $v.innerHTML=`<section class="card"><p class="muted">กำลังบันทึก…</p></section>`;
+  const st=vocabState(), t=todayKey();
+  V.results.forEach(r=>{ const cur=st[r.w]?.box||0; const box=r.correct?Math.min(BOX_DAYS.length,cur+1):1;
+    let due=t; for(let i=0;i<BOX_DAYS[box-1];i++) due=nextDay(due); st[r.w]={box,due} });
+  saveVocabState(st);
+  const c=V.results.filter(r=>r.correct).length, rc=V.rres.filter(Boolean).length;
+  await finishWith({type:"vocab",setId:"vocab",subject:"อังกฤษ",topic:"คำศัพท์วันนี้",startedAt:new Date(V.start).toISOString(),endedAt:new Date().toISOString(),
+    durationSec:Math.round((Date.now()-V.start)/1000),correct:c,total:V.results.length,newWords:V.fresh.length,
+    reading:V.read?{correct:rc,total:V.rres.length}:null,xp:c*5+(V.results.length-c)*2+rc*5+(V.rres.length-rc)*2,
+    items:V.results.map(r=>({qid:"v:"+r.w,word:r.w,fresh:r.fresh,correct:r.correct}))});
+}
+
+/* ---------- spell map ---------- */
+function renderMap(){
+  const ss=spellStats(mine());
+  const realmOrder=Object.keys(REALMS).sort((a,b)=>(SPELLS.some(s=>s.realm===b&&s.school==="now")?1:0)-(SPELLS.some(s=>s.realm===a&&s.school==="now")?1:0));
+  const got=SPELLS.filter(s=>(ss[s.id]?.tier||0)>=1).length;
+  const cnt=[1,2,3].map(t=>SPELLS.filter(s=>(ss[s.id]?.tier||0)===t).length);
+  $v.innerHTML=`<section class="card"><span class="eyebrow">แผนที่คาถา</span>
+    <h2>เก็บคาถาได้ ${got} จาก ${SPELLS.length}</h2>
+    <p class="small">🌱 ฝึกหัด ${cnt[0]} · ✨ ชำนาญ ${cnt[1]} · 👑 ปรมาจารย์ ${cnt[2]}</p>
+    <p class="small muted">ทุกคาถามี 3 ขั้น ฝึกหัด (พื้นฐาน) → ชำนาญ (ประยุกต์ ต้องทำได้ 2 วัน) → ปรมาจารย์ (แนว MWIT ต้องทำได้ห่างกัน 1 สัปดาห์) คาถาที่ไม่ได้ใช้นานจะจางลง ทบทวนสั้นๆ ก็กลับมาเต็ม ★ คือความถี่ที่ออกสอบคณิต</p>
+  </section>
+  ${realmOrder.map(rk=>{const sps=SPELLS.filter(s=>s.realm===rk);const g=sps.filter(s=>(ss[s.id]?.tier||0)>=1).length;
+    const open=sps.some(sp=>SETS.some(s=>s.spell===sp.id)||ss[sp.id]);
+    return `<details class="realm" ${open?"open":""}><summary><h3 style="display:inline">${REALMS[rk]} <small>เก็บแล้ว ${g}/${sps.length}${open?"":" · แตะเพื่อดู"}</small></h3></summary><div class="spells" style="margin-top:8px">
+    ${sps.map(sp=>{const set=SETS.find(s=>s.spell===sp.id), info=ss[sp.id], tier=info?.tier||0;
+      const pips=[1,2,3].map(t=>`<i class="${tier>=t?"on"+t:""}"></i>`).join("");
+      const stars=sp.stars?` <span class="small" style="color:var(--beak)">${"★".repeat(sp.stars)}</span>`:"";
+      const school=sp.school==="not"?`<span class="chip">ยังไม่ได้เรียนที่โรงเรียน</span>`:sp.school==="now"?`<span class="chip l2">กำลังเรียนอยู่</span>`:"";
+      if(!set&&!info) return `<div class="spell shadow"><b>${esc(sp.name)}${stars}</b><span class="small">${esc(sp.topic)} · ${sp.grade}</span>
+        <span class="row" style="gap:6px"><span class="small">🔒 คาถาที่รอให้ค้นพบ</span>${school}</span></div>`;
+      const tag=set?"button":"div";
+      return `<${tag} class="spell ${info?.faded?"faded":""}" ${set?`data-set="${set.id}"`:""}><b>${esc(sp.name)}${stars}</b>
+        <span class="small muted">${esc(sp.topic)} · ${sp.grade}</span>
+        <span class="row" style="gap:8px"><span class="pips" aria-label="${TIER[tier]}">${pips}</span><span class="small">${TIER[tier]}</span>${school}</span>
+        ${info?.faded?`<span class="small" style="color:var(--warn)">จางลงแล้ว ทบทวนสั้นๆ เพื่อเติมพลัง</span>`:`<span class="small muted">${set?nextStep(sp,info):"บทเรียนกำลังมา"}</span>`}</${tag}>`}).join("")}
+    </div></details>`}).join("")}`;
+  $v.querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>{introSet=SETS.find(s=>s.id===b.dataset.set);view="intro";render()});
 }
 
 /* ---------- parent view ---------- */
@@ -534,7 +917,8 @@ let showExamples = true, analysisText = "", fbList = [];
   try{ d.collection("feedback").orderBy("at","desc").limit(30).onSnapshot(s=>{fbList=s.docs.map(x=>({id:x.id,...x.data()}));if(view==="parent")render()},()=>{}) }catch(e){} })();
 function renderParent(){
   const pool = showExamples ? attempts : realAttempts();
-  const all = pool.filter(a=>!isSkip(a)), skips = pool.filter(isSkip);
+  const all = pool.filter(isLesson), skips = pool.filter(isSkip), voc = pool.filter(a=>a.type==="vocab");
+  const prog = progressOf(realAttempts()); const vItems = voc.flatMap(a=>a.items||[]); const vAcc = vItems.length?Math.round(vItems.filter(x=>x.correct).length/vItems.length*100):0;
   const conf = all.flatMap(a=>(a.confused||[]).map(c=>({...c,date:a.endedAt})));
   const hasEx = attempts.some(a=>a.example||a.test); const nTest = attempts.filter(a=>a.test).length + fbList.filter(f=>f.test).length;
   const items = all.flatMap(a=>a.items||[]).filter(x=>!x.skipped);
@@ -557,6 +941,9 @@ function renderParent(){
       <div class="stat"><b>${all.length}</b><span>ครั้งที่ฝึก</span></div>
       <div class="stat"><b>${mins}</b><span>นาทีรวม</span></div>
       <div class="stat"><b>${acc}%</b><span>ตอบถูก</span></div>
+      <div class="stat"><b>🔥 ${prog.streak}</b><span>วันติดต่อกัน</span></div>
+      <div class="stat"><b>🧊 ${prog.freeze}</b><span>น้ำแข็งในมือ</span></div>
+      <div class="stat"><b>${prog.goalDays}</b><span>วันที่ถึงเป้า</span></div>
     </div>
     <p class="note">เวลาคือช่วงที่เปิดหน้าเว็บ ใช้ดูแนวโน้ม ไม่ใช่เวลาที่ตั้งใจจริงทั้งหมด</p>`}
   </section>
@@ -577,6 +964,10 @@ function renderParent(){
     ${Object.keys(errs).length?Object.entries(errs).map(([k,n])=>`<div class="bar"><span>${ERR[k]||"ไม่ระบุ"}</span><span class="track"><i style="width:${Math.min(100,n*20)}%;background:var(--bad)"></i></span><span class="v">${n}</span></div>`).join(""):`<p class="muted small">ยังไม่มีข้อผิด</p>`}
   </div>
   <p class="note">ผิดเพราะไม่เข้าใจหลัก ต้องอธิบายใหม่ ผิดเพราะอ่านพลาดหรือคิดเลขผิด ต้องฝึกความรอบคอบ คนละวิธีแก้กัน</p></section>
+  <section class="card"><h3>คำศัพท์อังกฤษ</h3>
+    ${voc.length?`<p>ทำ ${voc.length} ครั้ง · เรียนคำใหม่ ${voc.reduce((s,a)=>s+(a.newWords||0),0)} คำ · ตอบถูก ${vAcc}%</p>
+    ${(()=>{const miss={};vItems.filter(x=>!x.correct).forEach(x=>miss[x.word]=(miss[x.word]||0)+1);const m=Object.entries(miss).sort((a,b)=>b[1]-a[1]).slice(0,6);return m.length?`<p class="small muted">คำที่พลาดบ่อย: ${m.map(([w,n])=>`${esc(w)} (${n})`).join(", ")}</p>`:""})()}`:`<p class="muted small">ยังไม่ได้เริ่มคำศัพท์</p>`}
+  </section>
   <section class="card"><h3>ลูกขอให้ช่วย</h3>
     ${conf.length?conf.slice(0,5).map(c=>`<div class="logi"><span class="chip">${c.where==="concept"?"การ์ดสรุป":"โจทย์"} · ${esc(c.topic)}</span>${c.prompt?`<span class="small">${esc(c.prompt)}</span>`:`<span class="small muted">อ่านคำอธิบายครบทุกแบบแล้วยังงง</span>`}</div>`).join("")+`<p class="note">ถามผมในแชตได้ เช่น "ช่วยเขียนคำอธิบายใหม่เรื่องนี้" ผมจะใส่ไว้ในชุดถัดไป</p>`:`<p class="muted small">ยังไม่มีคำขอ</p>`}
   </section>
@@ -620,14 +1011,14 @@ async function setupAsk(sum){ const skips=sum.skips||[], conf=sum.conf||[];
   btn.hidden=false;
   btn.onclick=async()=>{
     const out=document.getElementById("out"); btn.disabled=true; out.textContent="กำลังวิเคราะห์ อาจใช้เวลาราวครึ่งนาที…";
-    const real=realAttempts(), rs=real.filter(a=>!isSkip(a)), rk=real.filter(isSkip);
+    const real=realAttempts(), rs=real.filter(isLesson), rk=real.filter(isSkip), rv=real.filter(a=>a.type==="vocab"), rp=progressOf(real);
     const rItems=rs.flatMap(a=>a.items||[]).filter(x=>!x.skipped);
     if(!rs.length&&!rk.length){ out.textContent="ยังไม่มีข้อมูลจริงให้วิเคราะห์ ข้อมูลตัวอย่างและข้อมูลทดสอบไม่ถูกนับ"; btn.disabled=false; return; }
     const rLv=[1,2,3].map(l=>{const it=rItems.filter(x=>x.level===l);return {level:l,n:it.length,correct:it.filter(x=>x.correct).length}});
     const rErr={}; rItems.filter(x=>!x.correct).forEach(x=>{rErr[x.errorType||"unspecified"]=(rErr[x.errorType||"unspecified"]||0)+1});
     const data={skips:rk.map(k=>({date:k.endedAt,reason:k.reason,memo:k.memo})),confused:rs.flatMap(a=>(a.confused||[]).map(c=>({...c,date:a.endedAt}))),notes:fbList.filter(f=>!f.test).slice(0,10).map(f=>f.text),
       sessions:rs.map(a=>({topic:a.topic,date:a.endedAt,minutes:Math.round(a.durationSec/60),correct:a.correct,total:a.total,rating:a.rating,memo:a.memo,
-      wrong:(a.items||[]).filter(x=>x.correct===false).map(x=>({topic:x.topic,level:x.level,error:x.errorType,hints:x.hints}))})),accuracyByLevel:rLv,errors:rErr};
+      wrong:(a.items||[]).filter(x=>x.correct===false).map(x=>({topic:x.topic,level:x.level,error:x.errorType,hints:x.hints}))})),accuracyByLevel:rLv,errors:rErr,streak:{days:rp.streak,freezeLeft:rp.freeze,goalDays:rp.goalDays},vocab:{sessions:rv.length,correct:rv.reduce((s,a)=>s+a.correct,0),total:rv.reduce((s,a)=>s+a.total,0)}};
     const _unused={skips:skips.map(k=>({date:k.endedAt,reason:k.reason,memo:k.memo})),confused:conf,sessions:sum.all.map(a=>({topic:a.topic,date:a.endedAt,minutes:Math.round(a.durationSec/60),correct:a.correct,total:a.total,rating:a.rating,memo:a.memo,example:!!a.example,
       wrong:(a.items||[]).filter(x=>x.correct===false).map(x=>({topic:x.topic,level:x.level,error:x.errorType}))})),accuracyByLevel:sum.lv,errors:sum.errs};
     try{
@@ -639,7 +1030,7 @@ async function setupAsk(sum){ const skips=sum.skips||[], conf=sum.conf||[];
   };
 }
 
-function route(){ const h=location.hash.replace("#",""); if(false){} else if(!["session","intro","feedback","done","skip","send"].includes(view)){view="home"} else if(view==="done"){view="home"} render() }
+function route(){ const h=location.hash.replace("#",""); if(false){} else if(h==="map"){view="map"} else if(!["session","intro","feedback","done","skip","send","vocab"].includes(view)){view="home"} else if(view==="done"){view="home"} render() }
 window.addEventListener("hashchange",route);
 route();
 </script>
