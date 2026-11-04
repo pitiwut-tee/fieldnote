@@ -58,8 +58,9 @@ m5 ทฤษฎีจำนวน, m6 แบบรูป, m7 สมการเ�
 m1 จำนวนเต็ม, s1 อนุภาค, s7 เซลล์, s8 พืช, s12 ความร้อน, s13 แรง, s14 ความดันและแรงลอยตัว, s9 ร่างกายมนุษย์,
 s19 บรรยากาศ, s3 การแยกสาร, s22 ตัวแปร, s23 อ่านกราฟ.
 
-If the father has sent the school's course outline (look for `content/school-plan.md`), follow it for
-`currentSpells` and update `calendar.json` when the school moves to a new topic. Otherwise keep the current list.
+Read `content/school-plan.md` every run: it holds the science weighting estimate, the usual topic order, and
+known gaps. Follow its balance when choosing non-current topics. If it ever contains the school's own outline,
+use that for `currentSpells` and update `calendar.json` when the school moves to a new topic.
 
 ## 4. Write the content
 
