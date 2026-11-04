@@ -106,6 +106,10 @@ p{margin:0}
 .xpbar .progress>i{background:var(--beak)}
 .dot.ice{border-color:#7DB9E8;background:color-mix(in srgb,#7DB9E8 35%,transparent)}
 .pick{border:2px solid var(--accent)}
+.mission{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
+.mission:first-of-type{border-top:0}
+.mission.done{opacity:.75}
+.mcheck{flex:none;width:30px;height:30px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-family:var(--display)}
 .realm summary{cursor:pointer;padding:6px 0}
 .realm h3 small{color:var(--muted);font-family:var(--body);font-size:.8rem;font-weight:400}
 .spells{display:grid;grid-template-columns:1fr;gap:8px}
@@ -473,24 +477,26 @@ function nextDay(d){ const t=new Date(d); t.setDate(t.getDate()+1); t.setHours(0
 function xpOf(a){ if(isSkip(a)) return 0; if(typeof a.xp==="number") return a.xp; return (a.correct||0)*10+((a.total||0)-(a.correct||0))*5+20 }
 function itemXp(items){ return items.reduce((s,x)=>s+(x.skipped?0:x.correct?10:5),0) }
 function progressOf(list){
-  const byDay=new Map(), skipDays=new Set();
-  list.forEach(a=>{const k=dayKey(a.endedAt); if(isSkip(a)){skipDays.add(k);return} byDay.set(k,(byDay.get(k)||0)+xpOf(a))});
+  /* a day counts when both missions are done: one lesson set (or review) and the daily vocabulary */
+  const byDay=new Map(), skipDays=new Set(), lessonDays=new Set(), vocabDays=new Set(), met=new Set();
+  list.forEach(a=>{const k=dayKey(a.endedAt); if(isSkip(a)){skipDays.add(k);return} byDay.set(k,(byDay.get(k)||0)+xpOf(a)); (a.type==="vocab"?vocabDays:lessonDays).add(k)});
+  const noVocabToday=(()=>{try{const v=vocabToday();return !v.due.length&&!v.fresh.length}catch(e){return false}})();
   const today=todayKey(), keys=[...byDay.keys(),...skipDays];
   let streak=0, freeze=0, goalDays=0; const frozen=new Set(), earned=[];
   if(keys.length){
     for(let d=Math.min(...keys); d<=today; d=nextDay(d)){
       const xp=byDay.get(d)||0;
-      if(xp>=GOAL){
+      if(lessonDays.has(d)&&(vocabDays.has(d)||(d===today&&noVocabToday))){ met.add(d);
         goalDays++; streak++;
         if(goalDays%5===0&&freeze<FREEZE_MAX){freeze++;earned.push({d,why:"ถึงเป้าครบ 5 วัน"})}
-        if(xp>=GOAL*2&&freeze<FREEZE_MAX){freeze++;earned.push({d,why:"เก็บ XP ได้เกิน 2 เท่าของเป้า"})}
+        if(xp>=GOAL*2&&freeze<FREEZE_MAX){freeze++;earned.push({d,why:"เก็บ XP ได้ 120 ขึ้นไปในวันเดียว"})}
       } else if(d<today){
         if(freeze>0&&streak>0){freeze--;frozen.add(d)} else streak=0;
       }
     }
   }
   const todayXp=byDay.get(today)||0;
-  return {streak,freeze,goalDays,frozen,skipDays,byDay,todayXp,goalToday:todayXp>=GOAL,earnedToday:earned.filter(e=>e.d===today)};
+  return {streak,freeze,goalDays,frozen,skipDays,byDay,met,todayXp,lessonToday:lessonDays.has(today),vocabToday:vocabDays.has(today),goalToday:met.has(today),earnedToday:earned.filter(e=>e.d===today)};
 }
 
 /* ---------- what to do today ---------- */
@@ -585,8 +591,8 @@ function flameHtml(p){
   return `<div class="hero">
     <div class="flame ${p.streak?"":"out"}" title="จำนวนวันติดต่อกันที่ถึงเป้า">🔥 ${p.streak} <span class="small muted" style="font-family:var(--body)">วัน</span></div>
     <div class="ice" title="น้ำแข็งกันไฟดับ">🧊 ${p.freeze}/${FREEZE_MAX}</div>
-    <div class="xpbar"><div class="stage"><span>XP วันนี้</span><span><b>${p.todayXp}</b> / ${GOAL}</span></div>
-      <div class="progress"><i style="width:${Math.min(100,p.todayXp/GOAL*100)}%"></i></div></div></div>`;
+    <div class="xpbar"><div class="stage"><span>ภารกิจวันนี้ ${(p.lessonToday?1:0)+(p.vocabToday?1:0)}/2</span><span>XP วันนี้ <b>${p.todayXp}</b></span></div>
+      <div class="progress"><i style="width:${((p.lessonToday?1:0)+(p.vocabToday?1:0))*50}%"></i></div></div></div>`;
 }
 
 function renderHome(){
@@ -594,7 +600,7 @@ function renderHome(){
   const days=["จ","อ","พ","พฤ","ศ","ส","อา"];
   const mon=new Date(); mon.setHours(0,0,0,0); mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
   const dots=days.map((d,k)=>{const t=new Date(mon);t.setDate(mon.getDate()+k);const tk=t.getTime();
-    const on=(p.byDay.get(tk)||0)>=GOAL, ice=p.frozen.has(tk), sk=!on&&p.skipDays.has(tk);
+    const on=p.met.has(tk), ice=p.frozen.has(tk), sk=!on&&p.skipDays.has(tk);
     return `<div class="day"><span class="dot ${on?"on":ice?"ice":""} ${sk&&!ice?"rest":""}" title="${on?"ถึงเป้า":ice?"ใช้น้ำแข็งกันไฟดับ":sk?"ขอพัก":"ยังไม่ถึงเป้า"}"></span>${tk===today?"<b>วันนี้</b>":d}</div>`}).join("");
   const rec=recommend(list), pool=reviewPool(list), vt=vocabToday(), vocabDone=list.some(a=>a.type==="vocab"&&dayKey(a.endedAt)===today);
   const skippedToday=p.skipDays.has(today);
@@ -609,21 +615,31 @@ function renderHome(){
   <section class="card">
     ${flameHtml(p)}
     <div class="week">${dots}</div>
-    <p class="small muted">${p.goalToday?"วันนี้ถึงเป้าแล้ว ไฟยังลุกอยู่ 🔥":`ทำชุดหลักให้จบ 1 ชุดก็ถึงเป้า ${GOAL} XP แล้ว`} · ถึงเป้าครบทุก 5 วัน หรือเก็บ XP ได้ ${GOAL*2} ในวันเดียว ได้น้ำแข็ง 1 ก้อน (เก็บได้สูงสุด ${FREEZE_MAX}) วันที่ไม่ได้ทำ น้ำแข็งจะละลายแทนไฟ</p>
+    <p class="small muted">${p.goalToday?"วันนี้ภารกิจครบแล้ว ไฟยังลุกอยู่ 🔥":"ทำภารกิจให้ครบ 2 อย่าง (ชุดฝึก + คำศัพท์) ไฟถึงจะติด"} · ทำครบทุก 5 วัน หรือเก็บ XP ได้ ${GOAL*2} ในวันเดียว ได้น้ำแข็ง 1 ก้อน (เก็บได้สูงสุด ${FREEZE_MAX}) วันที่ไม่ได้ทำ น้ำแข็งจะละลายแทนไฟ</p>
     ${p.goalToday||skippedToday?(skippedToday&&!p.goalToday?`<p class="small muted">วันนี้บอกพักไว้แล้ว พรุ่งนี้มาต่อนะ</p>`:""):`<button class="btn ghost" id="skip-open">วันนี้ขอพัก</button>`}
   </section>
   <section class="card pick">
-    <span class="eyebrow">${p.goalToday?"ถึงเป้าแล้ว อยากเก็บ XP เพิ่มไหม":"แนะนำวันนี้"}</span>
-    <span class="row" style="gap:6px"><span class="chip">${rec.subject} · ${rec.grade}</span>${rec.current?`<span class="chip l2">เรียนอยู่ตอนนี้</span>`:""}</span>
-    <h2>${esc(rec.topic)}</h2>
-    <p class="small muted">อุ่นเครื่อง ${rec.warm.length} ข้อ · การ์ดสรุป · ฝึก ${rec.practice.length} ข้อ · ข้อท้าทาย 1 ข้อ · ${rec.mins}</p>
-    <div class="row"><button class="btn" id="go-rec">เริ่มชุดนี้</button><button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"อยากทำเรื่องอื่น"}</button></div>
+    <span class="eyebrow">ภารกิจวันนี้ · ทำให้ครบ 2 อย่าง</span>
+    <div class="mission ${p.lessonToday?"done":""}">
+      <span class="mcheck">${p.lessonToday?"✅":"1"}</span>
+      <div style="display:flex;flex-direction:column;gap:6px;flex:1">
+        <span class="small muted">ชุดฝึก${p.lessonToday?" · ทำแล้ว อยากทำอีกชุดก็ได้":" · ราว 30 นาที"}</span>
+        <span class="row" style="gap:6px"><span class="chip">${rec.subject} · ${rec.grade}</span>${rec.current?`<span class="chip l2">เรียนอยู่ตอนนี้</span>`:""}</span>
+        <h2>${esc(rec.topic)}</h2>
+        <div class="row"><button class="btn ${p.lessonToday?"ghost":""}" id="go-rec">เริ่มชุดนี้</button><button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"อยากทำเรื่องอื่น"}</button></div>
+      </div></div>
+    ${showAll?`<div class="sets">${SETS.map((s,k)=>s===rec?"":setCard(s,k)).join("")}</div>`:""}
+    <div class="mission ${vocabDone?"done":""}">
+      <span class="mcheck">${vocabDone?"✅":"2"}</span>
+      <div style="display:flex;flex-direction:column;gap:6px;flex:1">
+        <span class="small muted">คำศัพท์อังกฤษ · ราว 5–7 นาที</span>
+        <h2>คำศัพท์วันนี้</h2>
+        <p class="small muted">${vocabDone?"ทำแล้ว เก่งมาก":vt.fresh.length||vt.due.length?`คำใหม่ ${vt.fresh.length} คำ · ทบทวน ${vt.due.length} คำ · ฟังเสียง ฝึกสะกด${isWeekend()?" · อ่านภาษาอังกฤษสั้นๆ":""}`:"วันนี้ไม่มีคำค้าง ข้ามได้"}</p>
+        ${!vocabDone&&(vt.fresh.length||vt.due.length)?`<button class="btn" id="vocab-go">เริ่มคำศัพท์</button>`:""}
+      </div></div>
   </section>
-  ${showAll?`<section class="sets">${SETS.map((s,k)=>s===rec?"":setCard(s,k)).join("")}</section>`:""}
+  <span class="eyebrow">เก็บ XP เพิ่ม (ไม่บังคับ)</span>
   <section class="sets">
-    <div class="card"><h3>คำศัพท์วันนี้ <span class="small muted" style="font-family:var(--body)">· ราว 5 นาที</span></h3>
-      <p class="small muted">${vocabDone?"วันนี้ทำแล้ว เก่งมาก":vt.fresh.length||vt.due.length?`คำใหม่ ${vt.fresh.length} คำ · ทบทวน ${vt.due.length} คำ${isWeekend()?" · มีอ่านภาษาอังกฤษสั้นๆ":""}`:"วันนี้ไม่มีคำค้าง"}</p>
-      ${!vocabDone&&(vt.fresh.length||vt.due.length)?`<button class="btn ghost" id="vocab-go">เริ่มคำศัพท์</button>`:""}</div>
     <div class="card"><h3>ทบทวนข้อที่เคยพลาด</h3>
       <p class="small muted">${pool.length?`มีค้างอยู่ ${pool.length} ข้อ ครั้งนี้ทำ ${Math.min(5,pool.length)} ข้อ ตัวเลือกจะสลับที่ใหม่`:"ยังไม่มีข้อค้าง"}</p>
       ${pool.length?`<button class="btn ghost" id="review-go">ทบทวน</button>`:""}</div>
@@ -677,7 +693,7 @@ function renderIntro(){
       <li><b>ฝึกทำ ${s.practice.length} ข้อ</b> <span class="muted small">ไล่จากง่ายไปยาก มีเฉลยทุกข้อ มีข้อภาษาอังกฤษแทรก 1 ข้อ</span></li>
       <li><b>ข้อท้าทาย 1 ข้อ</b> <span class="muted small">จะข้ามก็ได้</span></li>
     </ol>
-    <p class="small muted">ข้อถูกได้ 10 XP ข้อผิดก็ได้ 5 XP เพราะได้ลองแล้ว ทำจบชุดได้โบนัส 20 XP</p>
+    <p class="small muted">ข้อถูกได้ 10 XP ข้อผิดก็ได้ 5 XP เพราะได้ลองแล้ว ทำจบชุดได้โบนัส 20 XP · อย่าลืมภารกิจที่ 2 คำศัพท์วันนี้</p>
     <div class="row"><button class="btn" id="go">เริ่มเลย</button><button class="btn ghost" id="go-card">ขออ่านสรุปก่อน</button></div>
     <p class="note">ถ้าเป็นเรื่องที่ยังไม่ได้เรียน หรือช่วงที่ขาดเรียน กด "ขออ่านสรุปก่อน" ได้เลย</p>
     <button class="btn ghost" id="back" style="border:0;padding-left:0">← กลับ</button></section>`;
@@ -824,13 +840,13 @@ function renderDone(){
     <p>${r.type==="vocab"?`คำศัพท์ถูก ${r.correct} จาก ${r.total}`:`ทำได้ ${r.correct} จาก ${r.total} ข้อ`} ใน ${mins} นาที</p>
     ${byL?`<p class="small muted">${byL}</p>`:""}
     ${flameHtml(a)}
-    ${reached?`<p><b>ถึงเป้าวันนี้แล้ว ไฟ ${a.streak} วันยังลุกอยู่ 🔥</b></p>`:""}
+    ${reached?`<p><b>ภารกิจวันนี้ครบแล้ว ไฟ ${a.streak} วันยังลุกอยู่ 🔥</b></p>`:!a.goalToday?`<p><b style="color:var(--beak)">เหลืออีก 1 ภารกิจ: ${a.lessonToday?"คำศัพท์วันนี้":"ชุดฝึก 1 ชุด"}</b> ทำให้ครบแล้วไฟจะติด</p>`:""}
     ${a.earnedToday.length&&a.freeze>b.freeze?`<p><b>ได้น้ำแข็งกันไฟดับ 🧊</b> <span class="small muted">(${a.earnedToday.map(e=>e.why).join(", ")})</span></p>`:""}
     ${up?`<p><b>${esc(sp.name)} ขึ้นขั้น ${TIER[info.tier]}!</b></p>`:sp?`<p class="small muted">${esc(sp.name)}: ${TIER[info?.tier||0]} · ${nextStep(sp,info)}</p>`:""}
     <p class="small muted">${S.where==="db"?"บันทึกแล้ว พ่อเห็นสรุปได้จากหน้าผู้ปกครอง":"บันทึกไว้ในเครื่องนี้แล้ว อย่าลืมส่งผลให้พ่อนะ"}</p>
     <div class="row">
-      ${r.type!=="review"&&pool.length?`<button class="btn" id="d-review">ทบทวนข้อที่เคยพลาด ${Math.min(5,pool.length)} ข้อ</button>`:""}
-      ${r.type!=="vocab"&&!vocabDone&&(vt.fresh.length||vt.due.length)?`<button class="btn ghost" id="d-vocab">คำศัพท์วันนี้ (5 นาที)</button>`:""}
+      ${r.type!=="vocab"&&!vocabDone&&(vt.fresh.length||vt.due.length)?`<button class="btn" id="d-vocab">ต่อเลย: คำศัพท์วันนี้</button>`:""}
+      ${r.type!=="review"&&pool.length?`<button class="btn ghost" id="d-review">ทบทวนข้อที่เคยพลาด ${Math.min(5,pool.length)} ข้อ</button>`:""}
       ${S.where==="local"?`<button class="btn ghost" id="send2">ส่งผลให้พ่อ</button>`:""}
       <button class="btn ghost" id="home">กลับหน้าแรก</button>
     </div>
@@ -845,12 +861,33 @@ function renderDone(){
 
 /* ---------- vocabulary (spaced boxes: 1, 2, 4, 7, 14 days) ---------- */
 const BOX_DAYS=[1,2,4,7,14];
+const EX_TH={increase:"จำนวนแฟนๆ เพิ่มขึ้นหลังตอนที่ 5",decrease:"ออกซิเจนในน้ำลดลงเมื่อน้ำร้อนขึ้น",sketch:"เธอร่างภาพแมวอย่างเร็วๆ",average:"คะแนนเฉลี่ยคือ 8",
+ journey:"การเดินทางของพวกเขาใช้เวลาสิบปี",compare:"เปรียบเทียบกราฟสองอันนี้",ratio:"ผสมสีฟ้ากับสีเหลืองในอัตราส่วน 2 : 5",spell:"นักเวทเรียนคาถาใหม่",
+ describe:"บรรยายสิ่งที่เห็นในภาพ",dissolve:"น้ำตาลละลายในน้ำอุ่น",apprentice:"ลูกศิษย์ฝึกซ้อมทุกวัน",measure:"วัดความยาวของใบไม้",
+ temperature:"อุณหภูมิลดลงตอนกลางคืน",brave:"ฮีโร่ที่กล้าหาญไม่จำเป็นต้องแข็งแรงเสมอไป",result:"ผลลัพธ์ทำให้ทุกคนประหลาดใจ",experiment:"เราทำการทดลองกับน้ำเกลือ",
+ gentle:"เขาอ่อนโยนกับนกตัวเล็ก",reason:"คำตอบของเธอมีเหตุผลอะไร",percent:"ร้อยละสี่สิบของห้องชอบอนิเมะ",ancient:"พวกเขาพบหนังสือโบราณเล่มหนึ่ง",
+ example:"ยกตัวอย่างสารผสมมาหนึ่งอย่าง",variable:"เปลี่ยนตัวแปรทีละตัวเท่านั้น",curious:"แมวขี้สงสัยเปิดกล่องออก",difference:"หาผลต่างระหว่าง 15 กับ 9",
+ graph:"กราฟแสดงเส้นที่สูงขึ้น",shadow:"เงาของเธอยาวขึ้นในตอนเย็น",amount:"ใช้น้ำในปริมาณเท่ากัน",estimate:"ประมาณจำนวนปลาในบ่อ",
+ memory:"เธอเก็บความทรงจำเกี่ยวกับครูของเธอไว้",explain:"อธิบายว่าได้คำตอบมาอย่างไร",data:"เก็บข้อมูลเป็นเวลาหนึ่งสัปดาห์",wander:"พวกเขาเดินเตร็ดเตร่ไปในป่า",
+ predict:"ทำนายว่าจะเกิดอะไรขึ้นต่อไป",evidence:"ใช้หลักฐานสนับสนุนความคิดของเธอ",character:"ตัวละครที่ชอบที่สุดเป็นคนเงียบแต่ใจดี",observe:"สังเกตการเปลี่ยนสีอย่างตั้งใจ",
+ density:"น้ำแข็งมีความหนาแน่นน้อยกว่าน้ำ",shade:"แรเงาด้านซ้ายของแอปเปิล",total:"ผลรวมคือ 40",energy:"พืชได้พลังงานจากแสงแดด",
+ adventure:"การผจญภัยทุกครั้งเริ่มจากก้าวแรก",similar:"สามเหลี่ยมสองรูปนี้คล้ายกัน",force:"แรงสามารถผลักหรือดึงได้",patient:"ใจเย็นๆ ภาพวาดที่ดีต้องใช้เวลา",
+ solve:"เธอแก้ปริศนานี้ได้ไหม"};
+VOCAB.forEach(x=>x.exTh=EX_TH[x.w]||"");
 function vocabState(){ try{ return JSON.parse(localStorage.getItem("fieldnote.vocab")||"{}") }catch(e){ return {} } }
 function saveVocabState(v){ try{ localStorage.setItem("fieldnote.vocab",JSON.stringify(v)) }catch(e){} }
 function isWeekend(){ const d=new Date().getDay(); return d===0||d===3||d===6 }
 function vocabToday(){
   const st=vocabState(), t=todayKey();
-  return {due:VOCAB.filter(x=>st[x.w]&&st[x.w].due<=t).sort((a,b)=>st[a.w].due-st[b.w].due).slice(0,10), fresh:VOCAB.filter(x=>!st[x.w]).slice(0,5)};
+  return {due:VOCAB.filter(x=>st[x.w]&&st[x.w].due<=t).sort((a,b)=>st[a.w].due-st[b.w].due).slice(0,8), fresh:VOCAB.filter(x=>!st[x.w]).slice(0,5)};
+}
+/* pronunciation: the browser's own English voice (works on iPad and Android Chrome) */
+const CAN_SPEAK = typeof speechSynthesis!=="undefined" && typeof SpeechSynthesisUtterance!=="undefined";
+function speak(text, slow){
+  if(!CAN_SPEAK) return;
+  try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.lang="en-US"; u.rate=slow?0.7:0.9;
+    const v=speechSynthesis.getVoices().find(v=>/^en(-|_)US/i.test(v.lang))||speechSynthesis.getVoices().find(v=>/^en/i.test(v.lang)); if(v) u.voice=v;
+    speechSynthesis.speak(u) }catch(e){}
 }
 function vOpts(word,dir){
   const others=VOCAB.filter(x=>x.w!==word.w).sort(()=>Math.random()-.5).slice(0,3);
@@ -859,60 +896,112 @@ function vOpts(word,dir){
 }
 function startVocab(){
   const {due,fresh}=vocabToday(); if(!due.length&&!fresh.length) return;
-  const quiz=[...fresh.map(w=>({w,dir:"en",fresh:true})),...due.map((w,k)=>({w,dir:k%2?"en":"th"}))].sort(()=>Math.random()-.5).map(x=>({...x,...vOpts(x.w,x.dir)}));
+  const st=vocabState();
+  // new words: meaning first, spelling later in the round; review words: spelling once they have been seen twice
+  const meaning=[...fresh.map(w=>({w,kind:"mc",dir:"en",fresh:true})),...due.map((w,k)=>({w,kind:"mc",dir:k%2?"en":"th"}))].map(x=>({...x,...vOpts(x.w,x.dir)}));
+  const spellNew=fresh.map(w=>({w,kind:"spell",fresh:true}));
+  const spellDue=due.filter(w=>(st[w.w]?.box||0)>=2||Math.random()<.5).map(w=>({w,kind:"spell"}));
+  const quiz=[...meaning.sort(()=>Math.random()-.5),...[...spellNew,...spellDue].sort(()=>Math.random()-.5)];
   const read=isWeekend()?READINGS[Math.floor(todayKey()/DAY)%READINGS.length]:null;
-  V={fresh,quiz,read,phase:fresh.length?"learn":"quiz",li:0,qi:0,ri:0,ans:null,results:[],rres:[],start:Date.now()};
+  V={fresh,quiz,read,phase:fresh.length?"learn":"quiz",li:0,qi:0,ri:0,ans:null,results:[],rres:[],heard:new Set(),showTh:false,start:Date.now()};
   view="vocab"; render(); window.scrollTo({top:0});
 }
+const sayBtn=(id,label)=>`<button class="btn ghost" id="${id}" type="button">🔊 ${label}</button>`;
+function bindSay(id,text,slow,after){ const b=document.getElementById(id); if(b) b.onclick=()=>{speak(text,slow); if(after) after()} }
 function renderVocab(){
   const top=`<div class="stage"><span>คำศัพท์วันนี้</span><span>${V.phase==="learn"?`คำใหม่ ${V.li+1}/${V.fresh.length}`:V.phase==="quiz"?`ทดสอบ ${V.qi+1}/${V.quiz.length}`:`อ่านสั้นๆ`}</span></div>`;
   if(V.phase==="learn"){
-    const w=V.fresh[V.li];
+    const w=V.fresh[V.li], heard=!CAN_SPEAK||V.heard.has(w.w);
     $v.innerHTML=`<section class="card">${top}<span class="eyebrow">คำใหม่</span>
-      <span class="vword">${esc(w.w)}</span><p><b>${esc(w.th)}</b></p><p class="vex">“${esc(w.ex)}”</p>
-      <p class="small muted">อ่านออกเสียงประโยคตัวอย่างหนึ่งรอบ แล้วกดต่อไป</p>
-      <button class="btn" id="vn">${V.li+1<V.fresh.length?"ต่อไป":"ไปทดสอบ"}</button></section>`;
-    document.getElementById("vn").onclick=()=>{ if(V.li+1<V.fresh.length) V.li++; else V.phase="quiz"; renderVocab() };
+      <span class="vword">${esc(w.w)}</span><p><b>${esc(w.th)}</b></p>
+      ${CAN_SPEAK?`<div class="row">${sayBtn("say-w","ฟังคำนี้")}${sayBtn("say-slow","ฟังช้าๆ")}</div>
+      <p class="small ${heard?"muted":""}" style="${heard?"":"color:var(--beak)"}">${heard?"ฟังแล้ว ลองพูดตามดังๆ หนึ่งรอบ":"กดฟังเสียงก่อนนะ แล้วพูดตามดังๆ"}</p>`:`<p class="small muted">เครื่องนี้เล่นเสียงไม่ได้ ลองอ่านออกเสียงเองหนึ่งรอบ</p>`}
+      <div class="feedback"><p class="vex">“${esc(w.ex)}”</p>
+        ${V.showTh?`<p class="small">${esc(w.exTh)}</p>`:`<button class="btn ghost" id="show-th" style="border:0;padding:0">ลองเดาความหมายก่อน แล้วกดดูคำแปล</button>`}
+        ${CAN_SPEAK?sayBtn("say-ex","ฟังประโยค"):""}</div>
+      <button class="btn" id="vn" ${heard?"":"disabled"}>${V.li+1<V.fresh.length?"ต่อไป":"ไปทดสอบ"}</button></section>`;
+    bindSay("say-w",w.w,false,()=>{if(!V.heard.has(w.w)){V.heard.add(w.w);renderVocab()}});
+    bindSay("say-slow",w.w,true,()=>{if(!V.heard.has(w.w)){V.heard.add(w.w);renderVocab()}});
+    bindSay("say-ex",w.ex,false);
+    const st=document.getElementById("show-th"); if(st) st.onclick=()=>{V.showTh=true;renderVocab()};
+    document.getElementById("vn").onclick=()=>{ V.showTh=false; if(V.li+1<V.fresh.length) V.li++; else V.phase="quiz"; renderVocab() };
     return;
   }
   if(V.phase==="quiz"){
     const it=V.quiz[V.qi], ans=V.ans;
+    const next=()=>{ V.results.push({w:it.w.w,kind:it.kind,correct:ans.correct,fresh:!!it.fresh}); V.ans=null;
+      if(V.qi+1<V.quiz.length) V.qi++; else if(V.read) V.phase="read"; else return finishVocab();
+      renderVocab(); window.scrollTo({top:0}); };
+    if(it.kind==="spell"){
+      const hint=it.w.w[0]+" "+"_ ".repeat(it.w.w.length-1).trim();
+      $v.innerHTML=`<section class="card">${top}
+        <p class="small muted">ฝึกสะกด${it.fresh?" · คำใหม่":" · ทบทวน"} · ฟังเสียงแล้วพิมพ์คำภาษาอังกฤษ</p>
+        <p><b>${esc(it.w.th)}</b></p>
+        <p style="font-family:var(--mono);letter-spacing:.15em">${esc(hint)} <span class="small muted" style="letter-spacing:0">(${it.w.w.length} ตัว)</span></p>
+        ${CAN_SPEAK?`<div class="row">${sayBtn("say-w","ฟังเสียง")}${sayBtn("say-slow","ฟังช้าๆ")}</div>`:""}
+        <div class="num"><input id="spin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="พิมพ์คำศัพท์" style="width:14ch" ${ans&&!ans.retype?"disabled":""} value="${ans&&!ans.retype?esc(ans.raw):""}">
+        ${ans?"":`<button class="btn" id="check">ตรวจ</button>`}</div>
+        ${ans?`<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?"สะกดถูก +5 XP":"ยังไม่ถูก +2 XP"}</b>
+          <p>คำที่ถูกคือ <b style="font-family:var(--mono);font-size:1.1rem">${esc(it.w.w)}</b>${ans.correct?"":` · ที่พิมพ์มา <span style="font-family:var(--mono)">${esc(ans.raw)}</span>`}</p>
+          ${ans.correct?"":`<p class="small">${ans.retype?"ลองพิมพ์คำที่ถูกอีกครั้ง ช่วยให้มือจำตัวสะกด":""}</p>`}</div>
+          ${!ans.correct&&ans.retype?`<p class="small" id="rmsg" aria-live="polite"></p>`:""}
+          <button class="btn" id="vn" ${!ans.correct&&ans.retype?"disabled":""}>ต่อไป</button>`:""}
+      </section>`;
+      bindSay("say-w",it.w.w,false); bindSay("say-slow",it.w.w,true);
+      const inp=document.getElementById("spin");
+      if(!ans){
+        if(CAN_SPEAK) setTimeout(()=>speak(it.w.w),150);
+        const go=()=>{const raw=inp.value.trim(); if(!raw) return; const ok=raw.toLowerCase()===it.w.w.toLowerCase(); V.ans={raw,correct:ok,retype:!ok}; renderVocab(); const i2=document.getElementById("spin"); if(i2&&!ok) i2.focus()};
+        document.getElementById("check").onclick=go; inp.onkeydown=e=>{if(e.key==="Enter")go()}; inp.focus();
+      } else {
+        if(!ans.correct&&ans.retype){
+          inp.oninput=()=>{ if(inp.value.trim().toLowerCase()===it.w.w.toLowerCase()){ document.getElementById("vn").disabled=false; document.getElementById("rmsg").textContent="เยี่ยม จำตัวสะกดได้แล้ว" } };
+          inp.onkeydown=e=>{ if(e.key==="Enter"&&!document.getElementById("vn").disabled) next() };
+        }
+        document.getElementById("vn").onclick=next;
+      }
+      return;
+    }
     $v.innerHTML=`<section class="card">${top}
       <p class="small muted">${it.dir==="en"?"คำนี้แปลว่าอะไร":"คำภาษาอังกฤษของคำนี้คืออะไร"}${it.fresh?" · คำใหม่":" · ทบทวน"}</p>
-      <span class="vword">${esc(it.dir==="en"?it.w.w:it.w.th)}</span>
+      <div class="row"><span class="vword">${esc(it.dir==="en"?it.w.w:it.w.th)}</span>${it.dir==="en"&&CAN_SPEAK?sayBtn("say-w","ฟัง"):""}</div>
       <div class="opts">${it.opts.map((o,k)=>{let c="";if(ans){if(k===it.a)c="right";else if(k===ans.choice)c="wrong"}return `<button class="opt ${c}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>`}).join("")}</div>
-      ${ans?`<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?"ถูก +5 XP":"ยังไม่ใช่ +2 XP"}</b><p><b>${esc(it.w.w)}</b> = ${esc(it.w.th)}</p><p class="vex small">“${esc(it.w.ex)}”</p></div>
+      ${ans?`<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?"ถูก +5 XP":"ยังไม่ใช่ +2 XP"}</b><p><b>${esc(it.w.w)}</b> = ${esc(it.w.th)}</p><p class="vex small">“${esc(it.w.ex)}”</p><p class="small muted">${esc(it.w.exTh)}</p>
+        ${CAN_SPEAK?`<div class="row">${sayBtn("say-a","ฟังคำนี้")}</div>`:""}</div>
       <button class="btn" id="vn">ต่อไป</button>`:""}</section>`;
+    bindSay("say-w",it.w.w,false); bindSay("say-a",it.w.w,false);
     if(!ans) $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{V.ans={choice:+b.dataset.k,correct:+b.dataset.k===it.a};renderVocab()});
-    else document.getElementById("vn").onclick=()=>{
-      V.results.push({w:it.w.w,correct:ans.correct,fresh:!!it.fresh}); V.ans=null;
-      if(V.qi+1<V.quiz.length) V.qi++; else if(V.read) V.phase="read"; else return finishVocab();
-      renderVocab(); window.scrollTo({top:0});
-    };
+    else document.getElementById("vn").onclick=next;
     return;
   }
   if(V.phase==="read"){
     const q=V.read.qs[V.ri], ans=V.ans;
     $v.innerHTML=`<section class="card">${top}<span class="eyebrow">อ่านภาษาอังกฤษสั้นๆ (พุธ เสาร์ อาทิตย์)</span>
       <div class="reading">${esc(V.read.text)}</div>
+      ${CAN_SPEAK?`<div class="row">${sayBtn("say-r","ฟังทั้งเรื่อง")}</div>`:""}
       <p class="prompt">${esc(q.q)}</p>
       <div class="opts">${q.opts.map((o,k)=>{let c="";if(ans){if(k===q.a)c="right";else if(k===ans.choice)c="wrong"}return `<button class="opt ${c}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>`}).join("")}</div>
       ${ans?`<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?"ถูก +5 XP":"ยังไม่ใช่ ลองอ่านอีกรอบ +2 XP"}</b></div><button class="btn" id="vn">ต่อไป</button>`:""}</section>`;
+    bindSay("say-r",V.read.text,true);
     if(!ans) $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{V.ans={choice:+b.dataset.k,correct:+b.dataset.k===q.a};renderVocab()});
     else document.getElementById("vn").onclick=()=>{ V.rres.push(ans.correct); V.ans=null; if(V.ri+1<V.read.qs.length){V.ri++;renderVocab()} else finishVocab() };
   }
 }
 async function finishVocab(){
+  try{ if(CAN_SPEAK) speechSynthesis.cancel() }catch(e){}
   $v.innerHTML=`<section class="card"><p class="muted">กำลังบันทึก…</p></section>`;
-  const st=vocabState(), t=todayKey();
-  V.results.forEach(r=>{ const cur=st[r.w]?.box||0; const box=r.correct?Math.min(BOX_DAYS.length,cur+1):1;
-    let due=t; for(let i=0;i<BOX_DAYS[box-1];i++) due=nextDay(due); st[r.w]={box,due} });
+  const st=vocabState(), t=todayKey(), byWord={};
+  V.results.forEach(r=>{ byWord[r.w]=(byWord[r.w]??true)&&r.correct });   // a word moves up only if every item on it was right
+  Object.entries(byWord).forEach(([w,ok])=>{ const cur=st[w]?.box||0; const box=ok?Math.min(BOX_DAYS.length,cur+1):1;
+    let due=t; for(let i=0;i<BOX_DAYS[box-1];i++) due=nextDay(due); st[w]={box,due} });
   saveVocabState(st);
   const c=V.results.filter(r=>r.correct).length, rc=V.rres.filter(Boolean).length;
+  const sp=V.results.filter(r=>r.kind==="spell");
   await finishWith({type:"vocab",setId:"vocab",subject:"อังกฤษ",topic:"คำศัพท์วันนี้",startedAt:new Date(V.start).toISOString(),endedAt:new Date().toISOString(),
     durationSec:Math.round((Date.now()-V.start)/1000),correct:c,total:V.results.length,newWords:V.fresh.length,
+    spelling:{correct:sp.filter(r=>r.correct).length,total:sp.length},
     reading:V.read?{correct:rc,total:V.rres.length}:null,xp:c*5+(V.results.length-c)*2+rc*5+(V.rres.length-rc)*2,
-    items:V.results.map(r=>({qid:"v:"+r.w,word:r.w,fresh:r.fresh,correct:r.correct}))});
+    items:V.results.map(r=>({qid:"v:"+r.w,word:r.w,kind:r.kind,fresh:r.fresh,correct:r.correct}))});
 }
 
 /* ---------- spell map ---------- */
