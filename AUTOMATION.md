@@ -162,10 +162,10 @@ undermine interest (Deci, Koestner & Ryan 1999) while self-set goals help (Locke
   father something she learned, lightly, no scoring. Mention it warmly in letters. If `dadNote` suggests she was
   unsure about something, that spell gets a slower lesson soon. The parent page also shows dad conversation
   starters built from her data; you do not need to write them.
-- **Companion home** (`type:"shop"`: `item` pet:/acc:/bg:/prop:/snack:, `cost`, `name`, `pet`, `hearts`): XP she
-  earns is spent as ดาวเวท on cosmetic items and more companions. Not practice: ignore in learning analysis. In
-  letters you may mention a new companion's arrival warmly, but never push her to earn or spend, and never tie
-  stars to scores.
+- **Companion home** (`type:"shop"`: `item` pet:/acc:/wear:/fx:/bg:/prop:/snack:, `cost`, `name`, `pet`, `grow`):
+  XP she earns is spent as ดาวเวท on magic food (companions hatch from eggs and change form as they grow), more
+  companions, things to wear and room scenes. Not practice: ignore in learning analysis. In letters you may
+  celebrate a hatching or a new form warmly, but never push her to earn or spend, and never tie stars to scores.
 
 ## Monthly real-world mission (content/missions.json)
 
