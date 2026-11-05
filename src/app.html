@@ -107,6 +107,19 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .buddy{display:flex;gap:10px;align-items:flex-start}
 .bface{flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:color-mix(in srgb,var(--beak) 18%,var(--card));object-fit:cover;line-height:1}
 .bubble{position:relative;flex:1;background:var(--soft);border-radius:4px 14px 14px 14px;padding:8px 12px;display:flex;flex-direction:column;gap:3px;font-size:.92rem}
+.petwrap{position:relative;display:inline-flex;flex:none}
+.pethat{position:absolute;left:50%;top:-24%;transform:translateX(-50%);line-height:1;pointer-events:none}
+.scene{position:relative;border-radius:16px;min-height:230px;display:flex;align-items:flex-end;justify-content:center;padding:16px;overflow:hidden}
+.scene .props{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;font-size:2rem}
+.scene .hero-pet{margin-bottom:18px}
+.scene .others{position:absolute;bottom:10px;right:10px;display:flex;gap:6px}
+.scene .mini{border:0;background:rgba(255,255,255,.55);border-radius:50%;padding:3px;cursor:pointer}
+.stars{font-family:var(--display);font-size:1.1rem;color:var(--beak)}
+.starlink{color:var(--beak);text-decoration:none;font-weight:600}
+.shopgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.shopitem{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:12px 8px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+.shopitem.have{border-color:color-mix(in srgb,var(--good) 50%,var(--line))}
+.swatch{width:56px;height:40px;border-radius:8px;display:inline-block}
 .buddyhero{background:linear-gradient(135deg,color-mix(in srgb,var(--beak) 16%,var(--card)),color-mix(in srgb,var(--accent) 12%,var(--card)));border:2px solid color-mix(in srgb,var(--beak) 45%,var(--line))}
 .bbtn{border:0;background:none;padding:0;cursor:pointer;animation:bob 3s ease-in-out infinite}
 .bbtn.hop{animation:hop .45s ease-out}
@@ -201,7 +214,7 @@ button.spell{cursor:pointer} button.spell:hover{border-color:var(--accent)}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand"><h1>สมุดคาถา</h1><small>ฝึกวันละ 30–45 นาที · ต้นแบบรุ่นทดลอง</small></div>
-    <nav class="tabs"><a href="#home" id="tab-home" data-v="home">ฝึกวันนี้</a><a href="#map" id="tab-map" data-v="map">แผนที่คาถา</a><a href="#parent" id="tab-parent" data-v="parent">หน้าผู้ปกครอง</a></nav>
+    <nav class="tabs"><a href="#home" id="tab-home" data-v="home">ฝึกวันนี้</a><a href="#map" id="tab-map" data-v="map">แผนที่คาถา</a><a href="#den" id="tab-den" data-v="den">บ้านคู่หู</a><a href="#parent" id="tab-parent" data-v="parent">หน้าผู้ปกครอง</a></nav>
   </header>
   <main id="view" aria-live="polite"></main>
 </div>
@@ -255,6 +268,7 @@ const LS = "fieldnote.attempts";
 function lsRead(){ try{ return JSON.parse(localStorage.getItem(LS)||"[]") }catch(e){ return [] } }
 function lsWrite(a){ try{ localStorage.setItem(LS, JSON.stringify(a)) }catch(e){} }
 attempts = lsRead();
+setTimeout(()=>{ try{ migrateBuddy() }catch(e){} },0);
 (async()=>{
   try{
     db = await window.claude?.use?.("db");
@@ -412,7 +426,7 @@ function progressOf(list){
   list.forEach(a=>{ const k=dayKey(a.endedAt);
     if(a.type==="daymode") return;
     if(a.type==="mission"||a.type==="teach"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* mission / teaching dad: XP only, not a daily unit */
-    if(a.type==="goal"||a.type==="goaldone") return;
+    if(a.type==="goal"||a.type==="goaldone"||a.type==="shop") return;
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
     byDay.set(k,(byDay.get(k)||0)+xpOf(a));
     if(a.type==="vocab") vocabDays.add(k); else { units.set(k,(units.get(k)||0)+1); if(a.type==="probe"||a.type==="mixed"||a.type==="passage") probes.set(k,(probes.get(k)||0)+1) } });
@@ -613,10 +627,11 @@ function startReview(n, title){
 }
 
 function render(){
-  const tab = view==="parent"?"parent":view==="map"?"map":"home";
+  const tab = view==="parent"?"parent":view==="map"?"map":view==="den"?"den":"home";
   document.querySelectorAll(".tabs a").forEach(a=>a.setAttribute("aria-current", a.dataset.v===tab?"page":"false"));
   if(view==="home") return renderHome();
   if(view==="map") return renderMap();
+  if(view==="den") return renderDen();
   if(view==="intro") return renderIntro();
   if(view==="feedback") return renderFeedback();
   if(view==="send") return renderSend(false);
@@ -640,7 +655,7 @@ function flameHtml(p){
       ${next?`<span class="small muted">อีก ${next-p.streak} วันถึง 🏅 ${next} วัน</span>`:""}
       <div class="badges">${MILESTONES.slice(0,Math.max(got.length+2,4)).map(m=>`<span class="badge ${p.best>=m?"on":""}" title="${p.best>=m?"ได้แล้ว":"ยังไม่ถึง"}">🏅${m}</span>`).join("")}</div>
     </div></div>
-    <div class="xpbar"><div class="stage"><span>ภารกิจวันนี้ ${doneCount.done}/${doneCount.total}</span><span>XP วันนี้ <b>${p.todayXp}</b></span></div>
+    <div class="xpbar"><div class="stage"><span>ภารกิจวันนี้ ${doneCount.done}/${doneCount.total}</span><span>XP วันนี้ <b>${p.todayXp}</b> · <a href="#den" class="starlink">⭐ ${wallet(mine()).stars}</a></span></div>
       <div class="progress"><i style="width:${doneCount.total?doneCount.done/doneCount.total*100:0}%"></i></div></div>`;
 }
 function missionList(p){
@@ -1324,7 +1339,7 @@ function celeHtml(e){
       text:`${e.sp.topic}${e.tier===1?" · เปิดการ์ดคาถาใบใหม่ในสมุดแล้ว":""}`,art,btn:e.tier===1&&!art?"🎨 วาดการ์ดใบนี้":null} }
   if(e.kind==="realm") return {icon:"🏯",title:`พิชิต${REALMS[e.rk]}ครบทุกคาถา!`,text:"ทุกคาถาในสำนักนี้ปลดล็อกแล้วอย่างน้อยขั้นฝึกหัด"};
   if(e.kind==="milestone") return {icon:"🏅",title:`จุดไฟติดต่อกัน ${e.m} วัน!`,text:"เหรียญนี้เป็นของเธอตลอดไป ต่อให้ไฟดับก็ไม่หาย"};
-  if(e.kind==="buddy") return {icon:BUDDY_KINDS.find(k=>k.k===getBuddy()?.kind)?.e||"✨",title:`${getBuddy()?.name||"คู่หู"} โตเป็น${e.name}แล้ว!`,text:"เพราะเธอปลดล็อกคาถาเพิ่มขึ้น ขอบคุณที่พาเรามาไกลขนาดนี้",art:buddyArt()};
+  if(e.kind==="buddy") return {icon:BUDDY_KINDS.find(k=>k.k===getBuddy()?.kind)?.e||"✨",title:`${getBuddy()?.name||"คู่หู"} โตเป็น${e.name}แล้ว!`,text:"เพราะเธอปลดล็อกคาถาเพิ่มขึ้น ขอบคุณที่พาเรามาไกลขนาดนี้",art:buddyArt(getBuddy()?.kind)};
   if(e.kind==="quest") return {icon:"📜",title:"ภารกิจประจำสัปดาห์ครบ!",text:"ได้น้ำแข็งกันไฟดับ 1 ก้อน"};
   return {icon:"🧊",title:"ได้น้ำแข็งกันไฟดับ!",text:e.why||""};
 }
@@ -1369,13 +1384,9 @@ function renderDone(){
    Never guilt, never pretends to be a person; grows with the spells she unlocks. ---------- */
 const BUDDY_KINDS=[{k:"fox",e:"🦊",n:"จิ้งจอกเวท"},{k:"dragon",e:"🐉",n:"มังกรน้อย"},{k:"owl",e:"🦉",n:"นกฮูกนักปราชญ์"},{k:"cat",e:"🐈‍⬛",n:"แมวดำจอมเวท"},{k:"bunny",e:"🐇",n:"กระต่ายจันทรา"},{k:"bubble",e:"🫧",n:"ภูตฟองสบู่"},{k:"robot",e:"🤖",n:"หุ่นกลไกจิ๋ว"},{k:"turtle",e:"🐢",n:"เต่าเก็บความรู้"}];
 const BUDDY_STAGES=[[0,"ภูตแรกเกิด"],[3,"ภูตฝึกหัด"],[10,"ภูตชำนาญ"],[20,"ภูตผู้พิทักษ์"],[35,"ภูตตำนาน"]];
-function getBuddy(){ try{ return JSON.parse(localStorage.getItem("fieldnote.buddy")||"null") }catch(e){ return null } }
-function setBuddy(b){ try{ localStorage.setItem("fieldnote.buddy",JSON.stringify(b)) }catch(e){} }
-function buddyArt(){ try{ return localStorage.getItem("fieldnote.buddyart") }catch(e){ return null } }
 function buddyStage(list){ const n=Object.values(spellStats(list)).filter(v=>v.tier>=1).length; let i=0; BUDDY_STAGES.forEach(([m],k)=>{ if(n>=m) i=k });
   return {i,name:BUDDY_STAGES[i][1],n,next:BUDDY_STAGES[i+1]?BUDDY_STAGES[i+1][0]-n:null,nextName:BUDDY_STAGES[i+1]?.[1]} }
-function buddyFace(b,size){ const art=buddyArt(), K=BUDDY_KINDS.find(x=>x.k===b?.kind)||BUDDY_KINDS[0];
-  return art?`<img src="${art}" alt="" class="bface" style="width:${size}px;height:${size}px">`:`<span class="bface" style="font-size:${Math.round(size*0.72)}px;width:${size}px;height:${size}px" aria-hidden="true">${K.e}</span>` }
+function buddyFace(b,size){ return petFace(b.kind,size,true) }
 function bname(){ return getBuddy()?.name||"คู่หู" }
 /* a day-stable pick so the message doesn't change on every re-render */
 function pickDay(arr,salt){ const d=todayKey()/DAY+(salt||0); return arr[Math.abs(Math.floor(Math.sin(d*12.9898)*43758.5453))%arr.length] }
@@ -1398,6 +1409,7 @@ function buddyLines(list,p,plan){
   if(longSolo>=2) L.push(`เมื่อวานโจทย์ยาวๆ เธออ่านเองแล้วตอบถูกตั้ง ${longSolo} ข้อ การอ่านเริ่มแข็งแรงขึ้นแล้ว`);
   if(near) L.push(`อีกแค่วันเดียว ${sp(near[0])} จะขึ้นขั้นชำนาญ ถ้าวันนี้เจอข้อประยุกต์เรื่องนี้ ลุยเลย`);
   if(due.length) L.push(`${sp(due[0].spell)} ไม่ได้ใช้มาหลายวัน ถึงรอบทวนแล้ว เราจะหยิบมาให้ลองในชุดฝึกช่วงนี้ ความจำจะได้ไม่จาง`);
+  try{ const w=wallet(list); if(w.stars>=nextPetPrice(list)) L.push(`ดาวเวทพอรับเพื่อนใหม่มาอยู่บ้านแล้วนะ ไปดูที่ "บ้านคู่หู" สิ`); else if(w.stars>=150&&!list.some(a=>a.type==="shop"&&a.cost>0)) L.push(`มีดาวเวท ${w.stars} ดวงแล้ว ไปแต่งบ้านให้เราที่ "บ้านคู่หู" ได้นะ`) }catch(e){}
   if(plan.mixed) L.push("วันนี้มีชุดผสมแบบข้อสอบ ลองดูว่าเธอแยกออกไหม ข้อไหนต้องใช้คาถาอะไร");
   if(plan.passage) L.push("วันนี้มีบทความให้อ่าน อ่านเงียบๆ ช้าๆ ได้เลย ไม่ต้องรีบ");
   if(p.info.kind==="holiday"&&!L.length) L.push("วันหยุดแบ่งทำเป็นช่วงๆ ได้นะ ทำเสร็จหนึ่งอย่างแล้วไปพักก่อนก็ได้");
@@ -1443,12 +1455,12 @@ function buddySetupHtml(){
     <input id="bname" maxlength="20" value="${esc(bDraft.name)}" placeholder="เช่น ฟูจิ" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">
     <div class="row"><button class="btn" id="bsave" ${bDraft.kind&&bDraft.name.trim()?"":"disabled"}>เริ่มเดินทางด้วยกัน</button>
       <button class="btn ghost small" id="bart">🎨 ใช้รูปที่วาดเองแทน (ไม่บังคับ)</button></div>
-    ${buddyArt()?`<p class="small">ใส่รูปที่วาดแล้ว ✓</p>`:""}</section>` }
+    ${bDraft.kind&&buddyArt(bDraft.kind)?`<p class="small">ใส่รูปที่วาดแล้ว ✓</p>`:bDraft.kind?"":`<p class="small muted">อยากได้หลายตัว? เลือกตัวแรกก่อน แล้วสะสมดาวเวทจากการฝึก ไปรับตัวอื่นมาเลี้ยงได้ที่ "บ้านคู่หู"</p>`}</section>` }
 function bindBuddySetup(){
   $v.querySelectorAll("[data-bk]").forEach(b=>b.onclick=()=>{bDraft.kind=b.dataset.bk;bDraft.name=document.getElementById("bname").value;renderHome()});
   const n=document.getElementById("bname"); if(n) n.oninput=()=>{bDraft.name=n.value; document.getElementById("bsave").disabled=!(bDraft.kind&&n.value.trim())};
-  const s=document.getElementById("bsave"); if(s) s.onclick=()=>{ setBuddy({kind:bDraft.kind,name:bDraft.name.trim().slice(0,20),born:new Date().toISOString()}); renderHome(); window.scrollTo({top:0}) };
-  const a=document.getElementById("bart"); if(a) a.onclick=()=>pickImg("fieldnote.buddyart",()=>{bDraft.name=document.getElementById("bname").value;renderHome()});
+  const s=document.getElementById("bsave"); if(s) s.onclick=async()=>{ s.disabled=true; await setBuddy({kind:bDraft.kind,name:bDraft.name.trim().slice(0,20)}); renderHome(); window.scrollTo({top:0}) };
+  const a=document.getElementById("bart"); if(a) a.onclick=()=>{ if(!bDraft.kind) return; pickImg(petArtKey(bDraft.kind),()=>{bDraft.name=document.getElementById("bname").value;renderHome()}) };
 }
 function pickImg(key,done){ const inp=document.createElement("input"); inp.type="file"; inp.accept="image/*";
   inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(!f) return; const url=URL.createObjectURL(f), img=new Image();
@@ -1518,29 +1530,149 @@ function bindGoal(list){
 }
 let buddyNote="";
 
-/* ---------- teach dad (learning by teaching): once a week, dad confirms on this device ---------- */
-let teachPick=null, teachStep=0, teachRate=null;
+/* ---------- companion home (บ้านคู่หู): XP she earns becomes ดาวเวท to adopt more companions, decorate their room and
+   give snacks. Everything here is cosmetic; it never changes practice. Purchases are records (type "shop") so they
+   travel to dad with the result code and survive a cleared browser. No hunger, no decay, no guilt. ---------- */
+const PET_SPECIAL=[{k:"unicorn",e:"🦄",n:"ยูนิคอร์นดาวตก",how:"จุดไฟติดต่อกันครบ 30 วัน"},{k:"whale",e:"🐋",n:"วาฬฟ้าแห่งความรู้",how:"พิชิตสำนักใดสำนักหนึ่งครบทุกคาถา"},{k:"hedgehog",e:"🦔",n:"เม่นนักอ่าน",how:"อ่านจับใจความครบ 4 เรื่อง"}];
+const ALL_PETS=[...BUDDY_KINDS,...PET_SPECIAL];
+const SHOP=[
+  {id:"acc:bow",e:"🎀",n:"โบว์สีชมพู",cost:200,slot:"hat"},{id:"acc:cap",e:"🧢",n:"หมวกแก๊ป",cost:200,slot:"hat"},{id:"acc:flower",e:"🌸",n:"ดอกไม้ทัดหู",cost:150,slot:"hat"},
+  {id:"acc:wizard",e:"🎩",n:"หมวกนักมายากล",cost:350,slot:"hat"},{id:"acc:crown",e:"👑",n:"มงกุฎ",cost:900,slot:"hat"},{id:"acc:teacher",e:"🎓",n:"หมวกครู",special:"เล่าให้พ่อฟังครั้งแรก",slot:"hat"},
+  {id:"bg:forest",n:"ป่าเวทมนตร์",cost:400,slot:"bg",css:"linear-gradient(180deg,#bfe3c6,#7fbf8e)"},{id:"bg:night",n:"ท้องฟ้ายามค่ำ",cost:600,slot:"bg",css:"linear-gradient(180deg,#1b2a4a,#4a5f8f)"},
+  {id:"bg:sea",n:"ใต้ทะเล",cost:600,slot:"bg",css:"linear-gradient(180deg,#9fd8ee,#2f7fa8)"},{id:"bg:library",n:"ห้องสมุดลอยฟ้า",cost:800,slot:"bg",css:"linear-gradient(180deg,#f3e2c4,#c79a63)"},
+  {id:"prop:plant",e:"🪴",n:"กระถางต้นไม้",cost:150,slot:"prop"},{id:"prop:candle",e:"🕯️",n:"เทียนเวท",cost:150,slot:"prop"},{id:"prop:books",e:"📚",n:"กองหนังสือ",cost:200,slot:"prop"},
+  {id:"prop:paint",e:"🎨",n:"จานสี",cost:250,slot:"prop"},{id:"prop:potion",e:"🧪",n:"ขวดยาวิเศษ",cost:300,slot:"prop"},{id:"prop:bed",e:"🛏️",n:"เตียงนุ่ม",cost:300,slot:"prop"},
+  {id:"prop:moon",e:"🌙",n:"โคมพระจันทร์",cost:350,slot:"prop"},{id:"prop:scope",e:"🔭",n:"กล้องดูดาว",cost:400,slot:"prop"}];
+const SNACKS=[{id:"snack:cookie",e:"🍪",n:"คุกกี้",cost:20,hearts:1},{id:"snack:berry",e:"🍓",n:"สตรอว์เบอร์รี",cost:30,hearts:1},{id:"snack:cake",e:"🍰",n:"เค้กชิ้นโต",cost:60,hearts:3}];
+const FRIEND=[[0,"เพิ่งรู้จักกัน"],[5,"เพื่อนกัน"],[15,"เพื่อนสนิท"],[30,"คู่หูคู่ใจ"]];
+function ls(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v) }catch(e){ return d } }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)) }catch(e){} }
+function wallet(list){ const earned=list.filter(a=>a.type!=="shop").reduce((s,a)=>s+Math.max(0,xpOf(a)),0), spent=list.filter(a=>a.type==="shop").reduce((s,a)=>s+(a.cost||0),0); return {earned,spent,stars:earned-spent} }
+let _specKey=null,_specVal=null;
+function earnedSpecials(list){ const key=list.length+"|"+(list[0]&&list[0].endedAt)+"|"+todayKey(); if(key===_specKey) return _specVal; _specKey=key; _specVal=earnedSpecials0(list); return _specVal }
+function earnedSpecials0(list){ const out=new Set(), p=progressOf(list), ss=spellStats(list);
+  if(p.best>=30) out.add("pet:unicorn");
+  if(Object.keys(REALMS).some(rk=>SPELLS.filter(s=>s.realm===rk).every(s=>(ss[s.id]?.tier||0)>=1))) out.add("pet:whale");
+  if(new Set(list.filter(a=>a.type==="passage").map(a=>a.setId)).size>=4) out.add("pet:hedgehog");
+  if(list.some(a=>a.type==="teach")) out.add("acc:teacher");
+  return out }
+function owns(list){ const s=new Set(list.filter(a=>a.type==="shop"&&a.item&&!a.item.startsWith("snack:")).map(a=>a.item)); earnedSpecials(list).forEach(x=>s.add(x)); return s }
+function petName(kind,list){ const names=ls("fieldnote.petnames",{}); if(names[kind]) return names[kind];
+  const r=(list||mine()).find(a=>a.type==="shop"&&a.item==="pet:"+kind&&a.name); return r?r.name:(ALL_PETS.find(x=>x.k===kind)?.n||"คู่หู") }
+function ownedPets(list){ const o=owns(list); return ALL_PETS.filter(x=>o.has("pet:"+x.k)) }
+function nextPetPrice(list){ const paid=list.filter(a=>a.type==="shop"&&a.item&&a.item.startsWith("pet:")&&a.cost>0).length; return 2000+500*paid }
+function hearts(kind,list){ return list.filter(a=>a.type==="shop"&&a.pet===kind&&a.hearts).reduce((s,a)=>s+a.hearts,0) }
+function friend(h){ let t=FRIEND[0][1]; FRIEND.forEach(([m,n])=>{ if(h>=m) t=n }); return t }
+function room(){ return ls("fieldnote.room",{bg:null,props:[],hats:{}}) }
+function petArtKey(kind){ return "fieldnote.buddyart."+kind }
+/* the old single-companion data becomes the first companion in the collection, once */
+async function migrateBuddy(){
+  const old=ls("fieldnote.buddy",null); if(!old) return;
+  if(!mine().some(a=>a.type==="shop"&&a.item==="pet:"+old.kind)){ const now=old.born||new Date().toISOString();
+    await saveAttempt({type:"shop",setId:"shop",item:"pet:"+old.kind,cost:0,name:old.name,topic:"รับคู่หูตัวแรก",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]}) }
+  try{ const art=localStorage.getItem("fieldnote.buddyart"); if(art&&!localStorage.getItem(petArtKey(old.kind))) localStorage.setItem(petArtKey(old.kind),art); localStorage.setItem("fieldnote.activepet",JSON.stringify(old.kind)); localStorage.removeItem("fieldnote.buddy") }catch(e){}
+  if(typeof render==="function") render();
+}
+function getBuddy(){ const list=mine(), pets=ownedPets(list); if(!pets.length) return null;
+  const a=ls("fieldnote.activepet",null), k=pets.some(p=>p.k===a)?a:pets[0].k; return {kind:k,name:petName(k,list)} }
+async function setBuddy(b){ const now=new Date().toISOString();
+  await saveAttempt({type:"shop",setId:"shop",item:"pet:"+b.kind,cost:0,name:b.name,topic:"รับคู่หูตัวแรก",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
+  lsSet("fieldnote.activepet",b.kind) }
+function buddyArt(kind){ try{ return localStorage.getItem(petArtKey(kind||getBuddy()?.kind)) }catch(e){ return null } }
+let denMsg="", denBuy=null, denName="", denTab="pets";
+function petFace(kind,size,withHat){ const art=buddyArt(kind), K=ALL_PETS.find(x=>x.k===kind)||BUDDY_KINDS[0], hat=withHat?SHOP.find(s=>s.id===room().hats[kind]):null;
+  return `<span class="petwrap" style="width:${size}px;height:${size}px">${art?`<img src="${art}" alt="" class="bface" style="width:${size}px;height:${size}px">`:`<span class="bface" style="font-size:${Math.round(size*0.72)}px;width:${size}px;height:${size}px" aria-hidden="true">${K.e}</span>`}${hat?`<span class="pethat" style="font-size:${Math.round(size*0.42)}px">${hat.e}</span>`:""}</span>` }
+function renderDen(){
+  const list=mine(), w=wallet(list), o=owns(list), pets=ownedPets(list), b=getBuddy(), R=room();
+  if(!b){ $v.innerHTML=`<section class="card"><h2>บ้านคู่หู</h2><p>ไปเลือกคู่หูตัวแรกที่หน้า "ฝึกวันนี้" ก่อนนะ</p><a class="btn" href="#home">ไปเลือกคู่หู</a></section>`; return }
+  const bg=SHOP.find(s=>s.id===R.bg), st=buddyStage(list), h=hearts(b.kind,list), price=nextPetPrice(list);
+  const buyBtn=(item,cost,label)=>denBuy===item?`<button class="btn small" data-confirm="${item}">ยืนยัน ใช้ ⭐${cost}</button><button class="btn ghost small" data-cancel="1">ไม่เอาแล้ว</button>`
+    :`<button class="btn ghost small" data-buy="${item}" ${w.stars<cost?"disabled":""}>${label||`⭐${cost}`}</button>`;
+  $v.innerHTML=`<section class="card"><div class="row" style="justify-content:space-between"><h2>บ้านคู่หู</h2><span class="stars">⭐ ${w.stars} ดาวเวท</span></div>
+    <p class="small muted">ดาวเวทได้จาก XP ทุกครั้งที่ฝึก (สะสมแล้ว ${w.earned} XP) ใช้รับคู่หูตัวใหม่ แต่งห้อง และซื้อขนม ของในบ้านเป็นของแต่งอย่างเดียว ไม่มีผลกับการเรียน</p>
+    ${denMsg?`<p class="small" style="color:var(--good)"><b>${esc(denMsg)}</b></p>`:""}
+    <div class="scene" style="background:${bg?bg.css:"linear-gradient(180deg,var(--soft),color-mix(in srgb,var(--beak) 14%,var(--card)))"}">
+      <div class="props">${(R.props||[]).map(id=>SHOP.find(s=>s.id===id)).filter(Boolean).map(s=>`<span title="${esc(s.n)}">${s.e}</span>`).join("")}</div>
+      <div class="hero-pet bbtn" id="petpat">${petFace(b.kind,120,true)}</div>
+      <div class="others">${pets.filter(x=>x.k!==b.kind).map(x=>`<button class="mini" data-act="${x.k}" title="ให้ ${esc(petName(x.k,list))} มาหน้าแรก">${petFace(x.k,44,true)}</button>`).join("")}</div>
+    </div>
+    <div class="row" style="justify-content:space-between"><span><b>${esc(b.name)}</b> · ${st.name} · ❤️ ${h} ${friend(h)}</span>
+      <span class="row" style="gap:6px"><button class="btn ghost small" id="prename">✏️ เปลี่ยนชื่อ</button><button class="btn ghost small" id="part">🎨 ${buddyArt(b.kind)?"เปลี่ยนรูป":"วาดรูปให้"}</button></span></div>
+    <div class="row" style="gap:6px">${SNACKS.map(s=>`<button class="btn ghost small" data-snack="${s.id}" ${w.stars<s.cost?"disabled":""}>${s.e} ${s.n} ⭐${s.cost}</button>`).join("")}</div>
+    <p class="small muted">แตะเพื่อนตัวเล็กในห้อง เพื่อให้มาอยู่หน้าแรกแทน · ให้ขนมแล้วจะสนิทกันมากขึ้น (ไม่ให้ก็ไม่หิว ไม่เป็นไรนะ)</p></section>
+  <section class="card"><div class="why" role="tablist">${[["pets","สัตว์คู่หู"],["hat","ของแต่งตัว"],["bg","ฉากห้อง"],["prop","ของในห้อง"]].map(([k,l])=>`<button data-dtab="${k}" aria-pressed="${denTab===k}">${l}</button>`).join("")}</div>
+  ${denTab==="pets"?`<div class="shopgrid">${ALL_PETS.map(x=>{ const have=o.has("pet:"+x.k), sp=PET_SPECIAL.find(s=>s.k===x.k);
+      return `<div class="shopitem ${have?"have":""}">${petFace(x.k,52,have)}<b class="small">${have?esc(petName(x.k,list)):esc(x.n)}</b>
+        ${have?(x.k===b.kind?`<span class="small muted">อยู่หน้าแรก</span>`:`<button class="btn ghost small" data-act="${x.k}">ให้มาหน้าแรก</button>`)
+          :sp?`<span class="small muted">🔒 ${esc(sp.how)}</span>`
+          :denBuy==="pet:"+x.k?`<input id="newname" maxlength="20" placeholder="ตั้งชื่อ" value="${esc(denName)}" style="font:inherit;width:100%;padding:6px;border-radius:8px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">${buyBtn("pet:"+x.k,price)}`
+          :buyBtn("pet:"+x.k,price,`รับมาเลี้ยง ⭐${price}`)}</div>` }).join("")}</div>
+    <p class="small muted">ตัวที่มี 🔒 ซื้อไม่ได้ ต้องทำสำเร็จตามที่เขียนไว้ ตัวถัดไปราคา ⭐${price}</p>`
+  :`<div class="shopgrid">${SHOP.filter(s=>s.slot===denTab).map(s=>{ const have=o.has(s.id), on=denTab==="hat"?R.hats[b.kind]===s.id:denTab==="bg"?R.bg===s.id:(R.props||[]).includes(s.id);
+      return `<div class="shopitem ${have?"have":""}">${s.e?`<span style="font-size:2rem">${s.e}</span>`:`<span class="swatch" style="background:${s.css}"></span>`}<b class="small">${esc(s.n)}</b>
+        ${have?`<button class="btn ${on?"":"ghost"} small" data-equip="${s.id}">${on?"✓ ใช้อยู่":denTab==="hat"?`ให้ ${esc(b.name)} ใส่`:"ใช้"}</button>`
+          :s.special?`<span class="small muted">🔒 ${esc(s.special)}</span>`:buyBtn(s.id,s.cost)}</div>` }).join("")}</div>
+    ${denTab==="prop"?`<p class="small muted">วางของในห้องได้พร้อมกัน 4 ชิ้น</p>`:""}`}</section>`;
+  const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
+  const reRender=()=>{ renderDen() };
+  $v.querySelectorAll("[data-dtab]").forEach(x=>x.onclick=()=>{denTab=x.dataset.dtab;denBuy=null;denMsg="";reRender()});
+  $v.querySelectorAll("[data-act]").forEach(x=>x.onclick=()=>{lsSet("fieldnote.activepet",x.dataset.act);denMsg=`${petName(x.dataset.act,list)} มาอยู่หน้าแรกแล้ว`;reRender()});
+  $v.querySelectorAll("[data-buy]").forEach(x=>x.onclick=()=>{denBuy=x.dataset.buy;denName="";denMsg="";reRender()});
+  $v.querySelectorAll("[data-cancel]").forEach(x=>x.onclick=()=>{denBuy=null;reRender()});
+  const nn=document.getElementById("newname"); if(nn) nn.oninput=()=>{denName=nn.value};
+  $v.querySelectorAll("[data-confirm]").forEach(x=>x.onclick=async()=>{ const item=x.dataset.confirm, isPet=item.startsWith("pet:"), cost=isPet?price:SHOP.find(s=>s.id===item).cost;
+    if(wallet(mine()).stars<cost) return; const kind=item.slice(4), name=isPet?((document.getElementById("newname")?.value||"").trim().slice(0,20)||ALL_PETS.find(p=>p.k===kind).n):null;
+    x.disabled=true; const now=new Date().toISOString();
+    await saveAttempt({type:"shop",setId:"shop",item,cost,...(name?{name}:{}),topic:"บ้านคู่หู",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
+    if(!isPet){ const s=SHOP.find(z=>z.id===item), r=room(); if(s.slot==="hat") r.hats[getBuddy().kind]=item; else if(s.slot==="bg") r.bg=item; else r.props=[...(r.props||[]),item].slice(-4); lsSet("fieldnote.room",r) }
+    denMsg=isPet?`ยินดีต้อนรับ ${name} สู่บ้าน!`:`ได้ ${SHOP.find(s=>s.id===item).n} แล้ว`; denBuy=null; reRender() });
+  $v.querySelectorAll("[data-equip]").forEach(x=>x.onclick=()=>{ const s=SHOP.find(z=>z.id===x.dataset.equip), r=room();
+    if(s.slot==="hat") r.hats[b.kind]=r.hats[b.kind]===s.id?null:s.id; else if(s.slot==="bg") r.bg=r.bg===s.id?null:s.id;
+    else r.props=(r.props||[]).includes(s.id)?r.props.filter(i=>i!==s.id):[...(r.props||[]),s.id].slice(-4); lsSet("fieldnote.room",r); denMsg=""; reRender() });
+  $v.querySelectorAll("[data-snack]").forEach(x=>x.onclick=async()=>{ const s=SNACKS.find(z=>z.id===x.dataset.snack); if(wallet(mine()).stars<s.cost) return; x.disabled=true; const now=new Date().toISOString();
+    await saveAttempt({type:"shop",setId:"shop",item:s.id,cost:s.cost,pet:b.kind,hearts:s.hearts,topic:"ให้ขนม",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
+    denMsg=pickDay([`${b.name} ชอบ${s.n}มาก!`,`${b.name} กิน${s.n}อย่างมีความสุข`,`${b.name} ยิ้มกว้างเลย`],Date.now()%7); reRender();
+    const pp=document.getElementById("petpat"); if(pp){ pp.classList.remove("hop"); void pp.offsetWidth; pp.classList.add("hop") } });
+  on("petpat",()=>{ const pp=document.getElementById("petpat"); pp.classList.remove("hop"); void pp.offsetWidth; pp.classList.add("hop") });
+  on("prename",()=>{ const n=prompt("ชื่อใหม่ของ "+b.name, b.name); if(n&&n.trim()){ const names=ls("fieldnote.petnames",{}); names[b.kind]=n.trim().slice(0,20); lsSet("fieldnote.petnames",names); reRender() } });
+  on("part",()=>pickImg(petArtKey(b.kind),reRender));
+}
+
+/* ---------- tell dad (light, once a week): she picks what to tell, dad reacts warmly; no scoring ---------- */
+const TALK=[{k:"fav",t:"เรื่องที่ชอบที่สุดสัปดาห์นี้"},{k:"fixed",t:"ข้อที่เคยพลาด แต่ตอนนี้เข้าใจแล้ว"},{k:"spell",t:"อธิบายคาถาที่มั่นใจ 1 เรื่อง"},{k:"use",t:"เรื่องที่เรียนแล้วเอาไปใช้ในชีวิตจริงได้"}];
+const DAD_REACT=["❤️ ฟังแล้วชอบมาก","💡 พ่อได้เรียนรู้ด้วย","😊 อยากฟังอีก"];
+let talkPick=null, teachStep=0, teachRate=null;
 function teachHtml(list){ const b=getBuddy(); if(!b) return ""; const wk=weekStart(todayKey()), t=list.find(a=>a.type==="teach"&&dayKey(a.endedAt)>=wk);
-  if(t) return `<section class="card"><span class="eyebrow">👨‍🏫 สอนพ่อประจำสัปดาห์ · ทำแล้ว ✓</span><p class="small">สัปดาห์นี้สอนเรื่อง ${esc(SPELLS.find(x=>x.id===t.spell)?.topic||"")} แล้ว พ่อบอกว่า “${esc(t.dadRating||"")}”</p></section>`;
-  const ss=spellStats(list), cand=SPELLS.filter(s=>ss[s.id]&&SETS.some(x=>x.spell===s.id&&x.concept&&x.concept.points.length)).sort((a,b)=>(ss[b.id].tier-ss[a.id].tier));
-  if(!cand.length) return "";
-  const sp=teachPick&&SPELLS.find(s=>s.id===teachPick), set=sp&&SETS.find(x=>x.spell===sp.id&&x.kind==="lesson")||sp&&SETS.find(x=>x.spell===sp.id);
-  return `<section class="card"><span class="eyebrow">👨‍🏫 สอนพ่อ (สัปดาห์ละครั้ง · +50 XP)</span>
-    <p class="small">${esc(b.name)}: การอธิบายให้คนอื่นฟัง ทำให้เราเข้าใจลึกกว่าการทำโจทย์อีกนะ เลือกเรื่องที่มั่นใจ แล้วสอนพ่อสัก 5–10 นาที</p>
-    <div class="why">${cand.slice(0,6).map(s=>`<button data-tp="${s.id}" aria-pressed="${teachPick===s.id}">${esc(s.topic)}</button>`).join("")}</div>
-    ${sp?`<div class="feedback"><b>สอนให้ครบ 3 อย่าง</b><ol style="margin:0;padding-left:1.3em" class="small"><li>อธิบายว่าเรื่องนี้คืออะไร ใช้คำของเธอเอง</li><li>ยกตัวอย่าง 1 ข้อ แล้วทำให้พ่อดูทีละขั้น</li><li>ให้พ่อลองทำ 1 ข้อ แล้วเธอช่วยตรวจ</li></ol>
-      ${set?`<details class="small"><summary>แอบดูการ์ดสรุปได้ ถ้าลืม</summary><ul>${set.concept.points.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></details>`:""}
-      ${teachStep===0?`<button class="btn" id="tdone">สอนเสร็จแล้ว ให้พ่อยืนยัน</button>`
-        :`<p class="small"><b>สำหรับพ่อ:</b> ลูกอธิบายเป็นอย่างไร</p><div class="why">${["เข้าใจชัดมาก","พอเข้าใจ","ยังงงอยู่บ้าง"].map(x=>`<button data-tr="${x}" aria-pressed="${teachRate===x}">${x}</button>`).join("")}</div>
+  if(t) return `<section class="card"><span class="eyebrow">💬 เล่าให้พ่อฟังประจำสัปดาห์ · ทำแล้ว ✓</span><p class="small">พ่อบอกว่า “${esc(t.dadReaction||t.dadRating||"")}”${t.dadNote?` · “${esc(t.dadNote)}”`:""}</p></section>`;
+  const first=!list.some(a=>a.type==="teach"), T=TALK.find(x=>x.k===talkPick);
+  return `<section class="card"><span class="eyebrow">💬 เล่าให้พ่อฟัง (สัปดาห์ละครั้ง · ราว 3 นาที · ไม่บังคับ)</span>
+    <p class="small">${esc(b.name)}: ไม่ต้องเป็นการสอนก็ได้นะ แค่เล่าให้พ่อฟังสบายๆ เลือกเรื่องที่อยากเล่า${first?` · ครั้งแรกได้ 🎓 หมวกครูให้${esc(b.name)}ด้วย`:""}</p>
+    <div class="why">${TALK.map(x=>`<button data-talk="${x.k}" aria-pressed="${talkPick===x.k}">${esc(x.t)}</button>`).join("")}</div>
+    ${T?(teachStep===0?`<div class="row"><button class="btn" id="tdone">เล่าแล้ว ให้พ่อกด</button></div>`
+      :`<div class="feedback"><p class="small"><b>สำหรับพ่อ:</b> ฟังลูกเล่าแล้วรู้สึกอย่างไร</p><div class="why">${DAD_REACT.map(x=>`<button data-tr="${x}" aria-pressed="${teachRate===x}">${x}</button>`).join("")}</div>
         <input id="tnote" maxlength="120" placeholder="พ่ออยากบอกอะไรลูก (ไม่บังคับ)" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">
-        <button class="btn" id="tconfirm" ${teachRate?"":"disabled"}>พ่อยืนยัน</button>`}</div>`:""}</section>` }
+        <button class="btn" id="tconfirm" ${teachRate?"":"disabled"}>พ่อยืนยัน</button></div>`):""}</section>` }
 function bindTeach(){
-  $v.querySelectorAll("[data-tp]").forEach(b=>b.onclick=()=>{teachPick=b.dataset.tp;teachStep=0;teachRate=null;renderHome()});
+  $v.querySelectorAll("[data-talk]").forEach(b=>b.onclick=()=>{talkPick=b.dataset.talk;teachStep=0;teachRate=null;renderHome()});
   const d=document.getElementById("tdone"); if(d) d.onclick=()=>{teachStep=1;renderHome()};
   $v.querySelectorAll("[data-tr]").forEach(b=>b.onclick=()=>{const n=document.getElementById("tnote").value;teachRate=b.dataset.tr;renderHome();document.getElementById("tnote").value=n});
-  const c=document.getElementById("tconfirm"); if(c) c.onclick=async()=>{ c.disabled=true; const now=new Date().toISOString();
-    await saveAttempt({type:"teach",setId:"teach-"+teachPick,spell:teachPick,topic:"สอนพ่อ: "+(SPELLS.find(x=>x.id===teachPick)?.topic||""),dadRating:teachRate,dadNote:document.getElementById("tnote").value.trim(),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:50,items:[]});
-    buddyNote="สอนพ่อสำเร็จ! คนที่สอนคนอื่นได้ คือคนที่เข้าใจจริง"; teachPick=null; teachStep=0; teachRate=null; renderHome(); window.scrollTo({top:0}) };
+  const c=document.getElementById("tconfirm"); if(c) c.onclick=async()=>{ c.disabled=true; const now=new Date().toISOString(), first=!mine().some(a=>a.type==="teach");
+    await saveAttempt({type:"teach",setId:"teach-"+talkPick,talk:talkPick,topic:"เล่าให้พ่อฟัง: "+TALK.find(x=>x.k===talkPick).t,dadReaction:teachRate,dadNote:document.getElementById("tnote").value.trim(),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:50,items:[]});
+    buddyNote=first?"ได้หมวกครูแล้ว! ไปให้เราใส่ที่บ้านคู่หูได้เลย":"เล่าให้พ่อฟังแล้ว เก่งมาก การเล่าคือการทบทวนที่ดีที่สุดเลยนะ"; talkPick=null; teachStep=0; teachRate=null; renderHome(); window.scrollTo({top:0}) };
+}
+
+/* ---------- conversation starters for dad, from her real data (parent page) ---------- */
+function talkStarters(list){
+  const out=[], wk=weekStart(todayKey())-7*DAY, recent=list.filter(a=>dayKey(a.endedAt)>=wk);
+  const lastSet=recent.filter(a=>a.type==="set").map(a=>SETS.find(s=>s.id===a.setId)).find(Boolean);
+  if(lastSet) out.push({q:`ลองถามน้องว่า “${lastSet.topic.replace(/^[^:]*:\s*/,"")}” เอาไปใช้ทำอะไรในชีวิตจริงได้บ้าง`,hint:lastSet.concept?.use||""});
+  const fixed=recent.flatMap(a=>(a.items||[]).filter(x=>x.of&&x.correct)).map(x=>QBANK[x.of]?.q).find(Boolean);
+  if(fixed) out.push({q:`น้องเคยพลาดเรื่อง “${fixed.topic}” แต่ตอนนี้ทำข้อแฝดได้แล้ว ลองชวนเล่าว่าตอนนี้เข้าใจตรงไหน`,hint:fixed.ex});
+  const ask=recent.flatMap(a=>(a.confused||[]).filter(c=>c.ask)).slice(-1)[0];
+  if(ask) out.push({q:`น้องเคยพิมพ์ถามว่า “${ask.ask}” ลองถามว่าตอนนี้เข้าใจหรือยัง หรือให้น้องอธิบายพ่อแทน`,hint:""});
+  const ps=recent.find(a=>a.type==="passage"), P=ps&&SETS.find(s=>s.id===ps.setId);
+  if(P) out.push({q:`บทความสัปดาห์นี้เรื่อง “${P.passage.title}” ลองถามว่าน้องคิดอย่างไร ถ้าเป็นน้องจะทดลองยังไง`,hint:""});
+  return out.slice(0,3);
 }
 
 /* ---------- look back without questions: a finished set's summary and answers, and the words learned so far ---------- */
@@ -1865,7 +1997,7 @@ function renderMap(){
     </div></details>`}).join("")}`;
   $v.querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>{introSet=SETS.find(s=>s.id===b.dataset.set);view="intro";render()});
   $v.querySelectorAll("[data-notes]").forEach(b=>b.onclick=()=>{notesSet=SETS.find(x=>x.id===b.dataset.notes);view="notes";render();window.scrollTo({top:0})});
-  const bam=document.getElementById("bartmap"); if(bam) bam.onclick=()=>pickImg("fieldnote.buddyart",()=>renderMap());
+  const bam=document.getElementById("bartmap"); if(bam) bam.onclick=()=>pickImg(petArtKey(getBuddy().kind),()=>renderMap());
   $v.querySelectorAll("[data-art]").forEach(b=>b.onclick=()=>pickArt(b.dataset.art,ok=>{ if(ok){artTarget=b.dataset.art;renderMap();document.getElementById("sp-"+b.dataset.art)?.scrollIntoView({block:"center"})} else document.getElementById("artmsg").textContent="เก็บรูปไม่ได้ เครื่องอาจเต็ม ลองรูปที่เล็กลง" }));
   if(artTarget){ const el=document.getElementById("sp-"+artTarget); if(el) setTimeout(()=>el.scrollIntoView({block:"center"}),50) }
 }
@@ -1914,8 +2046,12 @@ function renderParent(){
     <div class="row"><button class="btn" id="impgo">นำเข้า</button><span class="small" id="impmsg" aria-live="polite"></span></div></section>`:""}
   ${(()=>{ const bf=fbList.find(f=>f.kind==="buddy"), goals=pool.filter(a=>a.type==="goal"), teach=pool.filter(a=>a.type==="teach");
     const gdec=id=>fbList.filter(f=>f.kind==="goal"&&f.goalId===id);
-    if(!bf&&!goals.length&&!teach.length&&!LETTERS.length) return "";
-    return `<section class="card"><h3>🤝 คู่หู เป้าหมาย และการสอนพ่อ</h3>
+    const starters=talkStarters(realAttempts());
+    if(!bf&&!goals.length&&!teach.length&&!LETTERS.length&&!starters.length) return "";
+    return `${starters.length?`<section class="card usebox"><h3>💬 คำถามชวนคุยสัปดาห์นี้</h3>
+      ${starters.map(x=>`<div class="logi"><span>${esc(x.q)}</span>${x.hint?`<details class="small muted"><summary>คำตอบคร่าวๆ สำหรับพ่อ</summary><p>${esc(x.hint)}</p></details>`:""}</div>`).join("")}
+      <p class="note">ถามแบบอยากรู้ ไม่ใช่สอบ ถ้าน้องตอบไม่ได้ ชวนเปิด "อ่านสรุป" ในแอปดูด้วยกัน ถ้าน้องเล่าให้ฟัง ให้น้องกด "เล่าให้พ่อฟัง" ในแอป แล้วพ่อกดยืนยันได้เลย</p></section>`:""}
+    <section class="card"><h3>🤝 คู่หู เป้าหมาย และการเล่าให้พ่อฟัง</h3>
       ${bf?`<p class="small">คู่หูของลูกชื่อ <b>${esc(bf.name)}</b> ${BUDDY_KINDS.find(k=>k.k===bf.buddy)?.e||""}</p>`:""}
       ${goals.map(g=>{ const prog=goalProgress(realAttempts(),g), done=pool.some(a=>a.type==="goaldone"&&a.setId===g.setId)||prog>=g.target, dd=gdec(g.setId);
         return `<div class="logi"><span class="small muted">เป้าหมายเดือน ${esc(g.month)}</span><b>${esc(g.goal)}</b><span class="small">ความคืบหน้า ${Math.min(prog,g.target)}/${g.target}${done?" · ✅ สำเร็จแล้ว":""}</span>
@@ -1923,7 +2059,8 @@ function renderParent(){
           ${dd.map(d=>`<span class="small">${d.decision==="ok"?"✅ พ่อตกลง":"💬 พ่อขอคุยก่อน"}${d.note?` · “${esc(d.note)}”`:""}</span>`).join("")}
           ${g.reward&&db&&!dd.length?`<input data-gnote="${g.setId}" placeholder="ข้อความถึงลูก หรือเสนอรางวัลอื่น (ไม่บังคับ)" style="font:inherit;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">
             <div class="row"><button class="btn small" data-gok="${g.setId}">ตกลงรางวัลนี้</button><button class="btn ghost small" data-gtalk="${g.setId}">ขอคุยกันก่อน</button><span class="small" id="gmsg-${g.setId}"></span></div>`:""}</div>` }).join("")}
-      ${teach.length?`<span class="eyebrow">ลูกสอนพ่อ</span>${teach.slice(0,6).map(t=>`<div class="topic"><span class="small">${new Date(t.endedAt).toLocaleDateString("th-TH",{day:"numeric",month:"short"})} · ${esc(t.topic)}</span><span class="small">${esc(t.dadRating||"")}</span></div>`).join("")}`:""}
+      ${teach.length?`<span class="eyebrow">ลูกเล่าให้พ่อฟัง</span>${teach.slice(0,6).map(t=>`<div class="topic"><span class="small">${new Date(t.endedAt).toLocaleDateString("th-TH",{day:"numeric",month:"short"})} · ${esc(t.topic)}</span><span class="small">${esc(t.dadReaction||t.dadRating||"")}</span></div>`).join("")}`:""}
+      ${(()=>{const pets=ownedPets(realAttempts()); return pets.length?`<p class="small">บ้านคู่หู: ${pets.map(x=>x.e+" "+esc(petName(x.k,realAttempts()))).join(" · ")} · ⭐ ${wallet(realAttempts()).stars} ดาวเวท</p>`:""})()}
       ${LETTERS.length?`<details class="small"><summary>จดหมายที่คู่หูเขียนถึงลูก (${LETTERS.length})</summary>${LETTERS.slice(0,6).map(l=>`<div class="logi" style="margin-top:6px"><span class="muted">${esc(l.date)}</span><span style="white-space:pre-wrap">${esc(l.text)}</span></div>`).join("")}</details>`:""}
       <p class="note">ตกลงรางวัลแล้ว คู่หูจะบอกลูกในรอบอัปเดตถัดไป (พุธ/อาทิตย์) หรือบอกลูกเองได้เลย รางวัลที่ไม่ได้บอกล่วงหน้า เช่น คำชมหรือพาไปเที่ยวแบบเซอร์ไพรส์ ไม่ลดแรงจูงใจ ให้ได้เสมอ</p></section>` })()}
   ${MISSIONS.length?`<section class="card"><h3>🌏 ภารกิจโลกจริงประจำเดือน</h3>
@@ -2091,7 +2228,7 @@ async function setupAsk(sum){ const skips=sum.skips||[], conf=sum.conf||[];
   };
 }
 
-function route(){ const h=location.hash.replace("#",""); if(h==="parent"){view="parent"} else if(h==="map"){view="map"} else if(!["session","intro","feedback","done","skip","send","vocab","mission","notes","words"].includes(view)){view="home"} else if(view==="done"){view="home"} render() }
+function route(){ const h=location.hash.replace("#",""); if(h==="parent"){view="parent"} else if(h==="map"){view="map"} else if(h==="den"){view="den";denMsg=""} else if(!["session","intro","feedback","done","skip","send","vocab","mission","notes","words"].includes(view)){view="home"} else if(view==="done"){view="home"} render() }
 window.addEventListener("hashchange",route);
 route();
 </script>

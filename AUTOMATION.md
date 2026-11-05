@@ -158,8 +158,14 @@ undermine interest (Deci, Koestner & Ryan 1999) while self-set goals help (Locke
   answer into `content/decisions.json` (`goals[goalId] = {status, note}`), and mention it in the next letter
   ("พ่อตกลงเรื่องรางวัลแล้ว!" or "พ่ออยากคุยเรื่องรางวัลกับเธอก่อน"). Keep the note short and kind; if the note
   contains anything personal, paraphrase it generally.
-- **Teach dad** (`type:"teach"`, `spell`, `dadRating`, `dadNote`): if dad says "ยังงงอยู่บ้าง", that spell gets a
-  slower re-teaching lesson soon. Mention teaching in letters warmly (never as a test).
+- **Tell dad** (`type:"teach"`, `talk`: fav / fixed / spell / use, `dadReaction`, `dadNote`): once a week she tells her
+  father something she learned, lightly, no scoring. Mention it warmly in letters. If `dadNote` suggests she was
+  unsure about something, that spell gets a slower lesson soon. The parent page also shows dad conversation
+  starters built from her data; you do not need to write them.
+- **Companion home** (`type:"shop"`: `item` pet:/acc:/bg:/prop:/snack:, `cost`, `name`, `pet`, `hearts`): XP she
+  earns is spent as ดาวเวท on cosmetic items and more companions. Not practice: ignore in learning analysis. In
+  letters you may mention a new companion's arrival warmly, but never push her to earn or spend, and never tie
+  stars to scores.
 
 ## Monthly real-world mission (content/missions.json)
 
