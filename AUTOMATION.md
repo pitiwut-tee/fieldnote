@@ -6,7 +6,7 @@ Her father set this up. You only add **content**. You never change how the app w
 
 ## 0. Ground rules
 
-- Edit only `content/` (sets, vocab, readings, calendar). Never edit `src/app.html` or `tools/`.
+- Edit only `content/` (sets, vocab, readings, calendar, missions). Never edit `src/app.html` or `tools/`.
   If you think the app itself needs a change, do not make it: put it in the message to the father.
 - Everything the student reads is Thai, plain and friendly, with light humour. English appears only in
   "English corner" questions and vocabulary.
@@ -47,6 +47,51 @@ The app is built on these research results. Write and choose content so they kee
 Rules of thumb in this guide (60%, "hard twice in a row", 7 days ahead) are practical estimates, not research
 values. With one student and few answers per spell, prefer simple rules and say in the message to the father
 when the data is too thin to conclude anything.
+
+## Contexts: why we learn this (follow in every set)
+
+Her father wants her to see what each topic is *for*. Research: utility value raises interest (Hulleman &
+Harackiewicz 2009), but only when the context is part of the problem; decorative stories hurt learning
+(seductive details, Harp & Mayer 1998). Self-generated connections beat being told "this is important"
+(Canning & Harackiewicz 2015).
+
+- Every question has `ctx`: `life` (money, bills, food, travel, phone, home, school life), `earth` (environment
+  and sustainability: PM2.5, floods, heat, energy, water, waste and recycling, ecosystems), `fun` (her interests,
+  see ground rules), `pure` (no story, or lab only). Old sets carry `ctxAuto:true` (tagged by keywords; may be off).
+- Lesson practice (8): about 3 `life`, 2 `earth`, 2 `fun`, 1 `pure`. Mixed set (12): about 4 life, 3 earth,
+  3 fun, 2 pure. `verify.js` enforces at least half life+earth and at least one earth for new sets.
+- The context must change the thinking: the numbers decide something real (which bulb saves more, is the deal
+  real, which day is safer to go out). If the story could be deleted without changing the question, rewrite it.
+- Real data: when a question says something is real (PM2.5 standard, electricity price, rainfall, a statistic),
+  look it up with web search, use an official or reputable source, and name the source briefly at the end of
+  `ex` ("ข้อมูล: กรมควบคุมมลพิษ"). If you make numbers up, say "สมมติว่า". Never present invented numbers as real.
+- Environment framing: choices and agency, not doom. Compare options, measure, decide. No guilt, no scare
+  statistics without a "what can we do" angle. Keep to facts in ม.1–3 science; no political positions.
+- Lesson concept cards have `use`: one or two sentences, a concrete real place this idea is used (not "it is
+  important"). Thai, specific, checkable.
+
+## Weekly reflection
+
+From `calendar.reflectFrom`, the mixed-set rating screen asks (optional) which topic this week she can use in
+her life and how. Records have `reflect`. Read them: if she connects a topic to something, use that context in a
+later question; mention one good one to her father.
+
+## Monthly real-world mission (content/missions.json)
+
+One offline mission per month, 30–60 minutes total (data can be collected a little each day), done at home with
+things a normal family has. **Her father must approve every mission before she sees it.**
+
+- Write it as `status:"draft"` about 10 days before the month starts (model: the first mission in the file):
+  why (real reason, tied to topics she studies), spells, materials, parentNote (what the parent must provide or
+  help with), 4–6 steps, optional `record` table (cols, numCol, min rows), 3–5 summary questions where she uses
+  the math/science on her own data. XP 100–150. `from`/`to` about one month.
+- Draft only; never set `status:"approved"` yourself unless the father approved. Approval comes as a doc in the
+  parent artifact's `feedback` collection: `{kind:"mission", missionId, decision:"approve"|"change", note}`
+  (read it with ArtifactData list on `feedback`). `approve` → set status approved (and adjust `from` if it has
+  passed). `change` → revise the draft as the note asks, keep status draft, tell him what changed.
+- In your message, list any draft still waiting and what it needs from him (materials, equipment).
+- Results: records `type:"mission"` with `rows` and `answers`. Check her numbers and reasoning; praise specific
+  good thinking in the message to her father, and turn any misconception into a later lesson.
 
 ## 1. Get the repo and the data
 

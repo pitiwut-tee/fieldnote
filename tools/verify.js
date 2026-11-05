@@ -42,6 +42,23 @@ for(const f of files){
   }
   if(lv[1]<2||lv[2]<2||lv[3]<1) warn(`${where}: mix should have ≥2 level-1, ≥2 level-2, ≥1 level-3 (has ${JSON.stringify(lv)})`);
 }
+/* lessons and mixed sets written from 2026-11-05 on: every question has a context tag, lessons have a real-life "use" line */
+for(const f of files){ let s; try{ s=J("content/sets/"+f) }catch(e){ continue } if(!(s.added>="2026-11-05")) continue;
+  const qs=[...(s.warm||[]),...(s.practice||[]),...(s.challenge?[s.challenge]:[])];
+  for(const q of qs) if(!["life","earth","fun","pure"].includes(q.ctx)) warn(`${f} ${q.id}: ctx must be life, earth, fun or pure`);
+  const pr=(s.practice||[]).filter(q=>!q.ctxAuto), n=k=>pr.filter(q=>q.ctx===k).length;
+  if(s.kind!=="probe"&&pr.length&&(n("life")+n("earth")<Math.ceil(pr.length*0.5)||n("earth")<1)) warn(`${f}: practice needs about half life/earth contexts and at least 1 earth (has life ${n("life")}, earth ${n("earth")})`);
+  if(s.kind==="lesson"&&!(s.concept&&s.concept.use)) warn(`${f}: lesson concept needs a "use" line (where this is used in real life)`);
+}
+/* missions */
+const MS=J("content/missions.json").missions||[];
+for(const m of MS){ const w=`missions.json ${m.id}`;
+  for(const k of ["id","status","from","to","title","why","mins","steps"]) if(!m[k]) warn(`${w}: missing ${k}`);
+  if(!["draft","approved"].includes(m.status)) warn(`${w}: status must be draft or approved`);
+  for(const sp of m.spells||[]) if(!spells.has(sp)) warn(`${w}: unknown spell ${sp}`);
+  if(m.record&&(!Array.isArray(m.record.cols)||(m.record.numCol!=null&&!(m.record.numCol<m.record.cols.length)))) warn(`${w}: record.cols / numCol wrong`);
+  for(const q of m.questions||[]) if(!q.id||!q.q) warn(`${w}: question needs id and q`);
+}
 const cal=J("content/calendar.json");
 for(const sp of cal.currentSpells||[]) if(!spells.has(sp)) warn(`calendar.json: unknown current spell ${sp}`);
 for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) warn(`calendar.json: bad date ${d}`);

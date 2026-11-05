@@ -102,6 +102,10 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--card))}
 .opt.picked{border-color:var(--accent);border-width:2.5px;background:color-mix(in srgb,var(--accent) 10%,var(--card))}
 .trialbox{border-left:4px solid var(--accent)}
+.usebox{border-left:4px solid var(--good)}
+table.mt{border-collapse:collapse;font-size:.88rem;width:100%}
+table.mt th,table.mt td{border-bottom:1px solid var(--line);padding:6px;text-align:left;vertical-align:middle}
+table.mt input{font:inherit;width:100%;min-width:5.5em;padding:6px;border-radius:8px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);box-sizing:border-box}
 .opt:disabled{cursor:default}
 .num{display:flex;gap:8px;flex-wrap:wrap}
 .num input{font:inherit;font-family:var(--mono);padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);width:10ch}
@@ -200,6 +204,7 @@ const REALMS=CONTENT.spells.realms, SCHOOL=CONTENT.spells.school, SPELLS=CONTENT
 
 /* ---------- daily vocabulary: general academic words + science/math words + story/art words ---------- */
 const VOCAB=CONTENT.vocab.map(x=>({...x}));
+const MISSIONS=(CONTENT.missions&&CONTENT.missions.missions)||[];
 const READINGS=CONTENT.readings.map((r,i)=>({text:r.text,qs:r.qs.map(q=>({q:q.q,opts:q.opts,a:q.a})),th:{text:r.th,qs:r.qs.map(q=>({q:q.qth,opts:q.optsTh}))},idx:i}));
 
 /* ---------- test mode: open the page with #test once; results get a "test" tag ---------- */
@@ -319,7 +324,7 @@ const GOAL=60, FREEZE_MAX=2, DAY=86400000;
 function realAttempts(){ return attempts.filter(a=>!a.example&&!a.test) }
 function mine(){ return TEST ? attempts.filter(a=>!a.example) : realAttempts() }
 function isSkip(a){ return a.type==="skip" }
-function isLesson(a){ return !isSkip(a) && a.type!=="vocab" && a.type!=="daymode" }
+function isLesson(a){ return !isSkip(a) && a.type!=="vocab" && a.type!=="daymode" && a.type!=="mission" }
 function dayKey(iso){ const d=new Date(iso); d.setHours(0,0,0,0); return d.getTime() }
 function todayKey(){ return dayKey(new Date().toISOString()) }
 function nextDay(d){ const t=new Date(d); t.setDate(t.getDate()+1); t.setHours(0,0,0,0); return t.getTime() }
@@ -365,6 +370,7 @@ function progressOf(list){
   const byDay=new Map(), skipDays=new Set(), leaveDays=new Set(), vocabDays=new Set(), units=new Map(), probes=new Map(), met=new Set();
   list.forEach(a=>{ const k=dayKey(a.endedAt);
     if(a.type==="daymode") return;
+    if(a.type==="mission"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* real-world mission: XP only, not a daily unit */
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
     byDay.set(k,(byDay.get(k)||0)+xpOf(a));
     if(a.type==="vocab") vocabDays.add(k); else { units.set(k,(units.get(k)||0)+1); if(a.type==="probe"||a.type==="mixed") probes.set(k,(probes.get(k)||0)+1) } });
@@ -553,6 +559,7 @@ function render(){
   if(view==="vocab") return renderVocab();
   if(view==="done") return renderDone();
   if(view==="parent") return renderParent();
+  if(view==="mission") return renderMission();
 }
 
 function flameHtml(p){
@@ -663,6 +670,10 @@ function renderHome(){
     ${ms.some(x=>x.key==="extra")?mission(4,"extra","ชุดเพิ่มวันหยุด · ราว 25 นาที (พักก่อนค่อยทำก็ได้)",
       md.extra&&doneNP[1]?doneTitle(doneNP[1]):plan.extra?`<h2>${esc(plan.extra.topic)}</h2>`:"",`<button class="btn ${md.extra?"ghost":""}" id="go-extra">เริ่มชุดนี้</button>`):""}
   </section>
+  ${(()=>{const m=activeMission(); if(!m) return ""; const d=missionDone(m), st=mState(m.id);
+    return `<section class="card usebox"><span class="eyebrow">🌏 ภารกิจโลกจริงประจำเดือน${d?" · ทำแล้ว ✓":""}</span><h2>${esc(m.title)}</h2>
+      <p class="small">${esc(m.hook||m.why)}</p><p class="small muted">${esc(m.mins)} · ถึง ${new Date(m.to+"T00:00:00").toLocaleDateString("th-TH",{day:"numeric",month:"short"})} · ไม่นับในไฟประจำวัน · ได้ ${m.xp||100} XP${m.record&&!d?` · บันทึกแล้ว ${(st.rows||[]).length} แถว`:""}</p>
+      <button class="btn ${d?"ghost":""}" id="go-mission">${d?"ดูภารกิจ":"เปิดภารกิจ"}</button></section>`})()}
   <section class="card"><h3>ภารกิจประจำสัปดาห์ ${p.questDoneThisWeek?"✅ ครบแล้ว ได้น้ำแข็ง 🧊":""}</h3>
     ${quests.q.map(q=>`<div class="quest"><span>${q.have>=q.need?"✅":"⬜"} ${q.label}</span><span class="small muted">${Math.min(q.have,q.need)}/${q.need}</span></div>`).join("")}
     <p class="small muted">ครบทั้ง 3 ข้อได้น้ำแข็ง 1 ก้อน เริ่มใหม่ทุกวันจันทร์</p></section>
@@ -683,6 +694,7 @@ function renderHome(){
   on("go-rec",()=>{ if(plan.repair) return startReview(8,"ชุดซ่อมจุดอ่อน"); if(plan.lesson){introSet=plan.lesson;view="intro";render()} });
   on("go-probe",()=>{introSet=plan.probe;view="intro";render()});
   on("go-mixed",()=>{introSet=plan.mixed;view="intro";render()});
+  on("go-mission",()=>{missionShown=activeMission();view="mission";render();window.scrollTo({top:0})});
   on("go-extra",()=>{ if(plan.extra){introSet=plan.extra;view="intro";render()} });
   on("go-extra2",()=>{showAll=true;renderHome();window.scrollTo({top:0})});
   on("other",()=>{showAll=!showAll;renderHome()});
@@ -984,6 +996,7 @@ function renderConcept(){
   $v.innerHTML=`<section class="card concept">${header()}
     <h2>${esc(c.title)}</h2>
     <ul>${c.points.map(p=>`<li>${gloss(p)}</li>`).join("")}</ul>
+    ${c.use?`<div class="feedback usebox"><span class="small"><b>🌏 เอาไปใช้ที่ไหน</b> ${gloss(c.use)}</span></div>`:""}
     <div class="feedback" id="gloss-box" hidden></div>
     ${c.formulas.map(f=>`<div class="formula">${esc(f)}</div>`).join("")}
     <div><span class="eyebrow">คำศัพท์อังกฤษของบทนี้</span><div class="vocab">${c.vocab.map(([e,t])=>`<span>${e} <i>${t}</i></span>`).join("")}</div></div>
@@ -1012,15 +1025,18 @@ function renderRate(){
     <h2>วันนี้รู้สึกอย่างไร</h2>
     <div class="rate">${RATINGS.map(r=>`<button class="btn ${S.rating===r?"":"ghost"}" data-r="${r}">${r}</button>`).join("")}</div>
     ${trialVoteHtml()}
+    ${S.set.kind==="mixed"&&CAL.reflectFrom&&isoDay(todayKey())>=CAL.reflectFrom?`<div class="feedback usebox"><label class="small" for="reflect"><b>🌏 คำถามประจำสัปดาห์ (ไม่บังคับ)</b> เรื่องไหนที่เรียนสัปดาห์นี้ ที่เธอเห็นว่าเอาไปใช้กับชีวิตตัวเอง หรือกับเรื่องรอบตัวได้ ใช้อย่างไร</label>
+      <textarea id="reflect" rows="2" maxlength="400" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)" placeholder="เช่น ร้อยละ ใช้ดูว่าโปรลดราคาคุ้มจริงไหม">${esc(S.reflect||"")}</textarea></div>`:""}
     <label class="small muted" for="memo">อยากบอกอะไรเพิ่มไหม (ไม่บังคับ)</label>
     <input id="memo" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)" placeholder="เช่น ข้อปลาสนุกดี / การ์ดสรุปยาวไป">
     <button class="btn" id="save" ${S.rating?"":"disabled"}>บันทึกและรับ XP</button></section>`;
+  const rf=document.getElementById("reflect"); if(rf) rf.oninput=()=>{S.reflect=rf.value};
   $v.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{const m=document.getElementById("memo").value;S.rating=b.dataset.r;renderRate();document.getElementById("memo").value=m});
   bindTrialVote(()=>{const m=document.getElementById("memo").value;renderRate();document.getElementById("memo").value=m});
   document.getElementById("save").onclick=async e=>{
     e.target.disabled=true; e.target.textContent="กำลังบันทึก…";
     const items=S.items, scored=items.filter(x=>!x.skipped);
-    const rec={...trialRec(),...(S.dueIds&&S.dueIds.length?{dueIds:S.dueIds}:{}),type:S.set.kind==="probe"?"probe":S.set.kind==="mixed"?"mixed":"set",setId:S.set.id,spell:S.set.spell,subject:S.set.subject,topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
+    const rec={...trialRec(),...((S.reflect||"").trim()?{reflect:S.reflect.trim()}:{}),...(S.dueIds&&S.dueIds.length?{dueIds:S.dueIds}:{}),type:S.set.kind==="probe"?"probe":S.set.kind==="mixed"?"mixed":"set",setId:S.set.id,spell:S.set.spell,subject:S.set.subject,topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
       durationSec:Math.round((Date.now()-S.start)/1000),conceptSec:S.conceptSec||0,rating:S.rating,memo:document.getElementById("memo").value.trim(),
       correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items)+20,altShown:S.altShown,glossed:S.glossed,confused:S.confused,items};
     await finishWith(rec);
@@ -1121,6 +1137,52 @@ function renderDone(){
   on("home",()=>{location.hash="#home";view="home";render()});
   on("ce-next",()=>{S.ci++;renderDone()});
   on("ce-art",()=>{const id=S.cele[S.ci].sp.id; S.ci=S.cele.length; artTarget=id; location.hash="#map"});
+}
+
+/* ---------- real-world mission: monthly, offline, approved by dad before it appears ---------- */
+let missionShown=null;
+function activeMission(){ const t=isoDay(todayKey()); return MISSIONS.find(m=>m.status==="approved"&&t>=m.from&&t<=m.to)||null }
+function missionDone(m){ return mine().some(a=>a.type==="mission"&&a.setId===m.id) }
+function mState(id){ try{ return JSON.parse(localStorage.getItem("fieldnote.mission."+id)||"{}") }catch(e){ return {} } }
+function mSave(id,st){ try{ localStorage.setItem("fieldnote.mission."+id,JSON.stringify(st)) }catch(e){} }
+function numStats(xs){ const v=xs.map(Number).filter(x=>isFinite(x)).sort((a,b)=>a-b); if(!v.length) return null; const n=v.length;
+  return {n,mean:v.reduce((s,x)=>s+x,0)/n,med:n%2?v[(n-1)/2]:(v[n/2-1]+v[n/2])/2,min:v[0],max:v[n-1]} }
+const r1=x=>Math.round(x*10)/10;
+function renderMission(){
+  const m=missionShown; if(!m){ view="home"; return render() }
+  const st=mState(m.id); st.steps=st.steps||[]; st.rows=st.rows||[]; st.ans=st.ans||{};
+  const rec=mine().find(a=>a.type==="mission"&&a.setId===m.id), done=!!rec, R=m.record;
+  const rows=done?(rec.rows||[]):st.rows;
+  const need=R?(R.min||1):0, okRows=rows.length>=need, okAns=(m.questions||[]).every(q=>q.optional||(st.ans[q.id]||"").trim());
+  const stats=R&&R.numCol!=null?numStats(rows.map(r=>r[R.numCol])):null;
+  $v.innerHTML=`<section class="card"><span class="eyebrow">🌏 ภารกิจโลกจริง</span><h2>${esc(m.title)}</h2>
+    <p>${esc(m.why)}</p>
+    <p class="small muted">ใช้คาถา: ${(m.spells||[]).map(id=>esc(SPELLS.find(x=>x.id===id)?.name||id)).join(" · ")} · ${esc(m.mins)}</p>
+    ${(m.materials||[]).length?`<div class="feedback"><b>ต้องใช้</b><ul style="margin:0;padding-left:1.2em">${m.materials.map(x=>`<li class="small">${esc(x)}</li>`).join("")}</ul></div>`:""}
+    <div class="feedback"><b>ขั้นตอน</b>${m.steps.map((x,i)=>`<label class="small" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" style="margin-top:5px;flex:none" data-step="${i}" ${st.steps[i]||done?"checked":""} ${done?"disabled":""}><span><b>${esc(x.title)}</b> ${esc(x.text)}</span></label>`).join("")}</div>
+    ${R?`<div class="feedback"><b>บันทึกข้อมูล</b>${R.hint?`<span class="small muted">${esc(R.hint)}</span>`:""}
+      <div style="overflow-x:auto"><table class="mt"><thead><tr>${R.cols.map(c=>`<th>${esc(c)}</th>`).join("")}${done?"":"<th></th>"}</tr></thead><tbody>
+      ${rows.map((r,i)=>`<tr>${r.map(x=>`<td>${esc(x)}</td>`).join("")}${done?"":`<td><button class="xopt" data-del="${i}" aria-label="ลบแถวนี้">✕</button></td>`}</tr>`).join("")}
+      ${done?"":`<tr>${R.cols.map((c,k)=>`<td><input class="mi" data-c="${k}" aria-label="${esc(c)}" ${k===R.numCol?'inputmode="decimal"':""} placeholder="${esc((R.placeholders||[])[k]||"")}"></td>`).join("")}<td><button class="btn small" id="addrow">เพิ่ม</button></td></tr>`}
+      </tbody></table></div><span class="small muted">บันทึกแล้ว ${rows.length}${R.target?` จาก ${R.target}`:""} แถว${done?"":" · เก็บไว้ในเครื่องนี้ ค่อยๆ เพิ่มทีละวันได้"}</span></div>`:""}
+    ${(m.questions||[]).length?`<div class="feedback"><b>สรุปผลภารกิจ</b>${!okRows&&!done?`<span class="small muted">บันทึกข้อมูลให้ได้อย่างน้อย ${need} แถวก่อน แล้วค่อยตอบ</span>`:""}
+      ${m.questions.map(q=>`<label class="small" for="mq-${q.id}">${esc(q.q)}${q.optional?" (ไม่บังคับ)":""}</label>
+      <textarea id="mq-${q.id}" data-q="${q.id}" rows="2" maxlength="500" ${done||!okRows?"disabled":""} style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">${esc((done?rec.answers?.[q.id]:st.ans[q.id])||"")}</textarea>`).join("")}</div>`:""}
+    ${done&&stats?`<div class="feedback usebox"><b>ระบบคำนวณให้เทียบกับที่เธอคิด</b><span class="small">ข้อมูล ${stats.n} ค่า · ค่าเฉลี่ย ${r1(stats.mean)} · มัธยฐาน ${r1(stats.med)} · ต่ำสุด ${stats.min} · สูงสุด ${stats.max} · พิสัย ${r1(stats.max-stats.min)}</span></div>`:""}
+    ${done?`<p><b>ภารกิจนี้สำเร็จแล้ว +${rec.xp} XP 🌏</b></p>${store!=="db"&&!rec.sent?`<p class="small muted">อย่าลืมส่งผลให้พ่อดูนะ พ่ออยากเห็นข้อมูลที่เก็บมา</p>`:""}`
+      :`<button class="btn" id="msave" ${okRows&&okAns?"":"disabled"}>ส่งภารกิจ รับ ${m.xp||100} XP</button>`}
+    <button class="btn ghost" id="mback" style="border:0;padding-left:0">← กลับ</button></section>`;
+  const keep=()=>mSave(m.id,st);
+  $v.querySelectorAll("[data-step]").forEach(b=>b.onchange=()=>{st.steps[+b.dataset.step]=b.checked;keep()});
+  $v.querySelectorAll("[data-q]").forEach(t=>t.oninput=()=>{st.ans[t.dataset.q]=t.value;keep();const sb=document.getElementById("msave");if(sb) sb.disabled=!(okRows&&(m.questions||[]).every(q=>q.optional||(st.ans[q.id]||"").trim()))});
+  $v.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{st.rows.splice(+b.dataset.del,1);keep();renderMission()});
+  const ar=document.getElementById("addrow"); if(ar) ar.onclick=()=>{ const vals=[...$v.querySelectorAll(".mi")].map(i=>i.value.trim()); if(vals.every(v=>!v)) return;
+    if(R.numCol!=null&&!isFinite(parseFloat(vals[R.numCol]))){ $v.querySelector(`.mi[data-c="${R.numCol}"]`).focus(); return }
+    st.rows.push(vals); keep(); renderMission() };
+  document.getElementById("mback").onclick=()=>{view="home";render()};
+  const sb=document.getElementById("msave"); if(sb) sb.onclick=async()=>{ sb.disabled=true; sb.textContent="กำลังบันทึก…"; const now=new Date().toISOString();
+    await saveAttempt({type:"mission",setId:m.id,topic:m.title,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:m.xp||100,items:[],rows:st.rows,answers:st.ans,stepsDone:st.steps.filter(Boolean).length});
+    attempts=store==="db"?attempts:lsRead(); renderMission(); window.scrollTo({top:0}) };
 }
 
 /* ---------- spell card art: her own drawings, kept in this browser ---------- */
@@ -1403,6 +1465,23 @@ function renderParent(){
     <textarea id="imp" rows="3" style="font-family:var(--mono);font-size:.75rem;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)"></textarea>
     <label class="small row" style="gap:6px"><input type="checkbox" id="imptest"> นี่คือรหัสจากการทดลองเล่น (ติดป้ายทดสอบ ไม่นับในการวิเคราะห์)</label>
     <div class="row"><button class="btn" id="impgo">นำเข้า</button><span class="small" id="impmsg" aria-live="polite"></span></div></section>`:""}
+  ${MISSIONS.length?`<section class="card"><h3>🌏 ภารกิจโลกจริงประจำเดือน</h3>
+    ${MISSIONS.map(m=>{ const dec=fbList.filter(f=>f.kind==="mission"&&f.missionId===m.id&&!f.test); const res=pool.find(a=>a.type==="mission"&&a.setId===m.id);
+      return `<div class="logi"><div class="row" style="justify-content:space-between"><b>${esc(m.title)}</b><span class="pill ${m.status==="approved"?"g":"y"}">${m.status==="approved"?"เปิดให้ลูกแล้ว":"ร่าง รอพ่ออนุมัติ"}</span></div>
+        <span class="small muted">${esc(m.from)} ถึง ${esc(m.to)} · ${esc(m.mins)}</span>
+        <details class="small"><summary>ดูรายละเอียดภารกิจ</summary><div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
+          <p>${esc(m.why)}</p>${m.parentNote?`<p><b>ถึงพ่อ:</b> ${esc(m.parentNote)}</p>`:""}
+          <p><b>ต้องใช้:</b> ${(m.materials||[]).map(esc).join(" · ")}</p>
+          <ol style="margin:0;padding-left:1.3em">${m.steps.map(x=>`<li><b>${esc(x.title)}</b> ${esc(x.text)}</li>`).join("")}</ol>
+          ${m.record?`<p><b>ลูกบันทึก:</b> ${m.record.cols.map(esc).join(" · ")} (อย่างน้อย ${m.record.min||1} แถว)</p>`:""}
+          <p><b>คำถามสรุป:</b></p><ul style="margin:0;padding-left:1.2em">${(m.questions||[]).map(q=>`<li>${esc(q.q)}</li>`).join("")}</ul></div></details>
+        ${dec.map(d=>`<span class="small">${d.decision==="approve"?"✅ พ่ออนุมัติแล้ว":"✏️ พ่อขอปรับ"} · ${new Date(d.at).toLocaleDateString("th-TH",{day:"numeric",month:"short"})}${d.note?` · “${esc(d.note)}”`:""}</span>`).join("")}
+        ${m.status!=="approved"&&db?`<textarea data-mnote="${m.id}" rows="2" placeholder="ถ้าอยากปรับ เช่น บ้านไม่มีเครื่องวัด ใช้แอปแทนได้ไหม" style="font:inherit;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)"></textarea>
+          <div class="row"><button class="btn small" data-mok="${m.id}">อนุมัติภารกิจนี้</button><button class="btn ghost small" data-mfix="${m.id}">ส่งความเห็นให้ปรับ</button><span class="small" id="mmsg-${m.id}"></span></div>`:""}
+        ${res?`<span class="small"><b>ลูกทำเสร็จแล้ว</b> ${new Date(res.endedAt).toLocaleDateString("th-TH",{day:"numeric",month:"short"})} · บันทึก ${(res.rows||[]).length} แถว</span>
+          ${m.record&&(res.rows||[]).length?`<details class="small"><summary>ดูข้อมูลที่ลูกจด</summary><div style="overflow-x:auto"><table class="mt"><thead><tr>${m.record.cols.map(c=>`<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${res.rows.map(r=>`<tr>${r.map(x=>`<td>${esc(x)}</td>`).join("")}</tr>`).join("")}</tbody></table></div></details>`:""}
+          ${(m.questions||[]).map(q=>res.answers?.[q.id]?`<span class="small"><span class="muted">${esc(q.q)}</span><br>“${esc(res.answers[q.id])}”</span>`:"").join("")}`:""}</div>` }).join("")}
+    <p class="note">ภารกิจจะขึ้นให้ลูกเห็นหลังพ่อกดอนุมัติ และ Claude อัปเดตรอบถัดไป (ทุกพุธและอาทิตย์) ถ้าอยากให้เปิดทันที บอกในแชตได้เลย</p></section>`:""}
   ${empty?"":`
   <section class="card"><h3>ความแม่นตามระดับความยาก</h3><div class="bars">
     ${lv.map(x=>`<div class="bar"><span>${LV[x.l].split(" · ")[1]}</span><span class="track"><i style="width:${x.p}%;background:var(${x.l===1?"--good":x.l===2?"--warn":"--beak"})"></i></span><span class="v">${x.n?x.p+"%":"–"}</span></div>`).join("")}
@@ -1439,6 +1518,15 @@ function renderParent(){
       <span class="small">${x.correct?"✅":"❌"} ${x.ownWhy?`“${esc(x.ownWhy)}”`:x.ownWhyPad?"(เขียนในกระดาษทด)":"(ไม่ได้เขียน)"}</span></div>`).join("")}`:""}
     ${due.length?`<p class="small">ข้อทวนตามรอบ (เรื่องที่ไม่ได้ฝึกหลายวัน) ${due.length} ข้อ ถูก ${pc(due)} <span class="muted">· ตัวเลขนี้คือความจำระยะยาว</span></p>`:""}
   </section>` })()}
+  ${(()=>{ const CTX={life:"ชีวิตประจำวัน",earth:"สิ่งแวดล้อม / ความยั่งยืน",fun:"เรื่องที่ลูกชอบ",pure:"คณิต-วิทย์ล้วน"};
+    const g={}; items.forEach(x=>{const q=QBANK[x.qid]?.q; const c=q&&q.ctx; if(!c) return; const o=g[c]??={n:0,c:0,t:0}; o.n++; if(x.correct) o.c++; o.t+=x.timeSec||0});
+    if(!Object.keys(g).length) return "";
+    return `<section class="card"><h3>ความแม่นตามบริบทของโจทย์</h3><div class="bars">
+      ${Object.keys(CTX).filter(k=>g[k]).map(k=>{const o=g[k],pc=Math.round(o.c/o.n*100);return `<div class="bar"><span>${CTX[k]}</span><span class="track"><i style="width:${pc}%;background:var(--accent)"></i></span><span class="v">${pc}%</span></div><span class="small muted" style="margin-top:-6px">${o.n} ข้อ · เฉลี่ย ${Math.round(o.t/o.n)} วินาทีต่อข้อ</span>`}).join("")}</div>
+      <p class="note">ใช้ดูหลังผ่านไปสักเดือน ว่าลูกทำโจทย์บริบทไหนได้ดีหรือใช้เวลานาน ป้ายของชุดก่อน 5 พ.ย. ระบบติดให้อัตโนมัติ อาจคลาดเคลื่อนบ้าง</p></section>` })()}
+  ${(()=>{ const rf=all.filter(a=>a.reflect); return rf.length?`<section class="card"><h3>🌏 ลูกเชื่อมโยงบทเรียนกับชีวิต</h3>
+    ${rf.slice(0,6).map(a=>`<div class="logi"><span class="small muted">${new Date(a.endedAt).toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})}</span><span>“${esc(a.reflect)}”</span></div>`).join("")}
+    <p class="note">คำตอบจากคำถามท้ายชุดผสมทุกสัปดาห์ ลองชวนลูกคุยต่อจากที่เขียน จะได้ผลกว่าบอกเองว่าเรื่องนี้สำคัญ</p></section>`:"" })()}
   ${unclear.length?`<section class="card"><h3>โจทย์ที่ลูกบอกว่ากำกวม</h3>
     ${unclear.slice(0,8).map(x=>`<div class="logi"><span class="small">${esc(x.prompt||x.qid)}</span><span class="small muted">${esc(x.qid)}</span></div>`).join("")}
     <p class="note">ส่งรายการนี้ให้ Claude ในแชตได้ ผมจะเขียนโจทย์ให้ชัดขึ้น</p></section>`:""}
@@ -1458,7 +1546,7 @@ function renderParent(){
       ${a.memo?`<span class="small">“${esc(a.memo)}”</span>`:""}</div>`).join("")}
   </div></section>
   <section class="card"><h3>ข้อความที่ลูกเขียนถึง Claude</h3>
-    ${fbList.filter(f=>showExamples||!f.test).length?fbList.filter(f=>showExamples||!f.test).slice(0,5).map(f=>`<div class="logi"><span class="small muted">${new Date(f.at).toLocaleDateString("th-TH",{day:"numeric",month:"short"})}${f.test?` <span class="example">ทดสอบ</span>`:""}</span><span>${esc(f.text)}</span></div>`).join(""):`<p class="muted small">ยังไม่มีข้อความ</p>`}
+    ${fbList.filter(f=>!f.kind&&(showExamples||!f.test)).length?fbList.filter(f=>!f.kind&&(showExamples||!f.test)).slice(0,5).map(f=>`<div class="logi"><span class="small muted">${new Date(f.at).toLocaleDateString("th-TH",{day:"numeric",month:"short"})}${f.test?` <span class="example">ทดสอบ</span>`:""}</span><span>${esc(f.text)}</span></div>`).join(""):`<p class="muted small">ยังไม่มีข้อความ</p>`}
   </section>
   <section class="card"><h3>ให้ Claude วิเคราะห์</h3>
     <p class="small muted">สรุปจุดแข็ง จุดที่ต้องระวัง และคำแนะนำสำหรับพ่อ จากข้อมูลด้านบน</p>
@@ -1475,6 +1563,11 @@ function renderParent(){
   const ig=document.getElementById("impgo"); if(ig) ig.onclick=async()=>{const msg=document.getElementById("impmsg");ig.disabled=true;msg.textContent="กำลังนำเข้า…";
     try{const {n,k}=await importCode(document.getElementById("imp").value, document.getElementById("imptest").checked);msg.textContent=`นำเข้าแล้ว ${n} ครั้ง และข้อความ ${k} ข้อความ`;}
     catch(e){msg.textContent="รหัสไม่ถูกต้อง ตรวจว่าคัดลอกมาครบทั้งข้อความ"}ig.disabled=false;};
+  const mdec=async(id,decision)=>{ const m=document.getElementById("mmsg-"+id), note=($v.querySelector(`[data-mnote="${id}"]`)?.value||"").trim();
+    if(decision==="change"&&!note){ m.textContent="พิมพ์สิ่งที่อยากให้ปรับก่อน"; return }
+    m.textContent="กำลังบันทึก…"; try{ await db.collection("feedback").add({kind:"mission",missionId:id,decision,note,at:new Date().toISOString()}); m.textContent=decision==="approve"?"อนุมัติแล้ว":"ส่งแล้ว" }catch(e){ m.textContent="บันทึกไม่สำเร็จ ลองใหม่" } };
+  $v.querySelectorAll("[data-mok]").forEach(b=>b.onclick=()=>mdec(b.dataset.mok,"approve"));
+  $v.querySelectorAll("[data-mfix]").forEach(b=>b.onclick=()=>mdec(b.dataset.mfix,"change"));
   setupAsk({all,lv,topics,errs,ratings,skips,conf});
   setupAnswers(conf);
 }
@@ -1516,7 +1609,7 @@ async function setupAsk(sum){ const skips=sum.skips||[], conf=sum.conf||[];
   };
 }
 
-function route(){ const h=location.hash.replace("#",""); if(h==="parent"){view="parent"} else if(h==="map"){view="map"} else if(!["session","intro","feedback","done","skip","send","vocab"].includes(view)){view="home"} else if(view==="done"){view="home"} render() }
+function route(){ const h=location.hash.replace("#",""); if(h==="parent"){view="parent"} else if(h==="map"){view="map"} else if(!["session","intro","feedback","done","skip","send","vocab","mission"].includes(view)){view="home"} else if(view==="done"){view="home"} render() }
 window.addEventListener("hashchange",route);
 route();
 </script>

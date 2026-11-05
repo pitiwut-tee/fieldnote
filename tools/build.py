@@ -12,7 +12,8 @@ def load(p): return json.load(open(P(p), encoding="utf8"))
 
 sets = [json.load(open(f, encoding="utf8")) for f in sorted(glob.glob(P("content", "sets", "*.json")))]
 content = {"sets": sets, "spells": load("content/spells.json"), "vocab": load("content/vocab.json"),
-           "readings": load("content/readings.json"), "calendar": load("content/calendar.json")}
+           "readings": load("content/readings.json"), "calendar": load("content/calendar.json"),
+           "missions": load("content/missions.json")}
 
 src = open(P("src", "app.html"), encoding="utf8").read()
 assert "/*@@CONTENT@@*/null" in src
@@ -20,8 +21,9 @@ page = src.replace("/*@@CONTENT@@*/null", json.dumps(content, ensure_ascii=False
 os.makedirs(P("dist"), exist_ok=True)
 open(P("dist", "parent.html"), "w", encoding="utf8").write(page)
 
-# student page: no parent tab, wrapped in a full HTML document
-s = page
+# student page: no parent tab, wrapped in a full HTML document; only missions dad has approved
+student_content = dict(content, missions={"missions": [m for m in content["missions"]["missions"] if m.get("status") == "approved"]})
+s = src.replace("/*@@CONTENT@@*/null", json.dumps(student_content, ensure_ascii=False).replace("</", "<\\/"))
 def r(a, b):
     global s
     assert a in s, "missing: " + a[:60]
