@@ -103,6 +103,10 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .opt.picked{border-color:var(--accent);border-width:2.5px;background:color-mix(in srgb,var(--accent) 10%,var(--card))}
 .trialbox{border-left:4px solid var(--accent)}
 .usebox{border-left:4px solid var(--good)}
+.buddy{display:flex;gap:10px;align-items:flex-start}
+.bface{flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:color-mix(in srgb,var(--beak) 18%,var(--card));object-fit:cover;line-height:1}
+.bubble{position:relative;flex:1;background:var(--soft);border-radius:4px 14px 14px 14px;padding:8px 12px;display:flex;flex-direction:column;gap:3px;font-size:.92rem}
+.bubble b{font-family:var(--display);font-weight:500;font-size:.85rem;color:var(--muted)}
 .rdbox{margin-top:8px;padding:10px 12px;border-radius:10px;background:var(--soft);line-height:1.9}
 .rdbox span[data-ck]{border-radius:4px;padding:1px 0;transition:background .15s}
 .rdbox span.now{background:color-mix(in srgb,var(--beak) 35%,transparent)}
@@ -280,7 +284,7 @@ async function packCode(obj){
   }catch(e){} }
   return "FIELDNOTE1:"+b64e(json);
 }
-async function exportCode(all){ const a=all?lsRead():unsent().a, f=all?lsFb():unsent().f; return (a.length||f.length)?await packCode({a:a.map(slim),f:f.map(({sent,...x})=>x)}):"" }
+async function exportCode(all){ const a=all?lsRead():unsent().a, f=all?lsFb():unsent().f; const b=getBuddy(); return (a.length||f.length)?await packCode({a:a.map(slim),f:f.map(({sent,...x})=>x),...(b?{b:{name:b.name,kind:b.kind}}:{})}):"" }
 
 async function renderSend(all){
   const u=unsent(); const code=await exportCode(all);
@@ -309,6 +313,7 @@ async function importCode(raw, asTest){
   else if(m1) data=JSON.parse(b64d(m1[1].replace(/\s/g,""))); else throw new Error("bad");
   let n=0,k=0;
   for(const a of (data.a||[])){ const id=("s-"+(a.setId||a.type)+"-"+a.endedAt).replace(/[^A-Za-z0-9_-]/g,""); const {example,...rest}=fatten(a); await db.collection("attempts").doc(id).set({...rest,via:"code",test:!!(a.test||asTest)}); n++ }
+  if(data.b&&!asTest){ try{ await db.collection("feedback").doc("buddy").set({kind:"buddy",name:data.b.name,buddy:data.b.kind,at:new Date().toISOString()}) }catch(e){} }
   for(const f of (data.f||[])){ const id=("f-"+f.at).replace(/[^A-Za-z0-9_-]/g,""); await db.collection("feedback").doc(id).set({...f,test:!!(f.test||asTest)}); k++ }
   return {n,k};
 }
@@ -328,7 +333,8 @@ const GOAL=60, FREEZE_MAX=2, DAY=86400000;
 function realAttempts(){ return attempts.filter(a=>!a.example&&!a.test) }
 function mine(){ return TEST ? attempts.filter(a=>!a.example) : realAttempts() }
 function isSkip(a){ return a.type==="skip" }
-function isLesson(a){ return !isSkip(a) && a.type!=="vocab" && a.type!=="daymode" && a.type!=="mission" }
+const LESSON_TYPES=["set","probe","mixed","passage","review"];
+function isLesson(a){ return LESSON_TYPES.includes(a.type||"set") }
 function dayKey(iso){ const d=new Date(iso); d.setHours(0,0,0,0); return d.getTime() }
 function todayKey(){ return dayKey(new Date().toISOString()) }
 function nextDay(d){ const t=new Date(d); t.setDate(t.getDate()+1); t.setHours(0,0,0,0); return t.getTime() }
@@ -374,7 +380,8 @@ function progressOf(list){
   const byDay=new Map(), skipDays=new Set(), leaveDays=new Set(), vocabDays=new Set(), units=new Map(), probes=new Map(), met=new Set();
   list.forEach(a=>{ const k=dayKey(a.endedAt);
     if(a.type==="daymode") return;
-    if(a.type==="mission"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* real-world mission: XP only, not a daily unit */
+    if(a.type==="mission"||a.type==="teach"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* mission / teaching dad: XP only, not a daily unit */
+    if(a.type==="goal"||a.type==="goaldone") return;
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
     byDay.set(k,(byDay.get(k)||0)+xpOf(a));
     if(a.type==="vocab") vocabDays.add(k); else { units.set(k,(units.get(k)||0)+1); if(a.type==="probe"||a.type==="mixed"||a.type==="passage") probes.set(k,(probes.get(k)||0)+1) } });
@@ -652,14 +659,16 @@ function renderHome(){
   const doneNP=doneToday.filter(a=>!["probe","mixed","passage"].includes(a.type)), doneProbe=doneToday.find(a=>["probe","mixed","passage"].includes(a.type));
   const tr=trialsToday();
   const doneTitle=a=>`<h2>${esc(a.topic)}</h2><p class="small muted">ทำแล้ว ✓</p>`;
-  const lessonTitle=md.lesson&&doneNP[0]?doneTitle(doneNP[0]):plan.repair?`<h2>ชุดซ่อมจุดอ่อน</h2><p class="small muted">8 ข้อจากที่เคยพลาด ตัวเลือกสลับที่ใหม่</p>`
+  const lessonTitle=md.lesson&&(doneNP[0]||doneToday[0])?doneTitle(doneNP[0]||doneToday[0]):plan.repair?`<h2>ชุดซ่อมจุดอ่อน</h2><p class="small muted">8 ข้อจากที่เคยพลาด ตัวเลือกสลับที่ใหม่</p>`
     :plan.lesson?`<span class="row" style="gap:6px"><span class="chip">${plan.lesson.subject} · ${plan.lesson.grade}</span>${plan.lesson.current?`<span class="chip l2">เรียนอยู่ตอนนี้</span>`:""}</span><h2>${esc(plan.lesson.topic)}</h2>`:"";
   const quests=p.quests;
   $v.innerHTML = `
   ${TEST?`<section class="card" style="border-color:var(--beak)"><b style="color:var(--beak)">โหมดทดสอบ</b>
     <p class="small">ผลจากเครื่องนี้จะติดป้าย "ทดสอบ" และไม่ถูกนับในการวิเคราะห์ ลองกดทุกอย่างได้ตามสบาย</p>
     <button class="btn ghost" id="leave-test">ออกจากโหมดทดสอบ และล้างผลทดสอบในเครื่องนี้</button></section>`:""}
+  ${getBuddy()?"":buddySetupHtml()}
   <section class="card">
+    ${buddyHtml(buddyNote?[buddyNote]:buddyLines(list,p,plan))}
     ${flameHtml(p)}
     <div class="week">${dots}</div>
     <p class="small muted">${p.goalToday?"วันนี้ภารกิจครบแล้ว ไฟยังลุกอยู่ 🔥":"ทำภารกิจวันนี้ให้ครบ ไฟถึงจะติด"} · ทำครบทุก 5 วัน ทำชุดฝึกเกินภารกิจของวัน หรือทำภารกิจประจำสัปดาห์ครบ ได้น้ำแข็ง 1 ก้อน (เก็บได้สูงสุด ${FREEZE_MAX}) วันที่ไม่ได้ทำ น้ำแข็งจะละลายแทนไฟ</p>
@@ -691,6 +700,9 @@ function renderHome(){
     ${ms.some(x=>x.key==="extra")?mission(4,"extra","ชุดเพิ่มวันหยุด · ราว 25 นาที (พักก่อนค่อยทำก็ได้)",
       md.extra&&doneNP[1]?doneTitle(doneNP[1]):plan.extra?`<h2>${esc(plan.extra.topic)}</h2>`:"",`<button class="btn ${md.extra?"ghost":""}" id="go-extra">เริ่มชุดนี้</button>`):""}
   </section>
+  ${letterHtml()}
+  ${goalHtml(list)}
+  ${teachHtml(list)}
   ${(()=>{const m=activeMission(); if(!m) return ""; const d=missionDone(m), st=mState(m.id);
     return `<section class="card usebox"><span class="eyebrow">🌏 ภารกิจโลกจริงประจำเดือน${d?" · ทำแล้ว ✓":""}</span><h2>${esc(m.title)}</h2>
       <p class="small">${esc(m.hook||m.why)}</p><p class="small muted">${esc(m.mins)} · ถึง ${new Date(m.to+"T00:00:00").toLocaleDateString("th-TH",{day:"numeric",month:"short"})} · ไม่นับในไฟประจำวัน · ได้ ${m.xp||100} XP${m.record&&!d?` · บันทึกแล้ว ${(st.rows||[]).length} แถว`:""}</p>
@@ -710,7 +722,7 @@ function renderHome(){
   ${store!=="db"?`<details class="small muted"><summary>ตั้งค่าเครื่องนี้</summary>
     <p style="margin:8px 0">ลบเฉพาะผลที่<b>ยังไม่ได้ส่งให้พ่อ</b> (${unsent().a.length} ครั้ง) เช่น ตอนผู้ใหญ่ลองเล่น ผลที่ส่งแล้ว สตรีคจากวันเหล่านั้น และคำศัพท์ที่เรียนไว้ยังอยู่ครบ</p>
     <button class="btn ghost" id="wipe" ${unsent().a.length||unsent().f.length?"":"disabled"}>ลบผลที่ยังไม่ได้ส่ง</button> <span id="wipemsg"></span></details>`:""}`;
-  bindDayPanel(p);
+  bindDayPanel(p); bindBuddySetup(); bindLetter(); bindGoal(list); bindTeach(); buddyNote="";
   const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
   on("go-rec",()=>{ if(plan.repair) return startReview(8,"ชุดซ่อมจุดอ่อน"); if(plan.lesson){introSet=plan.lesson;view="intro";render()} });
   on("go-probe",()=>{introSet=plan.probe;view="intro";render()});
@@ -1199,6 +1211,7 @@ async function finishWith(rec){
   MILESTONES.filter(m=>after.best>=m&&before.best<m).forEach(m=>cele.push({kind:"milestone",m}));
   if(after.questDoneThisWeek&&!before.questDoneThisWeek) cele.push({kind:"quest"});
   if(after.freeze>before.freeze) cele.push({kind:"ice",why:after.earnedToday.map(e=>e.why).join(", ")});
+  if(getBuddy()){ const b1=buddyStage(prevList), b2=buddyStage(list); if(b2.i>b1.i) cele.push({kind:"buddy",name:b2.name}) }
   S={...S,where,rec,before,after,list,cele,ci:0}; view="done"; render(); window.scrollTo({top:0});
 }
 function confetti(){ if(matchMedia("(prefers-reduced-motion: reduce)").matches) return "";
@@ -1210,6 +1223,7 @@ function celeHtml(e){
       text:`${e.sp.topic}${e.tier===1?" · เปิดการ์ดคาถาใบใหม่ในสมุดแล้ว":""}`,art,btn:e.tier===1&&!art?"🎨 วาดการ์ดใบนี้":null} }
   if(e.kind==="realm") return {icon:"🏯",title:`พิชิต${REALMS[e.rk]}ครบทุกคาถา!`,text:"ทุกคาถาในสำนักนี้ปลดล็อกแล้วอย่างน้อยขั้นฝึกหัด"};
   if(e.kind==="milestone") return {icon:"🏅",title:`จุดไฟติดต่อกัน ${e.m} วัน!`,text:"เหรียญนี้เป็นของเธอตลอดไป ต่อให้ไฟดับก็ไม่หาย"};
+  if(e.kind==="buddy") return {icon:BUDDY_KINDS.find(k=>k.k===getBuddy()?.kind)?.e||"✨",title:`${getBuddy()?.name||"คู่หู"} โตเป็น${e.name}แล้ว!`,text:"เพราะเธอปลดล็อกคาถาเพิ่มขึ้น ขอบคุณที่พาเรามาไกลขนาดนี้",art:buddyArt()};
   if(e.kind==="quest") return {icon:"📜",title:"ภารกิจประจำสัปดาห์ครบ!",text:"ได้น้ำแข็งกันไฟดับ 1 ก้อน"};
   return {icon:"🧊",title:"ได้น้ำแข็งกันไฟดับ!",text:e.why||""};
 }
@@ -1226,6 +1240,7 @@ function renderDone(){
     <h2>+${r.xp} XP</h2>
     <p>${r.type==="vocab"?`คำศัพท์ถูก ${r.correct} จาก ${r.total}`:`ทำได้ ${r.correct} จาก ${r.total} ข้อ`} ใน ${mins} นาที</p>
     ${byL?`<p class="small muted">${byL}</p>`:""}
+    ${r.type!=="vocab"&&getBuddy()?buddyHtml([buddyAfter(r)].filter(Boolean)):""}
     ${flameHtml(a)}
     ${reached?`<p><b>ภารกิจวันนี้ครบแล้ว ไฟ ${a.streak} วันยังลุกอยู่ 🔥</b></p>`:left.length?`<p><b style="color:var(--beak)">เหลืออีก ${left.length} ภารกิจ: ${left.join(" · ")}</b> ทำให้ครบแล้วไฟจะติด</p>`:""}
     ${sp&&!(S.cele||[]).some(e=>e.kind==="tier"&&e.sp.id===sp.id)?`<p class="small muted">${esc(sp.name)}: ${TIER[info?.tier||0]} · ${nextStep(sp,info)}</p>`:""}
@@ -1247,6 +1262,170 @@ function renderDone(){
   on("home",()=>{location.hash="#home";view="home";render()});
   on("ce-next",()=>{S.ci++;renderDone()});
   on("ce-art",()=>{const id=S.cele[S.ci].sp.id; S.ci=S.cele.length; artTarget=id; location.hash="#map"});
+}
+
+/* ---------- companion (คู่หู): she picks and names it; it speaks every friendly message in the app.
+   Never guilt, never pretends to be a person; grows with the spells she unlocks. ---------- */
+const BUDDY_KINDS=[{k:"fox",e:"🦊",n:"จิ้งจอกเวท"},{k:"dragon",e:"🐉",n:"มังกรน้อย"},{k:"owl",e:"🦉",n:"นกฮูกนักปราชญ์"},{k:"cat",e:"🐈‍⬛",n:"แมวดำจอมเวท"},{k:"bunny",e:"🐇",n:"กระต่ายจันทรา"},{k:"bubble",e:"🫧",n:"ภูตฟองสบู่"},{k:"robot",e:"🤖",n:"หุ่นกลไกจิ๋ว"},{k:"turtle",e:"🐢",n:"เต่าเก็บความรู้"}];
+const BUDDY_STAGES=[[0,"ภูตแรกเกิด"],[3,"ภูตฝึกหัด"],[10,"ภูตชำนาญ"],[20,"ภูตผู้พิทักษ์"],[35,"ภูตตำนาน"]];
+function getBuddy(){ try{ return JSON.parse(localStorage.getItem("fieldnote.buddy")||"null") }catch(e){ return null } }
+function setBuddy(b){ try{ localStorage.setItem("fieldnote.buddy",JSON.stringify(b)) }catch(e){} }
+function buddyArt(){ try{ return localStorage.getItem("fieldnote.buddyart") }catch(e){ return null } }
+function buddyStage(list){ const n=Object.values(spellStats(list)).filter(v=>v.tier>=1).length; let i=0; BUDDY_STAGES.forEach(([m],k)=>{ if(n>=m) i=k });
+  return {i,name:BUDDY_STAGES[i][1],n,next:BUDDY_STAGES[i+1]?BUDDY_STAGES[i+1][0]-n:null,nextName:BUDDY_STAGES[i+1]?.[1]} }
+function buddyFace(b,size){ const art=buddyArt(), K=BUDDY_KINDS.find(x=>x.k===b?.kind)||BUDDY_KINDS[0];
+  return art?`<img src="${art}" alt="" class="bface" style="width:${size}px;height:${size}px">`:`<span class="bface" style="font-size:${Math.round(size*0.72)}px;width:${size}px;height:${size}px" aria-hidden="true">${K.e}</span>` }
+function bname(){ return getBuddy()?.name||"คู่หู" }
+/* a day-stable pick so the message doesn't change on every re-render */
+function pickDay(arr,salt){ const d=todayKey()/DAY+(salt||0); return arr[Math.abs(Math.floor(Math.sin(d*12.9898)*43758.5453))%arr.length] }
+function buddyLines(list,p,plan){
+  const t=todayKey(), h=new Date().getHours(), out=[], sp=id=>SPELLS.find(x=>x.id===id)?.name||id;
+  const days=[...new Set(list.filter(a=>a.type!=="daymode").map(a=>dayKey(a.endedAt)))].filter(d=>d<t).sort((a,b)=>b-a);
+  const gap=days.length?Math.round((t-days[0])/DAY):null;
+  const greet=h<11?["อรุณสวัสดิ์","เช้านี้สดใสไหม","ตื่นแล้วเหรอ เก่งจัง"]:h<17?["สวัสดีตอนบ่าย","มาแล้ว ดีใจจัง","บ่ายนี้พร้อมร่ายคาถาไหม"]:["กลับมาแล้ว เหนื่อยไหมวันนี้","สวัสดีตอนเย็น","ค่ำนี้ทำเบาๆ สบายๆ กันนะ"];
+  if(gap===null) out.push("เราจะอยู่ในสมุดเล่มนี้กับเธอนะ เริ่มจากภารกิจข้อ 1 ก่อนก็ได้ ค่อยๆ ไปด้วยกัน");
+  else if(gap>=3) out.push(pickDay(["คิดถึงเลย กลับมาแล้ว ดีจัง วันนี้เริ่มเบาๆ ก่อนก็ได้นะ","ไม่ได้เจอกันหลายวัน ไม่เป็นไรเลย มาเริ่มใหม่ด้วยกัน"]));
+  else out.push(pickDay(greet));
+  if(p.goalToday){ out.push(pickDay(["ภารกิจวันนี้ครบแล้ว ไฟยังลุกอยู่ พักผ่อนได้เต็มที่เลย","วันนี้ครบแล้ว อยากทำเพิ่มก็ได้ อยากพักก็ได้ เราภูมิใจในตัวเธอนะ"])); return out }
+  const y=list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===days[0]&&gap===1), yi=y.flatMap(a=>a.items||[]);
+  const longSolo=yi.filter(x=>x.correct&&!x.listen&&(x.len||QBANK[x.qid]?.q.q.length||0)>180).length, partsOk=yi.filter(x=>x.parts&&x.correct).length;
+  const ratings=list.filter(a=>a.rating).slice(0,2).map(a=>a.rating), hard=ratings.length===2&&ratings.every(r=>r==="ยาก"||r==="ยากมาก");
+  const ss=spellStats(list), near=Object.entries(ss).find(([k,v])=>v.tier===1&&v.d2===1), due=(()=>{try{return dueQuestions(list,2)}catch(e){return []}})();
+  const L=[];
+  if(hard) L.push("สองครั้งล่าสุดเธอบอกว่ายาก เราว่าเธอสู้มากเลยนะ วันนี้ถ้าเหนื่อย เริ่มจากการ์ดสรุปก่อนก็ได้");
+  if(partsOk) L.push(`เมื่อวานเธอใช้ "ช่วยแบ่งโจทย์" แล้วทำข้อยากได้ ${partsOk} ข้อ นั่นแหละวิธีที่คนเก่งๆ ใช้กับโจทย์ยาว`);
+  if(longSolo) L.push(`เมื่อวานโจทย์ยาวๆ เธออ่านเองแล้วตอบถูกตั้ง ${longSolo} ข้อ การอ่านเริ่มแข็งแรงขึ้นแล้ว`);
+  if(near) L.push(`อีกแค่วันเดียว ${sp(near[0])} จะขึ้นขั้นชำนาญ ถ้าวันนี้เจอข้อประยุกต์เรื่องนี้ ลุยเลย`);
+  if(due.length) L.push(`${sp(due[0].spell)} ไม่ได้ใช้มาหลายวัน เราแอบใส่ไว้ในอุ่นเครื่องให้ทวน ความจำจะได้ไม่จาง`);
+  if(plan.mixed) L.push("วันนี้มีชุดผสมแบบข้อสอบ ลองดูว่าเธอแยกออกไหม ข้อไหนต้องใช้คาถาอะไร");
+  if(plan.passage) L.push("วันนี้มีบทความให้อ่าน อ่านเงียบๆ ช้าๆ ได้เลย ไม่ต้องรีบ");
+  if(p.info.kind==="holiday"&&!L.length) L.push("วันหยุดแบ่งทำเป็นช่วงๆ ได้นะ ทำเสร็จหนึ่งอย่างแล้วไปพักก่อนก็ได้");
+  if(!L.length) L.push(pickDay(["ข้อที่พลาด ไม่ได้แปลว่าไม่เก่ง แปลว่าเราเจอสิ่งที่ต้องฝึกแล้ว","คิดไม่ออกกด ยังคิดไม่ออก ได้เลย ดีกว่าเดา เราจะได้รู้ว่าต้องช่วยตรงไหน","ข้อยาวๆ ลองกดแบ่งโจทย์ดู จะเห็นว่าจริงๆ มันไม่ได้ยากอย่างที่คิด"],1));
+  out.push(pickDay(L,2)); return out;
+}
+function buddyAfter(rec){
+  const its=(rec.items||[]).filter(x=>!x.skipped); if(!its.length) return "";
+  const pc=its.filter(x=>x.correct).length/its.length, l3=its.filter(x=>x.level===3), l3ok=l3.filter(x=>x.correct).length;
+  const partsOk=its.filter(x=>x.parts&&x.correct).length, dk=its.filter(x=>x.dontknow).length;
+  if(partsOk) return `ใช้แบ่งโจทย์แล้วทำได้ ${partsOk} ข้อ ไม่ยอมแพ้โจทย์ยาว เก่งตรงนี้แหละ`;
+  if(l3.length&&l3ok===l3.length) return "ข้อแนวคิดวิเคราะห์ถูกหมดเลย วิธีคิดเริ่มแน่นแล้วนะ";
+  if(pc>=0.8) return pickDay(["วันนี้แม่นมาก เราว่าเธอเข้าใจจริง ไม่ได้แค่จำ","ถูกเยอะเลย ลองไปเล่าให้พ่อฟังสักเรื่องสิ"]);
+  if(dk) return "ข้อที่กดว่ายังคิดไม่ออก เราเก็บไว้ให้ทวนแล้ว การยอมรับว่ายังไม่รู้คือก้าวแรกของการรู้";
+  if(pc<0.5) return "วันนี้ยากหน่อยใช่ไหม ไม่เป็นไรเลย ข้อที่พลาดเราเก็บไว้ทวนให้ รอบหน้าจะง่ายขึ้น";
+  return pickDay(["ทำจบอีกชุดแล้ว ทีละนิดแบบนี้แหละที่ไปถึงได้จริง","ข้อที่พลาด เราจะเอามาให้ลองใหม่ตอนที่ใช่"]);
+}
+function buddyHtml(lines){ const b=getBuddy(); if(!b) return "";
+  return `<div class="buddy">${buddyFace(b,52)}<div class="bubble"><b>${esc(b.name)}</b>${lines.map(l=>`<span>${esc(l)}</span>`).join("")}</div></div>` }
+
+/* first meeting: pick a kind, give it a name, optionally her own drawing */
+let bDraft={kind:null,name:""};
+function buddySetupHtml(){
+  return `<section class="card usebox" id="bsetup"><span class="eyebrow">พบคู่หูประจำสมุด</span>
+    <h2>เลือกคู่หูของเธอ</h2>
+    <p class="small">คู่หูจะคอยทักทาย บอกว่าเธอเก่งขึ้นตรงไหน และเขียนจดหมายตอบคำถามที่เธอถามไว้ คู่หูโตขึ้นตามคาถาที่เธอปลดล็อก</p>
+    <div class="why">${BUDDY_KINDS.map(k=>`<button data-bk="${k.k}" aria-pressed="${bDraft.kind===k.k}">${k.e} ${k.n}</button>`).join("")}</div>
+    <label class="small" for="bname">ตั้งชื่อให้คู่หู</label>
+    <input id="bname" maxlength="20" value="${esc(bDraft.name)}" placeholder="เช่น ฟูจิ" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">
+    <div class="row"><button class="btn" id="bsave" ${bDraft.kind&&bDraft.name.trim()?"":"disabled"}>เริ่มเดินทางด้วยกัน</button>
+      <button class="btn ghost small" id="bart">🎨 ใช้รูปที่วาดเองแทน (ไม่บังคับ)</button></div>
+    ${buddyArt()?`<p class="small">ใส่รูปที่วาดแล้ว ✓</p>`:""}</section>` }
+function bindBuddySetup(){
+  $v.querySelectorAll("[data-bk]").forEach(b=>b.onclick=()=>{bDraft.kind=b.dataset.bk;bDraft.name=document.getElementById("bname").value;renderHome()});
+  const n=document.getElementById("bname"); if(n) n.oninput=()=>{bDraft.name=n.value; document.getElementById("bsave").disabled=!(bDraft.kind&&n.value.trim())};
+  const s=document.getElementById("bsave"); if(s) s.onclick=()=>{ setBuddy({kind:bDraft.kind,name:bDraft.name.trim().slice(0,20),born:new Date().toISOString()}); renderHome(); window.scrollTo({top:0}) };
+  const a=document.getElementById("bart"); if(a) a.onclick=()=>pickImg("fieldnote.buddyart",()=>{bDraft.name=document.getElementById("bname").value;renderHome()});
+}
+function pickImg(key,done){ const inp=document.createElement("input"); inp.type="file"; inp.accept="image/*";
+  inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(!f) return; const url=URL.createObjectURL(f), img=new Image();
+    img.onload=()=>{ const max=240,k=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement("canvas"); c.width=Math.round(img.width*k); c.height=Math.round(img.height*k);
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(url); try{ localStorage.setItem(key,c.toDataURL("image/jpeg",0.75)) }catch(e){} done() };
+    img.src=url }; inp.click() }
+
+/* ---------- letters from the companion (written by Claude twice a week, content/letters.json; no personal details) ---------- */
+const LETTERS=((CONTENT.letters&&CONTENT.letters.letters)||[]).slice().sort((a,b)=>a.date<b.date?1:-1);
+function lettersRead(){ try{ return JSON.parse(localStorage.getItem("fieldnote.lettersread")||"[]") }catch(e){ return [] } }
+let letterOpen=false;
+function letterHtml(){ const t=isoDay(todayKey()), ls=LETTERS.filter(l=>l.date<=t); if(!ls.length||!getBuddy()) return "";
+  const read=lettersRead(), L=ls[0], unread=!read.includes(L.id);
+  if(!unread&&!letterOpen) return `<details class="small muted" style="padding:0 4px"><summary>💌 จดหมายจาก ${esc(bname())} (${ls.length} ฉบับ)</summary>${ls.map(l=>`<div class="logi" style="margin-top:6px"><span class="small muted">${new Date(l.date+"T00:00:00").toLocaleDateString("th-TH",{day:"numeric",month:"short"})}</span><span class="small" style="white-space:pre-wrap">${esc(l.text)}</span></div>`).join("")}</details>`;
+  return `<section class="card usebox"><span class="eyebrow">💌 จดหมายจาก ${esc(bname())}</span>
+    ${letterOpen?`<p style="white-space:pre-wrap">${esc(L.text)}</p><p class="small muted">— ${esc(bname())}</p><button class="btn ghost small" id="lclose">อ่านแล้ว</button>`
+      :`<p class="small">มีจดหมายฉบับใหม่ถึงเธอ</p><button class="btn" id="lopen">เปิดอ่าน</button>`}</section>` }
+function bindLetter(){ const t=isoDay(todayKey()), L=LETTERS.find(l=>l.date<=t);
+  const o=document.getElementById("lopen"); if(o) o.onclick=()=>{letterOpen=true;renderHome()};
+  const c=document.getElementById("lclose"); if(c) c.onclick=()=>{ try{ localStorage.setItem("fieldnote.lettersread",JSON.stringify([...new Set([...lettersRead(),L.id])])) }catch(e){} letterOpen=false; renderHome() } }
+
+/* ---------- monthly goal she sets herself, with a reward she proposes; dad agrees on the parent page ---------- */
+const DECISIONS=(CONTENT.decisions&&CONTENT.decisions.goals)||{};
+function monthKey(dk){ return isoDay(dk).slice(0,7) }
+function monthEnd(dk){ const d=new Date(dk); return new Date(d.getFullYear(),d.getMonth()+1,0).getTime() }
+function goalOptions(list){
+  const t=todayKey(), left=Math.round((monthEnd(t)-t)/DAY)+1, md=Math.max(3,Math.min(20,Math.round(left*0.7)));
+  return [{key:"metDays",label:`จุดไฟให้ครบ ${md} วันในเดือนนี้`,target:md},{key:"unlock",label:"ปลดล็อกคาถาใหม่ให้ได้ 3 คาถา",target:3},
+    {key:"tierup",label:"ทำให้คาถาขึ้นขั้น 4 ครั้ง",target:4},{key:"longSolo",label:"โจทย์ยาว อ่านเองโดยไม่กดฟัง ตอบถูก 15 ข้อ",target:15}] }
+function goalOf(list){ const m=monthKey(todayKey()); return list.find(a=>a.type==="goal"&&a.month===m)||null }
+function goalProgress(list,g){
+  const from=dayKey(g.endedAt), within=list.filter(a=>dayKey(a.endedAt)>=from&&monthKey(dayKey(a.endedAt))===g.month);
+  if(g.metric==="metDays"){ const p=progressOf(list); return [...p.met].filter(d=>d>=from&&monthKey(d)===g.month).length }
+  if(g.metric==="unlock"){ return Object.values(spellStats(list)).filter(v=>v.tier>=1).length-(g.base||0) }
+  if(g.metric==="tierup"){ const a=spellStats(list), b=spellStats(list.filter(x=>dayKey(x.endedAt)<from)); return Object.entries(a).reduce((s,[k,v])=>s+Math.max(0,v.tier-(b[k]?.tier||0)),0) }
+  if(g.metric==="longSolo"){ return within.filter(isLesson).flatMap(a=>a.items||[]).filter(x=>x.correct&&!x.listen&&(x.len||QBANK[x.qid]?.q.q.length||0)>180).length }
+  return list.some(a=>a.type==="goaldone"&&a.setId===g.setId)?g.target:0;
+}
+let gDraft={key:null,custom:"",reward:""};
+const REWARD_IDEAS=["ไปพิพิธภัณฑ์วิทยาศาสตร์","อุปกรณ์วาดรูป 1 ชิ้นที่เลือกเอง","เลือกร้านอาหารมื้อพิเศษ","ไปท้องฟ้าจำลองหรือดูดาว","ทำการทดลองสนุกๆ กับพ่อที่บ้าน"];
+function goalHtml(list){ const b=getBuddy(); if(!b) return ""; const g=goalOf(list), t=todayKey();
+  if(g){ const have=Math.min(goalProgress(list,g),g.target), done=have>=g.target, dec=DECISIONS[g.setId];
+    return `<section class="card"><span class="eyebrow">🎯 เป้าหมายเดือนนี้ที่เธอตั้งเอง</span><h3>${esc(g.goal)}</h3>
+      <div class="progress"><i style="width:${g.target?have/g.target*100:0}%"></i></div><span class="small muted">${have}/${g.target}${g.metric==="custom"?"":" · นับอัตโนมัติ"}</span>
+      ${g.reward?`<p class="small">รางวัลที่ขอ: ${esc(g.reward)} · ${dec?.status==="ok"?"✅ พ่อตกลงแล้ว":dec?.status==="talk"?`💬 พ่ออยากคุยกันก่อน${dec.note?`: “${esc(dec.note)}”`:""}`:`⏳ ${esc(b.name)} กำลังคุยกับพ่อให้`}</p>`:""}
+      ${done?`<p><b>สำเร็จแล้ว! 🎉 ไปบอกพ่อได้เลย</b></p>`:g.metric==="custom"?`<button class="btn ghost small" id="gdone">ทำสำเร็จแล้ว</button>`:""}</section>` }
+  const opts=goalOptions(list);
+  return `<section class="card"><span class="eyebrow">🎯 ตั้งเป้าหมายเดือนนี้ (เลือกเอง)</span>
+    <p class="small">${esc(b.name)}: เดือนนี้อยากพิชิตอะไร เลือกเองเลย หรือเขียนเป้าของเธอเองก็ได้</p>
+    <div class="why">${opts.map(o=>`<button data-gk="${o.key}" aria-pressed="${gDraft.key===o.key}">${esc(o.label)}</button>`).join("")}<button data-gk="custom" aria-pressed="${gDraft.key==="custom"}">เขียนเป้าเอง</button></div>
+    ${gDraft.key==="custom"?`<input id="gcustom" maxlength="80" value="${esc(gDraft.custom)}" placeholder="เช่น อธิบายพีทาโกรัสให้พ่อฟังได้โดยไม่ดูโน้ต" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">`:""}
+    <label class="small" for="greward">ถ้าทำได้ อยากขอรางวัลอะไรจากพ่อ (ไม่บังคับ) ${esc(b.name)} จะลองคุยกับพ่อให้</label>
+    <div class="why">${REWARD_IDEAS.map(r=>`<button data-gr="${esc(r)}" aria-pressed="${gDraft.reward===r}">${esc(r)}</button>`).join("")}</div>
+    <input id="greward" maxlength="80" value="${esc(gDraft.reward)}" placeholder="หรือพิมพ์เอง" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">
+    <button class="btn" id="gsave" ${gDraft.key&&(gDraft.key!=="custom"||gDraft.custom.trim())?"":"disabled"}>ตั้งเป้านี้</button></section>` }
+function bindGoal(list){
+  const keep=()=>{ const c=document.getElementById("gcustom"), r=document.getElementById("greward"); if(c) gDraft.custom=c.value; if(r) gDraft.reward=r.value };
+  $v.querySelectorAll("[data-gk]").forEach(b=>b.onclick=()=>{keep();gDraft.key=b.dataset.gk;renderHome()});
+  $v.querySelectorAll("[data-gr]").forEach(b=>b.onclick=()=>{keep();gDraft.reward=b.dataset.gr;renderHome()});
+  const c=document.getElementById("gcustom"); if(c) c.oninput=()=>{gDraft.custom=c.value; document.getElementById("gsave").disabled=!c.value.trim()};
+  const r=document.getElementById("greward"); if(r) r.oninput=()=>{gDraft.reward=r.value};
+  const s=document.getElementById("gsave"); if(s) s.onclick=async()=>{ keep(); s.disabled=true; const o=goalOptions(list).find(x=>x.key===gDraft.key), now=new Date().toISOString(), id="goal-"+monthKey(todayKey())+"-"+Date.now().toString(36);
+    await saveAttempt({type:"goal",setId:id,topic:"เป้าหมายเดือนนี้",month:monthKey(todayKey()),metric:gDraft.key,goal:o?o.label:gDraft.custom.trim(),target:o?o.target:1,
+      base:Object.values(spellStats(list)).filter(v=>v.tier>=1).length,reward:gDraft.reward.trim(),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
+    buddyNote=`รับทราบ! เป้าหมายนี้เท่มาก${gDraft.reward.trim()?` เรื่องรางวัล เดี๋ยวเราลองคุยกับพ่อให้นะ`:""}`; gDraft={key:null,custom:"",reward:""}; renderHome(); window.scrollTo({top:0}) };
+  const d=document.getElementById("gdone"); if(d) d.onclick=async()=>{ const g=goalOf(list), now=new Date().toISOString(); await saveAttempt({type:"goaldone",setId:g.setId,topic:"เป้าหมายสำเร็จ",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]}); buddyNote="สุดยอด! ไปบอกพ่อได้เลย"; renderHome() };
+}
+let buddyNote="";
+
+/* ---------- teach dad (learning by teaching): once a week, dad confirms on this device ---------- */
+let teachPick=null, teachStep=0, teachRate=null;
+function teachHtml(list){ const b=getBuddy(); if(!b) return ""; const wk=weekStart(todayKey()), t=list.find(a=>a.type==="teach"&&dayKey(a.endedAt)>=wk);
+  if(t) return `<section class="card"><span class="eyebrow">👨‍🏫 สอนพ่อประจำสัปดาห์ · ทำแล้ว ✓</span><p class="small">สัปดาห์นี้สอนเรื่อง ${esc(SPELLS.find(x=>x.id===t.spell)?.topic||"")} แล้ว พ่อบอกว่า “${esc(t.dadRating||"")}”</p></section>`;
+  const ss=spellStats(list), cand=SPELLS.filter(s=>ss[s.id]&&SETS.some(x=>x.spell===s.id&&x.concept&&x.concept.points.length)).sort((a,b)=>(ss[b.id].tier-ss[a.id].tier));
+  if(!cand.length) return "";
+  const sp=teachPick&&SPELLS.find(s=>s.id===teachPick), set=sp&&SETS.find(x=>x.spell===sp.id&&x.kind==="lesson")||sp&&SETS.find(x=>x.spell===sp.id);
+  return `<section class="card"><span class="eyebrow">👨‍🏫 สอนพ่อ (สัปดาห์ละครั้ง · +50 XP)</span>
+    <p class="small">${esc(b.name)}: การอธิบายให้คนอื่นฟัง ทำให้เราเข้าใจลึกกว่าการทำโจทย์อีกนะ เลือกเรื่องที่มั่นใจ แล้วสอนพ่อสัก 5–10 นาที</p>
+    <div class="why">${cand.slice(0,6).map(s=>`<button data-tp="${s.id}" aria-pressed="${teachPick===s.id}">${esc(s.topic)}</button>`).join("")}</div>
+    ${sp?`<div class="feedback"><b>สอนให้ครบ 3 อย่าง</b><ol style="margin:0;padding-left:1.3em" class="small"><li>อธิบายว่าเรื่องนี้คืออะไร ใช้คำของเธอเอง</li><li>ยกตัวอย่าง 1 ข้อ แล้วทำให้พ่อดูทีละขั้น</li><li>ให้พ่อลองทำ 1 ข้อ แล้วเธอช่วยตรวจ</li></ol>
+      ${set?`<details class="small"><summary>แอบดูการ์ดสรุปได้ ถ้าลืม</summary><ul>${set.concept.points.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></details>`:""}
+      ${teachStep===0?`<button class="btn" id="tdone">สอนเสร็จแล้ว ให้พ่อยืนยัน</button>`
+        :`<p class="small"><b>สำหรับพ่อ:</b> ลูกอธิบายเป็นอย่างไร</p><div class="why">${["เข้าใจชัดมาก","พอเข้าใจ","ยังงงอยู่บ้าง"].map(x=>`<button data-tr="${x}" aria-pressed="${teachRate===x}">${x}</button>`).join("")}</div>
+        <input id="tnote" maxlength="120" placeholder="พ่ออยากบอกอะไรลูก (ไม่บังคับ)" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">
+        <button class="btn" id="tconfirm" ${teachRate?"":"disabled"}>พ่อยืนยัน</button>`}</div>`:""}</section>` }
+function bindTeach(){
+  $v.querySelectorAll("[data-tp]").forEach(b=>b.onclick=()=>{teachPick=b.dataset.tp;teachStep=0;teachRate=null;renderHome()});
+  const d=document.getElementById("tdone"); if(d) d.onclick=()=>{teachStep=1;renderHome()};
+  $v.querySelectorAll("[data-tr]").forEach(b=>b.onclick=()=>{const n=document.getElementById("tnote").value;teachRate=b.dataset.tr;renderHome();document.getElementById("tnote").value=n});
+  const c=document.getElementById("tconfirm"); if(c) c.onclick=async()=>{ c.disabled=true; const now=new Date().toISOString();
+    await saveAttempt({type:"teach",setId:"teach-"+teachPick,spell:teachPick,topic:"สอนพ่อ: "+(SPELLS.find(x=>x.id===teachPick)?.topic||""),dadRating:teachRate,dadNote:document.getElementById("tnote").value.trim(),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:50,items:[]});
+    buddyNote="สอนพ่อสำเร็จ! คนที่สอนคนอื่นได้ คือคนที่เข้าใจจริง"; teachPick=null; teachStep=0; teachRate=null; renderHome(); window.scrollTo({top:0}) };
 }
 
 /* ---------- real-world mission: monthly, offline, approved by dad before it appears ---------- */
@@ -1504,7 +1683,10 @@ function renderMap(){
   const realmOrder=Object.keys(REALMS).sort((a,b)=>(SPELLS.some(s=>s.realm===b&&CAL.currentSpells.includes(s.id))?1:0)-(SPELLS.some(s=>s.realm===a&&CAL.currentSpells.includes(s.id))?1:0));
   const got=SPELLS.filter(s=>(ss[s.id]?.tier||0)>=1).length;
   const cnt=[1,2,3].map(t=>SPELLS.filter(s=>(ss[s.id]?.tier||0)===t).length);
-  $v.innerHTML=`<section class="card"><span class="eyebrow">แผนที่คาถา</span>
+  const bd=getBuddy(), bst=bd?buddyStage(mine()):null;
+  $v.innerHTML=`${bd?`<section class="card"><div class="buddy">${buddyFace(bd,64)}<div class="bubble"><b>${esc(bd.name)} · ${bst.name}</b><span>${bst.next!=null?`ปลดล็อกอีก ${bst.next} คาถา เราจะโตเป็น${bst.nextName}`:"เราโตเต็มที่แล้ว ขอบคุณที่พามาถึงตรงนี้นะ"}</span>
+    <span class="row" style="gap:6px;margin-top:4px"><button class="btn ghost small" id="bartmap">🎨 ${buddyArt()?"เปลี่ยนรูป":"วาดรูปให้เรา"}</button></span></div></div></section>`:""}
+  <section class="card"><span class="eyebrow">แผนที่คาถา</span>
     <h2>เก็บคาถาได้ ${got} จาก ${SPELLS.length}</h2>
     <p class="small">🌱 ฝึกหัด ${cnt[0]} · ✨ ชำนาญ ${cnt[1]} · 👑 ปรมาจารย์ ${cnt[2]}</p>
     <p class="small muted">ทุกคาถามี 3 ขั้น ฝึกหัด (พื้นฐาน) → ชำนาญ (ประยุกต์ ต้องทำได้ 2 วัน) → ปรมาจารย์ (แนวข้อสอบโรงเรียนวิทยาศาสตร์ ต้องทำได้ห่างกัน 1 สัปดาห์) คาถาที่ไม่ได้ใช้นานจะจางลง ทบทวนสั้นๆ ก็กลับมาเต็ม ★ คือความถี่ที่ออกสอบคณิต · คาถาที่ปลดล็อกแล้ว ใส่รูปที่วาดเองเป็นการ์ดได้</p>
@@ -1529,6 +1711,7 @@ function renderMap(){
         ${tier>=1&&store!=="db"?`<button class="btn ghost small" data-art="${sp.id}">🎨 ${art?"เปลี่ยนรูป":"ใส่รูปที่วาดเอง"}</button>`:""}</span></div>`}).join("")}
     </div></details>`}).join("")}`;
   $v.querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>{introSet=SETS.find(s=>s.id===b.dataset.set);view="intro";render()});
+  const bam=document.getElementById("bartmap"); if(bam) bam.onclick=()=>pickImg("fieldnote.buddyart",()=>renderMap());
   $v.querySelectorAll("[data-art]").forEach(b=>b.onclick=()=>pickArt(b.dataset.art,ok=>{ if(ok){artTarget=b.dataset.art;renderMap();document.getElementById("sp-"+b.dataset.art)?.scrollIntoView({block:"center"})} else document.getElementById("artmsg").textContent="เก็บรูปไม่ได้ เครื่องอาจเต็ม ลองรูปที่เล็กลง" }));
   if(artTarget){ const el=document.getElementById("sp-"+artTarget); if(el) setTimeout(()=>el.scrollIntoView({block:"center"}),50) }
 }
@@ -1575,6 +1758,20 @@ function renderParent(){
     <textarea id="imp" rows="3" style="font-family:var(--mono);font-size:.75rem;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)"></textarea>
     <label class="small row" style="gap:6px"><input type="checkbox" id="imptest"> นี่คือรหัสจากการทดลองเล่น (ติดป้ายทดสอบ ไม่นับในการวิเคราะห์)</label>
     <div class="row"><button class="btn" id="impgo">นำเข้า</button><span class="small" id="impmsg" aria-live="polite"></span></div></section>`:""}
+  ${(()=>{ const bf=fbList.find(f=>f.kind==="buddy"), goals=pool.filter(a=>a.type==="goal"), teach=pool.filter(a=>a.type==="teach");
+    const gdec=id=>fbList.filter(f=>f.kind==="goal"&&f.goalId===id);
+    if(!bf&&!goals.length&&!teach.length&&!LETTERS.length) return "";
+    return `<section class="card"><h3>🤝 คู่หู เป้าหมาย และการสอนพ่อ</h3>
+      ${bf?`<p class="small">คู่หูของลูกชื่อ <b>${esc(bf.name)}</b> ${BUDDY_KINDS.find(k=>k.k===bf.buddy)?.e||""}</p>`:""}
+      ${goals.map(g=>{ const prog=goalProgress(realAttempts(),g), done=pool.some(a=>a.type==="goaldone"&&a.setId===g.setId)||prog>=g.target, dd=gdec(g.setId);
+        return `<div class="logi"><span class="small muted">เป้าหมายเดือน ${esc(g.month)}</span><b>${esc(g.goal)}</b><span class="small">ความคืบหน้า ${Math.min(prog,g.target)}/${g.target}${done?" · ✅ สำเร็จแล้ว":""}</span>
+          ${g.reward?`<span class="small">ลูกขอรางวัล: <b>${esc(g.reward)}</b></span>`:`<span class="small muted">ไม่ได้ขอรางวัล</span>`}
+          ${dd.map(d=>`<span class="small">${d.decision==="ok"?"✅ พ่อตกลง":"💬 พ่อขอคุยก่อน"}${d.note?` · “${esc(d.note)}”`:""}</span>`).join("")}
+          ${g.reward&&db&&!dd.length?`<input data-gnote="${g.setId}" placeholder="ข้อความถึงลูก หรือเสนอรางวัลอื่น (ไม่บังคับ)" style="font:inherit;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">
+            <div class="row"><button class="btn small" data-gok="${g.setId}">ตกลงรางวัลนี้</button><button class="btn ghost small" data-gtalk="${g.setId}">ขอคุยกันก่อน</button><span class="small" id="gmsg-${g.setId}"></span></div>`:""}</div>` }).join("")}
+      ${teach.length?`<span class="eyebrow">ลูกสอนพ่อ</span>${teach.slice(0,6).map(t=>`<div class="topic"><span class="small">${new Date(t.endedAt).toLocaleDateString("th-TH",{day:"numeric",month:"short"})} · ${esc(t.topic)}</span><span class="small">${esc(t.dadRating||"")}</span></div>`).join("")}`:""}
+      ${LETTERS.length?`<details class="small"><summary>จดหมายที่คู่หูเขียนถึงลูก (${LETTERS.length})</summary>${LETTERS.slice(0,6).map(l=>`<div class="logi" style="margin-top:6px"><span class="muted">${esc(l.date)}</span><span style="white-space:pre-wrap">${esc(l.text)}</span></div>`).join("")}</details>`:""}
+      <p class="note">ตกลงรางวัลแล้ว คู่หูจะบอกลูกในรอบอัปเดตถัดไป (พุธ/อาทิตย์) หรือบอกลูกเองได้เลย รางวัลที่ไม่ได้บอกล่วงหน้า เช่น คำชมหรือพาไปเที่ยวแบบเซอร์ไพรส์ ไม่ลดแรงจูงใจ ให้ได้เสมอ</p></section>` })()}
   ${MISSIONS.length?`<section class="card"><h3>🌏 ภารกิจโลกจริงประจำเดือน</h3>
     ${MISSIONS.map(m=>{ const dec=fbList.filter(f=>f.kind==="mission"&&f.missionId===m.id&&!f.test); const res=pool.find(a=>a.type==="mission"&&a.setId===m.id);
       return `<div class="logi"><div class="row" style="justify-content:space-between"><b>${esc(m.title)}</b><span class="pill ${m.status==="approved"?"g":"y"}">${m.status==="approved"?"เปิดให้ลูกแล้ว":"ร่าง รอพ่ออนุมัติ"}</span></div>
@@ -1694,6 +1891,10 @@ function renderParent(){
     if(decision==="change"&&!note){ m.textContent="พิมพ์สิ่งที่อยากให้ปรับก่อน"; return }
     m.textContent="กำลังบันทึก…"; try{ await db.collection("feedback").add({kind:"mission",missionId:id,decision,note,at:new Date().toISOString()}); m.textContent=decision==="approve"?"อนุมัติแล้ว":"ส่งแล้ว" }catch(e){ m.textContent="บันทึกไม่สำเร็จ ลองใหม่" } };
   $v.querySelectorAll("[data-mok]").forEach(b=>b.onclick=()=>mdec(b.dataset.mok,"approve"));
+  const gdec=async(id,decision)=>{ const m=document.getElementById("gmsg-"+id), note=($v.querySelector(`[data-gnote="${id}"]`)?.value||"").trim(); m.textContent="กำลังบันทึก…";
+    try{ await db.collection("feedback").add({kind:"goal",goalId:id,decision,note,at:new Date().toISOString()}); m.textContent="บันทึกแล้ว" }catch(e){ m.textContent="บันทึกไม่สำเร็จ ลองใหม่" } };
+  $v.querySelectorAll("[data-gok]").forEach(b=>b.onclick=()=>gdec(b.dataset.gok,"ok"));
+  $v.querySelectorAll("[data-gtalk]").forEach(b=>b.onclick=()=>gdec(b.dataset.gtalk,"talk"));
   $v.querySelectorAll("[data-mfix]").forEach(b=>b.onclick=()=>mdec(b.dataset.mfix,"change"));
   setupAsk({all,lv,topics,errs,ratings,skips,conf});
   setupAnswers(conf);

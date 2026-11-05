@@ -13,7 +13,8 @@ def load(p): return json.load(open(P(p), encoding="utf8"))
 sets = [json.load(open(f, encoding="utf8")) for f in sorted(glob.glob(P("content", "sets", "*.json")))]
 content = {"sets": sets, "spells": load("content/spells.json"), "vocab": load("content/vocab.json"),
            "readings": load("content/readings.json"), "calendar": load("content/calendar.json"),
-           "missions": load("content/missions.json")}
+           "missions": load("content/missions.json"), "letters": load("content/letters.json"),
+           "decisions": load("content/decisions.json")}
 
 src = open(P("src", "app.html"), encoding="utf8").read()
 assert "/*@@CONTENT@@*/null" in src

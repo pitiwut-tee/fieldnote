@@ -1,7 +1,7 @@
 # Planning notes (from documents the father shared, 5 Nov 2026)
 
 These are not the school's own outline. They come from a tutoring school's summary (KruNee, วมว. prep) and the
-IPST ม.3 science textbooks. When the father sends Assumption Convent's real outline, it overrides the order below.
+IPST ม.3 science textbooks. When the father sends her school's real outline, it overrides the order below.
 
 ## Science weighting for the first-round exam (estimate, not official)
 KruNee counted the 31 sub-topics in the MWIT 2570 announcement annex:
