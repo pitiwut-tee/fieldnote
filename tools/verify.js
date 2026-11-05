@@ -74,7 +74,9 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
   const url="file://"+path.join(ROOT,"index.html");
   await pg.clock.install({time:new Date(Date.now()+86400000)});
   await pg.goto(url);
-  const ids=await pg.evaluate(()=>SETS.map(s=>s.id));
+  /* --since=YYYY-MM-DD plays only sets added on/after that date (content rules above still cover every set) */
+  const since=(process.argv.find(x=>x.startsWith("--since="))||"").slice(8);
+  const ids=await pg.evaluate(since=>SETS.filter(s=>!since||(s.added||"")>=since).map(s=>s.id),since);
   let n=0;
   for(const id of ids){
     /* every other set is played with this week's trial features on (confidence buttons + explain box) */
