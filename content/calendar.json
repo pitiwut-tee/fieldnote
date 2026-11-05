@@ -28,5 +28,32 @@
   "m22",
   "s4"
  ],
- "startDay": "2026-11-05"
+ "startDay": "2026-11-05",
+ "mixedPerWeek": 1,
+ "trials": {
+  "2026-11-05": [
+   "confidence"
+  ],
+  "2026-11-06": [
+   "explain"
+  ],
+  "2026-11-07": [
+   "confidence",
+   "explain"
+  ],
+  "2026-11-08": [
+   "confidence"
+  ],
+  "2026-11-09": [
+   "explain"
+  ],
+  "2026-11-10": [
+   "confidence",
+   "explain"
+  ],
+  "2026-11-11": [
+   "confidence"
+  ]
+ },
+ "trialsNote": "Trial of two features (confidence buttons, explain-before-answer) 5-11 Nov 2026; she votes at the end of each set. Remove or extend after the father decides."
 }

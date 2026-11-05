@@ -100,6 +100,8 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 }
 .opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 12%,var(--card))}
 .opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--card))}
+.opt.picked{border-color:var(--accent);border-width:2.5px;background:color-mix(in srgb,var(--accent) 10%,var(--card))}
+.trialbox{border-left:4px solid var(--accent)}
 .opt:disabled{cursor:default}
 .num{display:flex;gap:8px;flex-wrap:wrap}
 .num input{font:inherit;font-family:var(--mono);padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);width:10ch}
@@ -188,7 +190,7 @@ const LV = {1:"ระดับ 1 · พื้นฐาน",2:"ระดับ 2 
 /* ---------- content comes from content/*.json, injected at build time (tools/build.py) ---------- */
 const CONTENT=/*@@CONTENT@@*/null;
 const CAL=CONTENT.calendar;
-const SETS=CONTENT.sets.map(s=>{ const o=JSON.parse(JSON.stringify(s));
+const SETS=CONTENT.sets.map(s=>{ const o=JSON.parse(JSON.stringify(s)); o.warm=o.warm||[];
   [...o.warm,...o.practice,...(o.challenge?[o.challenge]:[])].forEach(q=>q.hints=(s.hints||{})[q.id]||[]);
   o.concept=o.concept||{title:"",points:[],formulas:[],vocab:[],alts:[]}; o.concept.alts=o.concept.alts||[];
   o.current=CAL.currentSpells.includes(o.spell); return o });
@@ -365,7 +367,7 @@ function progressOf(list){
     if(a.type==="daymode") return;
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
     byDay.set(k,(byDay.get(k)||0)+xpOf(a));
-    if(a.type==="vocab") vocabDays.add(k); else { units.set(k,(units.get(k)||0)+1); if(a.type==="probe") probes.set(k,(probes.get(k)||0)+1) } });
+    if(a.type==="vocab") vocabDays.add(k); else { units.set(k,(units.get(k)||0)+1); if(a.type==="probe"||a.type==="mixed") probes.set(k,(probes.get(k)||0)+1) } });
   const probeCount=SETS.filter(s=>s.kind==="probe").length, firstProbe={};
   list.filter(a=>a.type==="probe").forEach(a=>{const k=dayKey(a.endedAt); firstProbe[a.setId]=Math.min(firstProbe[a.setId]??Infinity,k)});
   const probesLeft=d=>probeCount-Object.values(firstProbe).filter(x=>x<d).length>0;
@@ -400,29 +402,58 @@ function progressOf(list){
 function lastDone(list){ const last={}; list.filter(isLesson).forEach(a=>{if(a.setId) last[a.setId]=Math.max(last[a.setId]||0,dayKey(a.endedAt))}); return last }
 function pickLesson(list, preferCurrent, exclude){
   const last=lastDone(list), t=todayKey(), ex=exclude||[];
-  const lessons=SETS.filter(s=>s.kind!=="probe"&&!ex.includes(s.id)); if(!lessons.length) return null;
+  const lessons=SETS.filter(s=>s.kind==="lesson"&&!ex.includes(s.id)); if(!lessons.length) return null;
   const pool=lessons.filter(s=>last[s.id]!==t), use=pool.length?pool:lessons;
   return use.slice().sort((a,b)=>(preferCurrent?(b.current?1:0)-(a.current?1:0):0)||(last[a.id]||0)-(last[b.id]||0))[0];
 }
 function pickProbe(list){ const done=new Set(list.filter(a=>a.type==="probe").map(a=>a.setId)); return SETS.find(s=>s.kind==="probe"&&!done.has(s.id))||null }
+/* mixed exam-style sets (interleaving): one per week on a holiday, in the probe slot */
+function pickMixed(list){
+  const done=new Set(list.filter(a=>a.type==="mixed").map(a=>a.setId));
+  const wk=weekStart(todayKey()), thisWeek=list.filter(a=>a.type==="mixed"&&dayKey(a.endedAt)>=wk&&dayKey(a.endedAt)<todayKey()).length;
+  const doneToday=list.some(a=>a.type==="mixed"&&dayKey(a.endedAt)===todayKey());
+  if(thisWeek>=(CAL.mixedPerWeek||1)&&!doneToday) return null;
+  return SETS.find(s=>s.kind==="mixed"&&!done.has(s.id))||(doneToday?SETS.find(s=>s.kind==="mixed"&&list.some(a=>a.setId===s.id&&dayKey(a.endedAt)===todayKey())):null)||null;
+}
 function planToday(list, p){
   const wd=new Date().getDay(), school=p.info.kind==="school";
-  const repair=school&&wd===5&&reviewPool(list).length>=4;
+  const repair=school&&wd===5&&reviewPool(list).length+dueQuestions(list,3).length>=4;
   const doneToday=list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===todayKey()).map(a=>a.setId);
   const lesson=repair?null:pickLesson(list, school);
-  const probe=school?null:pickProbe(list);
+  const mixed=school?null:pickMixed(list);
+  const probe=school||mixed?null:pickProbe(list);
   const extra=p.info.level==="full"?pickLesson(list,false,[...(lesson?[lesson.id]:[]),...doneToday]):null;
-  return {repair,lesson,probe,extra};
+  return {repair,lesson,probe,mixed,extra};
 }
 function recommend(list){ return pickLesson(list,true) }
+/* questions to look at again: wrong answers, and (trial) right answers she was not sure about */
 function reviewPool(list){
   const wrong=new Map();
   list.filter(isLesson).slice().sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt)).forEach(a=>(a.items||[]).forEach(x=>{
     if(x.skipped||!QBANK[x.qid]) return;
-    if(x.correct===false) wrong.set(x.qid,+new Date(a.endedAt)); else if(x.correct) wrong.delete(x.qid);
+    if(x.correct===false||(x.correct&&x.conf==="unsure")) wrong.set(x.qid,+new Date(a.endedAt)); else if(x.correct) wrong.delete(x.qid);
   }));
   return [...wrong.entries()].sort((a,b)=>a[1]-b[1]).map(([qid])=>QBANK[qid].q);
 }
+/* spaced review: spells not practised for a while come back, one question each (questions she has seen before) */
+const SPACING=[3,4,7,14];   // days before a spell is due again, by tier 0..3
+function dueQuestions(list, n, avoidSpells){
+  const ss=spellStats(list), t=todayKey(), avoid=new Set(avoidSpells||[]);
+  const seen=new Map();   // qid -> last day seen
+  list.filter(isLesson).forEach(a=>(a.items||[]).forEach(x=>{ if(!x.skipped&&QBANK[x.qid]) seen.set(x.qid,Math.max(seen.get(x.qid)||0,dayKey(a.endedAt))) }));
+  const due=Object.entries(ss).filter(([sp,v])=>!avoid.has(sp)&&v.idle>=SPACING[v.tier]).sort((a,b)=>b[1].idle/SPACING[b[1].tier]-a[1].idle/SPACING[a[1].tier]);
+  const out=[];
+  for(const [sp] of due){
+    const qs=[...seen.entries()].filter(([id,d])=>QBANK[id].q.spell===sp&&!QBANK[id].q.optional&&t-d>=3*DAY).sort((a,b)=>a[1]-b[1]);
+    const pick=qs.find(([id])=>QBANK[id].q.level<=2)||qs[0];
+    if(pick) out.push(QBANK[pick[0]].q);
+    if(out.length>=n) break;
+  }
+  return out;
+}
+/* trial features for this week (calendar.json "trials": {"2026-11-05":["confidence"], ...}) */
+const TRIAL_NAMES={confidence:"ปุ่ม มั่นใจ / ไม่ชัวร์ ก่อนส่งคำตอบ",explain:"เขียนเหตุผลก่อนดูเฉลย (ชุดละ 1 ข้อ)"};
+function trialsToday(){ return ((CAL.trials||{})[isoDay(todayKey())]||[]).filter(k=>TRIAL_NAMES[k]) }
 function shuffleQ(q, perm){
   if(q.num) return q;
   let idx=perm&&perm.length===q.opts.length?perm:null;
@@ -464,11 +495,17 @@ function nextStep(sp,info){
 }
 
 /* ---------- lesson sessions ---------- */
-function startSet(set, conceptFirst, perms){
-  const warm = set.warm.map(q=>({kind:"q",phase:"อุ่นเครื่อง (ทบทวนของเก่า)",q}));
+function startSet(set, conceptFirst, perms, dueIds){
+  const probe=set.kind==="probe", mixed=set.kind==="mixed";
+  /* spaced review: a lesson's warm-up gets 1 question from a spell that is due again */
+  const due = set.kind==="lesson" ? (dueIds ? dueIds.map(id=>QBANK[id]?.q).filter(Boolean)
+    : dueQuestions(mine(),1,[set.spell,...set.warm.map(q=>q.spell)])) : [];
+  const warm = [...set.warm.map(q=>({kind:"q",phase:"อุ่นเครื่อง (ทบทวนของเก่า)",q})),...due.map(q=>({kind:"q",phase:"ทบทวนตามรอบ (คาถาที่ไม่ได้ใช้มาหลายวัน)",q,due:true}))];
   const card = {kind:"concept",phase:"การ์ดสรุปเนื้อหา"};
-  const probe=set.kind==="probe";
-  const steps = (probe?[
+  const steps = (mixed?[
+    ...set.practice.map(q=>({kind:"q",phase:"ชุดผสมแบบข้อสอบ",q})),
+    {kind:"rate",phase:"ปิดท้าย"}
+  ]:probe?[
     ...set.practice.map(q=>({kind:"q",phase:"ด่านสำรวจ",q})),
     ...(set.concept&&set.concept.points&&set.concept.points.length?[{kind:"concept",phase:"สรุปหลังผ่านด่าน"}]:[]),
     {kind:"rate",phase:"ปิดท้าย"}
@@ -478,15 +515,28 @@ function startSet(set, conceptFirst, perms){
     ...(set.challenge?[{kind:"q",phase:"ข้อท้าทาย (ไม่บังคับ)",q:set.challenge,optional:true}]:[]),
     {kind:"rate",phase:"ปิดท้าย"}
   ]).map((st,k)=>st.q?{...st,q:shuffleQ(st.q,perms&&perms[k])}:st);   // the right answer is not always the first choice
-  S = {mode:"set", active:true, set, conceptFirst, steps, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, rating:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0};
+  const trial=trialsToday(); markExplain(steps, trial);
+  S = {mode:"set", active:true, set, conceptFirst, steps, dueIds:due.map(q=>q.id), trial, trialVote:{}, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, rating:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
   PAD.strokes=[]; saveProgress();
   view="session"; render(); window.scrollTo({top:0});
 }
+/* trial "explain": one question per set (the first level-3 one, else the hardest) asks for a reason before the answer shows */
+function markExplain(steps, trial){
+  if(!trial.includes("explain")) return;
+  const qs=steps.filter(st=>st.kind==="q"&&!st.optional); if(!qs.length) return;
+  const top=qs.find(st=>st.q.level===3)||qs.slice().sort((a,b)=>b.q.level-a.q.level)[0]; top.explain=true;
+}
 function startReview(n, title){
-  const qs=reviewPool(mine()).slice(0,n||5); if(!qs.length) return;
+  const list=mine(), repair=n>5;
+  /* the Friday repair set also brings back up to 3 spells that are due (spaced review), not only mistakes */
+  const due=repair?dueQuestions(list,3):[], dueIds=new Set(due.map(q=>q.id));
+  const qs=[...due,...reviewPool(list).filter(q=>!dueIds.has(q.id))].slice(0,n||5); if(!qs.length) return;
+  for(let i=qs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qs[i],qs[j]]=[qs[j],qs[i]]}
   const t=title||"ทบทวนข้อที่เคยพลาด";
-  S = {mode:"review", set:{id:n>5?"repair":"review",subject:"ทบทวน",topic:t}, steps:[...qs.map(q=>({kind:"q",phase:t,q:shuffleQ(q)})),{kind:"finish",phase:"เสร็จ"}],
-       active:true, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0};
+  const steps=[...qs.map(q=>({kind:"q",phase:dueIds.has(q.id)?t+" · ทบทวนตามรอบ":t,q:shuffleQ(q),due:dueIds.has(q.id)})),{kind:"finish",phase:"เสร็จ"}];
+  const trial=trialsToday(); markExplain(steps, trial);
+  S = {mode:"review", set:{id:repair?"repair":"review",subject:"ทบทวน",topic:t}, steps, trial, trialVote:{},
+       active:true, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
   view="session"; render(); window.scrollTo({top:0});
 }
 
@@ -570,11 +620,12 @@ function renderHome(){
   const setCard=(s,k)=>`<button class="set" data-k="${k}">
         <span class="row" style="gap:6px"><span class="chip">${s.subject} · ${s.grade}</span>${s.current?`<span class="chip l2">เรียนอยู่ตอนนี้</span>`:""}</span>
         <span class="subj">${esc(s.topic)}</span>
-        <span class="meta">${s.kind==="probe"?"ด่านสำรวจ ":""}ฝึก ${s.practice.length} ข้อ · ${s.mins}</span></button>`;
+        <span class="meta">${s.kind==="probe"?"ด่านสำรวจ ":s.kind==="mixed"?"ชุดผสมแบบข้อสอบ ":""}ฝึก ${s.practice.length} ข้อ · ${s.mins}</span></button>`;
   const mission=(n,key,label,title,btn,extraHtml)=>`<div class="mission ${md[key]?"done":""}"><span class="mcheck">${md[key]?"✅":n}</span>
       <div style="display:flex;flex-direction:column;gap:6px;flex:1"><span class="small muted">${label}</span>${title}${btn}${extraHtml||""}</div></div>`;
   const doneToday=list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===today).sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt));
-  const doneNP=doneToday.filter(a=>a.type!=="probe"), doneProbe=doneToday.find(a=>a.type==="probe");
+  const doneNP=doneToday.filter(a=>a.type!=="probe"&&a.type!=="mixed"), doneProbe=doneToday.find(a=>a.type==="probe"||a.type==="mixed");
+  const tr=trialsToday();
   const doneTitle=a=>`<h2>${esc(a.topic)}</h2><p class="small muted">ทำแล้ว ✓</p>`;
   const lessonTitle=md.lesson&&doneNP[0]?doneTitle(doneNP[0]):plan.repair?`<h2>ชุดซ่อมจุดอ่อน</h2><p class="small muted">8 ข้อจากที่เคยพลาด ตัวเลือกสลับที่ใหม่</p>`
     :plan.lesson?`<span class="row" style="gap:6px"><span class="chip">${plan.lesson.subject} · ${plan.lesson.grade}</span>${plan.lesson.current?`<span class="chip l2">เรียนอยู่ตอนนี้</span>`:""}</span><h2>${esc(plan.lesson.topic)}</h2>`:"";
@@ -597,14 +648,18 @@ function renderHome(){
   <section class="card pick">
     <span class="eyebrow">ภารกิจวันนี้ · ทำให้ครบ ${ms.length} อย่าง</span>
     ${dayPanel(p)}
+    ${tr.length?`<div class="daypanel trialbox"><p class="small"><b>🧪 ทดลองของใหม่วันนี้:</b> ${tr.map(k=>TRIAL_NAMES[k]).join(" และ ")} · ลองสัปดาห์นี้แล้วบอกหน่อยว่าชอบไหม</p></div>`:""}
     ${mission(1,"lesson",plan.repair?"ชุดซ่อมจุดอ่อน (วันศุกร์) · ราว 20 นาที":"ชุดฝึก"+(md.lesson?" · ทำแล้ว":" · ราว 30 นาที"),lessonTitle,
       `<div class="row"><button class="btn ${md.lesson?"ghost":""}" id="go-rec">${plan.repair?"เริ่มซ่อม":"เริ่มชุดนี้"}</button><button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"อยากทำเรื่องอื่น"}</button></div>`,
       showAll?`<div class="sets">${SETS.map((s,k)=>s===plan.lesson?"":setCard(s,k)).join("")}</div>`:"")}
     ${mission(2,"vocab","คำศัพท์อังกฤษ · ราว 10 นาที",`<h2>คำศัพท์วันนี้</h2><p class="small muted">${md.vocab?"ทำแล้ว เก่งมาก":vt.fresh.length||vt.due.length?`คำใหม่ ${vt.fresh.length} คำ · ทบทวน ${vt.due.length} คำ · ฟังเสียง ฝึกสะกด${isWeekend()?" · อ่านภาษาอังกฤษสั้นๆ":""}`:"วันนี้ไม่มีคำค้าง ข้ามได้"}</p>`,
       !p.vocabToday&&(vt.fresh.length||vt.due.length)?`<button class="btn" id="vocab-go">เริ่มคำศัพท์</button>`:"")}
-    ${ms.some(x=>x.key==="probe")?mission(3,"probe",plan.probe?"ด่านสำรวจ · เช็กเรื่องที่เรียนมาแล้ว ราว 20 นาที":"ชุดฝึกเพิ่ม (ด่านสำรวจครบแล้ว)",
+    ${ms.some(x=>x.key==="probe")?(plan.mixed&&!(md.probe&&doneProbe&&doneProbe.type==="probe")?mission(3,"probe","ชุดผสมแบบข้อสอบ (สัปดาห์ละครั้ง) · ราว 30 นาที",
+      md.probe&&doneProbe?doneTitle(doneProbe):`<h2>${esc(plan.mixed.topic)}</h2><p class="small muted">${plan.mixed.practice.length} ข้อ หลายเรื่องสลับกันเหมือนข้อสอบจริง ต้องดูเองว่าข้อไหนใช้คาถาอะไร</p>`,
+      `<button class="btn ${md.probe?"ghost":""}" id="go-mixed">เริ่มชุดผสม</button>`)
+      :mission(3,"probe",plan.probe?"ด่านสำรวจ · เช็กเรื่องที่เรียนมาแล้ว ราว 20 นาที":"ชุดฝึกเพิ่ม (ด่านสำรวจครบแล้ว)",
       md.probe&&doneProbe?doneTitle(doneProbe):plan.probe?`<h2>${esc(plan.probe.topic)}</h2><p class="small muted">${plan.probe.practice.length} ข้อ ไม่มีการ์ดก่อนทำ ทำได้ดีคาถาขึ้นขั้นทันที</p>`:`<p class="small muted">ทำชุดไหนก็ได้อีก 1 ชุด</p>`,
-      `<button class="btn ${md.probe?"ghost":""}" id="${plan.probe?"go-probe":"go-extra2"}">${plan.probe?"เข้าด่าน":"เลือกชุด"}</button>`):""}
+      `<button class="btn ${md.probe?"ghost":""}" id="${plan.probe?"go-probe":"go-extra2"}">${plan.probe?"เข้าด่าน":"เลือกชุด"}</button>`)):""}
     ${ms.some(x=>x.key==="extra")?mission(4,"extra","ชุดเพิ่มวันหยุด · ราว 25 นาที (พักก่อนค่อยทำก็ได้)",
       md.extra&&doneNP[1]?doneTitle(doneNP[1]):plan.extra?`<h2>${esc(plan.extra.topic)}</h2>`:"",`<button class="btn ${md.extra?"ghost":""}" id="go-extra">เริ่มชุดนี้</button>`):""}
   </section>
@@ -627,6 +682,7 @@ function renderHome(){
   const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
   on("go-rec",()=>{ if(plan.repair) return startReview(8,"ชุดซ่อมจุดอ่อน"); if(plan.lesson){introSet=plan.lesson;view="intro";render()} });
   on("go-probe",()=>{introSet=plan.probe;view="intro";render()});
+  on("go-mixed",()=>{introSet=plan.mixed;view="intro";render()});
   on("go-extra",()=>{ if(plan.extra){introSet=plan.extra;view="intro";render()} });
   on("go-extra2",()=>{showAll=true;renderHome();window.scrollTo({top:0})});
   on("other",()=>{showAll=!showAll;renderHome()});
@@ -686,7 +742,12 @@ function renderIntro(){
   const s=introSet, sp=SPELLS.find(x=>x.id===s.spell), info=spellStats(mine())[s.spell];
   $v.innerHTML=`<section class="card"><span class="eyebrow">${s.subject} · ${s.grade}${sp?` · ${esc(sp.name)}`:""}</span><h2>${esc(s.topic)}</h2>
     ${sp?`<p class="small muted">ขั้นตอนนี้: ${TIER[info?.tier||0]} · ${nextStep(sp,info)}</p>`:""}
-    ${s.kind==="probe"?`<p><b>ด่านสำรวจ</b> เช็กว่าเรื่องนี้ที่เคยเรียนมา ยังแน่นอยู่ไหม</p>
+    ${s.kind==="mixed"?`<p><b>ชุดผสมแบบข้อสอบ</b> หลายเรื่องสลับกัน เหมือนวันสอบจริง</p>
+    <ul style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px">
+      <li>${s.practice.length} ข้อ จาก ${new Set(s.practice.map(q=>q.spell)).size} คาถา ไม่บอกก่อนว่าข้อไหนเรื่องอะไร ส่วนหนึ่งของการฝึกคือดูให้ออกว่าต้องใช้วิธีไหน</li>
+      <li>ไม่มีการ์ดสรุป มีคำใบ้และเฉลยทุกข้อ</li>
+      <li>ข้อที่ตอบถูกนับเข้าคาถาของเรื่องนั้นด้วย</li></ul>
+    <div class="row"><button class="btn" id="go">เริ่มเลย</button></div>`:s.kind==="probe"?`<p><b>ด่านสำรวจ</b> เช็กว่าเรื่องนี้ที่เคยเรียนมา ยังแน่นอยู่ไหม</p>
     <ul style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px">
       <li>${s.practice.length} ข้อ ไล่จากง่ายไปยาก ไม่มีการ์ดสรุปก่อน เพราะอยากรู้ว่าตอนนี้จำได้แค่ไหน</li>
       <li>คิดไม่ออกกด "ยังคิดไม่ออก" ได้เลย ไม่ต้องเดา ผลจะช่วยให้รู้ว่าต้องซ่อมตรงไหน</li>
@@ -834,22 +895,33 @@ function renderStep(){
   if(st.kind==="rate") return renderRate();
   if(st.kind==="finish") return finishReview();
   const q = st.q, ans = S.answered;
+  /* trials: confidence buttons and/or a reason before the answer is shown, so choosing and sending are two taps */
+  const tConf=(S.trial||[]).includes("confidence"), tWhy=!!st.explain, staged=tConf||tWhy;
+  const sendBtns=tConf?`<button class="btn" id="send-sure">✓ มั่นใจ ส่งคำตอบ</button><button class="btn ghost" id="send-unsure">🤔 ไม่ชัวร์ ส่งคำตอบ</button>`:`<button class="btn" id="send-plain">ส่งคำตอบ</button>`;
+  const panel = !ans&&staged&&(q.num||S.pick!=null)?`<div class="feedback trialbox">
+      ${tWhy?`<label class="small" for="whytext"><b>ก่อนดูเฉลย:</b> ทำไมถึงตอบแบบนี้ เขียนสั้นๆ 1–2 บรรทัด (หรือเขียนในกระดาษทดก็ได้)</label>
+      <textarea id="whytext" rows="2" maxlength="300" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)" placeholder="เช่น เพราะต้องเรียงข้อมูลก่อน ตัวตรงกลางคือ 7">${esc(S.whyText||"")}</textarea>`:""}
+      ${tConf?`<span class="small muted">ตอบแล้วมั่นใจแค่ไหน ข้อที่ถูกแต่ไม่ชัวร์ ระบบจะเอามาให้ทวนอีกรอบ</span>`:""}
+      <div class="row">${sendBtns}</div></div>`:"";
   let body;
   if(q.num){
-    body = `<div class="num"><input id="numin" inputmode="decimal" aria-label="คำตอบ" ${ans?"disabled":""} value="${ans&&!ans.dontknow?esc(ans.raw):""}"><span class="muted" style="align-self:center">${q.unit}</span>
-      ${ans?"":`<button class="btn" id="check">ตรวจคำตอบ</button>`}</div>`;
+    body = `<div class="num"><input id="numin" inputmode="decimal" aria-label="คำตอบ" ${ans?"disabled":""} value="${ans&&!ans.dontknow?esc(ans.raw):esc(S.numDraft||"")}"><span class="muted" style="align-self:center">${q.unit}</span>
+      ${ans||staged?"":`<button class="btn" id="check">ตรวจคำตอบ</button>`}</div>${panel}`;
   } else {
     body = `<div class="opts">${q.opts.map((o,k)=>{
-      let c=""; if(ans){ if(k===q.a) c="right"; else if(k===ans.choice) c="wrong"; }
+      let c=""; if(ans){ if(k===q.a) c="right"; else if(k===ans.choice) c="wrong"; } else if(staged&&S.pick===k) c="picked";
       const struck=!ans&&S.struck.includes(k);
       return `<div class="optrow"><button class="opt ${c} ${struck?"struck":""}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>
         ${ans?"":`<button class="xopt" type="button" data-x="${k}" aria-pressed="${struck}" aria-label="${struck?"เอาคืน":"ตัดตัวเลือกนี้"}" title="${struck?"เอาคืน":"ตัดตัวเลือกนี้"}">${struck?"↺":"✕"}</button>`}</div>`}).join("")}</div>
-      ${ans?"":`<p class="small muted">กด ✕ ท้ายข้อเพื่อตัดตัวเลือกที่ไม่ใช่แน่ๆ</p>`}`;
+      ${ans?"":`<p class="small muted">${staged?"แตะตัวเลือกเพื่อเลือก แล้วกดส่งคำตอบ · ":""}กด ✕ ท้ายข้อเพื่อตัดตัวเลือกที่ไม่ใช่แน่ๆ</p>`}${panel}`;
   }
   let fb = "";
   if(ans){
     const head = ans.dontknow?"ไม่เป็นไร มาดูวิธีคิดกัน (0 XP)":ans.correct?YAY[S.i%YAY.length]:OOPS[S.i%OOPS.length];
-    fb = `<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answer} ${q.unit}`:""}</b><p>${gloss(q.ex)}</p>
+    const confNote = ans.dontknow||!ans.conf?"":ans.correct&&ans.conf==="unsure"?`<p class="small">ถูกแล้ว แต่ยังไม่ชัวร์ ระบบจะเอาข้อนี้มาให้ทวนอีกรอบ จะได้มั่นใจขึ้น</p>`
+      :!ans.correct&&ans.conf==="sure"?`<p class="small"><b>มั่นใจแต่พลาด</b> ข้อแบบนี้ถ้าเข้าใจตอนนี้ จะจำได้แม่นที่สุด อ่านเฉลยช้าๆ นะ</p>`:"";
+    const own = st.explain&&(ans.ownWhy||ans.ownWhyPad)?`<div class="feedback"><span class="small"><b>เหตุผลของเธอ:</b> ${ans.ownWhy?esc(ans.ownWhy):"(เขียนในกระดาษทด)"}</span><span class="small muted">ลองเทียบกับเฉลยด้านล่าง ตรงกันไหม ต่างกันตรงไหน</span></div>`:"";
+    fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answer} ${q.unit}`:""}</b>${confNote}<p>${gloss(q.ex)}</p>
       ${ans.correct||ans.dontknow?"":`<span class="small muted">พลาดเพราะอะไร เลือกได้หลายข้อ (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
       <div class="why">${Object.entries(ERR).filter(([k])=>k!=="dontknow").map(([k,v])=>`<button data-why="${k}" aria-pressed="${(S.why||[]).includes(k)}">${v}</button>`).join("")}</div>`}
       ${ans.correct?"":askHtml("question")}
@@ -857,7 +929,7 @@ function renderStep(){
     <button class="btn" id="next">ต่อไป</button>`;
   }
   $v.innerHTML = `<section class="card">${header()}
-    <span class="row" style="gap:6px"><span class="chip l${q.level}">${LV[q.level]} · ${esc(q.topic)}</span>${q.en?`<span class="chip">English corner</span>`:""}</span>
+    <span class="row" style="gap:6px"><span class="chip l${q.level}">${LV[q.level]}${S.set.kind==="mixed"&&!ans?"":" · "+esc(q.topic)}</span>${q.en?`<span class="chip">English corner</span>`:""}</span>
     <p class="prompt">${gloss(q.q)}</p>
     <div class="feedback" id="gloss-box" hidden></div>
     ${S.hints?`<div class="feedback">${q.hints.slice(0,S.hints).map((h,k)=>`<span class="small"><b>คำใบ้ ${k+1}</b> ${esc(h)}</span>`).join("")}</div>`:""}
@@ -868,13 +940,27 @@ function renderStep(){
   </section>${padHtml()}`;
   bindGloss(); padSetup();
   if(!ans){
+    const wt=document.getElementById("whytext"); if(wt) wt.oninput=()=>{S.whyText=wt.value};
+    const extra=conf=>({...(conf?{conf}:{}),...(st.explain?{ownWhy:(S.whyText||"").trim().slice(0,300),ownWhyPad:PAD.strokes.length>0}:{})});
     if(q.num){
-      const go=()=>{const raw=document.getElementById("numin").value.trim().replace(/,/g,"");const v=parseFloat(raw);if(raw===""||isNaN(v))return;
-        answer({raw, correct:Math.abs(v-q.answer)<=q.tol});};
-      document.getElementById("check").onclick=go;
-      document.getElementById("numin").onkeydown=e=>{if(e.key==="Enter")go()};
+      const ni=document.getElementById("numin"); ni.oninput=()=>{S.numDraft=ni.value};
+      const go=conf=>{const raw=ni.value.trim().replace(/,/g,"");const v=parseFloat(raw);if(raw===""||isNaN(v)){ni.focus();return}
+        answer({raw, correct:Math.abs(v-q.answer)<=q.tol, ...extra(conf)});};
+      const ck=document.getElementById("check"); if(ck) ck.onclick=()=>go();
+      ni.onkeydown=e=>{if(e.key==="Enter"&&!staged)go()};
+    } else if(staged){
+      $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{S.pick=+b.dataset.k; const y=window.scrollY; renderStep(); window.scrollTo({top:y})});
     } else {
       $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer({choice:+b.dataset.k,correct:+b.dataset.k===q.a}));
+    }
+    if(staged){
+      const send=conf=>{ if(q.num){ const raw=document.getElementById("numin").value.trim().replace(/,/g,"");const v=parseFloat(raw);if(raw===""||isNaN(v)){document.getElementById("numin").focus();return}
+          answer({raw,correct:Math.abs(v-q.answer)<=q.tol,...extra(conf)}) }
+        else if(S.pick!=null) answer({choice:S.pick,correct:S.pick===q.a,...extra(conf)}) };
+      const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
+      on("send-sure",()=>send("sure")); on("send-unsure",()=>send("unsure")); on("send-plain",()=>send(null));
+    }
+    {
       $v.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{const k=+b.dataset.x; S.struck=S.struck.includes(k)?S.struck.filter(x=>x!==k):[...S.struck,k]; const y=window.scrollY; renderStep(); window.scrollTo({top:y})});
     }
     const hb=document.getElementById("hint"); if(hb) hb.onclick=()=>{S.hints++;const y=window.scrollY;renderStep();window.scrollTo({top:y})};
@@ -884,13 +970,14 @@ function renderStep(){
     $v.querySelectorAll("[data-why]").forEach(b=>b.onclick=()=>{const k=b.dataset.why; S.why=(S.why||[]).includes(k)?S.why.filter(x=>x!==k):[...(S.why||[]),k];const y=window.scrollY;renderStep();window.scrollTo({top:y})});
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
     document.getElementById("next").onclick=()=>{
-      S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q});
+      S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
+        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{})});
       advance();
     };
   }
 }
 function answer(a){ S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
-function advance(){ S.i++; S.answered=null; S.why=[]; S.hints=0; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
+function advance(){ S.i++; S.answered=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.hints=0; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
 
 function renderConcept(){
   const c=S.set.concept;
@@ -910,18 +997,30 @@ function renderConcept(){
 }
 
 const RATINGS=["ง่ายมาก","ง่าย","พอดี","ยาก","ยากมาก"];
+/* trial vote: asked once per trial per day, never required */
+const VOTES=[["good","ช่วยได้ อยากให้มีต่อ"],["ok","เฉยๆ"],["bad","เกะกะ ไม่อยากได้"]];
+function trialsToVote(){ const t=todayKey(); const voted=new Set(mine().filter(a=>dayKey(a.endedAt)===t&&a.trial&&a.trial.vote).flatMap(a=>Object.keys(a.trial.vote)));
+  return (S.trial||[]).filter(k=>!voted.has(k)) }
+function trialVoteHtml(){ const ks=trialsToVote(); if(!ks.length) return "";
+  return `<div class="feedback trialbox"><b>วันนี้ลองของใหม่ ช่วยบอกหน่อย</b>${ks.map(k=>`<span class="small">${TRIAL_NAMES[k]}</span>
+    <div class="why">${VOTES.map(([v,l])=>`<button data-tv="${k}:${v}" aria-pressed="${S.trialVote[k]===v}">${l}</button>`).join("")}</div>`).join("")}
+    <span class="small muted">ไม่ตอบก็ได้ พ่อกับ Claude จะดูคำตอบนี้ตอนตัดสินใจว่าจะเก็บไว้ไหม</span></div>` }
+function bindTrialVote(rerender){ $v.querySelectorAll("[data-tv]").forEach(b=>b.onclick=()=>{const [k,v]=b.dataset.tv.split(":"); S.trialVote={...S.trialVote,[k]:v}; rerender()}) }
+function trialRec(){ return S.trial&&S.trial.length?{trial:{on:S.trial,vote:{...S.trialVote}}}:{} }
 function renderRate(){
   $v.innerHTML=`<section class="card">${header()}
     <h2>วันนี้รู้สึกอย่างไร</h2>
     <div class="rate">${RATINGS.map(r=>`<button class="btn ${S.rating===r?"":"ghost"}" data-r="${r}">${r}</button>`).join("")}</div>
+    ${trialVoteHtml()}
     <label class="small muted" for="memo">อยากบอกอะไรเพิ่มไหม (ไม่บังคับ)</label>
     <input id="memo" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)" placeholder="เช่น ข้อปลาสนุกดี / การ์ดสรุปยาวไป">
     <button class="btn" id="save" ${S.rating?"":"disabled"}>บันทึกและรับ XP</button></section>`;
   $v.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{const m=document.getElementById("memo").value;S.rating=b.dataset.r;renderRate();document.getElementById("memo").value=m});
+  bindTrialVote(()=>{const m=document.getElementById("memo").value;renderRate();document.getElementById("memo").value=m});
   document.getElementById("save").onclick=async e=>{
     e.target.disabled=true; e.target.textContent="กำลังบันทึก…";
     const items=S.items, scored=items.filter(x=>!x.skipped);
-    const rec={type:S.set.kind==="probe"?"probe":"set",setId:S.set.id,spell:S.set.spell,subject:S.set.subject,topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
+    const rec={...trialRec(),...(S.dueIds&&S.dueIds.length?{dueIds:S.dueIds}:{}),type:S.set.kind==="probe"?"probe":S.set.kind==="mixed"?"mixed":"set",setId:S.set.id,spell:S.set.spell,subject:S.set.subject,topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
       durationSec:Math.round((Date.now()-S.start)/1000),conceptSec:S.conceptSec||0,rating:S.rating,memo:document.getElementById("memo").value.trim(),
       correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items)+20,altShown:S.altShown,glossed:S.glossed,confused:S.confused,items};
     await finishWith(rec);
@@ -932,7 +1031,7 @@ function renderRate(){
 function saveProgress(){
   if(!S||S.mode!=="set") return;
   try{ localStorage.setItem("fieldnote.inprogress",JSON.stringify({setId:S.set.id,conceptFirst:S.conceptFirst,day:todayKey(),i:S.i,start:S.start,items:S.items,confused:S.confused,altShown:S.altShown,conceptSec:S.conceptSec||0,glossed:S.glossed,
-    perms:S.steps.map(x=>x.q?.perm||null)})) }catch(e){}
+    perms:S.steps.map(x=>x.q?.perm||null),dueIds:S.dueIds||[],trialVote:S.trialVote||{}})) }catch(e){}
 }
 function clearProgress(){ try{ localStorage.removeItem("fieldnote.inprogress") }catch(e){} }
 function pendingSet(){
@@ -943,15 +1042,20 @@ function pendingSet(){
 function resumeSet(){
   const p=pendingSet(); if(!p) return;
   if(p.live){ view="session"; render(); return }
-  const sv=p.saved; startSet(p.set, sv.conceptFirst, sv.perms);
-  Object.assign(S,{i:sv.i,start:sv.start,items:sv.items||[],confused:sv.confused||[],altShown:sv.altShown||0,conceptSec:sv.conceptSec,glossed:sv.glossed||[]});
+  const sv=p.saved; startSet(p.set, sv.conceptFirst, sv.perms, sv.dueIds||[]);
+  Object.assign(S,{trialVote:sv.trialVote||{},i:sv.i,start:sv.start,items:sv.items||[],confused:sv.confused||[],altShown:sv.altShown||0,conceptSec:sv.conceptSec,glossed:sv.glossed||[]});
   render();
 }
 
 async function finishReview(){
+  if(trialsToVote().length&&!S.voteShown){
+    const draw=()=>{ $v.innerHTML=`<section class="card">${header()}<h2>ทบทวนครบแล้ว</h2>${trialVoteHtml()}<button class="btn" id="save">บันทึกและรับ XP</button></section>`;
+      bindTrialVote(draw); document.getElementById("save").onclick=()=>{S.voteShown=true;finishReview()} };
+    return draw();
+  }
   $v.innerHTML=`<section class="card"><p class="muted">กำลังบันทึก…</p></section>`;
   const items=S.items, scored=items.filter(x=>!x.skipped);
-  await finishWith({type:"review",setId:S.set.id,subject:"ทบทวน",topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
+  await finishWith({...trialRec(),type:"review",setId:S.set.id,subject:"ทบทวน",topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
     durationSec:Math.round((Date.now()-S.start)/1000),correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items),confused:S.confused,items});
 }
 async function finishWith(rec){
@@ -1321,6 +1425,20 @@ function renderParent(){
       ${c.ask?`<button class="btn ghost" data-ans="${i}" hidden>ให้ Claude ช่วยร่างคำตอบ</button><p class="small analysis" id="ans-${i}"></p>`:""}</div>`).join("")
       +`<p class="note">คำตอบที่ Claude ร่างให้ คุณพ่ออ่านแล้วเล่าให้ลูกฟัง หรือส่งทาง LINE ก็ได้ ถ้าเรื่องไหนงงซ้ำ บอกผมในแชต ผมจะเพิ่มคำอธิบายในบทเรียน</p>`:`<p class="muted small">ยังไม่มีคำถาม</p>`}
   </section>
+  ${(()=>{ const allQ=all.flatMap(a=>(a.items||[]).filter(x=>!x.skipped).map(x=>({...x,date:a.endedAt})));
+    const tr=all.filter(a=>a.trial), cf=allQ.filter(x=>x.conf), ex=allQ.filter(x=>x.explain), due=allQ.filter(x=>x.due);
+    if(!tr.length&&!due.length) return "";
+    const pc=a=>a.length?Math.round(a.filter(x=>x.correct).length/a.length*100)+"%":"–";
+    const votes={}; tr.forEach(a=>Object.entries(a.trial.vote||{}).forEach(([k,v])=>{(votes[k]??={good:0,ok:0,bad:0})[v]++}));
+    const sure=cf.filter(x=>x.conf==="sure"), uns=cf.filter(x=>x.conf==="unsure");
+    return `<section class="card"><h3>ของใหม่ที่ทดลอง และการทวนตามรอบ</h3>
+    ${Object.keys(TRIAL_NAMES).map(k=>votes[k]?`<p class="small"><b>${TRIAL_NAMES[k]}</b> · ลูกโหวต: ช่วยได้ ${votes[k].good} · เฉยๆ ${votes[k].ok} · เกะกะ ${votes[k].bad}</p>`:"").join("")}
+    ${cf.length?`<p class="small">กด "มั่นใจ" ${sure.length} ข้อ ถูก ${pc(sure)} · กด "ไม่ชัวร์" ${uns.length} ข้อ ถูก ${pc(uns)} · <b>มั่นใจแต่ผิด ${sure.filter(x=>!x.correct).length} ข้อ</b></p>
+      <p class="note">ถ้า "มั่นใจ" ถูกมากกว่า "ไม่ชัวร์" ชัดเจน แปลว่าลูกประเมินตัวเองได้ดี ข้อที่มั่นใจแต่ผิด คือความเข้าใจผิดที่ควรคุยกัน</p>`:""}
+    ${ex.length?`<span class="eyebrow">เหตุผลที่ลูกเขียนก่อนดูเฉลย</span>${ex.slice(0,6).map(x=>`<div class="logi"><span class="small muted">${esc(x.prompt||x.qid)}</span>
+      <span class="small">${x.correct?"✅":"❌"} ${x.ownWhy?`“${esc(x.ownWhy)}”`:x.ownWhyPad?"(เขียนในกระดาษทด)":"(ไม่ได้เขียน)"}</span></div>`).join("")}`:""}
+    ${due.length?`<p class="small">ข้อทวนตามรอบ (เรื่องที่ไม่ได้ฝึกหลายวัน) ${due.length} ข้อ ถูก ${pc(due)} <span class="muted">· ตัวเลขนี้คือความจำระยะยาว</span></p>`:""}
+  </section>` })()}
   ${unclear.length?`<section class="card"><h3>โจทย์ที่ลูกบอกว่ากำกวม</h3>
     ${unclear.slice(0,8).map(x=>`<div class="logi"><span class="small">${esc(x.prompt||x.qid)}</span><span class="small muted">${esc(x.qid)}</span></div>`).join("")}
     <p class="note">ส่งรายการนี้ให้ Claude ในแชตได้ ผมจะเขียนโจทย์ให้ชัดขึ้น</p></section>`:""}

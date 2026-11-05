@@ -17,6 +17,37 @@ Her father set this up. You only add **content**. You never change how the app w
 - Stop and message the father instead of publishing if: a verification problem cannot be fixed, or a
   decision is needed that is not content (school schedule unclear, app behaviour, anything risky).
 
+
+## Learning principles (follow these in every choice you make)
+
+The app is built on these research results. Write and choose content so they keep working.
+
+1. **Retrieval practice** (Roediger & Karpicke 2006; Dunlosky et al. 2013). She learns by answering, not by
+   reading. Concept cards stay short (3–5 points); the questions do the teaching.
+2. **Spacing** (Cepeda et al. 2006). The app brings back spells that are due (`SPACING` 3/4/7/14 days by tier)
+   in lesson warm-ups and the Friday repair set, using questions she has already seen. You help by writing
+   `warm` questions from spells she has *not* practised for the longest time (look at the last date per spell),
+   not just any older topic.
+3. **Interleaving** (Rohrer & Taylor 2007; Rohrer et al. 2015). Exam papers mix topics, so she must learn to
+   recognise which method a question needs. Mixed sets (below) do this. Inside a lesson, at least one level-3
+   question should look like another topic at first glance (e.g. a ratio question in a science context).
+4. **Pretesting** (Richland, Kornell & Kao 2009). Probes come before teaching; that is intended, keep it.
+5. **Elaborated feedback** (Shute 2008). Every `ex` says why the answer is right *and* names the most likely
+   wrong option and the exact mistake behind it. Never just restate the answer.
+6. **Worked examples and cognitive load** (Sweller). `alts` include one step-by-step worked example. One new
+   idea per question at level 1; combine ideas only at level 3. Keep wording short; numbers friendly at level 1.
+7. **Diagnostic distractors.** Each wrong option must come from a real misconception or slip (forgot to sort,
+   used the wrong total, added instead of multiplied exponents, subtracted lengths instead of using
+   Pythagoras). If you cannot name the mistake behind an option, replace the option.
+8. **Mastery before moving on** (Bloom 1984). Do not add new topics for a spell that is under 60% at level 1;
+   write a slower re-teaching lesson for it first.
+9. **Motivation without bribery** (Self-Determination Theory; Hanus & Fox 2015). Never add rewards for speed or
+   volume alone, never shame. Contexts follow her interests (see ground rules) so the questions feel like hers.
+
+Rules of thumb in this guide (60%, "hard twice in a row", 7 days ahead) are practical estimates, not research
+values. With one student and few answers per spell, prefer simple rules and say in the message to the father
+when the data is too thin to conclude anything.
+
 ## 1. Get the repo and the data
 
 1. Attach and clone `pitiwut-tee/fieldnote` with push access (add_repo, then clone as instructed).
@@ -24,7 +55,10 @@ Her father set this up. You only add **content**. You never change how the app w
 2. Read results from the parent page's database (ArtifactData, url
    `https://claude.ai/artifact/59fiBfcRgbyEEC7mhXwqVR`, collection `attempts`, list with `out_dir`).
    Ignore documents with `test: true` or `example: true`.
-   Record types: `set`, `probe`, `review` (practice), `vocab`, `skip` (one day or `leave` range), `daymode`.
+   Record types: `set`, `probe`, `mixed`, `review` (practice), `vocab`, `skip` (one day or `leave` range), `daymode`.
+   Item fields worth reading: `due:true` (a spaced-review question: accuracy here = long-term memory),
+   `conf` ("sure"/"unsure", trial), `explain`/`ownWhy`/`ownWhyPad` (her written reason before the answer, trial).
+   Records may have `trial:{on:[...],vote:{confidence|explain: "good"|"ok"|"bad"}}`.
 
 ## 2. Look at the data (write short notes for yourself)
 
@@ -39,6 +73,10 @@ Her father set this up. You only add **content**. You never change how the app w
   on a spell → keep the next set at level 1–2 heavier.
 - Probes (`type: "probe"`): spells under 60% → add a lesson set for that spell soon (Friday repair uses
   her wrong answers automatically; you do not write repair sets).
+- Spaced review (`due:true` items): accuracy under 60% on a spell means it is fading; give it a lesson soon.
+- Trials (`calendar.trials`): count her votes; read `ownWhy` texts. A wrong answer with a sensible reason is a
+  slip; a wrong reason is a misconception: re-teach that idea in the next concept card. "Sure but wrong" items
+  are the most valuable misconceptions to address. Report votes to the father; he decides whether a trial stays.
 - Vocabulary: words wrong on spelling repeatedly; how many fresh words remain in `content/vocab.json`.
 
 ## 3. Decide what to write
@@ -48,6 +86,10 @@ and weekends:
 
 - School day needs 1 lesson (topics in `calendar.currentSpells` first).
 - Holiday needs 1 lesson + 1 probe + 1 extra lesson (full level).
+
+Weekly mixed set: the app offers one unused `kind:"mixed"` set per week (`calendar.mixedPerWeek`, default 1) on
+a holiday, in the probe slot. Keep at least 1 unused mixed set ready. From 2027-09-01 (about 2.5 months before
+the exam) set `mixedPerWeek` to 2 and keep 2 ready.
 
 A set counts as "unused" if no non-test attempt has its `setId`. Keep **at least 7 days** of unused
 content ahead. Usually that means per run: 2–4 lesson sets for current school topics, 1–2 lesson sets for
@@ -78,6 +120,13 @@ Lesson rules:
 - `hints`: 1–2 hints for every question id. `ex`: explain why the answer is right **and** why the common
   wrong option is wrong.
 - Distractors must be the mistakes students really make (forgot to sort, used the wrong total, etc.).
+
+Mixed set rules (`content/sets/020-mixed-1.json` is the model): `kind:"mixed"`, no `spell` on the set, no warm,
+no concept, `challenge:null`. 12 questions (10–15 allowed), every question has its own `spell`, at least 4
+different spells, only topics she has already learned at school or practised in the app. About 3 level-1,
+6 level-2, 3 level-3. Include pairs that look alike but need different methods (resultant force vs Pythagoras,
+"percent of new price" vs "percent of old price"), because telling them apart is the skill being trained.
+Questions are new (do not copy existing ones). Hints for every question.
 
 Probe rules: `kind:"probe"`, no warm, `challenge:null`, 10 practice questions (4 level-1, 4 level-2 with one
 English corner, 2 level-3), a concept card used as the summary after the probe.

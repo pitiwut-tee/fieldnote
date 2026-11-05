@@ -13,8 +13,14 @@ for(const f of files){
   let s; try{ s=J("content/sets/"+f) }catch(e){ warn(`${f}: not valid JSON (${e.message})`); continue }
   const where=`${f} (${s.id})`;
   if(setIds.has(s.id)) warn(`${where}: duplicate set id`); setIds.add(s.id);
-  if(!["lesson","probe"].includes(s.kind)) warn(`${where}: kind must be "lesson" or "probe"`);
-  if(!spells.has(s.spell)) warn(`${where}: unknown spell "${s.spell}"`);
+  if(!["lesson","probe","mixed"].includes(s.kind)) warn(`${where}: kind must be "lesson", "probe" or "mixed"`);
+  if(s.kind==="mixed"){
+    const sp=new Set((s.practice||[]).map(q=>q.spell));
+    if((s.practice||[]).some(q=>!q.spell)) warn(`${where}: every question in a mixed set needs its own spell`);
+    if(sp.size<4) warn(`${where}: a mixed set needs questions from at least 4 spells (has ${sp.size})`);
+    if((s.practice||[]).length<10) warn(`${where}: a mixed set needs 10-15 questions`);
+    if(s.challenge) warn(`${where}: a mixed set has no challenge`);
+  } else if(!spells.has(s.spell)) warn(`${where}: unknown spell "${s.spell}"`);
   for(const k of ["subject","topic","grade","mins"]) if(!s[k]) warn(`${where}: missing ${k}`);
   if(s.kind==="lesson"&&(!s.concept||!(s.concept.points||[]).length)) warn(`${where}: lesson needs concept.points`);
   if(!Array.isArray(s.practice)||s.practice.length<6) warn(`${where}: practice needs at least 6 questions`);
@@ -50,15 +56,21 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
   await pg.clock.install({time:new Date(Date.now()+86400000)});
   await pg.goto(url);
   const ids=await pg.evaluate(()=>SETS.map(s=>s.id));
+  let n=0;
   for(const id of ids){
-    await pg.evaluate(id=>{ localStorage.removeItem("fieldnote.inprogress"); introSet=SETS.find(s=>s.id===id); view="intro"; render() }, id);
+    /* every other set is played with this week's trial features on (confidence buttons + explain box) */
+    const trial=(n++)%2===0?["confidence","explain"]:[];
+    await pg.evaluate(([id,trial])=>{ localStorage.removeItem("fieldnote.inprogress"); CAL.trials={[isoDay(todayKey())]:trial}; introSet=SETS.find(s=>s.id===id); view="intro"; render() }, [id,trial]);
     await pg.click("#go");
     let ok=0, total=0;
     for(let i=0;i<40;i++){
       if(await pg.locator("#save").count()){ await pg.click('[data-r="พอดี"]'); await pg.click("#save"); break }
       if(await pg.locator(".opt:not([disabled])").count()){ const k=await pg.evaluate(()=>S.steps[S.i].q.a); await pg.locator(".opt").nth(k).click();
+        if(await pg.locator("#whytext").count()) await pg.fill("#whytext","เพราะคิดตามสูตร");
+        for(const b of ["#send-sure","#send-plain"]) if(await pg.locator(b).count()){ await pg.click(b); break }
         total++; if(await pg.locator(".feedback b.ok").count()) ok++; await pg.click("#next"); continue }
-      if(await pg.locator("#numin").count()){ const a=await pg.evaluate(()=>S.steps[S.i].q.answer); await pg.fill("#numin",String(a)); await pg.click("#check");
+      if(await pg.locator("#numin").count()){ const a=await pg.evaluate(()=>S.steps[S.i].q.answer); await pg.fill("#numin",String(a));
+        if(await pg.locator("#check").count()) await pg.click("#check"); else for(const b of ["#send-unsure","#send-plain"]) if(await pg.locator(b).count()){ await pg.click(b); break }
         total++; if(await pg.locator(".feedback b.ok").count()) ok++; await pg.click("#next"); continue }
       if(await pg.locator("#next").count()){ await pg.click("#next"); continue }
     }
