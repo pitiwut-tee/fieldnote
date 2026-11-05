@@ -59,5 +59,9 @@
  "reflectFrom": "2026-11-12",
  "passagePerWeek": 1,
  "listenQuestions": true,
- "listenDelaySec": 20
+ "listenDelaySec": 20,
+ "voidRecords": [
+  "2026-11-05T13:46:27.270Z"
+ ],
+ "voidNote": "Records the father said were only button tests (matched by endedAt)."
 }

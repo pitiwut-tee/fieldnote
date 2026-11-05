@@ -109,6 +109,25 @@ From `calendar.reflectFrom`, the mixed-set rating screen asks (optional) which t
 her life and how. Records have `reflect`. Read them: if she connects a topic to something, use that context in a
 later question; mention one good one to her father.
 
+## Review that makes her think (twins, typed answers, hidden options)
+
+Repeating the same question with the same options only tests whether she remembers the answer letter. When a
+question comes back (Friday repair, review button, warm-up retry, spaced review) the app uses, in order: an unseen
+twin from `content/variants.json`; else the original as a typed answer when all options are numbers; else the
+original with options hidden until she has thought ("คิดแล้ว ขอดูตัวเลือก").
+
+- **Every run, write one twin for each question she got wrong since the last run** (at most 12 per run, newest
+  first; skip ones that already have an unseen twin). Key = original id; twin id = `<orig>~v1`, `~v2`, ...
+  Same idea and level, new numbers and a new situation (follow the context mix), new distractors from real
+  mistakes, `ex` in the companion voice, `hints`, `ctx`, and `parts` if level 3. Re-solve twins in code and include
+  them in the subagent review. Twins do not count toward the 6-set cap.
+- Item fields: `of` (answered a twin of this id), `recall:true` (typed answer), `cover:true` + `coverSec`.
+  A wrong answer on a twin means the idea, not the memory of one question, is still weak: give that spell a lesson.
+- Mistake reason `forgot` ("เข้าใจ แต่จำสูตรหรือวิธีคิดไม่ได้"): the idea is fine, recall is weak. Do not re-teach;
+  add the formula or method to the letter as a short memory tip and rely on spacing.
+- `calendar.voidRecords`: endedAt values of records the father says were only button tests. The app ignores them;
+  ignore them in analysis too.
+
 ## Companion, voice, letters, goals (she should feel the app is a friend she trusts)
 
 Basis: Self-Determination Theory (competence, autonomy, relatedness); conversational "personalization" style
@@ -178,7 +197,7 @@ things a normal family has. **Her father must approve every mission before she s
 ## 2. Look at the data (write short notes for yourself)
 
 - Per spell (`items[].spell`, or look up the question id in content): accuracy by level 1/2/3.
-- Mistake reasons (`items[].errorTypes`): concept / read / misopt / unclear / calc / guess / dontknow.
+- Mistake reasons (`items[].errorTypes`): concept / forgot / read / misopt / unclear / calc / guess / dontknow.
   Many `concept` or `dontknow` on a spell → next lesson for that spell re-teaches with a slower concept card.
   Many `read` / `misopt` → add longer, carefully worded questions. `unclear` → rewrite that question
   (edit its JSON, keep the same id) and mention it to the father.
@@ -251,6 +270,7 @@ Passage rules: see "Reading".
 
 Also in this step:
 - **Letter**: write one letter into `content/letters.json` (see the companion section).
+- **Twins**: one twin per recent wrong question into `content/variants.json` (see "Review that makes her think").
 - **Goals**: copy dad's `feedback` answers (kind "goal") into `content/decisions.json`.
 - **Missions**: apply dad's `feedback` (kind "mission"): approve → `status:"approved"`; change → revise the draft.
   If the next month starts within 10 days and has no mission, write a draft.

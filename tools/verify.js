@@ -61,6 +61,15 @@ for(const m of MS){ const w=`missions.json ${m.id}`;
   if(m.record&&(!Array.isArray(m.record.cols)||(m.record.numCol!=null&&!(m.record.numCol<m.record.cols.length)))) warn(`${w}: record.cols / numCol wrong`);
   for(const q of m.questions||[]) if(!q.id||!q.q) warn(`${w}: question needs id and q`);
 }
+/* twin questions */
+const VAR=J("content/variants.json").variants||{};
+for(const [orig,vs] of Object.entries(VAR)){ if(!qIds.has(orig)) warn(`variants.json: ${orig} is not a question id`);
+  for(const v of vs){ const w=`variants.json ${v.id}`; if(!v.id||!v.id.startsWith(orig+"~")) warn(`${w}: id must start with "${orig}~"`);
+    if(qIds.has(v.id)) warn(`${w}: duplicate id`); qIds.add(v.id);
+    if(!v.q||!v.ex||!Array.isArray(v.opts)||v.opts.length<3||!(v.a>=0&&v.a<v.opts.length)) warn(`${w}: needs q, ex, opts (3+), a`);
+    if(new Set(v.opts||[]).size!==(v.opts||[]).length) warn(`${w}: options repeat`);
+    if(!Array.isArray(v.hints)||!v.hints.length) warn(`${w}: needs hints`);
+    if(!["life","earth","fun","pure"].includes(v.ctx)) warn(`${w}: needs ctx`); } }
 const cal=J("content/calendar.json");
 for(const sp of cal.currentSpells||[]) if(!spells.has(sp)) warn(`calendar.json: unknown current spell ${sp}`);
 for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) warn(`calendar.json: bad date ${d}`);
@@ -93,6 +102,7 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
       if(await pg.locator("#numin").count()){ const a=await pg.evaluate(()=>S.steps[S.i].q.answer); await pg.fill("#numin",String(a));
         if(await pg.locator("#check").count()) await pg.click("#check"); else for(const b of ["#send-unsure","#send-plain"]) if(await pg.locator(b).count()){ await pg.click(b); break }
         total++; if(await pg.locator(".feedback b.ok").count()) ok++; await pg.click("#next"); continue }
+      if(await pg.locator("#uncover").count()){ await pg.click("#uncover"); continue }
       if(await pg.locator("#readdone").count()){ await pg.click("#readdone"); continue }
       if(await pg.locator("#next").count()){ await pg.click("#next"); continue }
     }
