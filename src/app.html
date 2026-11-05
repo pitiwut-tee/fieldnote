@@ -167,6 +167,13 @@ table.mt th,table.mt td{border-bottom:1px solid var(--line);padding:6px;text-ali
 table.mt input{font:inherit;width:100%;min-width:5.5em;padding:6px;border-radius:8px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);box-sizing:border-box}
 .opt:disabled{cursor:default}
 .num{display:flex;gap:8px;flex-wrap:wrap}
+.qfig{margin:4px 0;display:flex;flex-direction:column;gap:4px;color:var(--ink);overflow-x:auto}
+.qfig svg{width:100%;height:auto}
+.stemtab{border-collapse:collapse;font-family:var(--mono);font-size:1rem;width:auto}
+.stemtab td,.stemtab th{padding:3px 10px;text-align:left;letter-spacing:.18em}
+.stemtab td.st,.stemtab th:nth-child(2){border-left:2px solid var(--ink);border-right:2px solid var(--ink);text-align:center;letter-spacing:0;font-weight:600}
+.stemtab tr:not(:has(td.l)) td.st{border-left:0}
+.stemtab td.l,.stemtab th.l{text-align:right}
 .numpad{display:grid;grid-template-columns:repeat(3,minmax(64px,88px));gap:8px;margin-top:4px}
 .numpad button{font:inherit;font-family:var(--mono);font-size:1.35rem;padding:12px 0;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 .numpad button[data-np="⌫"]{grid-column:span 3}
@@ -494,6 +501,8 @@ function progressOf(list){
 function lastDone(list){ const last={}; list.filter(isLesson).forEach(a=>{if(a.setId) last[a.setId]=Math.max(last[a.setId]||0,dayKey(a.endedAt))}); return last }
 function pickLesson(list, preferCurrent, exclude){
   const last=lastDone(list), t=todayKey(), ex=exclude||[];
+  /* calendar.lessonQueue: the school's order for the next lessons; the first one not done yet comes first */
+  if(preferCurrent&&Array.isArray(CAL.lessonQueue)){ const q=CAL.lessonQueue.map(id=>SETS.find(s=>s.id===id)).find(s=>s&&s.kind==="lesson"&&!last[s.id]&&!ex.includes(s.id)); if(q) return q }
   const lessons=SETS.filter(s=>s.kind==="lesson"&&!ex.includes(s.id)); if(!lessons.length) return null;
   const pool=lessons.filter(s=>last[s.id]!==t), use=pool.length?pool:lessons;
   return use.slice().sort((a,b)=>(preferCurrent?(b.current?1:0)-(a.current?1:0):0)||(last[a.id]||0)-(last[b.id]||0))[0];
@@ -519,7 +528,7 @@ function planToday(list, p){
   const wd=new Date().getDay(), school=p.info.kind==="school";
   const repair=school&&wd===5&&reviewPool(list).length+dueQuestions(list,3).length>=4;
   const doneToday=list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===todayKey()).map(a=>a.setId);
-  const lesson=repair?null:pickLesson(list, school);
+  const lesson=repair?null:pickLesson(list, true);   /* slot 1 always follows the school's current topics and lesson queue */
   const mixed=school?null:pickMixed(list);
   const passage=school||mixed?null:pickPassage(list);
   const special=mixed||passage;
@@ -1008,6 +1017,27 @@ function readAloud(where, texts, after){
 function alertRead(where,msg){ const b=document.querySelector(`[data-read="${where}"]`); if(!b) return; let n=document.getElementById("rdmsg"); if(!n){ n=document.createElement("p"); n.id="rdmsg"; n.className="small"; n.style.color="var(--warn)"; b.insertAdjacentElement("afterend",n) } n.textContent=msg }
 const readBtn=(where,label,disabled)=>`<button class="btn ghost small" type="button" data-read="${where}" data-label="${label}" ${disabled?"disabled":""}>${label}</button>`;
 
+
+/* ---------- figures inside questions (q.fig): dot plot, stem-and-leaf (one or two sided), histogram/bar chart, table ---------- */
+function figHtml(f){
+  if(!f) return "";
+  try{
+  if(f.kind==="dot"){ const step=f.step||1, n=Math.round((f.max-f.min)/step), W=Math.max(260,n*26+40), maxc=Math.max(1,...Object.values(f.counts||{})), H=maxc*13+46, x=v=>20+(v-f.min)/step*((W-40)/n);
+    const tick=f.tick||(n>14?2:1); let g="";
+    for(let i=0;i<=n;i++){ const v=+(f.min+i*step).toFixed(4); g+=`<line x1="${x(v)}" y1="${H-26}" x2="${x(v)}" y2="${H-20}" stroke="currentColor"/>`+(i%tick===0?`<text x="${x(v)}" y="${H-6}" font-size="11" text-anchor="middle" fill="currentColor">${v}</text>`:"") }
+    Object.entries(f.counts||{}).forEach(([v,c])=>{ for(let k=0;k<c;k++) g+=`<circle cx="${x(+v)}" cy="${H-33-k*13}" r="4.6" fill="var(--accent)"/>` });
+    return `<figure class="qfig"><svg viewBox="0 0 ${W} ${H}" style="max-width:${W}px" role="img" aria-label="แผนภาพจุด"><line x1="10" y1="${H-23}" x2="${W-10}" y2="${H-23}" stroke="currentColor" stroke-width="1.5"/>${g}</svg>${f.label?`<figcaption class="small muted">${esc(f.label)}</figcaption>`:""}</figure>` }
+  if(f.kind==="stem"){ const two=f.rows.some(r=>r.length===3);
+    return `<figure class="qfig"><table class="stemtab">${f.head?`<tr>${f.head.map((h,i)=>`<th class="${two&&i===0?"l":""}">${esc(h)}</th>`).join("")}</tr>`:""}${f.rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${two?(i===0?"l":i===1?"st":""):(i===0?"st":"")}">${esc(c)}</td>`).join("")}</tr>`).join("")}</table>${f.key?`<figcaption class="small muted">${esc(f.key)}</figcaption>`:""}</figure>` }
+  if(f.kind==="hist"||f.kind==="bar"){ const v=f.values, mx=Math.max(...v), W=Math.max(260,v.length*48+50), H=190, bw=(W-50)/v.length, gap=f.kind==="hist"?0:10, y=t=>H-30-(t/mx)*(H-55);
+    let g=""; v.forEach((t,i)=>{ g+=`<rect x="${40+i*bw+gap/2}" y="${y(t)}" width="${bw-gap}" height="${H-30-y(t)}" fill="color-mix(in srgb,var(--accent) 55%,transparent)" stroke="currentColor" stroke-width="1"/><text x="${40+i*bw+bw/2}" y="${y(t)-4}" font-size="11" text-anchor="middle" fill="currentColor">${t}</text>` });
+    (f.labels||[]).forEach((l,i)=>{ g+=`<text x="${f.kind==="hist"&&f.edges?40+i*bw:40+i*bw+bw/2}" y="${H-14}" font-size="10.5" text-anchor="middle" fill="currentColor">${esc(l)}</text>` });
+    return `<figure class="qfig"><svg viewBox="0 0 ${W} ${H}" style="max-width:${W}px" role="img" aria-label="${f.kind==="hist"?"ฮิสโทแกรม":"แผนภูมิแท่ง"}"><line x1="38" y1="${H-30}" x2="${W-6}" y2="${H-30}" stroke="currentColor"/><line x1="38" y1="12" x2="38" y2="${H-30}" stroke="currentColor"/>${g}</svg>${f.xLabel||f.yLabel?`<figcaption class="small muted">${esc([f.yLabel&&("แกนตั้ง: "+f.yLabel),f.xLabel&&("แกนนอน: "+f.xLabel)].filter(Boolean).join(" · "))}</figcaption>`:""}</figure>` }
+  if(f.kind==="table") return `<figure class="qfig"><div style="overflow-x:auto"><table class="mt">${f.head?`<thead><tr>${f.head.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead>`:""}<tbody>${f.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>${f.caption?`<figcaption class="small muted">${esc(f.caption)}</figcaption>`:""}</figure>`;
+  }catch(e){}
+  return "";
+}
+
 /* ---------- glossary: tap a dotted word in a card or question to see what it means ---------- */
 const GLOSS={
  "จำนวนคู่":"จำนวนที่หารด้วย 2 ลงตัว เช่น 2, 4, 6, 8 · ในเรื่องมัธยฐาน \"ข้อมูลมีจำนวนคู่\" แปลว่านับข้อมูลได้ 2, 4, 6, … ตัว เช่น คะแนน 6 คน พอเรียงแล้วตรงกลางจะมี 2 ตัว (ตัวที่ 3 กับตัวที่ 4) จึงต้องเอาสองตัวนั้นมาเฉลี่ยกัน",
@@ -1173,6 +1203,7 @@ function renderStep(){
     <span class="row" style="gap:6px"><span class="chip l${q.level}">${LV[q.level]}${S.set.kind==="mixed"&&!ans?"":" · "+esc(q.topic)}</span>${q.en?`<span class="chip">English corner</span>`:""}</span>
     ${st.passage?passageDetails():""}
     <p class="prompt">${gloss(q.q)}</p>
+    ${figHtml(q.fig)}
     <div class="feedback" id="gloss-box" hidden></div>
     ${(canQ||q.parts&&S.set.kind!=="mixed"&&!S.partsShown)&&!ans?`<div class="row" style="gap:8px">${canQ?readBtn("q",waitMs?"🔊 ฟังโจทย์ (ลองอ่านเองก่อนนะ)":"🔊 ฟังโจทย์",waitMs>0):""}${q.parts&&S.set.kind!=="mixed"&&!S.partsShown?`<button class="btn ghost small" id="parts" type="button">🧩 ช่วยแบ่งโจทย์</button>`:""}</div>`:""}
     ${q.parts&&!ans&&S.set.kind!=="mixed"?(S.partsShown?`<div class="feedback usebox"><b>🧩 แบ่งโจทย์ให้ดูทีละส่วน</b>
@@ -1848,7 +1879,7 @@ function renderNotes(){
     <div class="feedback" id="gloss-box" hidden></div>
     <details><summary>ดูโจทย์และเฉลย (${qs.length} ข้อ)${wrong.size?` · ข้อที่พลาดอยู่บนสุด`:""}</summary>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">${qs.map(q=>`<div class="logi">${wrong.has(q.id)?`<span class="small" style="color:var(--bad)">ข้อนี้เคยพลาด</span>`:""}
-        <span class="small">${gloss(q.q)}</span><span class="small"><b>คำตอบ:</b> ${esc(q.num?q.answer+" "+q.unit:q.opts[q.a])}</span><span class="small muted">${gloss(q.ex)}</span></div>`).join("")}</div></details>
+        <span class="small">${gloss(q.q)}</span>${figHtml(q.fig)}<span class="small"><b>คำตอบ:</b> ${esc(q.num?q.answer+" "+q.unit:q.opts[q.a])}</span><span class="small muted">${gloss(q.ex)}</span></div>`).join("")}</div></details>
     <button class="btn ghost" id="nback" style="border:0;padding-left:0">← กลับ</button></section>`;
   bindGloss();
   const nb=$v.querySelector('[data-read="notes"]'); if(nb) nb.onclick=()=>readAloud("notes",[c.title,...c.points,...(c.use?["เอาไปใช้ที่ไหน: "+c.use]:[])]);

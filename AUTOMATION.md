@@ -315,3 +315,8 @@ results when present), the letter's main point in one line, goal/mission decisio
 rewrote because she marked it unclear, and anything you need from him (school schedule, codes not imported since
 the last run, a mission draft waiting for approval). If no new results were imported since the last run, say so
 and that the content followed the calendar only.
+
+## School material
+The father keeps her school's material (science outlines, photos of her math workbook) and later the IPST
+books on his own computer. This cloud run cannot reach them. Work from `content/school-plan.md`, which
+summarises them, and follow `calendar.lessonQueue`. Never copy textbook or workbook questions; write new ones.

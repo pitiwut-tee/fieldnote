@@ -26,7 +26,8 @@
  "schoolBreaks": [],
  "currentSpells": [
   "m22",
-  "s4"
+  "s4",
+  "s3"
  ],
  "startDay": "2026-11-05",
  "mixedPerWeek": 1,
@@ -63,5 +64,19 @@
  "voidRecords": [
   "2026-11-05T13:46:27.270Z"
  ],
- "voidNote": "Records the father said were only button tests (matched by endedAt)."
+ "voidNote": "Records the father said were only button tests (matched by endedAt).",
+ "lessonQueue": [
+  "math-dotplot-1",
+  "sci-solution-1",
+  "math-stats-4",
+  "sci-solution-2",
+  "math-stats-3",
+  "sci-separation-1",
+  "math-stats-5",
+  "sci-solution-3",
+  "math-stats-1",
+  "sci-solution-4",
+  "sci-solution-5"
+ ],
+ "lessonQueueNote": "School order (her school's term-2 workbook): statistics first (she missed a week), science midterm = solutions + separation. The content run updates this queue."
 }

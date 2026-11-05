@@ -39,6 +39,10 @@ for(const f of files){
       else { if(new Set(q.opts).size!==q.opts.length) warn(`${w}: options repeat`);
         if(!(q.a>=0&&q.a<q.opts.length)) warn(`${w}: answer index out of range`); }
     }
+    if(q.fig){ const f=q.fig; if(!["dot","stem","hist","bar","table"].includes(f.kind)) warn(`${w}: fig.kind must be dot, stem, hist, bar or table`);
+      if(f.kind==="dot"&&!(typeof f.min==="number"&&typeof f.max==="number"&&f.counts)) warn(`${w}: dot fig needs min, max, counts`);
+      if((f.kind==="hist"||f.kind==="bar")&&!(Array.isArray(f.values)&&f.values.length)) warn(`${w}: ${f.kind} fig needs values`);
+      if((f.kind==="stem"||f.kind==="table")&&!Array.isArray(f.rows)) warn(`${w}: ${f.kind} fig needs rows`); }
     const h=(s.hints||{})[q.id]; if(!Array.isArray(h)||!h.length) warn(`${w}: needs at least one hint`);
   }
   if(lv[1]<2||lv[2]<2||lv[3]<1) warn(`${where}: mix should have ≥2 level-1, ≥2 level-2, ≥1 level-3 (has ${JSON.stringify(lv)})`);
@@ -71,6 +75,7 @@ for(const [orig,vs] of Object.entries(VAR)){ if(!qIds.has(orig)) warn(`variants.
     if(!Array.isArray(v.hints)||!v.hints.length) warn(`${w}: needs hints`);
     if(!["life","earth","fun","pure"].includes(v.ctx)) warn(`${w}: needs ctx`); } }
 const cal=J("content/calendar.json");
+for(const id of cal.lessonQueue||[]) if(!setIds.has(id)) warn(`calendar.json lessonQueue: unknown set ${id}`);
 for(const sp of cal.currentSpells||[]) if(!spells.has(sp)) warn(`calendar.json: unknown current spell ${sp}`);
 for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) warn(`calendar.json: bad date ${d}`);
 
