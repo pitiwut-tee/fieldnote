@@ -13,7 +13,8 @@ for(const f of files){
   let s; try{ s=J("content/sets/"+f) }catch(e){ warn(`${f}: not valid JSON (${e.message})`); continue }
   const where=`${f} (${s.id})`;
   if(setIds.has(s.id)) warn(`${where}: duplicate set id`); setIds.add(s.id);
-  if(!["lesson","probe","mixed"].includes(s.kind)) warn(`${where}: kind must be "lesson", "probe" or "mixed"`);
+  if(!["lesson","probe","mixed","passage"].includes(s.kind)) warn(`${where}: kind must be "lesson", "probe", "mixed" or "passage"`);
+  if(s.kind==="passage"&&!(s.passage&&s.passage.title&&Array.isArray(s.passage.paras)&&s.passage.paras.length)) warn(`${where}: passage needs passage.title and passage.paras`);
   if(s.kind==="mixed"){
     const sp=new Set((s.practice||[]).map(q=>q.spell));
     if((s.practice||[]).some(q=>!q.spell)) warn(`${where}: every question in a mixed set needs its own spell`);
@@ -48,6 +49,7 @@ for(const f of files){ let s; try{ s=J("content/sets/"+f) }catch(e){ continue } 
   for(const q of qs) if(!["life","earth","fun","pure"].includes(q.ctx)) warn(`${f} ${q.id}: ctx must be life, earth, fun or pure`);
   const pr=(s.practice||[]).filter(q=>!q.ctxAuto), n=k=>pr.filter(q=>q.ctx===k).length;
   if(s.kind!=="probe"&&pr.length&&(n("life")+n("earth")<Math.ceil(pr.length*0.5)||n("earth")<1)) warn(`${f}: practice needs about half life/earth contexts and at least 1 earth (has life ${n("life")}, earth ${n("earth")})`);
+  for(const q of qs) if(q.level===3&&!(q.parts&&Array.isArray(q.parts.given)&&q.parts.given.length&&q.parts.ask)) warn(`${f} ${q.id}: level-3 question needs parts {given:[...], ask, watch?}`);
   if(s.kind==="lesson"&&!(s.concept&&s.concept.use)) warn(`${f}: lesson concept needs a "use" line (where this is used in real life)`);
 }
 /* missions */
@@ -89,6 +91,7 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
       if(await pg.locator("#numin").count()){ const a=await pg.evaluate(()=>S.steps[S.i].q.answer); await pg.fill("#numin",String(a));
         if(await pg.locator("#check").count()) await pg.click("#check"); else for(const b of ["#send-unsure","#send-plain"]) if(await pg.locator(b).count()){ await pg.click(b); break }
         total++; if(await pg.locator(".feedback b.ok").count()) ok++; await pg.click("#next"); continue }
+      if(await pg.locator("#readdone").count()){ await pg.click("#readdone"); continue }
       if(await pg.locator("#next").count()){ await pg.click("#next"); continue }
     }
     await pg.waitForTimeout(150);

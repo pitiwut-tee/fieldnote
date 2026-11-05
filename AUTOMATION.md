@@ -70,6 +70,32 @@ Harackiewicz 2009), but only when the context is part of the problem; decorative
 - Lesson concept cards have `use`: one or two sentences, a concrete real place this idea is used (not "it is
   important"). Thai, specific, checkable.
 
+## Reading (she understands spoken explanations better than long text)
+
+Goal: build her stamina for long written questions, because the exam is a silent paper test.
+Research: reading-while-listening with eyes on the text builds fluency; listening instead of reading does not
+(Gough & Tunmer 1986 Simple View of Reading; Wood et al. 2018 on text-to-speech).
+
+- The app reads Thai aloud phrase by phrase with highlighting. Questions: only after `calendar.listenDelaySec`
+  (20 s) of trying to read; never in mixed sets or English corner. Concept cards and explanations: any time.
+  Write questions so they read well aloud: avoid unusual symbols; units as in other sets.
+- Every level-3 question has `parts`: `{"given":[2–4 short facts in question order], "ask":"what is asked",
+  "watch":"a READING trap (optional)"}`. Parts restate the question only: no method, no calculation, no hint
+  at the answer. `verify.js` requires parts on level-3 questions in new sets.
+- Gradually longer questions: keep level-3 questions 3–5 lines; level 2 may be 2–3 lines. Do not shorten
+  questions to make them easier to read; long questions are the skill being trained.
+- Weekly passage (`kind:"passage"`, model `content/sets/021-passage-1.json`, `calendar.passagePerWeek`): a Thai
+  science text with a title, 2–4 paragraphs and an optional table, then 6 questions (2 L1 main idea / find in
+  text, 2 L2 data or vocabulary in context, 2 L3 conclusion supported by evidence, design a fair test). Spell
+  `s24` on the set; questions may carry s22/s23 or a content spell. Length: start ~600 Thai characters, add
+  about 100 characters per month, up to ~1,500 by the exam. Mostly `earth` or `life` contexts. Made-up data must
+  say "ข้อมูลสมมติ"; real data must name its source. Keep 1 unused passage ready.
+- Data to read each run: per week, share of questions with `listen` > 0, accuracy of listened vs not, accuracy
+  and time for long questions (`len` > 180) vs short (≤ 90), `read` mistakes, passage `readSec`/`readChars`
+  (characters per minute, compare only with her own earlier passages). Report the trend to the father in one
+  line. If long questions are much weaker than short ones on the same spells, add more medium-length questions
+  and mention it. Around ม.3 term 2 (from 2027-08) suggest to the father setting `listenQuestions` to false.
+
 ## Weekly reflection
 
 From `calendar.reflectFrom`, the mixed-set rating screen asks (optional) which topic this week she can use in

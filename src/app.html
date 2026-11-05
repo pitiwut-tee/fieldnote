@@ -103,6 +103,10 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .opt.picked{border-color:var(--accent);border-width:2.5px;background:color-mix(in srgb,var(--accent) 10%,var(--card))}
 .trialbox{border-left:4px solid var(--accent)}
 .usebox{border-left:4px solid var(--good)}
+.rdbox{margin-top:8px;padding:10px 12px;border-radius:10px;background:var(--soft);line-height:1.9}
+.rdbox span[data-ck]{border-radius:4px;padding:1px 0;transition:background .15s}
+.rdbox span.now{background:color-mix(in srgb,var(--beak) 35%,transparent)}
+.passage{background:var(--soft);border-radius:12px;padding:14px 16px;line-height:1.85;display:flex;flex-direction:column;gap:10px}
 table.mt{border-collapse:collapse;font-size:.88rem;width:100%}
 table.mt th,table.mt td{border-bottom:1px solid var(--line);padding:6px;text-align:left;vertical-align:middle}
 table.mt input{font:inherit;width:100%;min-width:5.5em;padding:6px;border-radius:8px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);box-sizing:border-box}
@@ -373,7 +377,7 @@ function progressOf(list){
     if(a.type==="mission"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* real-world mission: XP only, not a daily unit */
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
     byDay.set(k,(byDay.get(k)||0)+xpOf(a));
-    if(a.type==="vocab") vocabDays.add(k); else { units.set(k,(units.get(k)||0)+1); if(a.type==="probe"||a.type==="mixed") probes.set(k,(probes.get(k)||0)+1) } });
+    if(a.type==="vocab") vocabDays.add(k); else { units.set(k,(units.get(k)||0)+1); if(a.type==="probe"||a.type==="mixed"||a.type==="passage") probes.set(k,(probes.get(k)||0)+1) } });
   const probeCount=SETS.filter(s=>s.kind==="probe").length, firstProbe={};
   list.filter(a=>a.type==="probe").forEach(a=>{const k=dayKey(a.endedAt); firstProbe[a.setId]=Math.min(firstProbe[a.setId]??Infinity,k)});
   const probesLeft=d=>probeCount-Object.values(firstProbe).filter(x=>x<d).length>0;
@@ -421,15 +425,24 @@ function pickMixed(list){
   if(thisWeek>=(CAL.mixedPerWeek||1)&&!doneToday) return null;
   return SETS.find(s=>s.kind==="mixed"&&!done.has(s.id))||(doneToday?SETS.find(s=>s.kind==="mixed"&&list.some(a=>a.setId===s.id&&dayKey(a.endedAt)===todayKey())):null)||null;
 }
+/* weekly Thai science reading passage: in the probe slot on a holiday that has no mixed set */
+function pickPassage(list){
+  const done=new Set(list.filter(a=>a.type==="passage").map(a=>a.setId)), wk=weekStart(todayKey()), t=todayKey();
+  const doneToday=list.find(a=>a.type==="passage"&&dayKey(a.endedAt)===t);
+  if(doneToday) return SETS.find(s=>s.id===doneToday.setId)||null;
+  if(list.filter(a=>a.type==="passage"&&dayKey(a.endedAt)>=wk).length>=(CAL.passagePerWeek||1)) return null;
+  return SETS.find(s=>s.kind==="passage"&&!done.has(s.id))||null;
+}
 function planToday(list, p){
   const wd=new Date().getDay(), school=p.info.kind==="school";
   const repair=school&&wd===5&&reviewPool(list).length+dueQuestions(list,3).length>=4;
   const doneToday=list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===todayKey()).map(a=>a.setId);
   const lesson=repair?null:pickLesson(list, school);
   const mixed=school?null:pickMixed(list);
-  const probe=school||mixed?null:pickProbe(list);
+  const passage=school||mixed?null:pickPassage(list);
+  const probe=school||mixed||passage?null:pickProbe(list);
   const extra=p.info.level==="full"?pickLesson(list,false,[...(lesson?[lesson.id]:[]),...doneToday]):null;
-  return {repair,lesson,probe,mixed,extra};
+  return {repair,lesson,probe,mixed,passage,extra};
 }
 function recommend(list){ return pickLesson(list,true) }
 /* questions to look at again: wrong answers, and (trial) right answers she was not sure about */
@@ -508,7 +521,12 @@ function startSet(set, conceptFirst, perms, dueIds){
     : dueQuestions(mine(),1,[set.spell,...set.warm.map(q=>q.spell)])) : [];
   const warm = [...set.warm.map(q=>({kind:"q",phase:"อุ่นเครื่อง (ทบทวนของเก่า)",q})),...due.map(q=>({kind:"q",phase:"ทบทวนตามรอบ (คาถาที่ไม่ได้ใช้มาหลายวัน)",q,due:true}))];
   const card = {kind:"concept",phase:"การ์ดสรุปเนื้อหา"};
-  const steps = (mixed?[
+  const passage=set.kind==="passage";
+  const steps = (passage?[
+    {kind:"passage",phase:"อ่านบทความ (อ่านเองเงียบๆ)"},
+    ...set.practice.map(q=>({kind:"q",phase:"ตอบจากบทความ",q,passage:true})),
+    {kind:"rate",phase:"ปิดท้าย"}
+  ]:mixed?[
     ...set.practice.map(q=>({kind:"q",phase:"ชุดผสมแบบข้อสอบ",q})),
     {kind:"rate",phase:"ปิดท้าย"}
   ]:probe?[
@@ -627,11 +645,11 @@ function renderHome(){
   const setCard=(s,k)=>`<button class="set" data-k="${k}">
         <span class="row" style="gap:6px"><span class="chip">${s.subject} · ${s.grade}</span>${s.current?`<span class="chip l2">เรียนอยู่ตอนนี้</span>`:""}</span>
         <span class="subj">${esc(s.topic)}</span>
-        <span class="meta">${s.kind==="probe"?"ด่านสำรวจ ":s.kind==="mixed"?"ชุดผสมแบบข้อสอบ ":""}ฝึก ${s.practice.length} ข้อ · ${s.mins}</span></button>`;
+        <span class="meta">${s.kind==="probe"?"ด่านสำรวจ ":s.kind==="mixed"?"ชุดผสมแบบข้อสอบ ":s.kind==="passage"?"อ่านจับใจความ ":""}ฝึก ${s.practice.length} ข้อ · ${s.mins}</span></button>`;
   const mission=(n,key,label,title,btn,extraHtml)=>`<div class="mission ${md[key]?"done":""}"><span class="mcheck">${md[key]?"✅":n}</span>
       <div style="display:flex;flex-direction:column;gap:6px;flex:1"><span class="small muted">${label}</span>${title}${btn}${extraHtml||""}</div></div>`;
   const doneToday=list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===today).sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt));
-  const doneNP=doneToday.filter(a=>a.type!=="probe"&&a.type!=="mixed"), doneProbe=doneToday.find(a=>a.type==="probe"||a.type==="mixed");
+  const doneNP=doneToday.filter(a=>!["probe","mixed","passage"].includes(a.type)), doneProbe=doneToday.find(a=>["probe","mixed","passage"].includes(a.type));
   const tr=trialsToday();
   const doneTitle=a=>`<h2>${esc(a.topic)}</h2><p class="small muted">ทำแล้ว ✓</p>`;
   const lessonTitle=md.lesson&&doneNP[0]?doneTitle(doneNP[0]):plan.repair?`<h2>ชุดซ่อมจุดอ่อน</h2><p class="small muted">8 ข้อจากที่เคยพลาด ตัวเลือกสลับที่ใหม่</p>`
@@ -661,7 +679,10 @@ function renderHome(){
       showAll?`<div class="sets">${SETS.map((s,k)=>s===plan.lesson?"":setCard(s,k)).join("")}</div>`:"")}
     ${mission(2,"vocab","คำศัพท์อังกฤษ · ราว 10 นาที",`<h2>คำศัพท์วันนี้</h2><p class="small muted">${md.vocab?"ทำแล้ว เก่งมาก":vt.fresh.length||vt.due.length?`คำใหม่ ${vt.fresh.length} คำ · ทบทวน ${vt.due.length} คำ · ฟังเสียง ฝึกสะกด${isWeekend()?" · อ่านภาษาอังกฤษสั้นๆ":""}`:"วันนี้ไม่มีคำค้าง ข้ามได้"}</p>`,
       !p.vocabToday&&(vt.fresh.length||vt.due.length)?`<button class="btn" id="vocab-go">เริ่มคำศัพท์</button>`:"")}
-    ${ms.some(x=>x.key==="probe")?(plan.mixed&&!(md.probe&&doneProbe&&doneProbe.type==="probe")?mission(3,"probe","ชุดผสมแบบข้อสอบ (สัปดาห์ละครั้ง) · ราว 30 นาที",
+    ${ms.some(x=>x.key==="probe")?(plan.passage&&!(md.probe&&doneProbe&&doneProbe.type!=="passage")?mission(3,"probe","อ่านจับใจความวิทย์ (สัปดาห์ละครั้ง) · ราว 20 นาที",
+      md.probe&&doneProbe?doneTitle(doneProbe):`<h2>${esc(plan.passage.topic)}</h2><p class="small muted">อ่านบทความสั้นเองเงียบๆ แล้วตอบ ${plan.passage.practice.length} ข้อ ฝึกอ่านข้อความยาวให้คล่อง แบบที่ข้อสอบใช้</p>`,
+      `<button class="btn ${md.probe?"ghost":""}" id="go-passage">เริ่มอ่าน</button>`)
+      :plan.mixed&&!(md.probe&&doneProbe&&doneProbe.type==="probe")?mission(3,"probe","ชุดผสมแบบข้อสอบ (สัปดาห์ละครั้ง) · ราว 30 นาที",
       md.probe&&doneProbe?doneTitle(doneProbe):`<h2>${esc(plan.mixed.topic)}</h2><p class="small muted">${plan.mixed.practice.length} ข้อ หลายเรื่องสลับกันเหมือนข้อสอบจริง ต้องดูเองว่าข้อไหนใช้คาถาอะไร</p>`,
       `<button class="btn ${md.probe?"ghost":""}" id="go-mixed">เริ่มชุดผสม</button>`)
       :mission(3,"probe",plan.probe?"ด่านสำรวจ · เช็กเรื่องที่เรียนมาแล้ว ราว 20 นาที":"ชุดฝึกเพิ่ม (ด่านสำรวจครบแล้ว)",
@@ -694,6 +715,7 @@ function renderHome(){
   on("go-rec",()=>{ if(plan.repair) return startReview(8,"ชุดซ่อมจุดอ่อน"); if(plan.lesson){introSet=plan.lesson;view="intro";render()} });
   on("go-probe",()=>{introSet=plan.probe;view="intro";render()});
   on("go-mixed",()=>{introSet=plan.mixed;view="intro";render()});
+  on("go-passage",()=>{introSet=plan.passage;view="intro";render()});
   on("go-mission",()=>{missionShown=activeMission();view="mission";render();window.scrollTo({top:0})});
   on("go-extra",()=>{ if(plan.extra){introSet=plan.extra;view="intro";render()} });
   on("go-extra2",()=>{showAll=true;renderHome();window.scrollTo({top:0})});
@@ -754,7 +776,12 @@ function renderIntro(){
   const s=introSet, sp=SPELLS.find(x=>x.id===s.spell), info=spellStats(mine())[s.spell];
   $v.innerHTML=`<section class="card"><span class="eyebrow">${s.subject} · ${s.grade}${sp?` · ${esc(sp.name)}`:""}</span><h2>${esc(s.topic)}</h2>
     ${sp?`<p class="small muted">ขั้นตอนนี้: ${TIER[info?.tier||0]} · ${nextStep(sp,info)}</p>`:""}
-    ${s.kind==="mixed"?`<p><b>ชุดผสมแบบข้อสอบ</b> หลายเรื่องสลับกัน เหมือนวันสอบจริง</p>
+    ${s.kind==="passage"?`<p><b>อ่านจับใจความวิทย์</b> ข้อสอบโรงเรียนวิทย์มีโจทย์ยาวและบทความให้อ่านเยอะ ฝึกอ่านให้คล่องตั้งแต่ตอนนี้</p>
+    <ul style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px">
+      <li>อ่านบทความสั้นๆ เองเงียบๆ 1 รอบ ระบบจับเวลาไว้ดูพัฒนาการ ไม่มีผลกับคะแนน</li>
+      <li>ตอบ ${s.practice.length} ข้อ เปิดบทความดูซ้ำได้ตลอด</li>
+      <li>เคล็ดลับ: อ่านคำถามข้อแรกก่อนก็ได้ จะได้รู้ว่าต้องหาอะไร</li></ul>
+    <div class="row"><button class="btn" id="go">เริ่มอ่าน</button></div>`:s.kind==="mixed"?`<p><b>ชุดผสมแบบข้อสอบ</b> หลายเรื่องสลับกัน เหมือนวันสอบจริง</p>
     <ul style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px">
       <li>${s.practice.length} ข้อ จาก ${new Set(s.practice.map(q=>q.spell)).size} คาถา ไม่บอกก่อนว่าข้อไหนเรื่องอะไร ส่วนหนึ่งของการฝึกคือดูให้ออกว่าต้องใช้วิธีไหน</li>
       <li>ไม่มีการ์ดสรุป มีคำใบ้และเฉลยทุกข้อ</li>
@@ -805,6 +832,53 @@ function header(){
   return `<div class="stage"><span>${esc(S.set.topic)}</span><span>${S.steps[S.i].phase} · ${itemXp(S.items)} XP${combo>=3?` · <b class="combo">ถูกติดกัน ${combo} ข้อ ✨</b>`:""}</span></div>
   <div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div>`;
 }
+
+
+/* ---------- read aloud in Thai: phrase by phrase, the phrase being read is highlighted so her eyes follow the text
+   (reading-while-listening trains reading; listening instead of reading does not). Questions: only after she has
+   tried reading for a while, and never in mixed exam-style sets. ---------- */
+const RD={where:null,chunks:[],k:0,slow:false,timer:null};
+try{ RD.slow=localStorage.getItem("fieldnote.thslow")==="1" }catch(e){}
+function thVoice(){ try{ return speechSynthesis.getVoices().find(v=>/^th/i.test(v.lang))||null }catch(e){ return null } }
+const SUP={"⁰":"0","¹":"1","²":"2","³":"3","⁴":"4","⁵":"5","⁶":"6","⁷":"7","⁸":"8","⁹":"9","⁻":"ลบ "};
+function sayable(t){
+  return String(t)
+    .replace(/µg\/m³/g," ไมโครกรัมต่อลูกบาศก์เมตร ").replace(/g\/cm³/g," กรัมต่อลูกบาศก์เซนติเมตร ").replace(/cm³/g," ลูกบาศก์เซนติเมตร ").replace(/m³/g," ลูกบาศก์เมตร ")
+    .replace(/m²/g," ตารางเมตร ").replace(/cm²/g," ตารางเซนติเมตร ").replace(/°C/g," องศาเซลเซียส ").replace(/% ?w\/v/g," เปอร์เซ็นต์โดยมวลต่อปริมาตร ")
+    .replace(/(\d)²/g,"$1 กำลังสอง ").replace(/(\d)³/g,"$1 กำลังสาม ").replace(/([⁻⁰¹²³⁴⁵⁶⁷⁸⁹]+)/g,m=>" ยกกำลัง "+[...m].map(c=>SUP[c]).join("")+" ")
+    .replace(/√/g," รากที่สองของ ").replace(/×/g," คูณ ").replace(/÷/g," หาร ").replace(/=/g," เท่ากับ ").replace(/[−–](?=\s*\d)/g," ลบ ")
+    .replace(/%/g," เปอร์เซ็นต์ ").replace(/(\d) ?: ?(\d)/g,"$1 ต่อ $2").replace(/[→]/g," ได้ ").replace(/·/g,", ").replace(/\s+/g," ").trim();
+}
+function chunkText(t){
+  const parts=String(t).replace(/\s+/g," ").trim().split(/(?<=[ .?!;])(?=\S)/), out=[];
+  for(const p of parts){ if(out.length&&(out[out.length-1].length<22||p.trim().length<6)) out[out.length-1]+=p; else out.push(p) }
+  return out.filter(x=>x.trim());
+}
+function readStop(){ try{ speechSynthesis.cancel() }catch(e){} RD.where=null; document.querySelectorAll(".rdbox").forEach(b=>b.remove()); document.querySelectorAll("[data-read]").forEach(b=>b.textContent=b.dataset.label) }
+function readAloud(where, texts, after){
+  if(RD.where===where){ readStop(); return }
+  readStop();
+  if(!CAN_SPEAK){ alertRead(where,"เครื่องนี้ใช้เสียงอ่านไม่ได้ ลองเปิดใน Safari หรือ Chrome"); return }
+  const btn=document.querySelector(`[data-read="${where}"]`); if(!btn) return;
+  RD.where=where; const groups=texts.map(t=>chunkText(t)); RD.chunks=groups.flat(); RD.k=0;
+  const box=document.createElement("div"); box.className="rdbox"; box.setAttribute("aria-live","off");
+  let n=0; box.innerHTML=`${groups.map(g=>`<div>${g.map(c=>`<span data-ck="${n++}">${esc(c)}</span>`).join("")}</div>`).join("")}
+    <div class="row" style="margin-top:6px"><label class="small row" style="gap:6px"><input type="checkbox" id="rdslow" ${RD.slow?"checked":""}> อ่านช้าลง</label><span class="small muted">ให้ตาวิ่งตามตัวที่ไฮไลต์</span></div>`;
+  btn.insertAdjacentElement("afterend",box); btn.textContent="⏹ หยุดอ่าน";
+  box.querySelector("#rdslow").onchange=e=>{RD.slow=e.target.checked; try{localStorage.setItem("fieldnote.thslow",RD.slow?"1":"0")}catch(err){}};
+  if(after) after();
+  const v=thVoice(); let started=false;
+  const next=()=>{ if(RD.where!==where) return;
+    box.querySelectorAll("[data-ck]").forEach(x=>x.classList.toggle("now",+x.dataset.ck===RD.k));
+    if(RD.k>=RD.chunks.length){ RD.where=null; btn.textContent=btn.dataset.label; box.querySelectorAll(".now").forEach(x=>x.classList.remove("now")); return }
+    const u=new SpeechSynthesisUtterance(sayable(RD.chunks[RD.k])); u.lang="th-TH"; if(v) u.voice=v; u.rate=RD.slow?0.75:1;
+    u.onstart=()=>{started=true}; u.onend=()=>{RD.k++; next()}; u.onerror=e=>{ if(e.error!=="interrupted"&&e.error!=="canceled"){ RD.where=null; btn.textContent=btn.dataset.label; alertRead(where,"เสียงภาษาไทยยังไม่พร้อม บน iPad ไปที่ การตั้งค่า › การช่วยการเข้าถึง › เนื้อหาที่ถูกพูด › เสียง › ไทย แล้วดาวน์โหลดเสียง") } };
+    try{ speechSynthesis.speak(u) }catch(e){} };
+  next();
+  setTimeout(()=>{ if(!started&&RD.where===where&&!speechSynthesis.speaking) alertRead(where,"ยังไม่ได้ยินเสียง? บน iPad ไปที่ การตั้งค่า › การช่วยการเข้าถึง › เนื้อหาที่ถูกพูด › เสียง › ไทย แล้วดาวน์โหลดเสียง ถ้าเปิดจาก LINE ให้เปิดใน Safari แทน") },3000);
+}
+function alertRead(where,msg){ const b=document.querySelector(`[data-read="${where}"]`); if(!b) return; let n=document.getElementById("rdmsg"); if(!n){ n=document.createElement("p"); n.id="rdmsg"; n.className="small"; n.style.color="var(--warn)"; b.insertAdjacentElement("afterend",n) } n.textContent=msg }
+const readBtn=(where,label,disabled)=>`<button class="btn ghost small" type="button" data-read="${where}" data-label="${label}" ${disabled?"disabled":""}>${label}</button>`;
 
 /* ---------- glossary: tap a dotted word in a card or question to see what it means ---------- */
 const GLOSS={
@@ -904,9 +978,11 @@ window.addEventListener("resize",()=>padDraw(true));
 function renderStep(){
   const st = S.steps[S.i];
   if(st.kind==="concept") return renderConcept();
+  if(st.kind==="passage") return renderPassage();
   if(st.kind==="rate") return renderRate();
   if(st.kind==="finish") return finishReview();
   const q = st.q, ans = S.answered;
+  const canQ=!q.en&&S.set.kind!=="mixed"&&CAL.listenQuestions!==false, waitMs=Math.max(0,(CAL.listenDelaySec??20)*1000-(Date.now()-S.qStart));
   /* trials: confidence buttons and/or a reason before the answer is shown, so choosing and sending are two taps */
   const tConf=(S.trial||[]).includes("confidence"), tWhy=!!st.explain, staged=tConf||tWhy;
   const sendBtns=tConf?`<button class="btn" id="send-sure">✓ มั่นใจ ส่งคำตอบ</button><button class="btn ghost" id="send-unsure">🤔 ไม่ชัวร์ ส่งคำตอบ</button>`:`<button class="btn" id="send-plain">ส่งคำตอบ</button>`;
@@ -934,6 +1010,7 @@ function renderStep(){
       :!ans.correct&&ans.conf==="sure"?`<p class="small"><b>มั่นใจแต่พลาด</b> ข้อแบบนี้ถ้าเข้าใจตอนนี้ จะจำได้แม่นที่สุด อ่านเฉลยช้าๆ นะ</p>`:"";
     const own = st.explain&&(ans.ownWhy||ans.ownWhyPad)?`<div class="feedback"><span class="small"><b>เหตุผลของเธอ:</b> ${ans.ownWhy?esc(ans.ownWhy):"(เขียนในกระดาษทด)"}</span><span class="small muted">ลองเทียบกับเฉลยด้านล่าง ตรงกันไหม ต่างกันตรงไหน</span></div>`:"";
     fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answer} ${q.unit}`:""}</b>${confNote}<p>${gloss(q.ex)}</p>
+      ${q.en?"":`<div>${readBtn("ex","🔊 ฟังเฉลย")}</div>`}
       ${ans.correct||ans.dontknow?"":`<span class="small muted">พลาดเพราะอะไร เลือกได้หลายข้อ (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
       <div class="why">${Object.entries(ERR).filter(([k])=>k!=="dontknow").map(([k,v])=>`<button data-why="${k}" aria-pressed="${(S.why||[]).includes(k)}">${v}</button>`).join("")}</div>`}
       ${ans.correct?"":askHtml("question")}
@@ -942,8 +1019,14 @@ function renderStep(){
   }
   $v.innerHTML = `<section class="card">${header()}
     <span class="row" style="gap:6px"><span class="chip l${q.level}">${LV[q.level]}${S.set.kind==="mixed"&&!ans?"":" · "+esc(q.topic)}</span>${q.en?`<span class="chip">English corner</span>`:""}</span>
+    ${st.passage?passageDetails():""}
     <p class="prompt">${gloss(q.q)}</p>
     <div class="feedback" id="gloss-box" hidden></div>
+    ${canQ&&!ans?`<div>${readBtn("q",waitMs?"🔊 ฟังโจทย์ (ลองอ่านเองก่อนนะ)":"🔊 ฟังโจทย์",waitMs>0)}</div>`:""}
+    ${q.parts&&!ans?(S.partsShown?`<div class="feedback usebox"><b>🧩 แบ่งโจทย์ให้ดูทีละส่วน</b>
+      <span class="small"><b>โจทย์ให้อะไรมา</b></span><ul style="margin:0;padding-left:1.2em">${(q.parts.given||[]).map(g=>`<li class="small">${esc(g)}</li>`).join("")}</ul>
+      <span class="small"><b>โจทย์ถามอะไร</b> ${esc(q.parts.ask||"")}</span>${q.parts.watch?`<span class="small"><b>ระวัง</b> ${esc(q.parts.watch)}</span>`:""}</div>`
+      :`<div><button class="btn ghost small" id="parts" type="button">🧩 ช่วยแบ่งโจทย์</button></div>`):""}
     ${S.hints?`<div class="feedback">${q.hints.slice(0,S.hints).map((h,k)=>`<span class="small"><b>คำใบ้ ${k+1}</b> ${esc(h)}</span>`).join("")}</div>`:""}
     ${body}${fb}
     <div class="row">${!ans&&S.hints<q.hints.length?`<button class="btn ghost" id="hint">ขอคำใบ้ (${S.hints}/${q.hints.length})</button>`:""}
@@ -951,6 +1034,13 @@ function renderStep(){
     ${st.optional&&!ans?`<button class="btn ghost" id="skip">ข้ามข้อนี้</button>`:""}</div>
   </section>${padHtml()}`;
   bindGloss(); padSetup();
+  clearTimeout(RD.timer);
+  const qb=$v.querySelector('[data-read="q"]');
+  if(qb){ if(qb.disabled) RD.timer=setTimeout(()=>{ qb.disabled=false; qb.dataset.label="🔊 ฟังโจทย์"; if(RD.where!=="q") qb.textContent="🔊 ฟังโจทย์" },waitMs);
+    qb.onclick=()=>readAloud("q",[q.q,...(q.num?[]:q.opts.map((o,k)=>`ตัวเลือกที่ ${k+1}: ${o}`))],()=>{S.listenQ=(S.listenQ||0)+1}) }
+  const eb=$v.querySelector('[data-read="ex"]'); if(eb) eb.onclick=()=>readAloud("ex",[q.ex],()=>{S.listenEx=(S.listenEx||0)+1});
+  bindPassage();
+  const pb=document.getElementById("parts"); if(pb) pb.onclick=()=>{S.partsShown=true;const y=window.scrollY;renderStep();window.scrollTo({top:y})};
   if(!ans){
     const wt=document.getElementById("whytext"); if(wt) wt.oninput=()=>{S.whyText=wt.value};
     const extra=conf=>({...(conf?{conf}:{}),...(st.explain?{ownWhy:(S.whyText||"").trim().slice(0,300),ownWhyPad:PAD.strokes.length>0}:{})});
@@ -983,18 +1073,19 @@ function renderStep(){
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
     document.getElementById("next").onclick=()=>{
       S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
-        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{})});
+        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),len:q.q.length});
       advance();
     };
   }
 }
-function answer(a){ S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
-function advance(){ S.i++; S.answered=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.hints=0; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
+function answer(a){ readStop(); S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
+function advance(){ readStop(); S.i++; S.answered=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.hints=0; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
 
 function renderConcept(){
   const c=S.set.concept;
   $v.innerHTML=`<section class="card concept">${header()}
     <h2>${esc(c.title)}</h2>
+    <div>${readBtn("concept","🔊 ฟังการ์ดนี้")}</div>
     <ul>${c.points.map(p=>`<li>${gloss(p)}</li>`).join("")}</ul>
     ${c.use?`<div class="feedback usebox"><span class="small"><b>🌏 เอาไปใช้ที่ไหน</b> ${gloss(c.use)}</span></div>`:""}
     <div class="feedback" id="gloss-box" hidden></div>
@@ -1005,8 +1096,27 @@ function renderConcept(){
     ${S.altShown<c.alts.length?`<button class="btn ghost" id="alt">อธิบายอีกแบบ</button>`:""}</div>
     ${askHtml("concept")}</section>${padHtml()}`;
   bindGloss(); padSetup(); bindAsk("concept",{topic:S.set.topic});
+  const cb=$v.querySelector('[data-read="concept"]'); if(cb) cb.onclick=()=>readAloud("concept",[c.title,...c.points,...(c.use?["เอาไปใช้ที่ไหน: "+c.use]:[])],()=>{S.conceptListen=(S.conceptListen||0)+1});
   const al=document.getElementById("alt"); if(al) al.onclick=()=>{S.altShown++;renderConcept()};
   document.getElementById("next").onclick=()=>{S.conceptSec=Math.round((Date.now()-S.qStart)/1000);advance()};
+}
+
+/* ---------- reading passage ---------- */
+function passageHtml(set){ const P=set.passage;
+  return `<div class="passage"><b>${esc(P.title)}</b>${P.paras.map(x=>`<p>${gloss(x)}</p>`).join("")}
+    ${P.table?`<div style="overflow-x:auto"><table class="mt">${P.table.caption?`<caption class="small muted" style="text-align:left">${esc(P.table.caption)}</caption>`:""}<thead><tr>${P.table.cols.map(c=>`<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${P.table.rows.map(r=>`<tr>${r.map(x=>`<td>${esc(x)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`:""}</div>` }
+function passageText(set){ const P=set.passage; return [P.title,...P.paras,...(P.table?[(P.table.caption||"ตาราง")+": "+P.table.rows.map(r=>r.map((x,k)=>P.table.cols[k]+" "+x).join(", ")).join(". ")]:[])] }
+function passageDetails(){ return `<details class="small"><summary>📄 ดูบทความอีกครั้ง</summary>${passageHtml(S.set)}<div style="margin-top:6px">${readBtn("passage","🔊 ฟังบทความ")}</div></details>` }
+function bindPassage(){ const b=$v.querySelector('[data-read="passage"]'); if(b) b.onclick=()=>readAloud("passage",passageText(S.set),()=>{S.listenPassage=(S.listenPassage||0)+1}) }
+function renderPassage(){
+  const chars=S.set.passage.paras.join("").length;
+  $v.innerHTML=`<section class="card">${header()}
+    <p class="small muted">อ่านเองเงียบๆ ให้จบ 1 รอบ ไม่ต้องรีบ ระบบจับเวลาไว้ดูว่าอ่านคล่องขึ้นไหม (ไม่มีผลกับคะแนน) ตอนตอบคำถามเปิดบทความดูซ้ำได้</p>
+    ${passageHtml(S.set)}
+    <div class="feedback" id="gloss-box" hidden></div>
+    <button class="btn" id="readdone">อ่านจบแล้ว ไปตอบคำถาม</button></section>${padHtml()}`;
+  bindGloss(); padSetup();
+  document.getElementById("readdone").onclick=()=>{ S.readSec=Math.round((Date.now()-S.qStart)/1000); S.readChars=chars; advance() };
 }
 
 const RATINGS=["ง่ายมาก","ง่าย","พอดี","ยาก","ยากมาก"];
@@ -1036,8 +1146,8 @@ function renderRate(){
   document.getElementById("save").onclick=async e=>{
     e.target.disabled=true; e.target.textContent="กำลังบันทึก…";
     const items=S.items, scored=items.filter(x=>!x.skipped);
-    const rec={...trialRec(),...((S.reflect||"").trim()?{reflect:S.reflect.trim()}:{}),...(S.dueIds&&S.dueIds.length?{dueIds:S.dueIds}:{}),type:S.set.kind==="probe"?"probe":S.set.kind==="mixed"?"mixed":"set",setId:S.set.id,spell:S.set.spell,subject:S.set.subject,topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
-      durationSec:Math.round((Date.now()-S.start)/1000),conceptSec:S.conceptSec||0,rating:S.rating,memo:document.getElementById("memo").value.trim(),
+    const rec={...trialRec(),...((S.reflect||"").trim()?{reflect:S.reflect.trim()}:{}),...(S.dueIds&&S.dueIds.length?{dueIds:S.dueIds}:{}),type:S.set.kind==="probe"?"probe":S.set.kind==="mixed"?"mixed":S.set.kind==="passage"?"passage":"set",setId:S.set.id,spell:S.set.spell,subject:S.set.subject,topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
+      durationSec:Math.round((Date.now()-S.start)/1000),conceptSec:S.conceptSec||0,...(S.conceptListen?{conceptListen:S.conceptListen}:{}),...(S.readSec?{readSec:S.readSec,readChars:S.readChars}:{}),...(S.listenPassage?{listenPassage:S.listenPassage}:{}),rating:S.rating,memo:document.getElementById("memo").value.trim(),
       correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items)+20,altShown:S.altShown,glossed:S.glossed,confused:S.confused,items};
     await finishWith(rec);
   };
@@ -1046,7 +1156,7 @@ function renderRate(){
 /* ---------- unfinished set survives a tab switch or a reload (same day) ---------- */
 function saveProgress(){
   if(!S||S.mode!=="set") return;
-  try{ localStorage.setItem("fieldnote.inprogress",JSON.stringify({setId:S.set.id,conceptFirst:S.conceptFirst,day:todayKey(),i:S.i,start:S.start,items:S.items,confused:S.confused,altShown:S.altShown,conceptSec:S.conceptSec||0,glossed:S.glossed,
+  try{ localStorage.setItem("fieldnote.inprogress",JSON.stringify({setId:S.set.id,conceptFirst:S.conceptFirst,day:todayKey(),i:S.i,start:S.start,items:S.items,confused:S.confused,altShown:S.altShown,conceptSec:S.conceptSec||0,glossed:S.glossed,readSec:S.readSec||0,readChars:S.readChars||0,
     perms:S.steps.map(x=>x.q?.perm||null),dueIds:S.dueIds||[],trialVote:S.trialVote||{}})) }catch(e){}
 }
 function clearProgress(){ try{ localStorage.removeItem("fieldnote.inprogress") }catch(e){} }
@@ -1059,7 +1169,7 @@ function resumeSet(){
   const p=pendingSet(); if(!p) return;
   if(p.live){ view="session"; render(); return }
   const sv=p.saved; startSet(p.set, sv.conceptFirst, sv.perms, sv.dueIds||[]);
-  Object.assign(S,{trialVote:sv.trialVote||{},i:sv.i,start:sv.start,items:sv.items||[],confused:sv.confused||[],altShown:sv.altShown||0,conceptSec:sv.conceptSec,glossed:sv.glossed||[]});
+  Object.assign(S,{trialVote:sv.trialVote||{},readSec:sv.readSec||0,readChars:sv.readChars||0,i:sv.i,start:sv.start,items:sv.items||[],confused:sv.confused||[],altShown:sv.altShown||0,conceptSec:sv.conceptSec,glossed:sv.glossed||[]});
   render();
 }
 
@@ -1524,6 +1634,23 @@ function renderParent(){
     return `<section class="card"><h3>ความแม่นตามบริบทของโจทย์</h3><div class="bars">
       ${Object.keys(CTX).filter(k=>g[k]).map(k=>{const o=g[k],pc=Math.round(o.c/o.n*100);return `<div class="bar"><span>${CTX[k]}</span><span class="track"><i style="width:${pc}%;background:var(--accent)"></i></span><span class="v">${pc}%</span></div><span class="small muted" style="margin-top:-6px">${o.n} ข้อ · เฉลี่ย ${Math.round(o.t/o.n)} วินาทีต่อข้อ</span>`}).join("")}</div>
       <p class="note">ใช้ดูหลังผ่านไปสักเดือน ว่าลูกทำโจทย์บริบทไหนได้ดีหรือใช้เวลานาน ป้ายของชุดก่อน 5 พ.ย. ระบบติดให้อัตโนมัติ อาจคลาดเคลื่อนบ้าง</p></section>` })()}
+  ${(()=>{ /* reading: listen use, short vs long questions, passage speed */
+    const its=all.flatMap(a=>(a.items||[]).filter(x=>!x.skipped).map(x=>({...x,wk:weekStart(dayKey(a.endedAt)),L:x.len||(QBANK[x.qid]?.q.q.length||0)})));
+    if(!its.length) return "";
+    const pc=a=>a.length?Math.round(a.filter(x=>x.correct).length/a.length*100):null, avgT=a=>a.length?Math.round(a.reduce((s,x)=>s+(x.timeSec||0),0)/a.length):null;
+    const bands=[["โจทย์สั้น (ไม่เกิน 2 บรรทัด)",x=>x.L<=90],["ปานกลาง",x=>x.L>90&&x.L<=180],["โจทย์ยาว (4 บรรทัดขึ้นไป)",x=>x.L>180]];
+    const wks=[...new Set(its.map(x=>x.wk))].sort((a,b)=>b-a).slice(0,6);
+    const L=its.filter(x=>x.listen), N=its.filter(x=>!x.listen);
+    const ps=all.filter(a=>a.type==="passage"&&a.readSec&&a.readChars);
+    return `<section class="card"><h3>📖 การอ่าน</h3>
+      <div class="bars">${bands.map(([lab,f])=>{const g=its.filter(f),p=pc(g);return g.length?`<div class="bar"><span>${lab}</span><span class="track"><i style="width:${p}%;background:var(--accent)"></i></span><span class="v">${p}%</span></div><span class="small muted" style="margin-top:-6px">${g.length} ข้อ · เฉลี่ย ${avgT(g)} วินาที</span>`:""}).join("")}</div>
+      <p class="note">ถ้าโจทย์ยาวแม่นน้อยกว่าโจทย์สั้นมาก ทั้งที่เป็นเรื่องเดียวกัน แปลว่าการอ่านโจทย์ยาวคือจุดที่ต้องฝึก ไม่ใช่ความรู้</p>
+      <span class="eyebrow">ปุ่มฟังโจทย์ รายสัปดาห์</span>
+      ${wks.map(w=>{const g=its.filter(x=>x.wk===w&&QBANK[x.qid]&&!QBANK[x.qid].q.en), l=g.filter(x=>x.listen), rd=g.filter(x=>(x.errorTypes||[]).includes("read")).length;
+        return `<div class="topic"><span class="small">สัปดาห์ ${new Date(w).toLocaleDateString("th-TH",{day:"numeric",month:"short"})}</span><span class="small">กดฟัง ${g.length?Math.round(l.length/g.length*100):0}% ของข้อ (${l.length}/${g.length}) · ผิดเพราะอ่านพลาด ${rd} ข้อ</span></div>`}).join("")}
+      ${L.length?`<p class="small">ข้อที่กดฟัง ถูก ${pc(L)}% · ข้อที่อ่านเอง ถูก ${pc(N)}%</p>`:""}
+      ${ps.length?`<span class="eyebrow">อ่านจับใจความ (อ่านเงียบครั้งแรก)</span>${ps.slice(0,6).map(a=>`<div class="topic"><span class="small">${esc(a.topic)}</span><span class="small">${Math.round(a.readChars/(a.readSec/60))} ตัวอักษร/นาที · ถูก ${a.correct}/${a.total}${a.listenPassage?" · กดฟังบทความ":""}</span></div>`).join("")}`:""}
+      <p class="note">เป้าหมาย: การกดฟังค่อยๆ ลดลง โดยความแม่นของโจทย์ยาวไม่แย่ลง ความเร็วอ่านใช้เทียบกับตัวเองเท่านั้น</p></section>` })()}
   ${(()=>{ const rf=all.filter(a=>a.reflect); return rf.length?`<section class="card"><h3>🌏 ลูกเชื่อมโยงบทเรียนกับชีวิต</h3>
     ${rf.slice(0,6).map(a=>`<div class="logi"><span class="small muted">${new Date(a.endedAt).toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})}</span><span>“${esc(a.reflect)}”</span></div>`).join("")}
     <p class="note">คำตอบจากคำถามท้ายชุดผสมทุกสัปดาห์ ลองชวนลูกคุยต่อจากที่เขียน จะได้ผลกว่าบอกเองว่าเรื่องนี้สำคัญ</p></section>`:"" })()}

@@ -56,5 +56,8 @@
   ]
  },
  "trialsNote": "Trial of two features (confidence buttons, explain-before-answer) 5-11 Nov 2026; she votes at the end of each set. Remove or extend after the father decides.",
- "reflectFrom": "2026-11-12"
+ "reflectFrom": "2026-11-12",
+ "passagePerWeek": 1,
+ "listenQuestions": true,
+ "listenDelaySec": 20
 }
