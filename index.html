@@ -109,9 +109,14 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .bubble{position:relative;flex:1;background:var(--soft);border-radius:4px 14px 14px 14px;padding:8px 12px;display:flex;flex-direction:column;gap:3px;font-size:.92rem}
 .petwrap{position:relative;display:inline-flex;flex:none;align-items:flex-end;justify-content:center}
 .petwrap .bface{position:relative;z-index:1}
-.w-head{position:absolute;left:50%;top:-6%;transform:translateX(-50%);line-height:1;z-index:2;pointer-events:none}
-.w-neck{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);line-height:1;z-index:2;pointer-events:none}
-.w-side{position:absolute;right:-6%;bottom:6%;line-height:1;z-index:2;pointer-events:none;transform:rotate(12deg)}
+.w-it{position:absolute;transform:translate(-50%,-50%);line-height:1;z-index:2;pointer-events:none;user-select:none;-webkit-user-select:none}
+.scene .props{position:absolute!important;inset:0;z-index:1;pointer-events:none}
+.prop-it{position:absolute;transform:translate(-50%,-50%);line-height:1;user-select:none;-webkit-user-select:none}
+.arrange .w-it,.arrange .prop-it{pointer-events:auto;cursor:grab;touch-action:none;outline:2px dashed rgba(255,255,255,.85);outline-offset:2px;border-radius:6px}
+.arrange .props{pointer-events:auto}
+.arrange .hero-pet,.arrange .hero-pet *{animation:none!important}
+.arrange .sel{outline:3px solid var(--beak)!important;background:rgba(255,255,255,.35)}
+.wishbar{display:flex;gap:10px;align-items:center}
 .fxp{position:absolute;z-index:3;line-height:1;pointer-events:none;animation:fxfloat 2.4s ease-in-out infinite}
 @keyframes fxfloat{0%,100%{transform:translateY(0);opacity:.95}50%{transform:translateY(-8px);opacity:.55}}
 .aura{position:absolute;inset:-6%;border-radius:50%;background:radial-gradient(circle,rgba(255,236,150,.85) 0%,rgba(255,200,90,.35) 45%,transparent 70%);animation:auraglow 2.6s ease-in-out infinite;z-index:0}
@@ -140,7 +145,7 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .glow{animation:twinkle 3.2s ease-in-out infinite}
 @media (prefers-reduced-motion: reduce){.twinkle,.rise,.fall,.sway,.float,.glow,.fxp,.aura,.bface.egg{animation:none}}
-.scene .props{position:absolute!important;bottom:14px;left:12px;right:12px;display:flex;justify-content:space-between;font-size:2rem;z-index:1;pointer-events:none}
+
 .scene .hero-pet{margin-bottom:18px}
 .scene .others{position:absolute!important;top:10px;right:10px;display:flex;gap:6px;z-index:2}
 .scene .mini{border:0;background:rgba(255,255,255,.55);border-radius:50%;padding:3px;cursor:pointer}
@@ -413,7 +418,7 @@ async function importCode(raw, asTest){
 }
 
 /* ---------- updates: GitHub Pages lets the browser keep an old copy for a while, so check for a newer build ---------- */
-const BUILD="2026-11-06 22:42";
+const BUILD="2026-11-06 23:37";
 async function checkUpdate(){ if(!/^https?:/.test(location.protocol)||typeof db!=="undefined"&&db) return;
   try{ const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text(); const m=t.match(/const BUILD="(\d{4}-\d\d-\d\d \d\d:\d\d)"/);
     if(m&&m[1]!==BUILD&&!m[1].includes("@@")&&!document.getElementById("updbar")){ const d=document.createElement("button"); d.id="updbar"; d.className="btn";
@@ -535,7 +540,7 @@ function progressOf(list){
   const n=need(today), u=units.get(today)||0, pr=probes.get(today)||0;
   return {streak,best,freeze,goalDays,frozen,skipDays,byDay,met,todayXp:byDay.get(today)||0,leaveDays,onLeave:leaveDays.has(today),
     unitsToday:u,probesToday:pr,lessonToday:u-pr>=1||(u>=1&&!n.probe),vocabToday:vocabDays.has(today),noVocabToday,need:n,info:n.info,modes,
-    goalToday:met.has(today),earnedToday:earned.filter(e=>e.d===today),quests:questStatus(list,weekStart(today),today,met),questDoneThisWeek:questDone.has(weekStart(today))};
+    goalToday:met.has(today),earnedToday:earned.filter(e=>e.d===today),quests:questStatus(list,weekStart(today),today,met),questDoneThisWeek:questDone.has(weekStart(today)),questWeeks:[...questDone].sort()};
 }
 
 /* ---------- what to do today ---------- */
@@ -812,7 +817,7 @@ function renderHome(){
   <section class="card">
     ${flameHtml(p)}
     <div class="week">${dots}</div>
-    <p class="small muted">${p.goalToday?"วันนี้ภารกิจครบแล้ว ไฟยังลุกอยู่ 🔥":"ทำภารกิจวันนี้ให้ครบ ไฟถึงจะติด"} · ทำครบทุก 5 วัน ทำชุดฝึกเกินภารกิจของวัน หรือทำภารกิจประจำสัปดาห์ครบ ได้น้ำแข็ง 1 ก้อน (เก็บได้สูงสุด ${FREEZE_MAX}) วันที่ไม่ได้ทำ น้ำแข็งจะละลายแทนไฟ</p>
+    <p class="small muted">${p.goalToday?"วันนี้ภารกิจครบแล้ว ไฟยังลุกอยู่ 🔥":"ทำภารกิจวันนี้ให้ครบ ไฟถึงจะติด"} · ทำครบทุก 5 วัน หรือทำชุดฝึกเกินภารกิจของวัน ได้น้ำแข็ง 1 ก้อน (เก็บได้สูงสุด ${FREEZE_MAX}) วันที่ไม่ได้ทำ น้ำแข็งจะละลายแทนไฟ</p>
     ${p.onLeave&&!p.goalToday?`<p class="small">🏕 ช่วงนี้ลาไว้ ไฟหยุดรออยู่ กลับมาเมื่อไรก็ทำต่อได้เลย (ทำระหว่างลาก็นับนะ)</p>`
       :p.goalToday||skippedToday?(skippedToday&&!p.goalToday?`<p class="small muted">วันนี้บอกพักไว้แล้ว พรุ่งนี้มาต่อนะ</p>`:""):`<button class="btn ghost" id="skip-open">ขอพัก (วันเดียว หรือ ไปค่ายหลายวัน)</button>`}
   </section>
@@ -855,9 +860,9 @@ function renderHome(){
     return `<section class="card usebox"><span class="eyebrow">🌏 ภารกิจโลกจริงประจำเดือน${d?" · ทำแล้ว ✓":""}</span><h2>${esc(m.title)}</h2>
       <p class="small">${esc(m.hook||m.why)}</p><p class="small muted">${esc(m.mins)} · ถึง ${new Date(m.to+"T00:00:00").toLocaleDateString("th-TH",{day:"numeric",month:"short"})} · ไม่นับในไฟประจำวัน · ได้ ${m.xp||100} XP${m.record&&!d?` · บันทึกแล้ว ${(st.rows||[]).length} แถว`:""}</p>
       <button class="btn ${d?"ghost":""}" id="go-mission">${d?"ดูภารกิจ":"เปิดภารกิจ"}</button></section>`})()}
-  <section class="card"><h3>ภารกิจประจำสัปดาห์ ${p.questDoneThisWeek?"✅ ครบแล้ว ได้น้ำแข็ง 🧊":""}</h3>
+  <section class="card"><h3>ภารกิจประจำสัปดาห์ ${p.questDoneThisWeek?"✅ ครบแล้ว ได้ของหายาก ✨":""}</h3>
     ${quests.q.map(q=>`<div class="quest"><span>${q.have>=q.need?"✅":"⬜"} ${q.label}</span><span class="small muted">${Math.min(q.have,q.need)}/${q.need}</span></div>`).join("")}
-    <p class="small muted">ครบทั้ง 3 ข้อได้น้ำแข็ง 1 ก้อน เริ่มใหม่ทุกวันจันทร์</p></section>
+    <p class="small muted">ครบทั้ง 3 ข้อ ได้<b>ของหายาก ✨ 1 ชิ้น</b> ที่ซื้อด้วยดาวไม่ได้ และดาวเวทพิเศษ ⭐${QUEST_BONUS} เริ่มใหม่ทุกวันจันทร์${(()=>{const nx=RARE[questWeeks(mine()).length]; return nx?` · ชิ้นต่อไป: ${nx.e} ${esc(nx.n)}`:""})()}</p></section>
   <span class="eyebrow">เก็บ XP เพิ่ม (ไม่บังคับ)</span>
   <section class="sets">
     <div class="card"><h3>ทบทวนข้อที่เคยพลาด</h3>
@@ -1314,7 +1319,7 @@ function renderStep(){
   }
 }
 function answer(a){ readStop(); S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
-function advance(){ readStop(); S.i++; S.answered=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.uncovered=false; S.coverSec=0; S.hints=0; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
+function advance(){ readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.uncovered=false; S.coverSec=0; S.hints=0; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
 
 function renderConcept(){
   const c=S.set.concept;
@@ -1445,7 +1450,7 @@ function celeHtml(e){
       text:`${e.sp.topic}${e.tier===1?" · เปิดการ์ดคาถาใบใหม่ในสมุดแล้ว":""}`,art,btn:e.tier===1&&!art?"🎨 วาดการ์ดใบนี้":null} }
   if(e.kind==="realm") return {icon:"🏯",title:`พิชิต${REALMS[e.rk]}ครบทุกคาถา!`,text:"ทุกคาถาในสำนักนี้ปลดล็อกแล้วอย่างน้อยขั้นฝึกหัด"};
   if(e.kind==="milestone") return {icon:"🏅",title:`จุดไฟติดต่อกัน ${e.m} วัน!`,text:"เหรียญนี้เป็นของเธอตลอดไป ต่อให้ไฟดับก็ไม่หาย"};
-  if(e.kind==="quest") return {icon:"📜",title:"ภารกิจประจำสัปดาห์ครบ!",text:"ได้น้ำแข็งกันไฟดับ 1 ก้อน"};
+  if(e.kind==="quest"){ const n=questWeeks(mine()).length, r=RARE[n-1]; return {icon:r?r.e:"📜",title:"ภารกิจประจำสัปดาห์ครบ!",text:`${r?`ได้ของหายาก ${r.n} ไปใช้ได้ที่บ้านคู่หู และ`:"ได้"}ดาวเวทพิเศษ ⭐${QUEST_BONUS}`} }
   return {icon:"🧊",title:"ได้น้ำแข็งกันไฟดับ!",text:e.why||""};
 }
 function renderDone(){
@@ -1539,7 +1544,7 @@ function buddyHero(list,p,plan){ const b=getBuddy(); if(!b) return "";
   return `<section class="card buddyhero"><div class="buddy">
     <button class="bbtn ${buddyTap?"hop":""}" id="btap" type="button" aria-label="คุยกับ ${esc(b.name)}">${buddyFace(b,76)}</button>
     <div class="bubble big"><b>${esc(b.name)}</b>${(tip?[tip]:lines).map(l=>`<span>${esc(l)}</span>`).join("")}
-      <span class="row" style="gap:6px;margin-top:4px">${unread?`<button class="btn small" id="bletter" type="button">💌 มีจดหมายถึงเธอ</button>`:""}<span class="small muted">แตะ${esc(b.name)}เพื่อคุยต่อ</span></span></div></div></section>` }
+      <span class="row" style="gap:6px;margin-top:4px">${unread?`<button class="btn small" id="bletter" type="button">💌 มีจดหมายถึงเธอ</button>`:""}<span class="small muted">แตะ${esc(b.name)}เพื่อคุยต่อ</span></span></div></div>${wishItem(list)?`<div style="margin-top:10px">${wishHtml(list)}</div>`:""}</section>` }
 function bindBuddyHero(){ const t=document.getElementById("btap"); if(t) t.onclick=()=>{ buddyTap++; buddyNote=""; renderHome() };
   const l=document.getElementById("bletter"); if(l) l.onclick=()=>{ letterOpen=true; renderHome(); document.getElementById("lclose")?.scrollIntoView({block:"center"}) } }
 function buddyHtml(lines){ const b=getBuddy(); if(!b) return "";
@@ -1729,7 +1734,7 @@ const formsText=x=>new Set(x.forms).size===1?`🥚 → ${x.forms[0]} โตจ�
 /* growth: magic food points; stage 0 egg, 1 baby (form 0), 2 young (form 1), 3 adult (form 2), 4 legend (form 2 + aura) */
 const GROW=[[0,"ไข่เวทมนตร์"],[30,"วัยเด็ก"],[150,"วัยรุ่น"],[400,"โตเต็มวัย"],[900,"ร่างตำนาน"]];
 const STAGE_SIZE=[0.62,0.72,0.86,1,1.06];
-const FOOD=[{id:"snack:cookie",e:"🍪",n:"คุกกี้เวท",cost:20,grow:5},{id:"snack:berry",e:"🍓",n:"ผลไม้วิเศษ",cost:40,grow:11},{id:"snack:cake",e:"🍰",n:"เค้กดวงดาว",cost:80,grow:24},{id:"snack:honey",e:"🍯",n:"น้ำผึ้งแสงจันทร์",cost:150,grow:48}];
+const FOOD=[{id:"snack:cookie",e:"🍪",n:"คุกกี้เวท",cost:20,grow:10},{id:"snack:berry",e:"🍓",n:"ผลไม้วิเศษ",cost:40,grow:22},{id:"snack:cake",e:"🍰",n:"เค้กดวงดาว",cost:80,grow:48},{id:"snack:honey",e:"🍯",n:"น้ำผึ้งแสงจันทร์",cost:150,grow:96}];
 const SNACKS=FOOD;
 const WEAR=[
   {id:"acc:bow",e:"🎀",n:"โบว์",cost:200,slot:"head"},{id:"acc:flower",e:"🌸",n:"ดอกไม้ทัดหู",cost:150,slot:"head"},{id:"acc:cap",e:"🧢",n:"หมวกแก๊ป",cost:200,slot:"head"},
@@ -1743,15 +1748,22 @@ const WEAR=[
   {id:"fx:sparkle",e:"✨",n:"ประกายเวท",cost:300,slot:"fx"},{id:"fx:hearts",e:"💖",n:"หัวใจลอย",cost:300,slot:"fx"},{id:"fx:bubbles",e:"🫧",n:"ฟองสบู่",cost:250,slot:"fx"},
   {id:"fx:leaves",e:"🍂",n:"ใบไม้ปลิว",cost:250,slot:"fx"},{id:"fx:snow",e:"❄️",n:"เกล็ดหิมะ",cost:300,slot:"fx"},{id:"fx:stars",e:"⭐",n:"ดาวระยิบ",cost:400,slot:"fx"},
   {id:"fx:notes",e:"🎵",n:"ตัวโน้ตดนตรี",cost:300,slot:"fx"},{id:"fx:petals",e:"🌸",n:"กลีบซากุระ",cost:350,slot:"fx"}];
+/* rare things only the weekly quest gives, one per completed week, in this order */
+const RARE=[["wings","🪽","ปีกนางฟ้า","wear"],["compass","🧭","เข็มทิศนักสำรวจ","wear"],["trophy","🏆","ถ้วยนักสู้","prop"],["ringed","🪐","ดาวเสาร์จิ๋ว","prop"],
+  ["clover","🍀","ใบโคลเวอร์นำโชค","wear"],["chime","🎐","โมบายลม","prop"],["pearl","🦪","หอยมุก","prop"],["rainbow","🌈","สายรุ้งส่วนตัว","prop"],
+  ["comet","☄️","ดาวหาง","prop"],["shell","🐚","เปลือกหอยทะเลลึก","wear"]]
+  .map(([k,e,n,t],i)=>({id:"rare:"+k,e,n,slot:t==="wear"?"wear":"prop",rare:i,special:"ภารกิจประจำสัปดาห์ครบ"}));
+const QUEST_BONUS=100;
 const PROPS=[["plant","🪴","กระถางต้นไม้",150],["candle","🕯️","เทียนเวท",150],["books","📚","กองหนังสือ",200],["paint","🎨","จานสี",250],["potion","🧪","ขวดยาวิเศษ",300],
   ["bed","🛏️","เตียงนุ่ม",300],["moon","🌙","โคมพระจันทร์",350],["scope","🔭","กล้องดูดาว",400],["teddy","🧸","ตุ๊กตาหมี",200],["lantern","🏮","โคมแดง",200],
   ["mushroom","🍄","เห็ดวิเศษ",150],["vase","💐","แจกันดอกไม้",200],["frame","🖼️","ภาพวาด",250],["sofa","🛋️","โซฟา",350],["globe","🌍","ลูกโลก",300],["piano","🎹","เปียโน",500]]
   .map(([k,e,n,cost])=>({id:"prop:"+k,e,n,cost,slot:"prop"}));
-const SHOP=[...WEAR,...PROPS,...Object.entries(SCENES).filter(([k,s])=>s.cost>0).map(([id,s])=>({id,n:s.n,cost:s.cost,slot:"bg"}))];
-const SLOT_NAME={head:"บนหัว",neck:"ที่คอ",side:"ถือไว้",fx:"รอบตัว"};
+WEAR.forEach(w=>{ if(w.slot!=="fx") w.slot="wear" });
+const SHOP=[...WEAR,...PROPS,...RARE,...Object.entries(SCENES).filter(([k,s])=>s.cost>0).map(([id,s])=>({id,n:s.n,cost:s.cost,slot:"bg"}))];
+const WEAR_HOME={head:[50,6],neck:[50,66],side:[86,62]};   /* where items bought in the old slot system start */
 function ls(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v) }catch(e){ return d } }
 function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)) }catch(e){} }
-function wallet(list){ const earned=list.filter(a=>a.type!=="shop").reduce((s,a)=>s+Math.max(0,xpOf(a)),0), spent=list.filter(a=>a.type==="shop").reduce((s,a)=>s+(a.cost||0),0); return {earned,spent,stars:earned-spent} }
+function wallet(list){ const earned=list.filter(a=>a.type!=="shop").reduce((s,a)=>s+Math.max(0,xpOf(a)),0)+QUEST_BONUS*questWeeks(list).length, spent=list.filter(a=>a.type==="shop").reduce((s,a)=>s+(a.cost||0),0); return {earned,spent,stars:earned-spent} }
 let _specKey=null,_specVal=null;
 function earnedSpecials(list){ const key=list.length+"|"+(list[0]&&list[0].endedAt)+"|"+todayKey(); if(key===_specKey) return _specVal; _specKey=key; _specVal=earnedSpecials0(list); return _specVal }
 function earnedSpecials0(list){ const out=new Set(), p=progressOf(list), ss=spellStats(list);
@@ -1760,18 +1772,27 @@ function earnedSpecials0(list){ const out=new Set(), p=progressOf(list), ss=spel
   if(Object.keys(REALMS).some(rk=>SPELLS.filter(s=>s.realm===rk).every(s=>(ss[s.id]?.tier||0)>=1))) out.add("pet:whale");
   if(new Set(list.filter(a=>a.type==="passage").map(a=>a.setId)).size>=4) out.add("pet:hedgehog");
   if(list.some(a=>a.type==="teach")) out.add("acc:teacher");
+  questWeeks(list).forEach((w,i)=>{ if(i<RARE.length) out.add(RARE[i].id) });
   return out }
+function questWeeks(list){ try{ return progressOf(list).questWeeks||[] }catch(e){ return [] } }
 function owns(list){ const s=new Set(list.filter(a=>a.type==="shop"&&a.item&&!a.item.startsWith("snack:")).map(a=>a.item)); earnedSpecials(list).forEach(x=>s.add(x)); return s }
 function petName(kind,list){ const names=ls("fieldnote.petnames",{}); if(names[kind]) return names[kind];
   const r=(list||mine()).find(a=>a.type==="shop"&&a.item==="pet:"+kind&&a.name); return r?r.name:(ALL_PETS.find(x=>x.k===kind)?.n||"คู่หู") }
 function ownedPets(list){ const o=owns(list); return ALL_PETS.filter(x=>o.has("pet:"+x.k)) }
-function nextPetPrice(list){ const paid=list.filter(a=>a.type==="shop"&&a.item&&a.item.startsWith("pet:")&&a.cost>0).length; return 2000+500*paid }
+function nextPetPrice(list){ const paid=list.filter(a=>a.type==="shop"&&a.item&&a.item.startsWith("pet:")&&a.cost>0).length; return 800+300*paid }
 /* the very first companion she picked starts grown up (it looks the way she chose it); every later one hatches from an egg */
 function firstPet(list){ const r=list.filter(a=>a.type==="shop"&&a.item&&a.item.startsWith("pet:")&&!a.cost).sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt))[0]; return r?r.item.slice(4):null }
 function growth(kind,list){ const fed=list.filter(a=>a.type==="shop"&&a.pet===kind).reduce((s,a)=>s+(a.grow||(a.hearts||0)*5),0); return fed+(firstPet(list)===kind?400:0) }
 function growStage(g){ let i=0; GROW.forEach(([m],k)=>{ if(g>=m) i=k }); return i }
 function petLook(kind,stage){ const P=ALL_PETS.find(x=>x.k===kind)||ALL_PETS[0]; return stage===0?"🥚":P.forms[Math.min(2,stage-1)] }
-function room(){ const r=ls("fieldnote.room",{bg:null,props:[],wear:{}}); r.wear=r.wear||{}; if(r.hats){ Object.entries(r.hats).forEach(([k,v])=>{ if(v){ r.wear[k]=r.wear[k]||{}; r.wear[k].head=r.wear[k].head||v } }); delete r.hats } r.props=r.props||[]; return r }
+/* room v2: worn things and room things are placed freely (x, y in % of the companion / scene, s = size) */
+function room(){ const r=ls("fieldnote.room",{bg:null,props:[],wear:{}}); r.wear=r.wear||{}; r.fx=r.fx||{};
+  if(r.hats){ Object.entries(r.hats).forEach(([k,v])=>{ if(v){ r.wear[k]=r.wear[k]||{}; if(!Array.isArray(r.wear[k])) r.wear[k].head=r.wear[k].head||v } }); delete r.hats }
+  Object.keys(r.wear).forEach(k=>{ const w=r.wear[k]; if(Array.isArray(w)) return; const arr=[];
+    ["head","neck","side"].forEach(sl=>{ if(w&&w[sl]) arr.push({id:w[sl],x:WEAR_HOME[sl][0],y:WEAR_HOME[sl][1],s:1}) }); if(w&&w.fx) r.fx[k]=w.fx; r.wear[k]=arr });
+  r.props=(r.props||[]).map((p,i)=>typeof p==="string"?{id:p,x:12+i*25,y:84,s:1}:p);
+  return r }
+function wornList(kind){ return room().wear[kind]||[] }
 function petArtKey(kind){ return "fieldnote.buddyart."+kind }
 async function migrateBuddy(){
   const old=ls("fieldnote.buddy",null); if(!old) return;
@@ -1789,17 +1810,21 @@ function buddyArt(kind){ try{ return localStorage.getItem(petArtKey(kind||getBud
 /* draw one companion: current growth look (or her own drawing once hatched), what it wears, and its aura */
 function petFace(kind,size,dressed,list){
   list=list||mine(); const st=growStage(growth(kind,list)), sz=Math.round(size*STAGE_SIZE[st]), art=st>0?buddyArt(kind):null, K=ALL_PETS.find(x=>x.k===kind)||ALL_PETS[0];
-  const w=dressed?(room().wear[kind]||{}):{}, it=id=>SHOP.find(s=>s.id===id);
-  const fx=w.fx&&it(w.fx), head=w.head&&it(w.head), neck=w.neck&&it(w.neck), side=w.side&&it(w.side);
+  const R=dressed?room():{wear:{},fx:{}}, it=id=>SHOP.find(s=>s.id===id), worn=(R.wear[kind]||[]).filter(x=>it(x.id)), fx=R.fx[kind]&&it(R.fx[kind]);
   return `<span class="petwrap st${st}" style="width:${size}px;height:${size}px">
     ${st===4?`<span class="aura"></span>`:""}
     ${fx?[0,1,2,3].map(i=>`<span class="fxp" style="left:${[8,78,18,70][i]}%;top:${[18,10,70,62][i]}%;animation-delay:${i*0.6}s;font-size:${Math.round(size*0.16)}px">${fx.e}</span>`).join(""):""}
     ${art?`<img src="${art}" alt="" class="bface" style="width:${sz}px;height:${sz}px">`
       :`<span class="bface ${st===0?"egg":""}" style="font-size:${Math.round(sz*0.72)}px;width:${sz}px;height:${sz}px;${st===0?`filter:hue-rotate(${(K.k.length*47)%360}deg) saturate(1.4)`:""}" aria-hidden="true">${petLook(kind,st)}</span>`}
-    ${head&&st>0?`<span class="w-head" style="font-size:${Math.round(sz*0.4)}px">${head.e}</span>`:""}
-    ${neck&&st>0?`<span class="w-neck" style="font-size:${Math.round(sz*0.28)}px">${neck.e}</span>`:""}
-    ${side&&st>0?`<span class="w-side" style="font-size:${Math.round(sz*0.34)}px">${side.e}</span>`:""}</span>` }
-let denMsg="", denBuy=null, denName="", denTab="food", denCele=null;
+    ${st>0?worn.map((x,i)=>`<span class="w-it" data-wi="${i}" style="left:${x.x}%;top:${x.y}%;font-size:${Math.round(sz*0.32*(x.s||1))}px">${it(x.id).e}</span>`).join(""):""}</span>` }
+let denMsg="", denBuy=null, denName="", denTab="food", denCele=null, denArrange=false, denSel=null;
+function wish(){ return ls("fieldnote.wish",null) }
+function wishItem(list){ const w=wish(); if(!w) return null; if(w.startsWith("pet:")){ const P=ALL_PETS.find(x=>x.k===w.slice(4)); return P&&!owns(list).has(w)?{id:w,e:P.forms[2],n:P.n,cost:nextPetPrice(list)}:null }
+  const s=SHOP.find(x=>x.id===w); return s&&!owns(list).has(w)&&s.cost?{id:w,e:s.e||"🏞️",n:s.n,cost:s.cost}:null }
+function wishHtml(list){ const w=wishItem(list); if(!w) return ""; const st=wallet(list).stars, left=Math.max(0,w.cost-st);
+  return `<div class="wishbar"><span style="font-size:1.8rem">${w.e}</span><div style="flex:1;display:flex;flex-direction:column;gap:4px">
+    <span class="small"><b>ของที่อยากได้: ${esc(w.n)}</b> · ${left?`อีก ⭐${left}`:"ดาวพอแล้ว ไปซื้อได้เลย!"}</span>
+    <div class="progress"><i style="width:${Math.min(100,Math.round(st/w.cost*100))}%;background:var(--beak)"></i></div></div></div>` }
 function renderDen(){
   const list=mine(), w=wallet(list), o=owns(list), pets=ownedPets(list), b=getBuddy(), R=room();
   if(!b){ $v.innerHTML=`<section class="card"><h2>บ้านคู่หู</h2><p>ไปเลือกคู่หูตัวแรกที่หน้า "ฝึกวันนี้" ก่อนนะ</p><a class="btn" href="#home">ไปเลือกคู่หู</a></section>`; return }
@@ -1807,17 +1832,22 @@ function renderDen(){
   const scene=SCENES[R.bg]||SCENES["bg:home"], mine1=R.wear[b.kind]||{};
   const buyBtn=(item,cost,label)=>denBuy===item?`<button class="btn small" data-confirm="${item}">ยืนยัน ใช้ ⭐${cost}</button><button class="btn ghost small" data-cancel="1">ไม่เอาแล้ว</button>`
     :`<button class="btn ghost small" data-buy="${item}" ${w.stars<cost?"disabled":""}>${label||`⭐${cost}`}</button>`;
-  const tabs=[["food","🍪 อาหารวิเศษ"],["pets","🐾 สัตว์คู่หู"],["head","บนหัว"],["neck","ที่คอ"],["side","ถือไว้"],["fx","รอบตัว"],["bg","🏞️ ฉาก"],["prop","ของในห้อง"]];
+  const tabs=[["food","🍪 อาหารวิเศษ"],["pets","🐾 สัตว์คู่หู"],["wear","🎀 ของแต่งตัว"],["fx","✨ เอฟเฟกต์"],["prop","🪴 ของในห้อง"],["bg","🏞️ ฉาก"]];
+  if(!tabs.some(t=>t[0]===denTab)) denTab="wear";
+  const worn=R.wear[b.kind]||[], wishBtn=id=>wish()===id?`<span class="small muted">⭐ เป้าหมายอยู่</span>`:`<button class="btn ghost small" data-wish="${id}" style="border:0">☆ อยากได้</button>`;
   $v.innerHTML=`<section class="card"><div class="row" style="justify-content:space-between"><h2>บ้านคู่หู</h2><span class="stars">⭐ ${w.stars} ดาวเวท</span></div>
     <p class="small muted">ดาวเวทได้จาก XP ทุกครั้งที่ฝึก (สะสมแล้ว ${w.earned} XP) ใช้ซื้ออาหารวิเศษให้คู่หูโต รับคู่หูตัวใหม่ และแต่งตัวแต่งบ้าน ทุกอย่างเป็นของเล่น ไม่มีผลกับการเรียน</p>
     ${denMsg?`<p class="small" style="color:var(--good)"><b>${esc(denMsg)}</b></p>`:""}
-    <div class="scene">${scene.svg()}
-      <div class="props">${(R.props||[]).map(id=>SHOP.find(s=>s.id===id)).filter(Boolean).map(s=>`<span title="${esc(s.n)}">${s.e}</span>`).join("")}</div>
+    ${wishHtml(list)}
+    <div class="scene ${denArrange?"arrange":""}" id="scene">${scene.svg()}
+      <div class="props" id="props">${R.props.map((p,i)=>{const s=SHOP.find(z=>z.id===p.id); return s?`<span class="prop-it ${denSel&&denSel.t==="p"&&denSel.i===i?"sel":""}" data-pi="${i}" title="${esc(s.n)}" style="left:${p.x}%;top:${p.y}%;font-size:${Math.round(32*(p.s||1))}px">${s.e}</span>`:""}).join("")}</div>
       <button class="hero-pet bbtn" id="petpat" type="button" aria-label="${esc(b.name)}">${petFace(b.kind,130,true,list)}</button>
       <div class="others">${pets.filter(x=>x.k!==b.kind).map(x=>`<button class="mini" data-act="${x.k}" title="ให้ ${esc(petName(x.k,list))} มาหน้าแรก">${petFace(x.k,46,true,list)}</button>`).join("")}</div>
     </div>
     <div class="row" style="justify-content:space-between"><span><b>${esc(b.name)}</b> · ${P.n} · ${GROW[st][1]}</span>
-      <span class="row" style="gap:6px"><button class="btn ghost small" id="prename">✏️ เปลี่ยนชื่อ</button>${st>0?`<button class="btn ghost small" id="part">🎨 ${buddyArt(b.kind)?"เปลี่ยนรูป":"วาดรูปให้"}</button>`:""}</span></div>
+      <span class="row" style="gap:6px"><button class="btn ${denArrange?"":"ghost"} small" id="arrange">${denArrange?"✓ จัดเสร็จแล้ว":"✋ จัดวางของ"}</button><button class="btn ghost small" id="prename">✏️ เปลี่ยนชื่อ</button>${st>0?`<button class="btn ghost small" id="part">🎨 ${buddyArt(b.kind)?"เปลี่ยนรูป":"วาดรูปให้"}</button>`:""}</span></div>
+    ${denArrange?`<div class="feedback"><span class="small"><b>โหมดจัดวาง:</b> ลากของบนตัว${esc(b.name)}หรือในห้องไปวางตรงไหนก็ได้ แตะของเพื่อเลือก แล้วปรับขนาดหรือเก็บออก</span>
+      ${denSel?`<div class="row"><button class="btn ghost small" data-sz="0.8">เล็กลง</button><button class="btn ghost small" data-sz="1.25">ใหญ่ขึ้น</button><button class="btn ghost small" data-rm="1">เก็บออก</button></div>`:""}</div>`:""}
     ${next?`<div class="growbox"><span class="nextshape" aria-hidden="true">${petLook(b.kind,st+1)}</span>
       <div style="flex:1;display:flex;flex-direction:column;gap:4px"><span class="small"><b>${st===0?`อีก ${next[0]-g} พลัง ไข่จะฟัก`:`อีก ${next[0]-g} พลังจะเข้าสู่${next[1]}`}</b>${st===3?" (มีออร่าเรืองแสง)":""}</span>
       <div class="progress"><i style="width:${Math.round((g-GROW[st][0])/(next[0]-GROW[st][0])*100)}%;background:var(--beak)"></i></div>
@@ -1832,13 +1862,19 @@ function renderDen(){
         ${have?`<span class="small muted">${GROW[growStage(growth(x.k,list))][1]}</span>${x.k===b.kind?`<span class="small muted">อยู่หน้าแรก</span>`:`<button class="btn ghost small" data-act="${x.k}">ให้มาหน้าแรก</button>`}`
           :x.how?`<span class="small muted">${formsText(x)}</span><span class="small muted">🔒 ${esc(x.how)}</span>`
           :`<span class="small muted">${formsText(x)}</span>${denBuy==="pet:"+x.k?`<input id="newname" maxlength="20" placeholder="ตั้งชื่อ" value="${esc(denName)}" style="font:inherit;width:100%;padding:6px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)">${buyBtn("pet:"+x.k,price)}`
-          :buyBtn("pet:"+x.k,price,`รับไข่มาเลี้ยง ⭐${price}`)}`}</div>` }).join("")}</div>
+          :`${buyBtn("pet:"+x.k,price,`รับไข่มาเลี้ยง ⭐${price}`)}${wishBtn("pet:"+x.k)}`}`}</div>` }).join("")}</div>
     <p class="small muted">คู่หูตัวใหม่มาเป็นไข่ ให้อาหารวิเศษแล้วจะฟักและเปลี่ยนร่าง ตัวที่มี 🔒 ซื้อไม่ได้ ต้องทำสำเร็จตามที่เขียนไว้</p>`
-  :`<div class="shopgrid">${SHOP.filter(s=>s.slot===denTab).map(s=>{ const have=o.has(s.id), on=denTab==="bg"?(R.bg===s.id):denTab==="prop"?R.props.includes(s.id):mine1[denTab]===s.id;
-      return `<div class="shopitem ${have?"have":""}">${denTab==="bg"?`<span class="thumb">${SCENES[s.id].svg()}</span>`:`<span style="font-size:2rem">${s.e}</span>`}<b class="small">${esc(s.n)}</b>
-        ${have?`<button class="btn ${on?"":"ghost"} small" data-equip="${s.id}">${on?"✓ ใช้อยู่":["head","neck","side","fx"].includes(denTab)?`ให้ ${esc(b.name)}`:"ใช้"}</button>`
-          :s.special?`<span class="small muted">🔒 ${esc(s.special)}</span>`:buyBtn(s.id,s.cost)}</div>` }).join("")}</div>
-    ${denTab==="prop"?`<p class="small muted">วางของในห้องได้พร้อมกัน 4 ชิ้น</p>`:denTab==="bg"?`<p class="small muted">${esc(P.n)}ชอบ${esc(SCENES[P.hab]?.n||"ทุกที่")}เป็นพิเศษ</p>`:`<p class="small muted">ของ${SLOT_NAME[denTab]}ใส่ได้ 1 ชิ้นต่อตัว ซื้อครั้งเดียวใช้กับทุกตัวได้</p>`}`}</section>
+  :`<div class="shopgrid">${SHOP.filter(s=>s.slot===denTab).sort((a,b2)=>(o.has(b2.id)-o.has(a.id))).map(s=>{ const have=o.has(s.id),
+        cnt=denTab==="prop"?R.props.filter(p=>p.id===s.id).length:denTab==="wear"?worn.filter(x=>x.id===s.id).length:0, on=denTab==="bg"?(R.bg===s.id):denTab==="fx"?R.fx[b.kind]===s.id:cnt>0;
+      return `<div class="shopitem ${have?"have":""}">${denTab==="bg"?`<span class="thumb">${SCENES[s.id].svg()}</span>`:`<span style="font-size:2rem">${s.e}</span>`}<b class="small">${esc(s.n)}</b>${s.rare!=null?`<span class="small muted">✨ ของหายาก</span>`:""}
+        ${have?(denTab==="prop"?`<button class="btn ghost small" data-equip="${s.id}">วางในห้อง${cnt?` (${cnt})`:""}</button>`
+            :denTab==="wear"?`<button class="btn ${on?"":"ghost"} small" data-equip="${s.id}">${on?"✓ ใส่อยู่ (แตะเพื่อถอด)":`ให้ ${esc(b.name)}`}</button>`
+            :`<button class="btn ${on?"":"ghost"} small" data-equip="${s.id}">${on?"✓ ใช้อยู่":"ใช้"}</button>`)
+          :s.special?`<span class="small muted">🔒 ${esc(s.special)}</span>`:`${buyBtn(s.id,s.cost)}${wishBtn(s.id)}`}</div>` }).join("")}</div>
+    ${denTab==="prop"?`<p class="small muted">วางได้ไม่จำกัด ชิ้นเดิมวางซ้ำหลายอันก็ได้ กด "✋ จัดวางของ" ด้านบนเพื่อลากไปวางตรงไหนก็ได้</p>`
+      :denTab==="bg"?`<p class="small muted">${esc(P.n)}ชอบ${esc(SCENES[P.hab]?.n||"ทุกที่")}เป็นพิเศษ</p>`
+      :denTab==="fx"?`<p class="small muted">เอฟเฟกต์ลอยอยู่รอบตัว ใช้ได้ทีละ 1 แบบต่อตัว</p>`
+      :`<p class="small muted">ใส่ได้หลายชิ้นพร้อมกัน ซื้อครั้งเดียวใช้กับทุกตัว กด "✋ จัดวางของ" แล้วลากไปไว้ตรงไหนก็ได้ ของหายาก ✨ ได้จากภารกิจประจำสัปดาห์</p>`}`}</section>
   ${denCele?`<div class="celebrate" role="dialog" aria-modal="true">${confetti()}<div class="celecard"><div class="celeicon">${denCele.icon}</div><h2>${esc(denCele.title)}</h2><p class="small">${esc(denCele.text)}</p><button class="btn" id="dcok">เยี่ยม!</button></div></div>`:""}`;
   const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
   const reRender=()=>renderDen();
@@ -1853,13 +1889,22 @@ function renderDen(){
     x.disabled=true; const now=new Date().toISOString();
     await saveAttempt({type:"shop",setId:"shop",item,cost,...(name?{name}:{}),topic:"บ้านคู่หู",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
     const s=SHOP.find(z=>z.id===item), r=room();
-    if(!isPet){ if(s.slot==="bg") r.bg=item; else if(s.slot==="prop") r.props=[...r.props,item].slice(-4); else { r.wear[b.kind]=r.wear[b.kind]||{}; r.wear[b.kind][s.slot]=item } lsSet("fieldnote.room",r) }
+    if(!isPet){ placeItem(r,s,b.kind); lsSet("fieldnote.room",r) }
+    if(wish()===item) lsSet("fieldnote.wish",null);
     if(isPet){ denCele={icon:"🥚",title:`ไข่ของ ${name} มาถึงบ้านแล้ว!`,text:`ให้ ${name} มาอยู่หน้าแรก แล้วให้อาหารวิเศษ ไข่จะฟักเมื่อมีพลังโต ${GROW[1][0]}`} }
     denMsg=isPet?"":`ได้ ${s.n} แล้ว`; denBuy=null; reRender() });
   $v.querySelectorAll("[data-equip]").forEach(x=>x.onclick=()=>{ const s=SHOP.find(z=>z.id===x.dataset.equip), r=room();
-    if(s.slot==="bg") r.bg=r.bg===s.id?null:s.id; else if(s.slot==="prop") r.props=r.props.includes(s.id)?r.props.filter(i=>i!==s.id):[...r.props,s.id].slice(-4);
-    else { r.wear[b.kind]=r.wear[b.kind]||{}; r.wear[b.kind][s.slot]=r.wear[b.kind][s.slot]===s.id?null:s.id }
-    lsSet("fieldnote.room",r); denMsg=""; reRender() });
+    if(s.slot==="bg") r.bg=r.bg===s.id?null:s.id; else if(s.slot==="fx") r.fx[b.kind]=r.fx[b.kind]===s.id?null:s.id;
+    else if(s.slot==="wear"&&(r.wear[b.kind]||[]).some(w=>w.id===s.id)) r.wear[b.kind]=r.wear[b.kind].filter(w=>w.id!==s.id);
+    else { placeItem(r,s,b.kind); denMsg=s.slot==="prop"?`วาง${s.n}แล้ว กด ✋ จัดวางของ เพื่อย้ายที่`:`${b.name}ใส่${s.n}แล้ว กด ✋ จัดวางของ เพื่อย้ายตำแหน่ง` }
+    lsSet("fieldnote.room",r); denSel=null; reRender() });
+  $v.querySelectorAll("[data-wish]").forEach(x=>x.onclick=()=>{ lsSet("fieldnote.wish",x.dataset.wish); denMsg="ตั้งเป็นของที่อยากได้แล้ว ดูความคืบหน้าได้ที่หน้าแรก"; reRender() });
+  on("arrange",()=>{ denArrange=!denArrange; denSel=null; reRender() });
+  $v.querySelectorAll("[data-sz]").forEach(x=>x.onclick=()=>{ const r=room(), o2=denSel.t==="p"?r.props[denSel.i]:(r.wear[b.kind]||[])[denSel.i]; if(!o2) return;
+    o2.s=Math.max(0.5,Math.min(2.5,(o2.s||1)*+x.dataset.sz)); lsSet("fieldnote.room",r); reRender() });
+  $v.querySelectorAll("[data-rm]").forEach(x=>x.onclick=()=>{ const r=room(); if(denSel.t==="p") r.props.splice(denSel.i,1); else (r.wear[b.kind]||[]).splice(denSel.i,1);
+    lsSet("fieldnote.room",r); denSel=null; reRender() });
+  if(denArrange) bindArrange(b.kind, reRender);
   $v.querySelectorAll("[data-food]").forEach(x=>x.onclick=async()=>{ const f=FOOD.find(z=>z.id===x.dataset.food); if(wallet(mine()).stars<f.cost) return; x.disabled=true; const now=new Date().toISOString(), before=growStage(growth(b.kind,mine()));
     await saveAttempt({type:"shop",setId:"shop",item:f.id,cost:f.cost,pet:b.kind,grow:f.grow,topic:"ให้อาหารวิเศษ",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
     const after=growStage(growth(b.kind,mine()));
@@ -1867,9 +1912,27 @@ function renderDen(){
       text:after===4?"มีออร่าเรืองแสงแล้ว ขอบคุณที่ดูแลกันมาตลอด":before===0?"ยินดีต้อนรับสู่บ้านนะ ตอนนี้แต่งตัวให้ได้แล้ว":"ร่างใหม่สวยมากเลย ฝึกต่อไปเรื่อยๆ แล้วมาให้อาหารกันอีกนะ"};
     denMsg=pickDay([`${b.name} ชอบ${f.n}มาก!`,`${b.name} กิน${f.n}อย่างมีความสุข`,`${b.name} ยิ้มกว้างเลย`],Date.now()%7); reRender();
     const pp=document.getElementById("petpat"); if(pp){ pp.classList.remove("hop"); void pp.offsetWidth; pp.classList.add("hop") } });
-  on("petpat",()=>{ const pp=document.getElementById("petpat"); pp.classList.remove("hop"); void pp.offsetWidth; pp.classList.add("hop") });
+  on("petpat",()=>{ if(denArrange) return; const pp=document.getElementById("petpat"); pp.classList.remove("hop"); void pp.offsetWidth; pp.classList.add("hop") });
   on("prename",()=>{ const n=prompt("ชื่อใหม่ของ "+b.name, b.name); if(n&&n.trim()){ const names=ls("fieldnote.petnames",{}); names[b.kind]=n.trim().slice(0,20); lsSet("fieldnote.petnames",names); reRender() } });
   on("part",()=>pickImg(petArtKey(b.kind),reRender));
+}
+
+function placeItem(r,s,kind){
+  if(s.slot==="bg") r.bg=s.id;
+  else if(s.slot==="prop"){ const n=r.props.length; r.props.push({id:s.id,x:[14,86,30,70,50,22,78][n%7],y:[82,82,86,86,90,70,70][n%7],s:1}) }
+  else if(s.slot==="fx") r.fx[kind]=s.id;
+  else { r.wear[kind]=r.wear[kind]||[]; const n=r.wear[kind].length; r.wear[kind].push({id:s.id,x:[50,50,86,14,70,30][n%6],y:[6,66,62,62,30,30][n%6],s:1}) } }
+/* drag worn things around the companion, and room things around the scene; positions are % of the box they sit in */
+function bindArrange(kind, reRender){
+  const grab=(el,t,i,box)=>{ el.onpointerdown=e=>{ e.preventDefault(); e.stopPropagation(); denSel={t,i}; $v.querySelectorAll(".sel").forEach(z=>z.classList.remove("sel")); el.classList.add("sel");
+      el.setPointerCapture(e.pointerId); let moved=false;
+      el.onpointermove=ev=>{ const rc=box().getBoundingClientRect(); const x=Math.max(-10,Math.min(110,(ev.clientX-rc.left)/rc.width*100)), y=Math.max(-10,Math.min(110,(ev.clientY-rc.top)/rc.height*100));
+        el.style.left=x+"%"; el.style.top=y+"%"; el.dataset.nx=x.toFixed(1); el.dataset.ny=y.toFixed(1); moved=true };
+      el.onpointerup=()=>{ el.onpointermove=null; el.onpointerup=null; const r=room(), o=t==="p"?r.props[i]:(r.wear[kind]||[])[i];
+        if(o&&moved){ o.x=+el.dataset.nx; o.y=+el.dataset.ny; lsSet("fieldnote.room",r) } reRender() } } };
+  $v.querySelectorAll("#props .prop-it").forEach(el=>grab(el,"p",+el.dataset.pi,()=>document.getElementById("props")));
+  const hero=document.querySelector("#petpat .petwrap");
+  $v.querySelectorAll("#petpat .w-it").forEach(el=>{ if(denSel&&denSel.t==="w"&&denSel.i===+el.dataset.wi) el.classList.add("sel"); grab(el,"w",+el.dataset.wi,()=>hero) });
 }
 
 /* ---------- tell dad (light, once a week): she picks what to tell, dad reacts warmly; no scoring ---------- */
@@ -2240,6 +2303,23 @@ let showExamples = true, analysisText = "", fbList = [];
 (async()=>{ const d=await (window.claude?.use?.("db")??Promise.resolve(null)).catch(()=>null); if(!d) return;
   try{ d.collection("feedback").orderBy("at","desc").limit(30).onSnapshot(s=>{fbList=s.docs.map(x=>({id:x.id,...x.data()}));if(view==="parent")render()},()=>{}) }catch(e){} })();
 let lastImport="";   /* new data re-renders the page, so the import result is kept here and drawn again */
+/* thinking time (question shown → answer) and explanation time (answer → next question), last 14 days.
+   fast/slow is relative to her own median time for that level, so it adapts as she gets quicker */
+function timeCard(all){
+  const since=Date.now()-14*86400000, its=all.filter(a=>new Date(a.endedAt)>=since&&a.type!=="review").flatMap(a=>a.items||[]).filter(x=>!x.skipped&&x.timeSec>0);
+  if(its.length<6) return "";
+  const med=xs=>{const v=[...xs].sort((a,b)=>a-b);return v.length?v[Math.floor(v.length/2)]:0};
+  const ml={}; [1,2,3].forEach(l=>ml[l]=med(its.filter(x=>x.level===l).map(x=>x.timeSec))||med(its.map(x=>x.timeSec)));
+  const q={fw:0,sw:0,fc:0,sc:0,nc:0,nw:0}; its.forEach(x=>{const m=ml[x.level], k=x.timeSec<Math.max(5,m*0.6)?"f":x.timeSec>m*1.4?"s":"n"; q[k+(x.correct?"c":"w")]++});
+  const ex=its.filter(x=>x.exSec!=null), exC=ex.filter(x=>x.correct), exW=ex.filter(x=>!x.correct), skip=exC.filter(x=>x.exSec<3).length;
+  const cell=(n,t,d,c)=>`<div class="stat" style="border-left:4px solid ${c};padding-left:8px"><b>${n}</b><span class="small" style="font-weight:600">${t}</span><span class="small muted">${d}</span></div>`;
+  return `<section class="card"><h3>เวลาคิดและการอ่านเฉลย (14 วัน)</h3>
+    <p class="small muted">เวลาคิดนับตั้งแต่ข้อขึ้นจนกดตอบ (รวมเวลาฟังเสียงอ่าน) เร็วหรือช้าเทียบกับเวลาปกติของลูกเองในข้อระดับเดียวกัน · กลางของระดับ 1/2/3: ${ml[1]}/${ml[2]}/${ml[3]} วินาที</p>
+    <div class="stats" style="grid-template-columns:repeat(2,1fr)">${cell(q.fc,"เร็วและถูก","เข้าใจแล้ว","var(--good)")}${cell(q.sc,"ช้าแต่ถูก","ยังไม่แน่น ฝึกต่อ","var(--beak)")}${cell(q.fw,"เร็วแต่ผิด","สะเพร่าหรือเดา","var(--warn)")}${cell(q.sw,"คิดนานแล้วผิด","ยังไม่เข้าใจ ควรสอนใหม่","var(--bad,#c62828)")}</div>
+    <p class="small muted">เร็ว = ใช้เวลาไม่ถึง 60% ของเวลากลาง · ช้า = เกิน 140% · ที่เหลือเป็นเวลาปกติ (ถูก ${q.nc} ผิด ${q.nw})</p>
+    ${ex.length?`<p class="small">อ่านเฉลยหลังตอบ: ข้อที่ตอบถูก ใช้เวลากลาง ${med(exC.map(x=>x.exSec))} วินาที · ข้ามเฉลย (ไม่ถึง 3 วินาที) <b>${skip}/${exC.length}</b> ข้อ · ข้อที่ตอบผิด ใช้เวลากลาง ${med(exW.map(x=>x.exSec))} วินาที</p>`
+      :`<p class="small muted">เวลาอ่านเฉลยเริ่มบันทึกตั้งแต่ 7 พ.ย. 2569</p>`}
+  </section>` }
 function renderParent(){
   const pool = showExamples ? attempts : realAttempts();
   const all = pool.filter(isLesson), skips = pool.filter(isSkip), voc = pool.filter(a=>a.type==="vocab");
@@ -2388,6 +2468,7 @@ function renderParent(){
   <section class="card"><h3>วันที่ขอพัก</h3>
     ${skips.length?skips.slice(0,7).map(k=>`<div class="logi"><span class="small muted">${new Date(k.endedAt).toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})}</span><span>${esc(k.reason||"-")}${k.memo?` · “${esc(k.memo)}”`:""}</span></div>`).join(""):`<p class="muted small">ยังไม่มีวันที่ขอพัก</p>`}
   </section>
+  ${timeCard(all)}
   <section class="card"><h3>ข้อที่ควรนั่งคุยกัน</h3>
     ${talk.length?talk.map(x=>`<div class="logi"><span class="chip l${x.level}">${esc(x.topic)}</span><span class="small">${esc(x.prompt||x.qid)}</span></div>`).join(""):`<p class="muted small">ยังไม่มีข้อที่ต้องคุย</p>`}
     ${hardRun>=2?`<p class="small" style="color:var(--warn)">ลูกกด "ยาก" หรือ "ยากมาก" ${hardRun} ครั้งจาก 3 ครั้งล่าสุด อาจถึงเวลาลดระดับหรือคุยกันก่อน</p>`:""}
