@@ -2239,6 +2239,7 @@ function renderMap(){
 let showExamples = true, analysisText = "", fbList = [];
 (async()=>{ const d=await (window.claude?.use?.("db")??Promise.resolve(null)).catch(()=>null); if(!d) return;
   try{ d.collection("feedback").orderBy("at","desc").limit(30).onSnapshot(s=>{fbList=s.docs.map(x=>({id:x.id,...x.data()}));if(view==="parent")render()},()=>{}) }catch(e){} })();
+let lastImport="";   /* new data re-renders the page, so the import result is kept here and drawn again */
 function renderParent(){
   const pool = showExamples ? attempts : realAttempts();
   const all = pool.filter(isLesson), skips = pool.filter(isSkip), voc = pool.filter(a=>a.type==="vocab");
@@ -2275,7 +2276,7 @@ function renderParent(){
   ${db?`<section class="card"><h3>นำเข้าผลจากเครื่องลูก</h3>
     <p class="small muted">ลูกส่งมาเป็นไฟล์ทาง LINE: บันทึกไฟล์ไว้ในเครื่อง แล้วกดเลือกไฟล์ (เลือกหลายไฟล์พร้อมกันได้) ส่งไฟล์เดิมซ้ำได้ ระบบไม่นับซ้ำ</p>
     <div class="row"><label class="btn" style="cursor:pointer">เลือกไฟล์จากลูก<input type="file" id="impfile" accept=".txt,text/plain" multiple hidden></label></div>
-    <div id="impfmsg" aria-live="polite"></div>
+    <div id="impfmsg" aria-live="polite">${lastImport}</div>
     <p class="small muted">หรือวางรหัสที่ส่งมาเป็นข้อความ (ขึ้นต้นด้วย SK2:, SKP: หรือ FIELDNOTE1:)</p>
     <textarea id="imp" rows="3" style="font-family:var(--mono);font-size:.75rem;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)"></textarea>
     <label class="small row" style="gap:6px"><input type="checkbox" id="imptest"> นี่คือรหัสจากการทดลองเล่น (ติดป้ายทดสอบ ไม่นับในการวิเคราะห์)</label>
@@ -2417,14 +2418,18 @@ function renderParent(){
       :e.message==="parts"?`ยังขาดส่วนที่ ${e.miss.join(", ")} (จากทั้งหมด ${e.n} ส่วน) คัดลอกทุกส่วนจาก LINE มาวางต่อกันในกล่องเดียว แล้วกดใหม่`
       :e.message==="cut"?`รหัสไม่ครบ (ได้มา ${(e.len||0).toLocaleString()} ตัวอักษร) น่าจะถูกตัดตอนส่งหรือคัดลอก ให้ลูกเปิดเมนู "ส่งให้พ่อ" ดูความยาวรหัสเทียบกัน ถ้า LINE แบ่งเป็นหลายข้อความ ให้คัดลอกทุกข้อความมาวางต่อกัน`
       :`อ่านรหัสได้ แต่บันทึกไม่สำเร็จ (${e.message||e}) ลองกดใหม่อีกครั้ง`}ig.disabled=false;};
+  function bindImpClear(){ const c=document.getElementById("impclear"); if(c) c.onclick=()=>{lastImport="";const bx=document.getElementById("impfmsg"); if(bx) bx.innerHTML=""} }
+  bindImpClear();
   const imf=document.getElementById("impfile"); if(imf) imf.onchange=async()=>{const box=document.getElementById("impfmsg"); const files=[...imf.files]; if(!files.length) return;
     box.innerHTML=`<p class="small">กำลังนำเข้า ${files.length} ไฟล์…</p>`; let n=0,k=0; const bad=[], what=[];
     for(const f of files){ try{ const r=await importCode(await f.text(), document.getElementById("imptest").checked); n+=r.n; k+=r.k; what.push(...r.what) }catch(e){ bad.push(f.name) } }
-    box.innerHTML=(n||k?`<div class="feedback" style="border-left:4px solid var(--ok,#2e7d32)"><b>✅ ได้รับแล้ว ${n} รายการ${k?` และข้อความถึง Claude ${k} ข้อความ`:""}</b>
+    lastImport=(n||k?`<div class="feedback" style="border-left:4px solid var(--ok,#2e7d32)"><b>✅ ได้รับแล้ว ${n} รายการ${k?` และข้อความถึง Claude ${k} ข้อความ`:""}</b>
         <ul class="small" style="margin:6px 0 0;padding-left:1.2em">${what.slice(-12).map(w=>`<li>${esc(w)}</li>`).join("")}</ul>
         <span class="small muted">รายการที่เคยนำเข้าแล้วจะถูกเขียนทับ ไม่นับซ้ำ สรุปด้านบนอัปเดตแล้ว</span></div>`:"")
       +(bad.length?`<p class="small" style="color:var(--warn)">❌ อ่านไม่ได้: ${esc(bad.join(", "))} ไฟล์นี้ไม่ใช่ไฟล์จากแอป หรือไม่ครบ ให้ลูกส่งใหม่</p>`:"")
-      +(!n&&!k&&!bad.length?`<p class="small">ไฟล์นี้ไม่มีผลใหม่</p>`:"");
+      +(!n&&!k&&!bad.length?`<p class="small">ไฟล์นี้ไม่มีผลใหม่</p>`:"")
+      +`<button class="btn ghost" id="impclear" style="margin-top:6px">ปิดข้อความนี้</button>`;
+    const bx=document.getElementById("impfmsg"); if(bx) bx.innerHTML=lastImport; bindImpClear();
     imf.value=""; };
   const mdec=async(id,decision)=>{ const m=document.getElementById("mmsg-"+id), note=($v.querySelector(`[data-mnote="${id}"]`)?.value||"").trim();
     if(decision==="change"&&!note){ m.textContent="พิมพ์สิ่งที่อยากให้ปรับก่อน"; return }
