@@ -360,17 +360,29 @@ async function renderSend(all){
   const ta=(id,v)=>`<textarea id="${id}" readonly rows="3" style="font-family:var(--mono);font-size:.75rem;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">${v}</textarea>`;
   $v.innerHTML=`<section class="card"><h2>ส่งผลให้พ่อ</h2>
     ${code?`<p>มีผลฝึก <b>${all?lsRead().length:u.a.length}</b> ครั้ง และข้อความถึง Claude <b>${all?lsFb().length:u.f.length}</b> ข้อความ ที่ยังไม่ได้ส่ง</p>
+    <ol style="margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px">
+      <li>กด <b>ส่งเป็นไฟล์</b> แล้วเลือก <b>LINE</b> → เลือกพ่อ</li><li>กลับมากด <b>ส่งเรียบร้อยแล้ว</b></li></ol>
+    <div class="row"><button class="btn" id="sendfile">ส่งเป็นไฟล์</button><span class="small" id="fmsg" aria-live="polite"></span></div>
+    <div class="row"><button class="btn ghost" id="sent">ส่งเรียบร้อยแล้ว</button></div>
+    <details><summary class="small muted" style="cursor:pointer">ส่งไฟล์ไม่ได้? ใช้วิธีคัดลอกรหัสแทน</summary><div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
     ${parts.length>1?`<p>รหัสยาว LINE ส่งทีเดียวไม่หมด เลยแบ่งเป็น <b>${parts.length} ส่วน</b> คัดลอกแล้ววางส่งใน LINE <b>ทีละส่วน ส่วนละ 1 ข้อความ</b> จนครบ แล้วกลับมากด <b>ส่งเรียบร้อยแล้ว</b></p>`
       :`<ol style="margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px">
-      <li>กด <b>คัดลอกรหัส</b></li><li>เปิด LINE แล้ววางส่งให้พ่อ</li><li>กลับมากด <b>ส่งเรียบร้อยแล้ว</b></li></ol>`}
+      <li>กด <b>คัดลอกรหัส</b></li><li>เปิด LINE แล้ววางส่งให้พ่อ</li></ol>`}
     ${parts.map((p,i)=>`<div style="display:flex;flex-direction:column;gap:6px">${parts.length>1?`<b class="small">ส่วนที่ ${i+1} จาก ${parts.length}</b>`:`<p class="small muted">รหัสยาว ${code.length.toLocaleString()} ตัวอักษร</p>`}
-      ${ta("code"+i,p)}<div class="row"><button class="btn${i?" ghost":""}" data-copy="${i}">คัดลอก${parts.length>1?`ส่วนที่ ${i+1}`:"รหัส"}</button><span class="small" id="cmsg${i}" aria-live="polite"></span></div></div>`).join("")}
-    <div class="row"><button class="btn ghost" id="sent">ส่งเรียบร้อยแล้ว</button></div>`:`<p class="muted">ส่งครบทุกครั้งแล้ว ไม่มีผลค้างส่ง</p>
+      ${ta("code"+i,p)}<div class="row"><button class="btn ghost" data-copy="${i}">คัดลอก${parts.length>1?`ส่วนที่ ${i+1}`:"รหัส"}</button><span class="small" id="cmsg${i}" aria-live="polite"></span></div></div>`).join("")}
+    </div></details>`:`<p class="muted">ส่งครบทุกครั้งแล้ว ไม่มีผลค้างส่ง</p>
     <button class="btn ghost" id="resend">ต้องการส่งทั้งหมดอีกครั้ง</button>`}
     <button class="btn ghost" id="sback" style="border:0;padding-left:0">← กลับหน้าแรก</button></section>`;
   document.getElementById("sback").onclick=()=>{view="home";render()};
   const rs=document.getElementById("resend"); if(rs) rs.onclick=()=>renderSend(true);
   if(!code) return;
+  document.getElementById("sendfile").onclick=async()=>{const m=document.getElementById("fmsg"); const d=new Date(), pad=x=>String(x).padStart(2,"0");
+    const name=`สมุดคาถา-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.txt`;
+    const file=new File([code],name,{type:"text/plain"});
+    try{ if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:"ผลฝึกสมุดคาถา"}); m.textContent="ส่งแล้ว กด \"ส่งเรียบร้อยแล้ว\" ได้เลย"; return } }
+    catch(e){ if(e&&e.name==="AbortError"){ m.textContent="ยกเลิกแล้ว กดส่งใหม่ได้"; return } }
+    const url=URL.createObjectURL(file), a=document.createElement("a"); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),4000);
+    m.textContent="บันทึกไฟล์ลงเครื่องแล้ว เปิด LINE กด + แล้วแนบไฟล์นี้ส่งให้พ่อ"; };
   $v.querySelectorAll("[data-copy]").forEach(btn=>btn.onclick=()=>{const i=+btn.dataset.copy;
     copyText(parts[i],document.getElementById("code"+i),document.getElementById("cmsg"+i),parts.length>1?`คัดลอกส่วนที่ ${i+1} แล้ว ไปวางใน LINE ได้เลย`:"คัดลอกแล้ว ไปวางใน LINE ได้เลย")});
   document.getElementById("sent").onclick=()=>{markSent();view="home";render()};
@@ -2247,7 +2259,9 @@ function renderParent(){
     <p class="note">เวลาคือช่วงที่เปิดหน้าเว็บ ใช้ดูแนวโน้ม ไม่ใช่เวลาที่ตั้งใจจริงทั้งหมด</p>`}
   </section>
   ${db?`<section class="card"><h3>นำเข้าผลจากเครื่องลูก</h3>
-    <p class="small muted">วางรหัสที่ลูกส่งมาทาง LINE (ขึ้นต้นด้วย SK2: หรือ FIELDNOTE1:) ส่งรหัสเดิมซ้ำได้ ระบบไม่นับซ้ำ</p>
+    <p class="small muted">ลูกส่งมาเป็นไฟล์ทาง LINE: บันทึกไฟล์ไว้ในเครื่อง แล้วกดเลือกไฟล์ (เลือกหลายไฟล์พร้อมกันได้) ส่งไฟล์เดิมซ้ำได้ ระบบไม่นับซ้ำ</p>
+    <div class="row"><label class="btn" style="cursor:pointer">เลือกไฟล์จากลูก<input type="file" id="impfile" accept=".txt,text/plain" multiple hidden></label></div>
+    <p class="small muted">หรือวางรหัสที่ส่งมาเป็นข้อความ (ขึ้นต้นด้วย SK2:, SKP: หรือ FIELDNOTE1:)</p>
     <textarea id="imp" rows="3" style="font-family:var(--mono);font-size:.75rem;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)"></textarea>
     <label class="small row" style="gap:6px"><input type="checkbox" id="imptest"> นี่คือรหัสจากการทดลองเล่น (ติดป้ายทดสอบ ไม่นับในการวิเคราะห์)</label>
     <div class="row"><button class="btn" id="impgo">นำเข้า</button><span class="small" id="impmsg" aria-live="polite"></span></div></section>`:""}
@@ -2388,6 +2402,10 @@ function renderParent(){
       :e.message==="parts"?`ยังขาดส่วนที่ ${e.miss.join(", ")} (จากทั้งหมด ${e.n} ส่วน) คัดลอกทุกส่วนจาก LINE มาวางต่อกันในกล่องเดียว แล้วกดใหม่`
       :e.message==="cut"?`รหัสไม่ครบ (ได้มา ${(e.len||0).toLocaleString()} ตัวอักษร) น่าจะถูกตัดตอนส่งหรือคัดลอก ให้ลูกเปิดเมนู "ส่งให้พ่อ" ดูความยาวรหัสเทียบกัน ถ้า LINE แบ่งเป็นหลายข้อความ ให้คัดลอกทุกข้อความมาวางต่อกัน`
       :`อ่านรหัสได้ แต่บันทึกไม่สำเร็จ (${e.message||e}) ลองกดใหม่อีกครั้ง`}ig.disabled=false;};
+  const imf=document.getElementById("impfile"); if(imf) imf.onchange=async()=>{const msg=document.getElementById("impmsg"); const files=[...imf.files]; if(!files.length) return;
+    msg.textContent="กำลังนำเข้า…"; let n=0,k=0; const bad=[];
+    for(const f of files){ try{ const r=await importCode(await f.text(), document.getElementById("imptest").checked); n+=r.n; k+=r.k }catch(e){ bad.push(f.name) } }
+    msg.textContent=`นำเข้าแล้ว ${n} ครั้ง และข้อความ ${k} ข้อความ`+(bad.length?` · อ่านไม่ได้: ${bad.join(", ")} (ไฟล์นี้ไม่ใช่ไฟล์จากแอป หรือไม่ครบ)`:""); imf.value=""; };
   const mdec=async(id,decision)=>{ const m=document.getElementById("mmsg-"+id), note=($v.querySelector(`[data-mnote="${id}"]`)?.value||"").trim();
     if(decision==="change"&&!note){ m.textContent="พิมพ์สิ่งที่อยากให้ปรับก่อน"; return }
     m.textContent="กำลังบันทึก…"; try{ await db.collection("feedback").add({kind:"mission",missionId:id,decision,note,at:new Date().toISOString()}); m.textContent=decision==="approve"?"อนุมัติแล้ว":"ส่งแล้ว" }catch(e){ m.textContent="บันทึกไม่สำเร็จ ลองใหม่" } };
