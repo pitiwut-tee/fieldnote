@@ -368,11 +368,16 @@ async function renderSend(all){
   document.getElementById("sent").onclick=()=>{markSent();view="home";render()};
 }
 async function importCode(raw, asTest){
-  let data; const m2=raw.match(/SK2:([A-Za-z0-9_-]+)/), m1=raw.match(/FIELDNOTE1:([A-Za-z0-9+/=\s]+)/);
-  if(m2){ const c=m2[1].replace(/-/g,"+").replace(/_/g,"/"); const bin=atob(c+"=".repeat((4-c.length%4)%4));
-    const bytes=Uint8Array.from(bin,ch=>ch.charCodeAt(0));
-    data=JSON.parse(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text()); }
-  else if(m1) data=JSON.parse(b64d(m1[1].replace(/\s/g,""))); else throw new Error("bad");
+  /* LINE may wrap a long code, split it into several bubbles, or add invisible characters: join everything first */
+  raw=String(raw||"").replace(/[\s\u200B-\u200D\u2060\uFEFF]/g,"");
+  let data; const m2=raw.match(/SK2:([A-Za-z0-9_-]+)/), m1=raw.match(/FIELDNOTE1:([A-Za-z0-9+/=]+)/);
+  if(!m2&&!m1) throw new Error("bad");
+  try{
+    if(m2){ const c=m2[1].replace(/-/g,"+").replace(/_/g,"/"); const bin=atob(c+"=".repeat((4-c.length%4)%4));
+      const bytes=Uint8Array.from(bin,ch=>ch.charCodeAt(0));
+      data=JSON.parse(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text()); }
+    else data=JSON.parse(b64d(m1[1]));
+  }catch(e){ const er=new Error("cut"); er.len=(m2||m1)[1].length; throw er }
   let n=0,k=0;
   for(const a of (data.a||[])){ const id=("s-"+(a.setId||a.type)+"-"+a.endedAt).replace(/[^A-Za-z0-9_-]/g,""); const {example,...rest}=fatten(a); await db.collection("attempts").doc(id).set({...rest,via:"code",test:!!(a.test||asTest)}); n++ }
   if(data.b&&!asTest){ try{ await db.collection("feedback").doc("buddy").set({kind:"buddy",name:data.b.name,buddy:data.b.kind,at:new Date().toISOString()}) }catch(e){} }
@@ -2364,7 +2369,9 @@ function renderParent(){
          m.textContent="ลบแล้ว"; }catch(e){ m.textContent="ลบไม่สำเร็จ ลองใหม่อีกครั้ง"; dt.disabled=false } };
   const ig=document.getElementById("impgo"); if(ig) ig.onclick=async()=>{const msg=document.getElementById("impmsg");ig.disabled=true;msg.textContent="กำลังนำเข้า…";
     try{const {n,k}=await importCode(document.getElementById("imp").value, document.getElementById("imptest").checked);msg.textContent=`นำเข้าแล้ว ${n} ครั้ง และข้อความ ${k} ข้อความ`;}
-    catch(e){msg.textContent="รหัสไม่ถูกต้อง ตรวจว่าคัดลอกมาครบทั้งข้อความ"}ig.disabled=false;};
+    catch(e){msg.textContent=e.message==="bad"?"ไม่พบรหัส ต้องมีคำว่า SK2: หรือ FIELDNOTE1: อยู่ในข้อความที่วาง"
+      :e.message==="cut"?`รหัสไม่ครบ (ได้มา ${(e.len||0).toLocaleString()} ตัวอักษร) น่าจะถูกตัดตอนส่งหรือคัดลอก ให้ลูกเปิดเมนู "ส่งให้พ่อ" ดูความยาวรหัสเทียบกัน ถ้า LINE แบ่งเป็นหลายข้อความ ให้คัดลอกทุกข้อความมาวางต่อกัน`
+      :`อ่านรหัสได้ แต่บันทึกไม่สำเร็จ (${e.message||e}) ลองกดใหม่อีกครั้ง`}ig.disabled=false;};
   const mdec=async(id,decision)=>{ const m=document.getElementById("mmsg-"+id), note=($v.querySelector(`[data-mnote="${id}"]`)?.value||"").trim();
     if(decision==="change"&&!note){ m.textContent="พิมพ์สิ่งที่อยากให้ปรับก่อน"; return }
     m.textContent="กำลังบันทึก…"; try{ await db.collection("feedback").add({kind:"mission",missionId:id,decision,note,at:new Date().toISOString()}); m.textContent=decision==="approve"?"อนุมัติแล้ว":"ส่งแล้ว" }catch(e){ m.textContent="บันทึกไม่สำเร็จ ลองใหม่" } };
