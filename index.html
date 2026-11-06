@@ -348,28 +348,43 @@ async function packCode(obj){
 }
 async function exportCode(all){ const a=all?lsRead():unsent().a, f=all?lsFb():unsent().f; const b=getBuddy(); return (a.length||f.length)?await packCode({a:a.map(slim),f:f.map(({sent,...x})=>x),...(b?{b:{name:b.name,kind:b.kind}}:{})}):"" }
 
+/* LINE cuts long messages (about 1,000 characters got through), so a long code is sent as numbered parts */
+const PART_LEN=800;
+function splitCode(code){ if(code.length<=PART_LEN) return [code];
+  const id=(Date.now()%46656).toString(36).padStart(3,"0"), n=Math.ceil(code.length/PART_LEN), out=[];
+  for(let i=0;i<n;i++) out.push(`SKP:${id}:${i+1}/${n}:`+code.slice(i*PART_LEN,(i+1)*PART_LEN));
+  return out }
+async function copyText(t,box,m,okMsg){ try{await navigator.clipboard.writeText(t);m.textContent=okMsg}catch(e){box.focus();box.select();m.textContent="กดค้างที่กล่อง แล้วเลือก \"เลือกทั้งหมด\" ก่อนคัดลอก"} }
 async function renderSend(all){
-  const u=unsent(); const code=await exportCode(all);
+  const u=unsent(); const code=await exportCode(all); const parts=code?splitCode(code):[];
+  const ta=(id,v)=>`<textarea id="${id}" readonly rows="3" style="font-family:var(--mono);font-size:.75rem;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">${v}</textarea>`;
   $v.innerHTML=`<section class="card"><h2>ส่งผลให้พ่อ</h2>
     ${code?`<p>มีผลฝึก <b>${all?lsRead().length:u.a.length}</b> ครั้ง และข้อความถึง Claude <b>${all?lsFb().length:u.f.length}</b> ข้อความ ที่ยังไม่ได้ส่ง</p>
-    <ol style="margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px">
-      <li>กด <b>คัดลอกรหัส</b></li><li>เปิด LINE แล้ววางส่งให้พ่อ</li><li>กลับมากด <b>ส่งเรียบร้อยแล้ว</b></li></ol>
-    <p class="small muted">รหัสยาว ${code.length.toLocaleString()} ตัวอักษร</p>
-    <textarea id="code" readonly rows="4" style="font-family:var(--mono);font-size:.75rem;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">${code}</textarea>
-    <div class="row"><button class="btn" id="copy">คัดลอกรหัส</button><button class="btn ghost" id="sent">ส่งเรียบร้อยแล้ว</button></div>
-    <p class="small" id="cmsg" aria-live="polite"></p>`:`<p class="muted">ส่งครบทุกครั้งแล้ว ไม่มีผลค้างส่ง</p>
+    ${parts.length>1?`<p>รหัสยาว LINE ส่งทีเดียวไม่หมด เลยแบ่งเป็น <b>${parts.length} ส่วน</b> คัดลอกแล้ววางส่งใน LINE <b>ทีละส่วน ส่วนละ 1 ข้อความ</b> จนครบ แล้วกลับมากด <b>ส่งเรียบร้อยแล้ว</b></p>`
+      :`<ol style="margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px">
+      <li>กด <b>คัดลอกรหัส</b></li><li>เปิด LINE แล้ววางส่งให้พ่อ</li><li>กลับมากด <b>ส่งเรียบร้อยแล้ว</b></li></ol>`}
+    ${parts.map((p,i)=>`<div style="display:flex;flex-direction:column;gap:6px">${parts.length>1?`<b class="small">ส่วนที่ ${i+1} จาก ${parts.length}</b>`:`<p class="small muted">รหัสยาว ${code.length.toLocaleString()} ตัวอักษร</p>`}
+      ${ta("code"+i,p)}<div class="row"><button class="btn${i?" ghost":""}" data-copy="${i}">คัดลอก${parts.length>1?`ส่วนที่ ${i+1}`:"รหัส"}</button><span class="small" id="cmsg${i}" aria-live="polite"></span></div></div>`).join("")}
+    <div class="row"><button class="btn ghost" id="sent">ส่งเรียบร้อยแล้ว</button></div>`:`<p class="muted">ส่งครบทุกครั้งแล้ว ไม่มีผลค้างส่ง</p>
     <button class="btn ghost" id="resend">ต้องการส่งทั้งหมดอีกครั้ง</button>`}
     <button class="btn ghost" id="sback" style="border:0;padding-left:0">← กลับหน้าแรก</button></section>`;
   document.getElementById("sback").onclick=()=>{view="home";render()};
   const rs=document.getElementById("resend"); if(rs) rs.onclick=()=>renderSend(true);
   if(!code) return;
-  document.getElementById("copy").onclick=async()=>{const t=document.getElementById("code");const m=document.getElementById("cmsg");
-    try{await navigator.clipboard.writeText(t.value);m.textContent="คัดลอกแล้ว ไปวางใน LINE ได้เลย"}catch(e){t.focus();t.select();m.textContent="กดค้างที่กล่องรหัสแล้วเลือกคัดลอก"}};
+  $v.querySelectorAll("[data-copy]").forEach(btn=>btn.onclick=()=>{const i=+btn.dataset.copy;
+    copyText(parts[i],document.getElementById("code"+i),document.getElementById("cmsg"+i),parts.length>1?`คัดลอกส่วนที่ ${i+1} แล้ว ไปวางใน LINE ได้เลย`:"คัดลอกแล้ว ไปวางใน LINE ได้เลย")});
   document.getElementById("sent").onclick=()=>{markSent();view="home";render()};
 }
 async function importCode(raw, asTest){
   /* LINE may wrap a long code, split it into several bubbles, or add invisible characters: join everything first */
   raw=String(raw||"").replace(/[\s\u200B-\u200D\u2060\uFEFF]/g,"");
+  if(raw.includes("SKP:")){ const got={}; let n=0, id=null;
+    raw.split("SKP:").slice(1).forEach(seg=>{const m=seg.match(/^([a-z0-9]+):(\d+)\/(\d+):(.*)$/); if(!m) return;
+      if(id&&m[1]!==id) return; id=m[1]; n=+m[3]; got[+m[2]]=m[4]});
+    const miss=[]; for(let i=1;i<=n;i++) if(!(i in got)) miss.push(i);
+    if(!n) throw new Error("bad");
+    if(miss.length){ const er=new Error("parts"); er.miss=miss; er.n=n; throw er }
+    raw=Array.from({length:n},(_,i)=>got[i+1]).join(""); }
   let data; const m2=raw.match(/SK2:([A-Za-z0-9_-]+)/), m1=raw.match(/FIELDNOTE1:([A-Za-z0-9+/=]+)/);
   if(!m2&&!m1) throw new Error("bad");
   try{
@@ -2370,6 +2385,7 @@ function renderParent(){
   const ig=document.getElementById("impgo"); if(ig) ig.onclick=async()=>{const msg=document.getElementById("impmsg");ig.disabled=true;msg.textContent="กำลังนำเข้า…";
     try{const {n,k}=await importCode(document.getElementById("imp").value, document.getElementById("imptest").checked);msg.textContent=`นำเข้าแล้ว ${n} ครั้ง และข้อความ ${k} ข้อความ`;}
     catch(e){msg.textContent=e.message==="bad"?"ไม่พบรหัส ต้องมีคำว่า SK2: หรือ FIELDNOTE1: อยู่ในข้อความที่วาง"
+      :e.message==="parts"?`ยังขาดส่วนที่ ${e.miss.join(", ")} (จากทั้งหมด ${e.n} ส่วน) คัดลอกทุกส่วนจาก LINE มาวางต่อกันในกล่องเดียว แล้วกดใหม่`
       :e.message==="cut"?`รหัสไม่ครบ (ได้มา ${(e.len||0).toLocaleString()} ตัวอักษร) น่าจะถูกตัดตอนส่งหรือคัดลอก ให้ลูกเปิดเมนู "ส่งให้พ่อ" ดูความยาวรหัสเทียบกัน ถ้า LINE แบ่งเป็นหลายข้อความ ให้คัดลอกทุกข้อความมาวางต่อกัน`
       :`อ่านรหัสได้ แต่บันทึกไม่สำเร็จ (${e.message||e}) ลองกดใหม่อีกครั้ง`}ig.disabled=false;};
   const mdec=async(id,decision)=>{ const m=document.getElementById("mmsg-"+id), note=($v.querySelector(`[data-mnote="${id}"]`)?.value||"").trim();
