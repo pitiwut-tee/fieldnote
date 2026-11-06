@@ -412,6 +412,15 @@ async function importCode(raw, asTest){
   return {n,k};
 }
 
+/* ---------- updates: GitHub Pages lets the browser keep an old copy for a while, so check for a newer build ---------- */
+const BUILD="/*@@BUILD@@*/";
+async function checkUpdate(){ if(!/^https?:/.test(location.protocol)||typeof db!=="undefined"&&db) return;
+  try{ const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text(); const m=t.match(/const BUILD="(\d{4}-\d\d-\d\d \d\d:\d\d)"/);
+    if(m&&m[1]!==BUILD&&!m[1].includes("@@")&&!document.getElementById("updbar")){ const d=document.createElement("button"); d.id="updbar"; d.className="btn";
+      d.style.cssText="position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:99;box-shadow:0 4px 16px rgba(0,0,0,.2)";
+      d.textContent="มีแอปรุ่นใหม่ แตะเพื่อโหลด"; d.onclick=()=>{location.replace(location.pathname+"?v="+Date.now())}; document.body.appendChild(d) } }catch(e){} }
+setTimeout(checkUpdate,1500); document.addEventListener("visibilitychange",()=>{ if(!document.hidden) checkUpdate() });
+
 /* ---------- session state ---------- */
 let view = "home", S = null, V = null, showAll = false;
 const $v = document.getElementById("view");
@@ -706,6 +715,7 @@ function render(){
   if(view==="intro") return renderIntro();
   if(view==="feedback") return renderFeedback();
   if(view==="send") return renderSend(false);
+  if(view==="sendall") return renderSend(true);
   if(view==="skip") return renderSkip();
   if(view==="session") return renderStep();
   if(view==="vocab") return renderVocab();
@@ -859,7 +869,10 @@ function renderHome(){
     <button class="btn" id="send-open">ส่งผลให้พ่อ</button></section>`:""}
   ${store!=="db"?`<details class="small muted"><summary>ตั้งค่าเครื่องนี้</summary>
     <p style="margin:8px 0">ลบเฉพาะผลที่<b>ยังไม่ได้ส่งให้พ่อ</b> (${unsent().a.length} ครั้ง) เช่น ตอนผู้ใหญ่ลองเล่น ผลที่ส่งแล้ว สตรีคจากวันเหล่านั้น และคำศัพท์ที่เรียนไว้ยังอยู่ครบ</p>
-    <button class="btn ghost" id="wipe" ${unsent().a.length||unsent().f.length?"":"disabled"}>ลบผลที่ยังไม่ได้ส่ง</button> <span id="wipemsg"></span></details>`:""}`;
+    <button class="btn ghost" id="wipe" ${unsent().a.length||unsent().f.length?"":"disabled"}>ลบผลที่ยังไม่ได้ส่ง</button> <span id="wipemsg"></span>
+    <p style="margin:12px 0 6px">ส่งผลทุกครั้งที่เก็บในเครื่องให้พ่ออีกรอบ (พ่อนำเข้าซ้ำได้ ไม่นับซ้ำ)</p>
+    <button class="btn ghost" id="send-all">ส่งผลทั้งหมดให้พ่ออีกครั้ง</button>
+    <p style="margin:12px 0 0">แอปรุ่น ${esc(BUILD)}</p></details>`:""}`;
   bindDayPanel(p); bindBuddySetup(); bindBuddyHero(); bindLetter(); bindGoal(list); bindTeach(); buddyNote="";
   const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
   on("go-rec",()=>{ if(plan.repair) return startReview(8,"ชุดซ่อมจุดอ่อน"); if(plan.lesson){introSet=plan.lesson;view="intro";render()} });
@@ -876,6 +889,7 @@ function renderHome(){
   on("other",()=>{showAll=!showAll;renderHome()});
   $v.querySelectorAll(".set").forEach(b=>b.onclick=()=>{introSet=SETS[+b.dataset.k];view="intro";render()});
   on("send-open",()=>{view="send";render()});
+  on("send-all",()=>{view="sendall";render()});
   on("leave-test",leaveTest);
   on("skip-open",()=>{view="skip";render()});
   on("resume",resumeSet);

@@ -17,6 +17,8 @@ content = {"sets": sets, "spells": load("content/spells.json"), "vocab": load("c
            "decisions": load("content/decisions.json"), "variants": load("content/variants.json")}
 
 src = open(P("src", "app.html"), encoding="utf8").read()
+import datetime as _dt
+src = src.replace("/*@@BUILD@@*/", _dt.datetime.now(_dt.timezone(_dt.timedelta(hours=7))).strftime("%Y-%m-%d %H:%M"))
 assert "/*@@CONTENT@@*/null" in src
 page = src.replace("/*@@CONTENT@@*/null", json.dumps(content, ensure_ascii=False).replace("</", "<\\/"))
 os.makedirs(P("dist"), exist_ok=True)
