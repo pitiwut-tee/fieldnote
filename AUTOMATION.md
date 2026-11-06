@@ -128,6 +128,18 @@ original with options hidden until she has thought ("คิดแล้ว ข�
 - `calendar.voidRecords`: endedAt values of records the father says were only button tests. The app ignores them;
   ignore them in analysis too.
 
+## Reason check (right answer, wrong reasoning)
+
+She often skips the explanation when she is right, so a lucky or wrong-method right answer goes unnoticed.
+- Give **every level-3 question** (and any level-2 question where a wrong method can still land on the right
+  option) a `check`: `{"q"?: "…", "opts": [right reason, 1–2 tempting wrong reasons], "a": 0, "ex": "one line"}`.
+  Wrong reasons are real shortcuts that happen to work here (guessing the middle value, averaging without weights,
+  "the longest option", reading a number off the table). The app shuffles them, shows the check only after a right
+  answer, gives +5 XP for the right reason, and a wrong reason sends the question back to review.
+- Item fields: `checkOk` (true/false). A `checkOk:false` counts like a mistake when you pick twins and plan.
+- `exSec` = seconds from answering to the next question (time on the explanation). Below 3 s on a right answer
+  means she did not read it.
+
 ## Companion, voice, letters, goals (she should feel the app is a friend she trusts)
 
 Basis: Self-Determination Theory (competence, autonomy, relatedness); conversational "personalization" style
@@ -194,10 +206,12 @@ things a normal family has. **Her father must approve every mission before she s
    Also list collection `feedback`: her free messages (`text`), and docs with `kind` "mission", "goal", "buddy"
    (dad's approvals and answers, and the companion's name).
    Record types: practice `set`, `probe`, `mixed`, `passage`, `review`; `vocab`; `skip` (one day or `leave`
-   range); `daymode`; `goal`, `goaldone`, `teach`, `mission`.
+   range); `daymode`; `goal`, `goaldone`, `teach`, `mission`; `recall` (daily 3-question recall of the last
+   lesson day, from memory; not a lesson, not in `isLesson`); `shop` (companion home).
    Item fields worth reading: `due:true` (spaced-review question: accuracy here = long-term memory), `retry:true`
    (an earlier mistake tried again), `listen`, `listenEx`, `parts`, `len` (question length), `conf`
-   ("sure"/"unsure", trial), `explain`/`ownWhy`/`ownWhyPad` (her written reason, trial).
+   ("sure"/"unsure", trial), `explain`/`ownWhy`/`ownWhyPad` (her written reason, trial), `checkOk`, `exSec`,
+   `timeSec` (question shown → answer, includes listening).
    Record fields: `reflect`, `readSec`/`readChars` (passages), `trial:{on, vote}`, `rating`, `memo`, `confused`.
 
 ## 2. Look at the data (write short notes for yourself)

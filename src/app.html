@@ -161,6 +161,15 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 @keyframes hop{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-12px) scale(1.06)}100%{transform:translateY(0) scale(1)}}
 @media (prefers-reduced-motion: reduce){.bbtn,.bbtn.hop{animation:none}}
+.bbtn{position:relative}
+.heartpop{position:absolute;left:50%;top:20%;pointer-events:none;z-index:5;font-size:22px;animation:heartup 1.1s ease-out forwards}
+@keyframes heartup{0%{opacity:0;transform:translate(-50%,0) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--dx,0px)),-70px) scale(1.15)}}
+.bbtn.squish .bface{animation:squish .5s ease-out}
+@keyframes squish{0%{transform:scale(1)}30%{transform:scale(1.12,.9)}60%{transform:scale(.95,1.06)}100%{transform:scale(1)}}
+.scene .hero-pet{transition:left 1.6s ease-in-out}
+.zz{position:absolute;right:-4px;top:-6px;font-size:20px;animation:fxfloat 2.4s ease-in-out infinite;pointer-events:none;z-index:4}
+.bond{display:flex;gap:8px;align-items:center}
+.bond .progress{flex:1}
 .bubble.big{font-size:1.02rem;background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .bubble b{font-family:var(--display);font-weight:500;font-size:.85rem;color:var(--muted)}
 .rdbox{margin-top:8px;padding:10px 12px;border-radius:10px;background:var(--soft);line-height:1.9}
@@ -468,7 +477,7 @@ function todayKey(){ return dayKey(new Date().toISOString()) }
 function nextDay(d){ const t=new Date(d); t.setDate(t.getDate()+1); t.setHours(0,0,0,0); return t.getTime() }
 function weekStart(d){ const t=new Date(d); t.setHours(0,0,0,0); t.setDate(t.getDate()-((t.getDay()+6)%7)); return t.getTime() }
 function xpOf(a){ if(isSkip(a)||a.type==="daymode") return 0; if(typeof a.xp==="number") return a.xp; return (a.correct||0)*10+((a.total||0)-(a.correct||0))*5+20 }
-function itemXp(items){ return items.reduce((s,x)=>s+(x.skipped||x.dontknow?0:x.correct?10:5),0) }
+function itemXp(items){ return items.reduce((s,x)=>s+(x.skipped||x.dontknow?0:x.correct?10:5)+(x.checkOk?5:0),0) }
 
 /* ---------- day types: school day or holiday (Thai public holidays, school days off, weekends), plus a manual switch ---------- */
 const LEVELS={full:{label:"เต็ม",mins:"ราว 90 นาที แบ่งทำ 3 ช่วง",units:3,probe:true},mid:{label:"กลาง",mins:"ราว 60 นาที",units:2,probe:true},light:{label:"เบา",mins:"ราว 40 นาที",units:1,probe:false}};
@@ -593,7 +602,7 @@ function reviewPool(list){
     /* a right answer only clears a mistake if she had to think: a twin, a typed answer, hidden options, or a fresh set.
        Re-tapping the same remembered option in a review does not count. */
     const thought=a.type!=="review"&&!x.retry||x.of||x.recall||x.cover;
-    if(x.correct===false||(x.correct&&x.conf==="unsure")) wrong.set(id,+new Date(a.endedAt)); else if(x.correct&&thought) wrong.delete(id);
+    if(x.correct===false||(x.correct&&(x.conf==="unsure"||x.checkOk===false))) wrong.set(id,+new Date(a.endedAt)); else if(x.correct&&thought) wrong.delete(id);
   }));
   return [...wrong.entries()].sort((a,b)=>a[1]-b[1]).map(([qid])=>QBANK[qid].q);
 }
@@ -707,6 +716,24 @@ function startReview(n, title){
   const steps=[...qs.map(q=>({kind:"q",phase:dueIds.has(q.id)?t+" · ทบทวนตามรอบ":t,q:shuffleQ(comeback(q,list)),due:dueIds.has(q.id)})),{kind:"finish",phase:"เสร็จ"}];
   const trial=trialsToday(); markExplain(steps, trial);
   S = {mode:"review", set:{id:repair?"repair":"review",subject:"ทบทวน",topic:t}, steps, trial, trialVote:{},
+       active:true, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
+  view="session"; render(); window.scrollTo({top:0});
+}
+
+/* daily recall: 3 questions from what she learned today (or the last day she learned), answered from memory
+   (a twin, typed answer, or hidden options). Once a day, small XP. Retrieval practice, not new content. */
+function recallSource(list){ const ls_=list.filter(a=>isLesson(a)&&a.type!=="review"&&(a.items||[]).length);
+  if(!ls_.length) return null; const t=todayKey(), days=[...new Set(ls_.map(a=>dayKey(a.endedAt)))].sort((a,b)=>b-a);
+  const day=days.includes(t)?t:days[0]; if(t-day>3*86400000) return null;
+  const ids=[...new Set(ls_.filter(a=>dayKey(a.endedAt)===day).flatMap(a=>a.items.filter(x=>!x.skipped&&QBANK[x.qid]).map(x=>x.qid)))];
+  return ids.length>=3?{day,ids}:null }
+function recallDoneToday(list){ return list.some(a=>a.type==="recall"&&dayKey(a.endedAt)===todayKey()) }
+function startRecall(){
+  const list=mine(), src=recallSource(list); if(!src) return;
+  const pick=src.ids.slice().sort(()=>Math.random()-.5).slice(0,3).map(id=>QBANK[id].q);
+  const t="ทบทวนวันนี้ 3 ข้อ";
+  const steps=[...pick.map(q=>({kind:"q",phase:t,q:shuffleQ(comeback(q,list))})),{kind:"finish",phase:"เสร็จ"}];
+  S = {mode:"review", recall:true, set:{id:"recall",subject:"ทบทวน",topic:t}, steps, trial:[], trialVote:{},
        active:true, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
   view="session"; render(); window.scrollTo({top:0});
 }
@@ -865,6 +892,9 @@ function renderHome(){
     <p class="small muted">ครบทั้ง 3 ข้อ ได้<b>ของหายาก ✨ 1 ชิ้น</b> ที่ซื้อด้วยดาวไม่ได้ และดาวเวทพิเศษ ⭐${QUEST_BONUS} เริ่มใหม่ทุกวันจันทร์${(()=>{const nx=RARE[questWeeks(mine()).length]; return nx?` · ชิ้นต่อไป: ${nx.e} ${esc(nx.n)}`:""})()}</p></section>
   <span class="eyebrow">เก็บ XP เพิ่ม (ไม่บังคับ)</span>
   <section class="sets">
+    ${(()=>{const src=recallSource(list); if(!src) return ""; const done=recallDoneToday(list);
+      return `<div class="card"><h3>🧠 ทบทวนวันนี้ 3 ข้อ</h3><p class="small muted">${done?"วันนี้ทบทวนแล้ว เก่งมาก พรุ่งนี้มาใหม่นะ":"ดึงสิ่งที่เรียนล่าสุดกลับมาจากความจำ ข้อละ +5 XP และโบนัส +5 (วันละครั้ง) ช่วยให้จำได้นานขึ้นมาก"}</p>
+      ${done?"":`<button class="btn ghost" id="recall-go">ทบทวน 3 ข้อ</button>`}</div>`})()}
     <div class="card"><h3>ทบทวนข้อที่เคยพลาด</h3>
       <p class="small muted">${pool.length?`มีค้างอยู่ ${pool.length} ข้อ ครั้งนี้ทำ ${Math.min(5,pool.length)} ข้อ ตัวเลือกจะสลับที่ใหม่`:"ยังไม่มีข้อค้าง"}</p>
       ${pool.length?`<button class="btn ghost" id="review-go">ทบทวน</button>`:""}</div>
@@ -902,6 +932,7 @@ function renderHome(){
   on("discard",e=>{const b=e.target; if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="กดอีกครั้ง ข้อที่ทำไว้จะหาย";return} clearProgress(); if(S&&S.mode==="set") S.active=false; renderHome()});
   on("vocab-go",startVocab);
   on("review-go",()=>startReview());
+  on("recall-go",()=>startRecall());
   on("wipe",e=>{const b=e.target; if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="กดอีกครั้งเพื่อยืนยัน ลบแล้วกู้คืนไม่ได้";return}
     try{
       lsWrite(lsRead().filter(x=>x.sent));
@@ -1237,12 +1268,21 @@ function renderStep(){
       ${ans?"":`<p class="small muted">${staged?"แตะตัวเลือกเพื่อเลือก แล้วกดส่งคำตอบ · ":""}กด ✕ ท้ายข้อเพื่อตัดตัวเลือกที่ไม่ใช่แน่ๆ</p>`}${panel}`;
   }
   let fb = "";
-  if(ans){
+  /* reason check: right answer on a question that has q.check → ask how she got it before showing the explanation */
+  const ck=ans&&ans.correct&&q.check&&!S.checkDone?q.check:null;
+  if(ck&&S.checkPick==null){
+    S.checkOrder=S.checkOrder||ck.opts.map((_,i)=>i).sort(()=>Math.random()-.5);
+    fb=`<div class="feedback"><b class="ok">✅ ถูกแล้ว!</b><p><b>ก่อนดูเฉลย ขอเช็กเหตุผลนิดนึง:</b> ${esc(ck.q||"เธอได้คำตอบนี้มาด้วยวิธีคิดแบบไหน")}</p>
+      <div class="opts">${S.checkOrder.map(k=>`<button class="opt ckopt" data-ck="${k}">${esc(ck.opts[k])}</button>`).join("")}</div>
+      <span class="small muted">เลือกเหตุผลที่ใกล้กับที่เธอคิดจริงที่สุด เหตุผลถูกได้ +5 XP</span></div>`;
+  } else if(ans){
+    const ckNote = q.check&&S.checkPick!=null?(S.checkPick===q.check.a?`<p class="small"><b>เหตุผลถูกด้วย +5 XP</b> เข้าใจจริง ไม่ได้ฟลุก</p>`
+      :`<p class="small"><b>คำตอบถูก แต่เหตุผลยังไม่ใช่</b> เหตุผลที่ถูกคือ “${esc(q.check.opts[q.check.a])}” ${esc(q.check.ex||"")} ข้อนี้จะกลับมาให้ทวนอีกรอบนะ</p>`):"";
     const head = ans.dontknow?"ไม่เป็นไร มาดูวิธีคิดกัน (0 XP)":ans.correct?YAY[S.i%YAY.length]:OOPS[S.i%OOPS.length];
     const confNote = ans.dontknow||!ans.conf?"":ans.correct&&ans.conf==="unsure"?`<p class="small">ถูกแล้ว แต่ยังไม่ชัวร์ ระบบจะเอาข้อนี้มาให้ทวนอีกรอบ จะได้มั่นใจขึ้น</p>`
       :!ans.correct&&ans.conf==="sure"?`<p class="small"><b>มั่นใจแต่พลาด</b> ข้อแบบนี้ถ้าเข้าใจตอนนี้ จะจำได้แม่นที่สุด อ่านเฉลยช้าๆ นะ</p>`:"";
     const own = st.explain&&(ans.ownWhy||ans.ownWhyPad)?`<div class="feedback"><span class="small"><b>เหตุผลของเธอ:</b> ${ans.ownWhy?esc(ans.ownWhy):"(เขียนในกระดาษทด)"}</span><span class="small muted">ลองเทียบกับเฉลยด้านล่าง ตรงกันไหม ต่างกันตรงไหน</span></div>`:"";
-    fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answer} ${q.unit}`:""}</b>${confNote}<p>${gloss(q.ex)}</p>
+    fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answer} ${q.unit}`:""}</b>${ckNote}${confNote}<p>${gloss(q.ex)}</p>
       ${q.en?"":`<div>${readBtn("ex","🔊 ฟังเฉลย")}</div>`}
       ${ans.correct||ans.dontknow?"":`<span class="small muted">พลาดเพราะอะไร เลือกได้หลายข้อ (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
       <div class="why">${Object.entries(ERR).filter(([k])=>k!=="dontknow").map(([k,v])=>`<button data-why="${k}" aria-pressed="${(S.why||[]).includes(k)}">${v}</button>`).join("")}</div>`}
@@ -1309,17 +1349,18 @@ function renderStep(){
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
     const sk=document.getElementById("skip"); if(sk) sk.onclick=()=>{S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,skipped:true,timeSec:0});advance()};
   } else {
+    $v.querySelectorAll("[data-ck]").forEach(b=>b.onclick=()=>{ S.checkPick=+b.dataset.ck; S.checkDone=true; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) });
     $v.querySelectorAll("[data-why]").forEach(b=>b.onclick=()=>{const k=b.dataset.why; S.why=(S.why||[]).includes(k)?S.why.filter(x=>x!==k):[...(S.why||[]),k];const y=window.scrollY;renderStep();window.scrollTo({top:y})});
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
-    document.getElementById("next").onclick=()=>{
+    const nx=document.getElementById("next"); if(nx) nx.onclick=()=>{
       S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
-        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0}:{}),len:q.q.length});
+        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0}:{}),...(q.check&&S.checkPick!=null?{checkOk:S.checkPick===q.check.a}:{}),len:q.q.length});
       advance();
     };
   }
 }
 function answer(a){ readStop(); S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
-function advance(){ readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.uncovered=false; S.coverSec=0; S.hints=0; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
+function advance(){ readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.hints=0; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
 
 function renderConcept(){
   const c=S.set.concept;
@@ -1421,6 +1462,9 @@ async function finishReview(){
   }
   $v.innerHTML=`<section class="card"><p class="muted">กำลังบันทึก…</p></section>`;
   const items=S.items, scored=items.filter(x=>!x.skipped);
+  if(S.recall){ const sc=items.filter(x=>!x.skipped), c=sc.filter(x=>x.correct).length;
+    return finishWith({type:"recall",setId:"recall",subject:"ทบทวน",topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
+      durationSec:Math.round((Date.now()-S.start)/1000),correct:c,total:sc.length,xp:c*5+5,confused:S.confused,items}) }
   await finishWith({...trialRec(),type:"review",setId:S.set.id,subject:"ทบทวน",topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
     durationSec:Math.round((Date.now()-S.start)/1000),correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items),confused:S.confused,items});
 }
@@ -1544,8 +1588,8 @@ function buddyHero(list,p,plan){ const b=getBuddy(); if(!b) return "";
   return `<section class="card buddyhero"><div class="buddy">
     <button class="bbtn ${buddyTap?"hop":""}" id="btap" type="button" aria-label="คุยกับ ${esc(b.name)}">${buddyFace(b,76)}</button>
     <div class="bubble big"><b>${esc(b.name)}</b>${(tip?[tip]:lines).map(l=>`<span>${esc(l)}</span>`).join("")}
-      <span class="row" style="gap:6px;margin-top:4px">${unread?`<button class="btn small" id="bletter" type="button">💌 มีจดหมายถึงเธอ</button>`:""}<span class="small muted">แตะ${esc(b.name)}เพื่อคุยต่อ</span></span></div></div>${wishItem(list)?`<div style="margin-top:10px">${wishHtml(list)}</div>`:""}</section>` }
-function bindBuddyHero(){ const t=document.getElementById("btap"); if(t) t.onclick=()=>{ buddyTap++; buddyNote=""; renderHome() };
+      <span class="row" style="gap:6px;margin-top:4px">${unread?`<button class="btn small" id="bletter" type="button">💌 มีจดหมายถึงเธอ</button>`:""}<span class="small muted">แตะหรือลูบ${esc(b.name)}เพื่อคุยต่อ</span></span></div></div>${wishItem(list)?`<div style="margin-top:10px">${wishHtml(list)}</div>`:""}</section>` }
+function bindBuddyHero(){ const t=document.getElementById("btap"); if(t) t.onclick=()=>{ buddyTap++; buddyNote=""; const k=getBuddy()?.kind; renderHome(); petPat(document.getElementById("btap"),k) };
   const l=document.getElementById("bletter"); if(l) l.onclick=()=>{ letterOpen=true; renderHome(); document.getElementById("lclose")?.scrollIntoView({block:"center"}) } }
 function buddyHtml(lines){ const b=getBuddy(); if(!b) return "";
   return `<div class="buddy">${buddyFace(b,52)}<div class="bubble"><b>${esc(b.name)}</b>${lines.map(l=>`<span>${esc(l)}</span>`).join("")}</div></div>` }
@@ -1556,7 +1600,7 @@ function buddySetupHtml(){
   return `<section class="card usebox" id="bsetup"><span class="eyebrow">พบคู่หูประจำสมุด</span>
     <h2>เลือกคู่หูของเธอ</h2>
     <p class="small">คู่หูจะคอยทักทาย บอกว่าเธอเก่งขึ้นตรงไหน และเขียนจดหมายตอบคำถามที่เธอถามไว้ ฝึกแล้วได้ดาวเวท เอาไปซื้ออาหารวิเศษให้คู่หูโตและเปลี่ยนร่างได้</p>
-    <div class="why">${BUDDY_KINDS.map(k=>`<button data-bk="${k.k}" aria-pressed="${bDraft.kind===k.k}">${k.e} ${k.n}</button>`).join("")}</div>
+    <div class="why">${BUDDY_KINDS.map(k=>`<button data-bk="${k.k}" aria-pressed="${bDraft.kind===k.k}"><span style="display:inline-block;width:1.2em;vertical-align:-.2em">${k.e}</span> ${k.n}</button>`).join("")}</div>
     <label class="small" for="bname">ตั้งชื่อให้คู่หู</label>
     <input id="bname" maxlength="20" value="${esc(bDraft.name)}" placeholder="เช่น ฟูจิ" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">
     <div class="row"><button class="btn" id="bsave" ${bDraft.kind&&bDraft.name.trim()?"":"disabled"}>เริ่มเดินทางด้วยกัน</button>
@@ -1704,14 +1748,50 @@ const SCENES={
    egg → baby → young → adult → legend, each stage a new look), more companions, things to wear and room scenes.
    Everything is cosmetic; it never changes practice. Purchases are records (type "shop") so they travel to dad with
    the result code and survive a cleared browser. No hunger, no decay, no guilt. ---------- */
+/* full-body drawings for companions whose emoji is only a head (fox, wolf, panda, unicorn) */
+const eyes=(y=40,dx=9,c="#1d1d2b")=>`<ellipse cx="${50-dx}" cy="${y}" rx="3.6" ry="4.4" fill="${c}"/><ellipse cx="${50+dx}" cy="${y}" rx="3.6" ry="4.4" fill="${c}"/>
+ <circle cx="${48.8-dx}" cy="${y-1.6}" r="1.4" fill="#fff"/><circle cx="${48.8+dx}" cy="${y-1.6}" r="1.4" fill="#fff"/>`;
+const blush=(y=47)=>`<ellipse cx="34" cy="${y}" rx="4" ry="2.4" fill="#ff8fa3" opacity=".55"/><ellipse cx="66" cy="${y}" rx="4" ry="2.4" fill="#ff8fa3" opacity=".55"/>`;
+const smile=(y=50)=>`<path d="M46 ${y} q2 2.6 4 0 q2 2.6 4 0" fill="none" stroke="#3a2a2a" stroke-width="1.4" stroke-linecap="round"/>`;
+const PET_ART={
+fox:`<path d="M66 80 C92 78 98 52 86 40 C84 56 76 64 62 68 Z" fill="#f08a3c"/><path d="M86 40 C93 46 94 54 90 60 C86 54 84 48 86 40Z" fill="#fff8ee"/>
+ <ellipse cx="50" cy="74" rx="21" ry="20" fill="#f08a3c"/><ellipse cx="50" cy="78" rx="12" ry="14" fill="#fff8ee"/>
+ <ellipse cx="41" cy="93" rx="6.5" ry="4" fill="#5b3a29"/><ellipse cx="59" cy="93" rx="6.5" ry="4" fill="#5b3a29"/>
+ <path d="M28 30 L30 8 L46 22 Z" fill="#f08a3c"/><path d="M72 30 L70 8 L54 22 Z" fill="#f08a3c"/><path d="M32 25 L32 13 L42 22Z" fill="#5b3a29"/><path d="M68 25 L68 13 L58 22Z" fill="#5b3a29"/>
+ <ellipse cx="50" cy="40" rx="24" ry="20" fill="#f08a3c"/><path d="M26 42 Q38 58 50 50 Q62 58 74 42 Q66 60 50 60 Q34 60 26 42Z" fill="#fff8ee"/>
+ ${eyes(38)}<ellipse cx="50" cy="48" rx="2.6" ry="2" fill="#2b1d1d"/>${smile(50.5)}${blush(46)}`,
+wolf:`<path d="M66 82 C90 82 96 60 88 46 C84 60 76 68 62 70 Z" fill="#8d99ae"/><path d="M88 46 C92 52 92 58 89 62 C86 57 86 52 88 46Z" fill="#e9edf2"/>
+ <ellipse cx="50" cy="74" rx="21" ry="20" fill="#8d99ae"/><ellipse cx="50" cy="78" rx="12" ry="14" fill="#e9edf2"/>
+ <ellipse cx="41" cy="93" rx="6.5" ry="4" fill="#6b7689"/><ellipse cx="59" cy="93" rx="6.5" ry="4" fill="#6b7689"/>
+ <path d="M27 32 L31 7 L46 22 Z" fill="#8d99ae"/><path d="M73 32 L69 7 L54 22 Z" fill="#8d99ae"/><path d="M32 26 L33 14 L42 22Z" fill="#c9d1dd"/><path d="M68 26 L67 14 L58 22Z" fill="#c9d1dd"/>
+ <ellipse cx="50" cy="40" rx="24" ry="20" fill="#8d99ae"/><path d="M30 44 Q40 56 50 52 Q60 56 70 44 Q64 60 50 60 Q36 60 30 44Z" fill="#e9edf2"/>
+ <path d="M50 22 a5 5 0 1 0 4 8 a4 4 0 1 1 -4 -8Z" fill="#bfe3ff"/>
+ ${eyes(39,9,"#1f3150")}<ellipse cx="50" cy="48.5" rx="2.8" ry="2.1" fill="#26262e"/>${smile(51)}${blush(47)}`,
+panda:`<ellipse cx="50" cy="74" rx="22" ry="20" fill="#f7f7f5" stroke="#d9d9d4" stroke-width="1"/><ellipse cx="29" cy="72" rx="7" ry="11" fill="#2b2b2b" transform="rotate(20 29 72)"/><ellipse cx="71" cy="72" rx="7" ry="11" fill="#2b2b2b" transform="rotate(-20 71 72)"/>
+ <ellipse cx="40" cy="92" rx="8" ry="5.5" fill="#2b2b2b"/><ellipse cx="60" cy="92" rx="8" ry="5.5" fill="#2b2b2b"/><ellipse cx="40" cy="92.5" rx="3" ry="2" fill="#ffd1dc"/><ellipse cx="60" cy="92.5" rx="3" ry="2" fill="#ffd1dc"/>
+ <circle cx="30" cy="22" r="8" fill="#2b2b2b"/><circle cx="70" cy="22" r="8" fill="#2b2b2b"/>
+ <ellipse cx="50" cy="40" rx="25" ry="21" fill="#f7f7f5" stroke="#d9d9d4" stroke-width="1"/>
+ <ellipse cx="40" cy="39" rx="6.5" ry="8" fill="#2b2b2b" transform="rotate(25 40 39)"/><ellipse cx="60" cy="39" rx="6.5" ry="8" fill="#2b2b2b" transform="rotate(-25 60 39)"/>
+ <circle cx="41" cy="39" r="2.6" fill="#fff"/><circle cx="59" cy="39" r="2.6" fill="#fff"/><circle cx="41.4" cy="39.4" r="1.4" fill="#111"/><circle cx="58.6" cy="39.4" r="1.4" fill="#111"/>
+ <ellipse cx="50" cy="48" rx="3" ry="2.2" fill="#2b2b2b"/>${smile(50.5)}${blush(48)}`,
+unicorn:`<path d="M68 80 C86 82 92 66 84 56 C86 68 78 72 66 72Z" fill="#c9a6ff"/><path d="M70 82 C88 88 94 74 88 64 C88 76 80 78 68 76Z" fill="#8fd3ff"/>
+ <ellipse cx="50" cy="74" rx="21" ry="20" fill="#fffaf5" stroke="#e3d3e6" stroke-width="1"/>
+ <rect x="35" y="84" width="10" height="10" rx="4" fill="#fffaf5"/><rect x="55" y="84" width="10" height="10" rx="4" fill="#fffaf5"/><rect x="35" y="91" width="10" height="5" rx="2" fill="#e8c56a"/><rect x="55" y="91" width="10" height="5" rx="2" fill="#e8c56a"/>
+ <path d="M30 28 L31 12 L42 22Z" fill="#fffaf5"/><path d="M70 28 L69 12 L58 22Z" fill="#fffaf5"/><path d="M33 24 L33 16 L39 22Z" fill="#ffc9dd"/><path d="M67 24 L67 16 L61 22Z" fill="#ffc9dd"/>
+ <ellipse cx="50" cy="40" rx="23" ry="20" fill="#fffaf5" stroke="#e3d3e6" stroke-width="1"/><ellipse cx="50" cy="51" rx="14" ry="8.5" fill="#ffe9f1"/>
+ <path d="M50 4 L45 24 L55 24Z" fill="#f5c84c"/><path d="M46.5 18 L53.5 16 M47.5 12 L52.5 10.5" stroke="#d9a520" stroke-width="1.3"/>
+ <path d="M58 22 C70 18 80 28 76 44 C72 34 66 30 60 30Z" fill="#ff9ec7"/><path d="M60 26 C72 26 80 38 74 52 C72 42 66 36 60 34Z" fill="#c9a6ff"/><path d="M42 22 C36 22 32 26 32 30 C38 26 44 26 48 26Z" fill="#8fd3ff"/>
+ ${eyes(40,9,"#3b2a5a")}<circle cx="46" cy="52" r="1.1" fill="#c98aa5"/><circle cx="54" cy="52" r="1.1" fill="#c98aa5"/>${smile(55)}${blush(46)}`
+};
+function glyph(t){ return typeof t==="string"&&t.startsWith("svg:")?`<svg class="pg" viewBox="0 0 100 100" width="1em" height="1em" aria-hidden="true" style="display:inline-block;vertical-align:-.15em">${PET_ART[t.slice(4)]||""}</svg>`:t }
 const PETS=[
-  {k:"dragon",n:"มังกรน้อย",forms:["🦎","🐲","🐉"],hab:"bg:volcano"},
+  {k:"dragon",n:"มังกรน้อย",forms:["🦎","🐉","🐉"],hab:"bg:volcano"},
   {k:"owl",n:"นกฮูกนักปราชญ์",forms:["🐣","🐥","🦉"],hab:"bg:library"},
-  {k:"fox",n:"จิ้งจอกเวท",forms:["🦊","🦊","🦊"],hab:"bg:forest"},
-  {k:"cat",n:"แมวดำจอมเวท",forms:["🐱","🐈","🐈‍⬛"],hab:"bg:night"},
-  {k:"bunny",n:"กระต่ายจันทรา",forms:["🐰","🐇","🐇"],hab:"bg:meadow"},
-  {k:"wolf",n:"หมาป่าแสงจันทร์",forms:["🐶","🐕","🐺"],hab:"bg:snow"},
-  {k:"tiger",n:"เสือเวทมนตร์",forms:["🐯","🐆","🐅"],hab:"bg:forest"},
+  {k:"fox",n:"จิ้งจอกเวท",forms:["svg:fox","svg:fox","svg:fox"],hab:"bg:forest"},
+  {k:"cat",n:"แมวดำจอมเวท",forms:["🐈","🐈","🐈‍⬛"],hab:"bg:night"},
+  {k:"bunny",n:"กระต่ายจันทรา",forms:["🐇","🐇","🐇"],hab:"bg:meadow"},
+  {k:"wolf",n:"หมาป่าแสงจันทร์",forms:["svg:wolf","svg:wolf","svg:wolf"],hab:"bg:snow"},
+  {k:"tiger",n:"เสือเวทมนตร์",forms:["🐅","🐅","🐅"],hab:"bg:forest"},
   {k:"peacock",n:"นกยูงสายรุ้ง",forms:["🐤","🦜","🦚"],hab:"bg:meadow"},
   {k:"swan",n:"หงส์ขาวแห่งทะเลสาบ",forms:["🐣","🦆","🦢"],hab:"bg:castle"},
   {k:"dino",n:"ไดโนน้อย",forms:["🦕","🦕","🦖"],hab:"bg:volcano"},
@@ -1719,18 +1799,18 @@ const PETS=[
   {k:"bubble",n:"ภูตฟองสบู่",forms:["🫧","🪼","🐙"],hab:"bg:sea"},
   {k:"butterfly",n:"ผีเสื้อนางฟ้า",forms:["🐛","🐛","🦋"],hab:"bg:meadow"},
   {k:"turtle",n:"เต่าเก็บความรู้",forms:["🐢","🐢","🐢"],hab:"bg:sea"},
-  {k:"panda",n:"แพนด้านักฝัน",forms:["🐼","🐼","🐼"],hab:"bg:forest"},
+  {k:"panda",n:"แพนด้านักฝัน",forms:["svg:panda","svg:panda","svg:panda"],hab:"bg:forest"},
   {k:"penguin",n:"เพนกวินหิมะ",forms:["🐧","🐧","🐧"],hab:"bg:snow"},
   {k:"deer",n:"กวางป่าเวท",forms:["🦌","🦌","🦌"],hab:"bg:forest"},
   {k:"otter",n:"นากน้อยนักสำรวจ",forms:["🦦","🦦","🦦"],hab:"bg:sea"},
-  {k:"unicorn",n:"ยูนิคอร์นดาวตก",forms:["🐴","🐎","🦄"],hab:"bg:castle",how:"จุดไฟติดต่อกันครบ 30 วัน"},
+  {k:"unicorn",n:"ยูนิคอร์นดาวตก",forms:["svg:unicorn","svg:unicorn","svg:unicorn"],hab:"bg:castle",how:"จุดไฟติดต่อกันครบ 30 วัน"},
   {k:"whale",n:"วาฬฟ้าแห่งความรู้",forms:["🐟","🐳","🐋"],hab:"bg:sea",how:"พิชิตสำนักใดสำนักหนึ่งครบทุกคาถา"},
   {k:"hedgehog",n:"เม่นนักอ่าน",forms:["🦔","🦔","🦔"],hab:"bg:library",how:"อ่านจับใจความครบ 4 เรื่อง"},
   {k:"robot",n:"หุ่นกลไกจิ๋ว",forms:["🤖","🤖","🤖"],retired:true}];
-const ALL_PETS=PETS.map(p=>({...p,e:p.forms[2]}));
+const ALL_PETS=PETS.map(p=>({...p,e:glyph(p.forms[2])}));
 const BUDDY_KINDS=["fox","dragon","owl","cat","bunny","wolf","peacock","dolphin"].map(k=>ALL_PETS.find(p=>p.k===k));
 const PET_SPECIAL=ALL_PETS.filter(p=>p.how);
-const formsText=x=>new Set(x.forms).size===1?`🥚 → ${x.forms[0]} โตจากตัวเล็กเป็นตัวใหญ่`:`🥚 → ${x.forms.join(" → ")}`;
+const formsText=x=>new Set(x.forms).size===1?`🥚 → โตจากตัวเล็กเป็นตัวใหญ่`:`🥚 → ${[...new Set(x.forms)].map(glyph).join(" → ")}`;
 /* growth: magic food points; stage 0 egg, 1 baby (form 0), 2 young (form 1), 3 adult (form 2), 4 legend (form 2 + aura) */
 const GROW=[[0,"ไข่เวทมนตร์"],[30,"วัยเด็ก"],[150,"วัยรุ่น"],[400,"โตเต็มวัย"],[900,"ร่างตำนาน"]];
 const STAGE_SIZE=[0.62,0.72,0.86,1,1.06];
@@ -1784,7 +1864,7 @@ function nextPetPrice(list){ const paid=list.filter(a=>a.type==="shop"&&a.item&&
 function firstPet(list){ const r=list.filter(a=>a.type==="shop"&&a.item&&a.item.startsWith("pet:")&&!a.cost).sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt))[0]; return r?r.item.slice(4):null }
 function growth(kind,list){ const fed=list.filter(a=>a.type==="shop"&&a.pet===kind).reduce((s,a)=>s+(a.grow||(a.hearts||0)*5),0); return fed+(firstPet(list)===kind?400:0) }
 function growStage(g){ let i=0; GROW.forEach(([m],k)=>{ if(g>=m) i=k }); return i }
-function petLook(kind,stage){ const P=ALL_PETS.find(x=>x.k===kind)||ALL_PETS[0]; return stage===0?"🥚":P.forms[Math.min(2,stage-1)] }
+function petLook(kind,stage){ const P=ALL_PETS.find(x=>x.k===kind)||ALL_PETS[0]; return stage===0?"🥚":glyph(P.forms[Math.min(2,stage-1)]) }
 /* room v2: worn things and room things are placed freely (x, y in % of the companion / scene, s = size) */
 function room(){ const r=ls("fieldnote.room",{bg:null,props:[],wear:{}}); r.wear=r.wear||{}; r.fx=r.fx||{};
   if(r.hats){ Object.entries(r.hats).forEach(([k,v])=>{ if(v){ r.wear[k]=r.wear[k]||{}; if(!Array.isArray(r.wear[k])) r.wear[k].head=r.wear[k].head||v } }); delete r.hats }
@@ -1817,9 +1897,34 @@ function petFace(kind,size,dressed,list){
     ${art?`<img src="${art}" alt="" class="bface" style="width:${sz}px;height:${sz}px">`
       :`<span class="bface ${st===0?"egg":""}" style="font-size:${Math.round(sz*0.72)}px;width:${sz}px;height:${sz}px;${st===0?`filter:hue-rotate(${(K.k.length*47)%360}deg) saturate(1.4)`:""}" aria-hidden="true">${petLook(kind,st)}</span>`}
     ${st>0?worn.map((x,i)=>`<span class="w-it" data-wi="${i}" style="left:${x.x}%;top:${x.y}%;font-size:${Math.round(sz*0.32*(x.s||1))}px">${it(x.id).e}</span>`).join(""):""}</span>` }
+/* ---------- petting: hearts, a soft sound, and a bond that only ever grows (never decays, no guilt) ---------- */
+const BOND_STEP=30, PAT_DAY=10;
+function bondState(){ return ls("fieldnote.bond",{}) }
+function studyDaysSince(list,kind){ const got=list.filter(a=>a.type==="shop"&&a.item==="pet:"+kind).map(a=>dayKey(a.endedAt)).sort()[0]||0;
+  return new Set(list.filter(a=>isLesson(a)&&dayKey(a.endedAt)>=got).map(a=>dayKey(a.endedAt))).size }
+function bondPts(kind,list){ const b=bondState()[kind]||{}; return (b.pts||0)+5*studyDaysSince(list||mine(),kind) }
+function bondHtml(kind,name,list){ const pts=bondPts(kind,list), lv=Math.floor(pts/BOND_STEP)+1, inLv=pts%BOND_STEP;
+  return `<div class="bond"><span class="small"><b>ความผูกพัน ❤️ ระดับ ${lv}</b></span><div class="progress"><i style="width:${Math.round(inLv/BOND_STEP*100)}%;background:#ff6f91"></i></div></div>
+    <p class="small muted" style="margin:2px 0 0">ลูบ${esc(name)}ได้ทุกวัน และทุกวันที่ฝึก ความผูกพันจะเพิ่มขึ้น ไม่มีวันลดลง</p>` }
+let _ac=null;
+function petSoundOn(){ return ls("fieldnote.petsound",true)!==false }
+function petChirp(kind){ if(!petSoundOn()) return; try{ _ac=_ac||new (window.AudioContext||window.webkitAudioContext)(); const t=_ac.currentTime;
+    const base={dragon:330,owl:520,fox:700,cat:640,bunny:880,wolf:440,tiger:300,panda:500,unicorn:780,whale:220,dolphin:900}[kind]||600;
+    [0,0.11].forEach((d,i)=>{ const o=_ac.createOscillator(), g=_ac.createGain(); o.type="sine"; o.frequency.setValueAtTime(base*(i?1.25:1),t+d); o.frequency.exponentialRampToValueAtTime(base*(i?1.5:1.18),t+d+0.09);
+      g.gain.setValueAtTime(0.0001,t+d); g.gain.exponentialRampToValueAtTime(0.12,t+d+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+d+0.12); o.connect(g).connect(_ac.destination); o.start(t+d); o.stop(t+d+0.14) }) }catch(e){} }
+function petPat(btn,kind){ if(!btn) return; btn.classList.remove("squish","hop"); void btn.offsetWidth; btn.classList.add("squish");
+  for(let i=0;i<3;i++){ const h=document.createElement("span"); h.className="heartpop"; h.textContent=["💖","💕","❤️"][i]; h.style.setProperty("--dx",(i-1)*22+"px"); h.style.animationDelay=i*0.12+"s"; btn.appendChild(h); setTimeout(()=>h.remove(),1500) }
+  petChirp(kind);
+  const st=bondState(), t=todayKey(), b=st[kind]||{pts:0,d:0,pats:0}; if(b.d!==t){ b.d=t; b.pats=0 } if(b.pats<PAT_DAY){ b.pats++; b.pts++ } st[kind]=b; lsSet("fieldnote.bond",st);
+  const bb=document.getElementById("bondbox"); if(bb) bb.innerHTML=bondHtml(kind,petName(kind),mine()) }
+let wanderT=null;
+function startWander(){ clearInterval(wanderT); wanderT=setInterval(()=>{ const hp=document.getElementById("petpat"), sc=document.getElementById("scene");
+    if(!hp||!sc||denArrange||document.hidden){ if(!hp) clearInterval(wanderT); return }
+    const room=Math.max(0,(sc.clientWidth-hp.clientWidth)/2-24); hp.style.left=Math.round((Math.random()*2-1)*room)+"px";
+    const z=hp.querySelector(".zz"); if(z) z.remove(); if(Math.random()<0.15){ const s=document.createElement("span"); s.className="zz"; s.textContent="💤"; hp.appendChild(s); setTimeout(()=>s.remove(),5000) } },4200) }
 let denMsg="", denBuy=null, denName="", denTab="food", denCele=null, denArrange=false, denSel=null;
 function wish(){ return ls("fieldnote.wish",null) }
-function wishItem(list){ const w=wish(); if(!w) return null; if(w.startsWith("pet:")){ const P=ALL_PETS.find(x=>x.k===w.slice(4)); return P&&!owns(list).has(w)?{id:w,e:P.forms[2],n:P.n,cost:nextPetPrice(list)}:null }
+function wishItem(list){ const w=wish(); if(!w) return null; if(w.startsWith("pet:")){ const P=ALL_PETS.find(x=>x.k===w.slice(4)); return P&&!owns(list).has(w)?{id:w,e:glyph(P.forms[2]),n:P.n,cost:nextPetPrice(list)}:null }
   const s=SHOP.find(x=>x.id===w); return s&&!owns(list).has(w)&&s.cost?{id:w,e:s.e||"🏞️",n:s.n,cost:s.cost}:null }
 function wishHtml(list){ const w=wishItem(list); if(!w) return ""; const st=wallet(list).stars, left=Math.max(0,w.cost-st);
   return `<div class="wishbar"><span style="font-size:1.8rem">${w.e}</span><div style="flex:1;display:flex;flex-direction:column;gap:4px">
@@ -1846,6 +1951,8 @@ function renderDen(){
     </div>
     <div class="row" style="justify-content:space-between"><span><b>${esc(b.name)}</b> · ${P.n} · ${GROW[st][1]}</span>
       <span class="row" style="gap:6px"><button class="btn ${denArrange?"":"ghost"} small" id="arrange">${denArrange?"✓ จัดเสร็จแล้ว":"✋ จัดวางของ"}</button><button class="btn ghost small" id="prename">✏️ เปลี่ยนชื่อ</button>${st>0?`<button class="btn ghost small" id="part">🎨 ${buddyArt(b.kind)?"เปลี่ยนรูป":"วาดรูปให้"}</button>`:""}</span></div>
+    <div id="bondbox">${bondHtml(b.kind,b.name,list)}</div>
+    <label class="small row" style="gap:6px"><input type="checkbox" id="psound" ${petSoundOn()?"checked":""}> เสียงคู่หูเวลาลูบ</label>
     ${denArrange?`<div class="feedback"><span class="small"><b>โหมดจัดวาง:</b> ลากของบนตัว${esc(b.name)}หรือในห้องไปวางตรงไหนก็ได้ แตะของเพื่อเลือก แล้วปรับขนาดหรือเก็บออก</span>
       ${denSel?`<div class="row"><button class="btn ghost small" data-sz="0.8">เล็กลง</button><button class="btn ghost small" data-sz="1.25">ใหญ่ขึ้น</button><button class="btn ghost small" data-rm="1">เก็บออก</button></div>`:""}</div>`:""}
     ${next?`<div class="growbox"><span class="nextshape" aria-hidden="true">${petLook(b.kind,st+1)}</span>
@@ -1858,7 +1965,7 @@ function renderDen(){
       <button class="btn ghost small" data-food="${f.id}" ${w.stars<f.cost||!next?"disabled":""}>ให้ ${esc(b.name)} ⭐${f.cost}</button></div>`).join("")}</div>
     <p class="small muted">อาหารให้ตัวที่อยู่หน้าแรก แต่ละตัวโตแยกกัน ไม่ให้อาหารก็ไม่หิว ไม่เศร้า รอได้เสมอ</p>`
   :denTab==="pets"?`<div class="shopgrid">${ALL_PETS.filter(x=>!x.retired||o.has("pet:"+x.k)).map(x=>{ const have=o.has("pet:"+x.k);
-      return `<div class="shopitem ${have?"have":""}">${have?petFace(x.k,56,true,list):`<span style="font-size:2.1rem">${x.forms[2]}</span>`}<b class="small">${have?esc(petName(x.k,list)):esc(x.n)}</b>
+      return `<div class="shopitem ${have?"have":""}">${have?petFace(x.k,56,true,list):`<span style="font-size:2.1rem">${glyph(x.forms[2])}</span>`}<b class="small">${have?esc(petName(x.k,list)):esc(x.n)}</b>
         ${have?`<span class="small muted">${GROW[growStage(growth(x.k,list))][1]}</span>${x.k===b.kind?`<span class="small muted">อยู่หน้าแรก</span>`:`<button class="btn ghost small" data-act="${x.k}">ให้มาหน้าแรก</button>`}`
           :x.how?`<span class="small muted">${formsText(x)}</span><span class="small muted">🔒 ${esc(x.how)}</span>`
           :`<span class="small muted">${formsText(x)}</span>${denBuy==="pet:"+x.k?`<input id="newname" maxlength="20" placeholder="ตั้งชื่อ" value="${esc(denName)}" style="font:inherit;width:100%;padding:6px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)">${buyBtn("pet:"+x.k,price)}`
@@ -1912,7 +2019,9 @@ function renderDen(){
       text:after===4?"มีออร่าเรืองแสงแล้ว ขอบคุณที่ดูแลกันมาตลอด":before===0?"ยินดีต้อนรับสู่บ้านนะ ตอนนี้แต่งตัวให้ได้แล้ว":"ร่างใหม่สวยมากเลย ฝึกต่อไปเรื่อยๆ แล้วมาให้อาหารกันอีกนะ"};
     denMsg=pickDay([`${b.name} ชอบ${f.n}มาก!`,`${b.name} กิน${f.n}อย่างมีความสุข`,`${b.name} ยิ้มกว้างเลย`],Date.now()%7); reRender();
     const pp=document.getElementById("petpat"); if(pp){ pp.classList.remove("hop"); void pp.offsetWidth; pp.classList.add("hop") } });
-  on("petpat",()=>{ if(denArrange) return; const pp=document.getElementById("petpat"); pp.classList.remove("hop"); void pp.offsetWidth; pp.classList.add("hop") });
+  on("petpat",()=>{ if(denArrange) return; petPat(document.getElementById("petpat"),b.kind) });
+  const ps=document.getElementById("psound"); if(ps) ps.onchange=()=>{ lsSet("fieldnote.petsound",ps.checked); if(ps.checked) petChirp(b.kind) };
+  if(!denArrange) startWander();
   on("prename",()=>{ const n=prompt("ชื่อใหม่ของ "+b.name, b.name); if(n&&n.trim()){ const names=ls("fieldnote.petnames",{}); names[b.kind]=n.trim().slice(0,20); lsSet("fieldnote.petnames",names); reRender() } });
   on("part",()=>pickImg(petArtKey(b.kind),reRender));
 }
