@@ -629,7 +629,7 @@ function shuffleQ(q, perm){
   if(q.num) return q;
   let idx=perm&&perm.length===q.opts.length?perm:null;
   if(!idx){ idx=q.opts.map((_,k)=>k); for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]]} }
-  return {...q,opts:idx.map(k=>q.opts[k]),a:idx.indexOf(q.a),perm:idx};
+  return {...q,opts:idx.map(k=>q.opts[k]),a:idx.indexOf(q.a),perm:idx,...(Array.isArray(q.optErr)&&q.optErr.length===q.opts.length?{optErr:idx.map(k=>q.optErr[k])}:{})};
 }
 
 /* ---------- spell tiers ---------- */
@@ -1354,7 +1354,7 @@ function renderStep(){
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
     const nx=document.getElementById("next"); if(nx) nx.onclick=()=>{
       S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
-        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0}:{}),...(q.check&&S.checkPick!=null?{checkOk:S.checkPick===q.check.a}:{}),len:q.q.length});
+        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0}:{}),...(q.check&&S.checkPick!=null?{checkOk:S.checkPick===q.check.a}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),len:q.q.length});
       advance();
     };
   }
@@ -1737,6 +1737,15 @@ const SCENES={
    <path d="M170 200 L270 70 L320 70 L420 200Z" fill="#6b3b2b"/><path d="M270 70 L320 70 L305 95 L290 82 L280 100Z" fill="#ff5a1f"/><path d="M282 98 q8 30 -6 60" stroke="#ff7a2f" stroke-width="5" fill="none" opacity=".9"/>
    <path d="M0 190 Q100 170 200 192 T400 186 V240 H0Z" fill="#8a4b32"/><path d="M0 215 Q120 205 240 216 T400 212 V240 H0Z" fill="#6b3a26"/>`,
    grad("vs","#ffcf8a","#ff8a5c"))},
+ "bg:terrarium":{n:"ป่าชื้นจิ๋ว",cost:500,svg:()=>SVGW(`<rect width="400" height="240" fill="url(#ts)"/>
+   <path d="M0 120 Q60 90 120 112 T240 104 T400 110 V240 H0Z" fill="#6aa86a" opacity=".55"/>
+   <path d="M30 130 q10 -60 30 -80 q-6 40 -14 80Z M340 126 q-8 -56 -30 -76 q8 38 14 76Z" fill="#4e8f55"/>
+   <rect y="168" width="400" height="72" fill="#6b4a2e"/><path d="M0 168 Q100 156 200 166 T400 162 V178 H0Z" fill="#5fae5a"/>
+   <rect x="120" y="176" width="150" height="22" rx="11" fill="#8a6440"/><path d="M130 182 h120 M138 190 h90" stroke="#6b4a2e" stroke-width="2"/>
+   ${dots(14,"",i=>`<ellipse cx="${18+i*28}" cy="${206+(i*13)%26}" rx="${6+(i%3)*2}" ry="3.5" fill="${["#c9772d","#a0522d","#d9a441"][i%3]}" transform="rotate(${(i*37)%60-30} ${18+i*28} ${206+(i*13)%26})"/>`)}
+   <g><rect x="296" y="178" width="5" height="10" fill="#f4e7d0"/><ellipse cx="298" cy="178" rx="9" ry="5" fill="#b07a4f"/></g><ellipse cx="70" cy="190" rx="16" ry="9" fill="#8f979e"/><ellipse cx="66" cy="186" rx="7" ry="3" fill="#a9b1b8"/>
+   ${dots(10,"",i=>`<circle class="twinkle" style="animation-delay:${(i*0.41)%2}s" cx="${30+i*38}" cy="${40+(i*47)%80}" r="2.2" fill="#e8ffd9"/>`)}`,
+   grad("ts","#cfe8c9","#eef7df"))},
  "bg:snow":{n:"ดินแดนหิมะ",cost:600,svg:()=>SVGW(`<rect width="400" height="240" fill="url(#ws)"/>
    <path d="M0 150 Q100 115 200 145 T400 135 V240 H0Z" fill="#eef6fb"/>${tree(50,165,.9,"#2f6b57","#3d8069")}${tree(340,160,1,"#2f6b57","#3d8069")}${tree(300,175,.7,"#2f6b57","#3d8069")}
    <path d="M0 185 Q150 168 280 186 T400 182 V240 H0Z" fill="#fff"/>
@@ -1783,6 +1792,56 @@ unicorn:`<path d="M68 80 C86 82 92 66 84 56 C86 68 78 72 66 72Z" fill="#c9a6ff"/
  <path d="M58 22 C70 18 80 28 76 44 C72 34 66 30 60 30Z" fill="#ff9ec7"/><path d="M60 26 C72 26 80 38 74 52 C72 42 66 36 60 34Z" fill="#c9a6ff"/><path d="M42 22 C36 22 32 26 32 30 C38 26 44 26 48 26Z" fill="#8fd3ff"/>
  ${eyes(40,9,"#3b2a5a")}<circle cx="46" cy="52" r="1.1" fill="#c98aa5"/><circle cx="54" cy="52" r="1.1" fill="#c98aa5"/>${smile(55)}${blush(46)}`
 };
+const eyes2=(y=40,dx=9,c="#1d1d2b",r=3.6)=>`<ellipse cx="${50-dx}" cy="${y}" rx="${r}" ry="${r*1.2}" fill="${c}"/><ellipse cx="${50+dx}" cy="${y}" rx="${r}" ry="${r*1.2}" fill="${c}"/><circle cx="${48.8-dx}" cy="${y-1.6}" r="1.3" fill="#fff"/><circle cx="${48.8+dx}" cy="${y-1.6}" r="1.3" fill="#fff"/>`;
+const bl=(y,dx=16)=>`<ellipse cx="${50-dx}" cy="${y}" rx="3.6" ry="2.2" fill="#ff8fa3" opacity=".5"/><ellipse cx="${50+dx}" cy="${y}" rx="3.6" ry="2.2" fill="#ff8fa3" opacity=".5"/>`;
+/* coiled chibi snake: base colour, belly, pattern colour, pattern kind */
+function snake(c,belly,pc,kind,extra=""){
+  const spots=kind==="blotch"?`<ellipse cx="28" cy="84" rx="6" ry="3.5" fill="${pc}"/><ellipse cx="50" cy="91" rx="7" ry="3.5" fill="${pc}"/><ellipse cx="72" cy="84" rx="6" ry="3.5" fill="${pc}"/><ellipse cx="38" cy="66" rx="5" ry="3" fill="${pc}"/><ellipse cx="62" cy="66" rx="5" ry="3" fill="${pc}"/>`
+   :kind==="dots"?`<circle cx="30" cy="84" r="2.2" fill="${pc}"/><circle cx="44" cy="90" r="2.2" fill="${pc}"/><circle cx="58" cy="90" r="2.2" fill="${pc}"/><circle cx="71" cy="84" r="2.2" fill="${pc}"/><circle cx="42" cy="66" r="2" fill="${pc}"/><circle cx="58" cy="66" r="2" fill="${pc}"/>`
+   :`<path d="M22 82 q4 -5 8 0 M40 90 q5 -5 10 0 M60 90 q5 -5 10 0 M74 80 q3 -4 6 0" stroke="${pc}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  return `<ellipse cx="50" cy="84" rx="34" ry="12" fill="${c}"/><ellipse cx="50" cy="87" rx="28" ry="7" fill="${belly}"/>
+  <ellipse cx="50" cy="68" rx="24" ry="10" fill="${c}"/><path d="M80 82 q12 -2 10 -12 q-2 6 -12 6Z" fill="${c}"/>${spots}
+  <path d="M42 64 C38 54 40 46 46 42 L56 42 C60 48 60 56 56 64Z" fill="${c}"/>
+  <ellipse cx="50" cy="36" rx="20" ry="16" fill="${c}"/><ellipse cx="50" cy="44" rx="12" ry="6" fill="${belly}"/>${extra}
+  ${eyes2(34,9,"#1d1d2b",4)}<path d="M48 47 l2 4 l2 -4" stroke="#e2574c" stroke-width="1.4" fill="none" stroke-linecap="round"/>${bl(41,15)}` }
+/* chibi isopod seen from the front-side: segmented shell */
+function isopod(shell,line,face,patch){
+  const segs=[0,1,2,3,4].map(i=>`<path d="M${16+i*1} ${78-i*9} Q50 ${54-i*9} ${84-i*1} ${78-i*9}" fill="none" stroke="${line}" stroke-width="1.6" opacity=".7"/>`).join("");
+  return `<g>${[24,34,44,56,66,76].map((x,i)=>`<path d="M${x} 86 l${i<3?-4:4} 8" stroke="#5a4a42" stroke-width="2.4" stroke-linecap="round"/>`).join("")}</g>
+  <path d="M12 86 Q12 30 50 28 Q88 30 88 86 Z" fill="${shell}"/>${patch||""}${segs}
+  <path d="M30 40 q-10 -14 -18 -14 M70 40 q10 -14 18 -14" stroke="#5a4a42" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <ellipse cx="50" cy="74" rx="20" ry="13" fill="${face}"/>${eyes2(72,8,"#1d1d2b",3.2)}<path d="M47 80 q3 2.4 6 0" stroke="#3a2a2a" stroke-width="1.3" fill="none" stroke-linecap="round"/>${bl(78,13)}` }
+/* chibi sitting quadruped used for Himmapan creatures */
+function quad({body,belly,ear,tail,mane,horn,feet,extra}){
+  return `${tail}<ellipse cx="50" cy="74" rx="21" ry="20" fill="${body}"/><ellipse cx="50" cy="78" rx="12" ry="14" fill="${belly}"/>
+  <ellipse cx="41" cy="93" rx="6.5" ry="4" fill="${feet}"/><ellipse cx="59" cy="93" rx="6.5" ry="4" fill="${feet}"/>${mane||""}${ear}
+  <ellipse cx="50" cy="40" rx="23" ry="20" fill="${body}"/><ellipse cx="50" cy="50" rx="12" ry="7.5" fill="${belly}"/>${horn||""}${extra||""}
+  ${eyes2(39)}<ellipse cx="50" cy="47.5" rx="2.6" ry="2" fill="#2b1d1d"/><path d="M46 50 q2 2.6 4 0 q2 2.6 4 0" fill="none" stroke="#3a2a2a" stroke-width="1.4" stroke-linecap="round"/>${bl(46)}` }
+Object.assign(PET_ART,{
+tank:`<rect x="8" y="22" width="84" height="66" rx="6" fill="#d9f2ff" opacity=".55" stroke="#7fb6d6" stroke-width="3"/><rect x="11" y="62" width="78" height="23" fill="#7a5634"/><rect x="11" y="56" width="78" height="8" fill="#5fae5a"/>
+  <path d="M20 62 q6 -18 12 0 M60 62 q4 -14 9 0" fill="#3f8f5a"/><ellipse cx="44" cy="70" rx="10" ry="4" fill="#a0784f"/><ellipse cx="72" cy="74" rx="6" ry="3" fill="#9aa3ad"/><circle cx="30" cy="76" r="3" fill="#8f9aa6"/><rect x="6" y="16" width="88" height="8" rx="3" fill="#4f8db0"/>`,
+ballpython:snake("#7a5634","#efe0c2","#d9b77e","blotch"),
+banana:snake("#f2d36b","#fff6d9","#b79ad6","blotch"),
+corn:snake("#f08a4b","#fff0dc","#d9412b","blotch"),
+greentree:snake("#3fb25c","#e9f7c9","#f3fff0","dots"),
+duck:isopod("#8f9aa6","#5d6772","#f4d96b"),
+cow:isopod("#fbfaf6","#9a9a94","#ffe9cf",`<ellipse cx="32" cy="52" rx="9" ry="6" fill="#2b2b2b"/><ellipse cx="64" cy="44" rx="8" ry="5" fill="#2b2b2b"/><ellipse cx="74" cy="66" rx="6" ry="5" fill="#2b2b2b"/>`),
+orangeiso:isopod("#f39a3d","#c4651d","#ffd7a8"),
+potion:isopod("#7f86c9","#4f559a","#d9dcf7",`<ellipse cx="34" cy="50" rx="7" ry="4" fill="#c9a6ff"/><ellipse cx="62" cy="42" rx="6" ry="4" fill="#9fe3ff"/><ellipse cx="70" cy="62" rx="5" ry="3.5" fill="#c9a6ff"/>`),
+kilen:quad({body:"#5fbf9a",belly:"#e8f7e1",feet:"#2f7d63",
+  tail:`<path d="M66 80 C86 84 94 68 86 56 C90 66 84 70 78 66 C84 74 76 78 66 74Z" fill="#ff8a4c"/><path d="M80 66 C86 70 88 62 84 58" stroke="#ffd45c" stroke-width="2.4" fill="none"/>`,
+  ear:`<path d="M28 34 L22 22 L36 28Z" fill="#5fbf9a"/><path d="M72 34 L78 22 L64 28Z" fill="#5fbf9a"/>`,
+  horn:`<path d="M42 22 C40 12 36 8 32 8 C38 10 40 16 40 22Z" fill="#f5c84c"/><path d="M58 22 C60 12 64 8 68 8 C62 10 60 16 60 22Z" fill="#f5c84c"/>`,
+  extra:`<path d="M36 70 q4 -4 8 0 M48 66 q4 -4 8 0 M58 72 q4 -4 8 0" stroke="#3a9a77" stroke-width="2" fill="none"/><path d="M38 52 q-8 6 -12 2 M62 52 q8 6 12 2" stroke="#2f7d63" stroke-width="1.6" fill="none"/>`}),
+lion:quad({body:"#f6c35a",belly:"#fff1c9",feet:"#d69a34",
+  tail:`<path d="M68 82 C86 84 90 74 88 64" stroke="#f6c35a" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="88" cy="62" r="5.5" fill="#c9722d"/>`,
+  mane:`<circle cx="50" cy="40" r="30" fill="#c9722d"/>${[0,1,2,3,4,5,6,7,8,9,10,11].map(i=>{const a=i*Math.PI/6;return `<circle cx="${(50+29*Math.cos(a)).toFixed(1)}" cy="${(40+29*Math.sin(a)).toFixed(1)}" r="7" fill="#c9722d"/>`}).join("")}`,
+  ear:`<circle cx="31" cy="24" r="6" fill="#f6c35a"/><circle cx="69" cy="24" r="6" fill="#f6c35a"/>`,
+  horn:`<path d="M40 18 L44 10 L50 16 L56 10 L60 18Z" fill="#f5d34c" stroke="#d9a520" stroke-width=".8"/>`}),
+naga:snake("#2fa37a","#f6f1c9","#f5c84c","dots",`<path d="M28 32 C22 20 30 10 40 16 C42 8 58 8 60 16 C70 10 78 20 72 32 C66 26 34 26 28 32Z" fill="#1f7a5a"/><path d="M38 20 L42 6 L46 16 L50 4 L54 16 L58 6 L62 20Z" fill="#f5c84c" stroke="#d9a520" stroke-width=".8"/><circle cx="50" cy="14" r="2" fill="#e2574c"/>`),
+});
+/* knowledge cards: real science behind each companion, unlocked as it grows (baby, young, adult) */
+const PET_FACTS={"dragon": ["มังกรในนิทานได้แรงบันดาลใจจากสัตว์จริงหลายชนิด เช่น ตะกวดและจระเข้", "มังกรโคโมโดเป็นกิ้งก่าที่ใหญ่ที่สุดในโลก ยาวได้ราว 3 เมตร อาศัยอยู่บนเกาะในอินโดนีเซีย", "กิ้งก่าเป็นสัตว์เลือดเย็น ต้องอาบแดดให้ร่างกายอุ่นก่อน จึงจะเคลื่อนไหวได้คล่อง"], "owl": ["นกฮูกกลอกตาในเบ้าไม่ได้ จึงต้องหมุนคอแทน หมุนได้ราว 270 องศา", "ขอบขนปีกนกฮูกหยักนุ่ม ช่วยลดเสียงลม จึงบินได้เงียบมาก", "นกฮูกกลืนเหยื่อทั้งตัว แล้วสำรอกส่วนที่ย่อยไม่ได้ เช่น กระดูกและขน ออกมาเป็นก้อน"], "fox": ["จิ้งจอกได้ยินเสียงเบามาก ได้ยินแม้เสียงหนูขุดดินอยู่ใต้หิมะ", "จิ้งจอกแดงกระโดดตะครุบเหยื่อใต้หิมะ งานวิจัยพบว่ามันมักกระโดดไปทางทิศตะวันออกเฉียงเหนือ อาจใช้สนามแม่เหล็กโลกช่วยกะระยะ", "หางฟูของจิ้งจอกช่วยทรงตัวตอนวิ่ง และใช้พันตัวให้อุ่นตอนนอน"], "cat": ["หลังจอตาของแมวมีชั้นสะท้อนแสง ตาจึงวาวในที่มืด และมองเห็นในแสงน้อยได้ดีกว่าคน", "หนวดแมวรับรู้แรงลมและสิ่งรอบตัวได้ ช่วยกะว่าช่องแคบพอให้ตัวผ่านไหม", "แมวรับรสหวานไม่ได้ เพราะยีนรับรสหวานของแมวไม่ทำงาน"], "bunny": ["ฟันกระต่ายงอกยาวขึ้นตลอดชีวิต จึงต้องกัดแทะหญ้าให้ฟันสึกอยู่เสมอ", "ตากระต่ายอยู่ด้านข้างหัว มองเห็นได้เกือบรอบตัว ช่วยระวังภัย", "หูยาวของกระต่ายมีเส้นเลือดเยอะ ช่วยระบายความร้อนออกจากร่างกาย"], "wolf": ["หมาป่าอยู่กันเป็นฝูง ส่วนใหญ่คือครอบครัวเดียวกัน คือพ่อแม่กับลูกๆ", "หมาป่าหอนเพื่อสื่อสารกับฝูงที่อยู่ไกล เสียงหอนไปได้ไกลหลายกิโลเมตร", "สุนัขบ้านมีบรรพบุรุษเป็นหมาป่าสีเทา ที่คนเริ่มเลี้ยงเมื่อกว่า 15,000 ปีก่อน"], "tiger": ["ลายของเสือแต่ละตัวไม่ซ้ำกัน เหมือนลายนิ้วมือของคน", "เสือว่ายน้ำเก่งและชอบแช่น้ำคลายร้อน ต่างจากแมวบ้านส่วนใหญ่", "ถ้าโกนขนเสือออก ผิวหนังข้างใต้ก็ยังมีลายอยู่"], "peacock": ["นกยูงตัวผู้เท่านั้นที่มีขนหางยาวสวย ใช้รำแพนอวดตัวเมีย", "สีเขียวฟ้าแวววาวของขนนกยูงไม่ได้มาจากสารสี แต่เกิดจากโครงสร้างเล็กๆ ในขนที่สะท้อนแสง", "นกยูงของไทยคือนกยูงเขียว เป็นสัตว์ป่าคุ้มครองที่ต้องช่วยกันดูแล"], "swan": ["หงส์ตัวใหญ่แต่บินได้ โดยต้องวิ่งบนผิวน้ำก่อนขึ้นบิน", "ลูกหงส์ขาวมีขนสีเทา แล้วค่อยๆ เปลี่ยนเป็นสีขาวเมื่อโต", "หงส์ใช้คอยาวก้มลงไปกินพืชใต้น้ำ โดยไม่ต้องดำน้ำทั้งตัว"], "dino": ["นกเป็นลูกหลานของไดโนเสาร์ นักวิทยาศาสตร์จึงนับว่านกคือไดโนเสาร์ที่ยังมีชีวิตอยู่", "ที่ภาคอีสานของไทยพบฟอสซิลไดโนเสาร์หลายชนิด เช่น ภูเวียงโกซอรัส สิรินธรเน", "ฟอสซิลเกิดจากซากที่ถูกตะกอนทับถมเป็นเวลานานมาก จนแร่ธาตุเข้าไปแทนที่และกลายเป็นหิน"], "dolphin": ["โลมาเป็นสัตว์เลี้ยงลูกด้วยนม หายใจด้วยปอดผ่านรูบนหัว", "โลมาส่งเสียงแล้วฟังเสียงสะท้อนเพื่อหาตำแหน่งเหยื่อ เหมือนค้างคาว", "ในทะเลสาบสงขลามีโลมาอิรวดีอาศัยอยู่ เหลืออยู่น้อยมากจนใกล้สูญพันธุ์"], "bubble": ["หมึกยักษ์มีหัวใจ 3 ดวง และมีเลือดสีฟ้า เพราะใช้ทองแดงขนออกซิเจน", "หมึกยักษ์เปลี่ยนสีผิวได้ในพริบตาเพื่อพรางตัว", "แมงกะพรุนไม่มีสมองและไม่มีหัวใจ ตัวของมันเป็นน้ำราว 95%"], "butterfly": ["ผีเสื้อเปลี่ยนรูปร่างครบ 4 ระยะ คือ ไข่ หนอน ดักแด้ และตัวเต็มวัย", "ผีเสื้อรับรสด้วยเท้า เมื่อเกาะใบไม้ก็รู้ว่าใบนั้นเหมาะจะวางไข่ไหม", "ผีเสื้อช่วยถ่ายเรณูให้ดอกไม้ เพราะตอนดูดน้ำหวาน ละอองเรณูจะติดตัวไปด้วย"], "turtle": ["กระดองเต่าเชื่อมกับกระดูกสันหลังและซี่โครง เต่าจึงถอดกระดองออกไม่ได้", "เพศของลูกเต่าทะเลขึ้นกับอุณหภูมิของทรายที่ฝังไข่ ทรายอุ่นจะได้ตัวเมียมากขึ้น", "เต่าทะเลมักกินถุงพลาสติก เพราะคิดว่าเป็นแมงกะพรุน"], "panda": ["แพนด้ากินไผ่วันละหลายสิบกิโลกรัม เพราะไผ่ให้พลังงานน้อย", "แพนด้ามีกระดูกข้อมือที่ยื่นออกมาเหมือนนิ้วที่หก ช่วยจับลำไผ่", "ลูกแพนด้าแรกเกิดตัวเล็กมาก หนักเพียงราว 100–200 กรัม"], "penguin": ["เพนกวินบินไม่ได้ แต่ใช้ปีกว่ายน้ำได้เร็วมาก", "เพนกวินจักรพรรดิตัวผู้กกไข่ไว้บนเท้าตลอดหน้าหนาวของแอนตาร์กติกา", "เพนกวินแทบทุกชนิดอยู่ซีกโลกใต้ ที่ขั้วโลกเหนือไม่มีเพนกวินเลย"], "deer": ["เขากวางผลัดทุกปีแล้วงอกใหม่ ต่างจากเขาวัวที่อยู่ไปตลอดชีวิต", "ระหว่างที่เขากวางกำลังงอก จะมีหนังนุ่มที่มีเส้นเลือดหุ้มอยู่", "กวางเป็นสัตว์เคี้ยวเอื้อง กลืนอาหารลงกระเพาะแล้วสำรอกกลับมาเคี้ยวอีกรอบ"], "otter": ["นากทะเลจับมือกันตอนนอน จะได้ไม่ลอยแยกจากกัน", "นากทะเลมีขนแน่นที่สุดในบรรดาสัตว์ทั้งหมด ใช้ขนกันหนาวแทนชั้นไขมัน", "นากทะเลใช้หินทุบเปลือกหอย เป็นสัตว์ที่รู้จักใช้เครื่องมือ"], "unicorn": ["ในอดีตมีคนขายเขาของวาฬนาร์วาล โดยอ้างว่าเป็นเขายูนิคอร์น", "เขาของวาฬนาร์วาลจริงๆ คือฟันที่งอกยาวออกมา ยาวได้ถึงราว 3 เมตร", "ยูนิคอร์นเป็นสัตว์ในตำนาน นักวิทยาศาสตร์ตัดสินว่าอะไรมีจริงจากหลักฐาน ไม่ใช่จากเรื่องเล่า"], "whale": ["วาฬสีน้ำเงินเป็นสัตว์ที่ใหญ่ที่สุดเท่าที่เคยมีบนโลก ยาวได้ราว 30 เมตร", "วาฬบาลีนไม่มีฟัน แต่ใช้แผงบาลีนกรองกุ้งเคยตัวเล็กๆ กิน", "ในอ่าวไทยมีวาฬบรูด้า ที่ชอบอ้าปากรอให้ฝูงปลาว่ายเข้ามาเอง"], "hedgehog": ["หนามของเม่นแคระคือขนที่แข็งเป็นพิเศษ ทำจากเคราติน สารเดียวกับเล็บของคน", "เม่นแคระม้วนตัวเป็นลูกบอลหนามเมื่อตกใจ", "เม่นแคระหากินกลางคืน และกินแมลงเป็นอาหารหลัก"], "ballpython": ["งูหลามบอลชอบม้วนตัวเป็นลูกบอลเมื่อตกใจ จึงได้ชื่อนี้", "งูรับกลิ่นด้วยลิ้น แลบลิ้นเก็บกลิ่นแล้วส่งไปให้อวัยวะรับกลิ่นที่เพดานปาก", "งูหลามบอลมีแอ่งรับความร้อนที่ริมปาก รู้ได้ว่าสัตว์เลือดอุ่นอยู่ตรงไหนแม้ในที่มืด"], "banana": ["งูสีกล้วยหอม (banana) เป็นมอร์ฟสีของงูหลามบอล ที่ผู้เลี้ยงผสมพันธุ์ต่อกันจนได้สีใหม่", "สีที่ส่งต่อจากพ่อแม่ไปสู่ลูกเป็นเรื่องพันธุศาสตร์ ที่เราจะได้เรียนตอน ม.3", "งูลอกคราบออกทั้งตัวเป็นชิ้นเดียว เพราะผิวชั้นนอกไม่ขยายตามตัวที่โตขึ้น"], "corn": ["งูคอร์นได้ชื่อเพราะลายท้องคล้ายเมล็ดข้าวโพด และมักพบใกล้ยุ้งข้าวโพดที่มีหนูชุม", "งูคอร์นไม่มีพิษ มันจับเหยื่อด้วยการรัด", "งูไม่มีใบหูด้านนอก แต่รับแรงสั่นสะเทือนผ่านกระดูกขากรรไกรได้"], "greentree": ["งูหลามเขียวตอนเด็กมีสีเหลืองหรือสีแดง แล้วค่อยๆ เปลี่ยนเป็นสีเขียวเมื่อโต", "งูหลามเขียวพันกิ่งไม้เป็นวง แล้ววางหัวพักไว้ตรงกลาง", "สีเขียวช่วยพรางตัวในพุ่มไม้ ทั้งจากเหยื่อและจากผู้ล่า"], "duck": ["ไอโซพอดไม่ใช่แมลง แต่เป็นญาติของกุ้งและปู (ครัสเตเชียน) ที่ขึ้นมาอยู่บนบก", "ไอโซพอดหายใจด้วยอวัยวะคล้ายเหงือกใต้ท้อง จึงต้องอยู่ในที่ชื้นเสมอ", "ไอโซพอดหน้าเป็ด (Rubber Ducky) ถูกพบครั้งแรกในถ้ำที่ประเทศไทย"], "cow": ["ไอโซพอดลายวัวนม (Dairy Cow) เป็นมอร์ฟสีขาวดำของ Porcellio laevis", "ไอโซพอดเป็นผู้ย่อยสลาย กินใบไม้และไม้ผุ แล้วคืนธาตุอาหารให้ดิน", "ไอโซพอดตัวเมียมีถุงใต้ท้องไว้อุ้มไข่และลูกที่เพิ่งฟัก"], "orangeiso": ["ไอโซพอดสีส้มนี้คือตัวกะปิ (Armadillidium) ที่ม้วนตัวกลมได้เหมือนลูกบอล", "ไอโซพอดลอกคราบทีละครึ่งตัว ลอกครึ่งหลังก่อน แล้วค่อยลอกครึ่งหน้า", "ไอโซพอดกินคราบเก่าของตัวเอง เพื่อเอาแคลเซียมกลับมาใช้สร้างเปลือกใหม่"], "potion": ["Magic Potion เป็นมอร์ฟของตัวกะปิ Armadillidium vulgare ที่มีแต้มหลายสี", "เปลือกไอโซพอดมีแคลเซียมคาร์บอเนต สารเดียวกับเปลือกไข่และหินปูน", "คนเลี้ยงไอโซพอดจะทำมุมชื้นและมุมแห้งไว้ในตู้ ให้มันเลือกเองว่าจะอยู่ตรงไหน"], "kilen": ["กิเลนเป็นสัตว์หิมพานต์ หัวคล้ายมังกร ตัวมีเกล็ด และมีกีบเหมือนกวางหรือม้า", "ในความเชื่อจีน กิเลนเป็นสัตว์มงคลที่เดินเบามากจนไม่เหยียบหญ้าให้ช้ำ", "ตัวนิ่มหรือตัวลิ่นมีเกล็ดจริงๆ ทำจากเคราติน และถูกล่าจนใกล้สูญพันธุ์"], "lion": ["ราชสีห์เป็นสัตว์หิมพานต์ ที่ได้แรงบันดาลใจมาจากสิงโต", "สิงโตเป็นแมวป่าชนิดเดียวที่อยู่กันเป็นฝูง", "แผงคอของสิงโตตัวผู้ช่วยป้องกันคอเวลาต่อสู้ และบอกว่าตัวนั้นแข็งแรงแค่ไหน"], "naga": ["พญานาคเป็นสัตว์ในตำนานที่ผูกพันกับน้ำและฝน ในความเชื่อของไทยและลาว", "งูจงอางแผ่แม่เบี้ยได้ และเป็นงูพิษที่ยาวที่สุดในโลก ยาวได้ราว 5 เมตร", "งูจงอางกินงูชนิดอื่นเป็นอาหารหลัก และตัวเมียทำรังจากใบไม้เพื่อวางไข่"]};
 function glyph(t){ return typeof t==="string"&&t.startsWith("svg:")?`<svg class="pg" viewBox="0 0 100 100" width="1em" height="1em" aria-hidden="true" style="display:inline-block;vertical-align:-.15em">${PET_ART[t.slice(4)]||""}</svg>`:t }
 const PETS=[
   {k:"dragon",n:"มังกรน้อย",forms:["🦎","🐉","🐉"],hab:"bg:volcano"},
@@ -1806,6 +1865,17 @@ const PETS=[
   {k:"unicorn",n:"ยูนิคอร์นดาวตก",forms:["svg:unicorn","svg:unicorn","svg:unicorn"],hab:"bg:castle",how:"จุดไฟติดต่อกันครบ 30 วัน"},
   {k:"whale",n:"วาฬฟ้าแห่งความรู้",forms:["🐟","🐳","🐋"],hab:"bg:sea",how:"พิชิตสำนักใดสำนักหนึ่งครบทุกคาถา"},
   {k:"hedgehog",n:"เม่นนักอ่าน",forms:["🦔","🦔","🦔"],hab:"bg:library",how:"อ่านจับใจความครบ 4 เรื่อง"},
+  {k:"ballpython",n:"งูหลามบอล",forms:["svg:ballpython","svg:ballpython","svg:ballpython"],hab:"bg:forest",grp:"งู"},
+  {k:"banana",n:"งูหลามบอลสีกล้วยหอม",forms:["svg:banana","svg:banana","svg:banana"],hab:"bg:forest",grp:"งู"},
+  {k:"corn",n:"งูคอร์น",forms:["svg:corn","svg:corn","svg:corn"],hab:"bg:meadow",grp:"งู"},
+  {k:"greentree",n:"งูหลามเขียว",forms:["svg:greentree","svg:greentree","svg:greentree"],hab:"bg:forest",grp:"งู"},
+  {k:"duck",n:"ไอโซพอดหน้าเป็ด",forms:["svg:duck","svg:duck","svg:duck"],hab:"bg:terrarium",grp:"ไอโซพอด"},
+  {k:"cow",n:"ไอโซพอดลายวัวนม",forms:["svg:cow","svg:cow","svg:cow"],hab:"bg:terrarium",grp:"ไอโซพอด"},
+  {k:"orangeiso",n:"ตัวกะปิสีส้ม",forms:["svg:orangeiso","svg:orangeiso","svg:orangeiso"],hab:"bg:terrarium",grp:"ไอโซพอด"},
+  {k:"potion",n:"ไอโซพอดแมจิกโพชั่น",forms:["svg:potion","svg:potion","svg:potion"],hab:"bg:terrarium",grp:"ไอโซพอด"},
+  {k:"kilen",n:"กิเลนหยก",forms:["svg:kilen","svg:kilen","svg:kilen"],hab:"bg:castle",grp:"หิมพานต์"},
+  {k:"lion",n:"ราชสีห์น้อย",forms:["svg:lion","svg:lion","svg:lion"],hab:"bg:forest",grp:"หิมพานต์"},
+  {k:"naga",n:"พญานาคน้อย",forms:["svg:naga","svg:naga","svg:naga"],hab:"bg:sea",grp:"หิมพานต์"},
   {k:"robot",n:"หุ่นกลไกจิ๋ว",forms:["🤖","🤖","🤖"],retired:true}];
 const ALL_PETS=PETS.map(p=>({...p,e:glyph(p.forms[2])}));
 const BUDDY_KINDS=["fox","dragon","owl","cat","bunny","wolf","peacock","dolphin"].map(k=>ALL_PETS.find(p=>p.k===k));
@@ -1836,8 +1906,10 @@ const RARE=[["wings","🪽","ปีกนางฟ้า","wear"],["compass","�
 const QUEST_BONUS=100;
 const PROPS=[["plant","🪴","กระถางต้นไม้",150],["candle","🕯️","เทียนเวท",150],["books","📚","กองหนังสือ",200],["paint","🎨","จานสี",250],["potion","🧪","ขวดยาวิเศษ",300],
   ["bed","🛏️","เตียงนุ่ม",300],["moon","🌙","โคมพระจันทร์",350],["scope","🔭","กล้องดูดาว",400],["teddy","🧸","ตุ๊กตาหมี",200],["lantern","🏮","โคมแดง",200],
-  ["mushroom","🍄","เห็ดวิเศษ",150],["vase","💐","แจกันดอกไม้",200],["frame","🖼️","ภาพวาด",250],["sofa","🛋️","โซฟา",350],["globe","🌍","ลูกโลก",300],["piano","🎹","เปียโน",500]]
-  .map(([k,e,n,cost])=>({id:"prop:"+k,e,n,cost,slot:"prop"}));
+  ["mushroom","🍄","เห็ดวิเศษ",150],["vase","💐","แจกันดอกไม้",200],["frame","🖼️","ภาพวาด",250],["sofa","🛋️","โซฟา",350],["globe","🌍","ลูกโลก",300],["piano","🎹","เปียโน",500],
+  ["rock","🪨","ก้อนหิน",100],["log","🪵","ขอนไม้ผุ",150],["moss","🌿","กอมอส",120],["leaflitter","🍂","กองใบไม้แห้ง",100],["sprout","🌱","ต้นกล้า",100],["cactus","🌵","กระบองเพชร",150],
+  ["terrarium","svg:tank","ตู้เลี้ยงไอโซพอด",400],["shroom2","🍄‍🟫","เห็ดป่า",120],["shell2","🐚","เปลือกหอย",120]]
+  .map(([k,e,n,cost])=>({id:"prop:"+k,e:e.startsWith("svg:")?glyph(e):e,n,cost,slot:"prop"}));
 WEAR.forEach(w=>{ if(w.slot!=="fx") w.slot="wear" });
 const SHOP=[...WEAR,...PROPS,...RARE,...Object.entries(SCENES).filter(([k,s])=>s.cost>0).map(([id,s])=>({id,n:s.n,cost:s.cost,slot:"bg"}))];
 const WEAR_HOME={head:[50,6],neck:[50,66],side:[86,62]};   /* where items bought in the old slot system start */
@@ -1903,6 +1975,9 @@ function bondState(){ return ls("fieldnote.bond",{}) }
 function studyDaysSince(list,kind){ const got=list.filter(a=>a.type==="shop"&&a.item==="pet:"+kind).map(a=>dayKey(a.endedAt)).sort()[0]||0;
   return new Set(list.filter(a=>isLesson(a)&&dayKey(a.endedAt)>=got).map(a=>dayKey(a.endedAt))).size }
 function bondPts(kind,list){ const b=bondState()[kind]||{}; return (b.pts||0)+5*studyDaysSince(list||mine(),kind) }
+function factsHtml(kind,name,st){ const F=PET_FACTS[kind]; if(!F) return ""; const open=Math.min(3,st), when=["ฟักออกจากไข่","เข้าสู่วัยรุ่น","โตเต็มวัย"];
+  return `<details class="card" style="padding:10px 12px;margin:0"><summary class="small" style="cursor:pointer"><b>📘 การ์ดความรู้ของ${esc(name)}</b> (${open}/3)</summary>
+    <ol class="small" style="margin:8px 0 0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px">${F.map((f,i)=>`<li>${i<open?esc(f):`<span class="muted">🔒 ปลดล็อกเมื่อ${when[i]}</span>`}</li>`).join("")}</ol></details>` }
 function bondHtml(kind,name,list){ const pts=bondPts(kind,list), lv=Math.floor(pts/BOND_STEP)+1, inLv=pts%BOND_STEP;
   return `<div class="bond"><span class="small"><b>ความผูกพัน ❤️ ระดับ ${lv}</b></span><div class="progress"><i style="width:${Math.round(inLv/BOND_STEP*100)}%;background:#ff6f91"></i></div></div>
     <p class="small muted" style="margin:2px 0 0">ลูบ${esc(name)}ได้ทุกวัน และทุกวันที่ฝึก ความผูกพันจะเพิ่มขึ้น ไม่มีวันลดลง</p>` }
@@ -1952,6 +2027,7 @@ function renderDen(){
     <div class="row" style="justify-content:space-between"><span><b>${esc(b.name)}</b> · ${P.n} · ${GROW[st][1]}</span>
       <span class="row" style="gap:6px"><button class="btn ${denArrange?"":"ghost"} small" id="arrange">${denArrange?"✓ จัดเสร็จแล้ว":"✋ จัดวางของ"}</button><button class="btn ghost small" id="prename">✏️ เปลี่ยนชื่อ</button>${st>0?`<button class="btn ghost small" id="part">🎨 ${buddyArt(b.kind)?"เปลี่ยนรูป":"วาดรูปให้"}</button>`:""}</span></div>
     <div id="bondbox">${bondHtml(b.kind,b.name,list)}</div>
+    ${factsHtml(b.kind,b.name,st)}
     <label class="small row" style="gap:6px"><input type="checkbox" id="psound" ${petSoundOn()?"checked":""}> เสียงคู่หูเวลาลูบ</label>
     ${denArrange?`<div class="feedback"><span class="small"><b>โหมดจัดวาง:</b> ลากของบนตัว${esc(b.name)}หรือในห้องไปวางตรงไหนก็ได้ แตะของเพื่อเลือก แล้วปรับขนาดหรือเก็บออก</span>
       ${denSel?`<div class="row"><button class="btn ghost small" data-sz="0.8">เล็กลง</button><button class="btn ghost small" data-sz="1.25">ใหญ่ขึ้น</button><button class="btn ghost small" data-rm="1">เก็บออก</button></div>`:""}</div>`:""}
@@ -1965,7 +2041,7 @@ function renderDen(){
       <button class="btn ghost small" data-food="${f.id}" ${w.stars<f.cost||!next?"disabled":""}>ให้ ${esc(b.name)} ⭐${f.cost}</button></div>`).join("")}</div>
     <p class="small muted">อาหารให้ตัวที่อยู่หน้าแรก แต่ละตัวโตแยกกัน ไม่ให้อาหารก็ไม่หิว ไม่เศร้า รอได้เสมอ</p>`
   :denTab==="pets"?`<div class="shopgrid">${ALL_PETS.filter(x=>!x.retired||o.has("pet:"+x.k)).map(x=>{ const have=o.has("pet:"+x.k);
-      return `<div class="shopitem ${have?"have":""}">${have?petFace(x.k,56,true,list):`<span style="font-size:2.1rem">${glyph(x.forms[2])}</span>`}<b class="small">${have?esc(petName(x.k,list)):esc(x.n)}</b>
+      return `<div class="shopitem ${have?"have":""}">${have?petFace(x.k,56,true,list):`<span style="font-size:2.1rem">${glyph(x.forms[2])}</span>`}<b class="small">${have?esc(petName(x.k,list)):esc(x.n)}</b>${x.grp?`<span class="small muted">${esc(x.grp)}</span>`:""}
         ${have?`<span class="small muted">${GROW[growStage(growth(x.k,list))][1]}</span>${x.k===b.kind?`<span class="small muted">อยู่หน้าแรก</span>`:`<button class="btn ghost small" data-act="${x.k}">ให้มาหน้าแรก</button>`}`
           :x.how?`<span class="small muted">${formsText(x)}</span><span class="small muted">🔒 ${esc(x.how)}</span>`
           :`<span class="small muted">${formsText(x)}</span>${denBuy==="pet:"+x.k?`<input id="newname" maxlength="20" placeholder="ตั้งชื่อ" value="${esc(denName)}" style="font:inherit;width:100%;padding:6px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)">${buyBtn("pet:"+x.k,price)}`

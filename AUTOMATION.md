@@ -140,6 +140,18 @@ She often skips the explanation when she is right, so a lucky or wrong-method ri
 - `exSec` = seconds from answering to the next question (time on the explanation). Below 3 s on a right answer
   means she did not read it.
 
+## Why she chose a wrong option (optErr)
+
+Her own "why I got it wrong" taps are often unreliable, so the content itself says what each wrong option means.
+- Give every new multiple-choice question `optErr`: an array the same length as `opts`, `null` at the answer and a
+  short kebab-case code for each wrong option naming the misconception it catches (e.g. `mode-as-frequency`,
+  `threshold-inclusive`, `forgot-to-scale`, `average-without-weights`). Reuse codes across sets so they add up.
+  Example: `content/sets/022-math-dotplot-1.json`.
+- Items record `optErr` (code of the wrong option she chose) and `orig` (chosen option index in the file's order).
+  When planning, count `optErr` codes over the last 2 weeks: a code that repeats is a misconception to teach
+  directly (lesson concept point + twins), whatever she tapped as the reason. Compare with her tapped reason to see
+  how well she judges her own mistakes, and mention it kindly in the letter now and then.
+
 ## Companion, voice, letters, goals (she should feel the app is a friend she trusts)
 
 Basis: Self-Determination Theory (competence, autonomy, relatedness); conversational "personalization" style
