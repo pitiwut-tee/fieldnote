@@ -405,15 +405,15 @@ async function importCode(raw, asTest){
       data=JSON.parse(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text()); }
     else data=JSON.parse(b64d(m1[1]));
   }catch(e){ const er=new Error("cut"); er.len=(m2||m1)[1].length; throw er }
-  let n=0,k=0;
-  for(const a of (data.a||[])){ const id=("s-"+(a.setId||a.type)+"-"+a.endedAt).replace(/[^A-Za-z0-9_-]/g,""); const {example,...rest}=fatten(a); await db.collection("attempts").doc(id).set({...rest,via:"code",test:!!(a.test||asTest)}); n++ }
+  let n=0,k=0; const what=[];
+  for(const a of (data.a||[])){ what.push(`${a.topic||a.type||"ผลฝึก"} (${new Date(a.endedAt).toLocaleString("th-TH",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})})`); const id=("s-"+(a.setId||a.type)+"-"+a.endedAt).replace(/[^A-Za-z0-9_-]/g,""); const {example,...rest}=fatten(a); await db.collection("attempts").doc(id).set({...rest,via:"code",test:!!(a.test||asTest)}); n++ }
   if(data.b&&!asTest){ try{ await db.collection("feedback").doc("buddy").set({kind:"buddy",name:data.b.name,buddy:data.b.kind,at:new Date().toISOString()}) }catch(e){} }
   for(const f of (data.f||[])){ const id=("f-"+f.at).replace(/[^A-Za-z0-9_-]/g,""); await db.collection("feedback").doc(id).set({...f,test:!!(f.test||asTest)}); k++ }
-  return {n,k};
+  return {n,k,what};
 }
 
 /* ---------- updates: GitHub Pages lets the browser keep an old copy for a while, so check for a newer build ---------- */
-const BUILD="2026-11-06 22:24";
+const BUILD="2026-11-06 22:30";
 async function checkUpdate(){ if(!/^https?:/.test(location.protocol)||typeof db!=="undefined"&&db) return;
   try{ const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text(); const m=t.match(/const BUILD="(\d{4}-\d\d-\d\d \d\d:\d\d)"/);
     if(m&&m[1]!==BUILD&&!m[1].includes("@@")&&!document.getElementById("updbar")){ const d=document.createElement("button"); d.id="updbar"; d.className="btn";
@@ -2275,6 +2275,7 @@ function renderParent(){
   ${db?`<section class="card"><h3>นำเข้าผลจากเครื่องลูก</h3>
     <p class="small muted">ลูกส่งมาเป็นไฟล์ทาง LINE: บันทึกไฟล์ไว้ในเครื่อง แล้วกดเลือกไฟล์ (เลือกหลายไฟล์พร้อมกันได้) ส่งไฟล์เดิมซ้ำได้ ระบบไม่นับซ้ำ</p>
     <div class="row"><label class="btn" style="cursor:pointer">เลือกไฟล์จากลูก<input type="file" id="impfile" accept=".txt,text/plain" multiple hidden></label></div>
+    <div id="impfmsg" aria-live="polite"></div>
     <p class="small muted">หรือวางรหัสที่ส่งมาเป็นข้อความ (ขึ้นต้นด้วย SK2:, SKP: หรือ FIELDNOTE1:)</p>
     <textarea id="imp" rows="3" style="font-family:var(--mono);font-size:.75rem;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)"></textarea>
     <label class="small row" style="gap:6px"><input type="checkbox" id="imptest"> นี่คือรหัสจากการทดลองเล่น (ติดป้ายทดสอบ ไม่นับในการวิเคราะห์)</label>
@@ -2416,10 +2417,15 @@ function renderParent(){
       :e.message==="parts"?`ยังขาดส่วนที่ ${e.miss.join(", ")} (จากทั้งหมด ${e.n} ส่วน) คัดลอกทุกส่วนจาก LINE มาวางต่อกันในกล่องเดียว แล้วกดใหม่`
       :e.message==="cut"?`รหัสไม่ครบ (ได้มา ${(e.len||0).toLocaleString()} ตัวอักษร) น่าจะถูกตัดตอนส่งหรือคัดลอก ให้ลูกเปิดเมนู "ส่งให้พ่อ" ดูความยาวรหัสเทียบกัน ถ้า LINE แบ่งเป็นหลายข้อความ ให้คัดลอกทุกข้อความมาวางต่อกัน`
       :`อ่านรหัสได้ แต่บันทึกไม่สำเร็จ (${e.message||e}) ลองกดใหม่อีกครั้ง`}ig.disabled=false;};
-  const imf=document.getElementById("impfile"); if(imf) imf.onchange=async()=>{const msg=document.getElementById("impmsg"); const files=[...imf.files]; if(!files.length) return;
-    msg.textContent="กำลังนำเข้า…"; let n=0,k=0; const bad=[];
-    for(const f of files){ try{ const r=await importCode(await f.text(), document.getElementById("imptest").checked); n+=r.n; k+=r.k }catch(e){ bad.push(f.name) } }
-    msg.textContent=`นำเข้าแล้ว ${n} ครั้ง และข้อความ ${k} ข้อความ`+(bad.length?` · อ่านไม่ได้: ${bad.join(", ")} (ไฟล์นี้ไม่ใช่ไฟล์จากแอป หรือไม่ครบ)`:""); imf.value=""; };
+  const imf=document.getElementById("impfile"); if(imf) imf.onchange=async()=>{const box=document.getElementById("impfmsg"); const files=[...imf.files]; if(!files.length) return;
+    box.innerHTML=`<p class="small">กำลังนำเข้า ${files.length} ไฟล์…</p>`; let n=0,k=0; const bad=[], what=[];
+    for(const f of files){ try{ const r=await importCode(await f.text(), document.getElementById("imptest").checked); n+=r.n; k+=r.k; what.push(...r.what) }catch(e){ bad.push(f.name) } }
+    box.innerHTML=(n||k?`<div class="feedback" style="border-left:4px solid var(--ok,#2e7d32)"><b>✅ ได้รับแล้ว ${n} รายการ${k?` และข้อความถึง Claude ${k} ข้อความ`:""}</b>
+        <ul class="small" style="margin:6px 0 0;padding-left:1.2em">${what.slice(-12).map(w=>`<li>${esc(w)}</li>`).join("")}</ul>
+        <span class="small muted">รายการที่เคยนำเข้าแล้วจะถูกเขียนทับ ไม่นับซ้ำ สรุปด้านบนอัปเดตแล้ว</span></div>`:"")
+      +(bad.length?`<p class="small" style="color:var(--warn)">❌ อ่านไม่ได้: ${esc(bad.join(", "))} ไฟล์นี้ไม่ใช่ไฟล์จากแอป หรือไม่ครบ ให้ลูกส่งใหม่</p>`:"")
+      +(!n&&!k&&!bad.length?`<p class="small">ไฟล์นี้ไม่มีผลใหม่</p>`:"");
+    imf.value=""; };
   const mdec=async(id,decision)=>{ const m=document.getElementById("mmsg-"+id), note=($v.querySelector(`[data-mnote="${id}"]`)?.value||"").trim();
     if(decision==="change"&&!note){ m.textContent="พิมพ์สิ่งที่อยากให้ปรับก่อน"; return }
     m.textContent="กำลังบันทึก…"; try{ await db.collection("feedback").add({kind:"mission",missionId:id,decision,note,at:new Date().toISOString()}); m.textContent=decision==="approve"?"อนุมัติแล้ว":"ส่งแล้ว" }catch(e){ m.textContent="บันทึกไม่สำเร็จ ลองใหม่" } };
