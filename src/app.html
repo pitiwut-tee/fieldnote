@@ -288,6 +288,7 @@ const REALMS=CONTENT.spells.realms, SCHOOL=CONTENT.spells.school, SPELLS=CONTENT
 /* ---------- daily vocabulary: general academic words + science/math words + story/art words ---------- */
 const VOCAB=CONTENT.vocab.map(x=>({...x}));
 const MISSIONS=(CONTENT.missions&&CONTENT.missions.missions)||[];
+const GUESTS=(CONTENT.guests&&CONTENT.guests.guests)||[];
 const READINGS=CONTENT.readings.map((r,i)=>({text:r.text,qs:r.qs.map(q=>({q:q.q,opts:q.opts,a:q.a})),th:{text:r.th,qs:r.qs.map(q=>({q:q.qth,opts:q.optsTh}))},idx:i}));
 
 /* ---------- test mode: open the page with #test once; results get a "test" tag ---------- */
@@ -890,6 +891,12 @@ function renderHome(){
   <section class="card"><h3>ภารกิจประจำสัปดาห์ ${p.questDoneThisWeek?"✅ ครบแล้ว ได้ของหายาก ✨":""}</h3>
     ${quests.q.map(q=>`<div class="quest"><span>${q.have>=q.need?"✅":"⬜"} ${q.label}</span><span class="small muted">${Math.min(q.have,q.need)}/${q.need}</span></div>`).join("")}
     <p class="small muted">ครบทั้ง 3 ข้อ ได้<b>ของหายาก ✨ 1 ชิ้น</b> ที่ซื้อด้วยดาวไม่ได้ และดาวเวทพิเศษ ⭐${QUEST_BONUS} เริ่มใหม่ทุกวันจันทร์${(()=>{const nx=RARE[questWeeks(mine()).length]; return nx?` · ชิ้นต่อไป: ${nx.e} ${esc(nx.n)}`:""})()}</p></section>
+  ${(()=>{const g=activeGuest(); if(!g) return ""; const pr=guestProgress(g,list), left=Math.round((new Date(g.to+"T23:59:59")-Date.now())/86400000);
+    return `<section class="card" style="border:2px dashed var(--beak)"><div class="row" style="gap:12px;align-items:center"><span style="font-size:2.6rem" class="float">${g.item.e}</span>
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px"><h3 style="margin:0">🎁 แขกพิเศษมาเยี่ยม: ${esc(g.item.n)}</h3>
+      ${pr.done?`<span class="small"><b>ได้แล้ว! ไปใช้ที่บ้านคู่หูได้เลย 🎉</b></span>`:`<span class="small">${esc(g.text)} · ทำแล้ว ${pr.n}/${g.task.n}</span>
+      <div class="progress"><i style="width:${Math.round(pr.n/g.task.n*100)}%;background:var(--beak)"></i></div>
+      <span class="small muted">อยู่ถึง ${new Date(g.to+"T12:00:00").toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"short"})}${left<=0?" (วันสุดท้าย)":""} ถ้าไม่ทัน ไม่เป็นไร แขกจะกลับมาอีกในอีกไม่กี่สัปดาห์</span>`}</div></div></section>` })()}
   <span class="eyebrow">เก็บ XP เพิ่ม (ไม่บังคับ)</span>
   <section class="sets">
     ${(()=>{const src=recallSource(list); if(!src) return ""; const done=recallDoneToday(list);
@@ -1904,6 +1911,19 @@ const RARE=[["wings","🪽","ปีกนางฟ้า","wear"],["compass","�
   ["comet","☄️","ดาวหาง","prop"],["shell","🐚","เปลือกหอยทะเลลึก","wear"]]
   .map(([k,e,n,t],i)=>({id:"rare:"+k,e,n,slot:t==="wear"?"wear":"prop",rare:i,special:"ภารกิจประจำสัปดาห์ครบ"}));
 const QUEST_BONUS=100;
+/* weekly special guest (content/guests.json, approved by dad): a rare item that visits for 3 days with a learning task */
+const GUEST_ITEMS=[...new Map(GUESTS.map(g=>[g.item.key,{id:"guest:"+g.item.key,e:g.item.e,n:g.item.n,slot:g.item.slot==="wear"?"wear":"prop",guest:true,special:"แขกพิเศษ"}])).values()];
+const GUEST_TASKS={
+  recallDays:(rs)=>new Set(rs.filter(a=>a.type==="recall").map(a=>dayKey(a.endedAt))).size,
+  reviewRight:(rs)=>rs.filter(a=>a.type==="review").flatMap(a=>a.items||[]).filter(x=>x.correct).length,
+  checkRight:(rs)=>rs.flatMap(a=>a.items||[]).filter(x=>x.checkOk).length,
+  level3Right:(rs)=>rs.filter(a=>isLesson(a)).flatMap(a=>a.items||[]).filter(x=>x.level===3&&x.correct).length,
+  passage:(rs)=>rs.filter(a=>a.type==="passage").length,
+  teach:(rs)=>rs.filter(a=>a.type==="teach").length,
+  vocabDays:(rs)=>new Set(rs.filter(a=>a.type==="vocab").map(a=>dayKey(a.endedAt))).size};
+function guestProgress(g,list){ const f=new Date(g.from+"T00:00:00").getTime(), t=new Date(g.to+"T23:59:59").getTime();
+  const rs=list.filter(a=>{const e=new Date(a.endedAt).getTime(); return e>=f&&e<=t}); const fn=GUEST_TASKS[g.task.kind]; const n=fn?fn(rs):0; return {n:Math.min(n,g.task.n),done:n>=g.task.n} }
+function activeGuest(){ const t=isoDay(todayKey()); return GUESTS.find(g=>g.status==="approved"&&t>=g.from&&t<=g.to)||null }
 const PROPS=[["plant","🪴","กระถางต้นไม้",150],["candle","🕯️","เทียนเวท",150],["books","📚","กองหนังสือ",200],["paint","🎨","จานสี",250],["potion","🧪","ขวดยาวิเศษ",300],
   ["bed","🛏️","เตียงนุ่ม",300],["moon","🌙","โคมพระจันทร์",350],["scope","🔭","กล้องดูดาว",400],["teddy","🧸","ตุ๊กตาหมี",200],["lantern","🏮","โคมแดง",200],
   ["mushroom","🍄","เห็ดวิเศษ",150],["vase","💐","แจกันดอกไม้",200],["frame","🖼️","ภาพวาด",250],["sofa","🛋️","โซฟา",350],["globe","🌍","ลูกโลก",300],["piano","🎹","เปียโน",500],
@@ -1911,7 +1931,7 @@ const PROPS=[["plant","🪴","กระถางต้นไม้",150],["candl
   ["terrarium","svg:tank","ตู้เลี้ยงไอโซพอด",400],["shroom2","🍄‍🟫","เห็ดป่า",120],["shell2","🐚","เปลือกหอย",120]]
   .map(([k,e,n,cost])=>({id:"prop:"+k,e:e.startsWith("svg:")?glyph(e):e,n,cost,slot:"prop"}));
 WEAR.forEach(w=>{ if(w.slot!=="fx") w.slot="wear" });
-const SHOP=[...WEAR,...PROPS,...RARE,...Object.entries(SCENES).filter(([k,s])=>s.cost>0).map(([id,s])=>({id,n:s.n,cost:s.cost,slot:"bg"}))];
+const SHOP=[...WEAR,...PROPS,...RARE,...GUEST_ITEMS,...Object.entries(SCENES).filter(([k,s])=>s.cost>0).map(([id,s])=>({id,n:s.n,cost:s.cost,slot:"bg"}))];
 const WEAR_HOME={head:[50,6],neck:[50,66],side:[86,62]};   /* where items bought in the old slot system start */
 function ls(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v) }catch(e){ return d } }
 function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)) }catch(e){} }
@@ -1925,6 +1945,7 @@ function earnedSpecials0(list){ const out=new Set(), p=progressOf(list), ss=spel
   if(new Set(list.filter(a=>a.type==="passage").map(a=>a.setId)).size>=4) out.add("pet:hedgehog");
   if(list.some(a=>a.type==="teach")) out.add("acc:teacher");
   questWeeks(list).forEach((w,i)=>{ if(i<RARE.length) out.add(RARE[i].id) });
+  GUESTS.filter(g=>g.status==="approved").forEach(g=>{ if(guestProgress(g,list).done) out.add("guest:"+g.item.key) });
   return out }
 function questWeeks(list){ try{ return progressOf(list).questWeeks||[] }catch(e){ return [] } }
 function owns(list){ const s=new Set(list.filter(a=>a.type==="shop"&&a.item&&!a.item.startsWith("snack:")).map(a=>a.item)); earnedSpecials(list).forEach(x=>s.add(x)); return s }
@@ -2047,9 +2068,9 @@ function renderDen(){
           :`<span class="small muted">${formsText(x)}</span>${denBuy==="pet:"+x.k?`<input id="newname" maxlength="20" placeholder="ตั้งชื่อ" value="${esc(denName)}" style="font:inherit;width:100%;padding:6px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)">${buyBtn("pet:"+x.k,price)}`
           :`${buyBtn("pet:"+x.k,price,`รับไข่มาเลี้ยง ⭐${price}`)}${wishBtn("pet:"+x.k)}`}`}</div>` }).join("")}</div>
     <p class="small muted">คู่หูตัวใหม่มาเป็นไข่ ให้อาหารวิเศษแล้วจะฟักและเปลี่ยนร่าง ตัวที่มี 🔒 ซื้อไม่ได้ ต้องทำสำเร็จตามที่เขียนไว้</p>`
-  :`<div class="shopgrid">${SHOP.filter(s=>s.slot===denTab).sort((a,b2)=>(o.has(b2.id)-o.has(a.id))).map(s=>{ const have=o.has(s.id),
+  :`<div class="shopgrid">${SHOP.filter(s=>s.slot===denTab&&(!s.guest||o.has(s.id))).sort((a,b2)=>(o.has(b2.id)-o.has(a.id))).map(s=>{ const have=o.has(s.id),
         cnt=denTab==="prop"?R.props.filter(p=>p.id===s.id).length:denTab==="wear"?worn.filter(x=>x.id===s.id).length:0, on=denTab==="bg"?(R.bg===s.id):denTab==="fx"?R.fx[b.kind]===s.id:cnt>0;
-      return `<div class="shopitem ${have?"have":""}">${denTab==="bg"?`<span class="thumb">${SCENES[s.id].svg()}</span>`:`<span style="font-size:2rem">${s.e}</span>`}<b class="small">${esc(s.n)}</b>${s.rare!=null?`<span class="small muted">✨ ของหายาก</span>`:""}
+      return `<div class="shopitem ${have?"have":""}">${denTab==="bg"?`<span class="thumb">${SCENES[s.id].svg()}</span>`:`<span style="font-size:2rem">${s.e}</span>`}<b class="small">${esc(s.n)}</b>${s.rare!=null?`<span class="small muted">✨ ของหายาก</span>`:s.guest?`<span class="small muted">🎁 จากแขกพิเศษ</span>`:""}
         ${have?(denTab==="prop"?`<button class="btn ghost small" data-equip="${s.id}">วางในห้อง${cnt?` (${cnt})`:""}</button>`
             :denTab==="wear"?`<button class="btn ${on?"":"ghost"} small" data-equip="${s.id}">${on?"✓ ใส่อยู่ (แตะเพื่อถอด)":`ให้ ${esc(b.name)}`}</button>`
             :`<button class="btn ${on?"":"ghost"} small" data-equip="${s.id}">${on?"✓ ใช้อยู่":"ใช้"}</button>`)
@@ -2562,9 +2583,18 @@ function renderParent(){
           ${g.reward&&db&&!dd.length?`<input data-gnote="${g.setId}" placeholder="ข้อความถึงลูก หรือเสนอรางวัลอื่น (ไม่บังคับ)" style="font:inherit;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">
             <div class="row"><button class="btn small" data-gok="${g.setId}">ตกลงรางวัลนี้</button><button class="btn ghost small" data-gtalk="${g.setId}">ขอคุยกันก่อน</button><span class="small" id="gmsg-${g.setId}"></span></div>`:""}</div>` }).join("")}
       ${teach.length?`<span class="eyebrow">ลูกเล่าให้พ่อฟัง</span>${teach.slice(0,6).map(t=>`<div class="topic"><span class="small">${new Date(t.endedAt).toLocaleDateString("th-TH",{day:"numeric",month:"short"})} · ${esc(t.topic)}</span><span class="small">${esc(t.dadReaction||t.dadRating||"")}</span></div>`).join("")}`:""}
-      ${(()=>{const pets=ownedPets(realAttempts()); return pets.length?`<p class="small">บ้านคู่หู: ${pets.map(x=>x.e+" "+esc(petName(x.k,realAttempts()))).join(" · ")} · ⭐ ${wallet(realAttempts()).stars} ดาวเวท</p>`:""})()}
+      ${(()=>{const pets=ownedPets(realAttempts()); return pets.length?`<p class="small">บ้านคู่หู: ${pets.map(x=>x.e+" "+esc(petName(x.k,realAttempts()))).join(" · ")} · ⭐ ${Math.max(0,wallet(attempts.filter(a=>!a.test&&!a.example)).stars)} ดาวเวท</p>`:""})()}
       ${LETTERS.length?`<details class="small"><summary>จดหมายที่คู่หูเขียนถึงลูก (${LETTERS.length})</summary>${LETTERS.slice(0,6).map(l=>`<div class="logi" style="margin-top:6px"><span class="muted">${esc(l.date)}</span><span style="white-space:pre-wrap">${esc(l.text)}</span></div>`).join("")}</details>`:""}
       <p class="note">ตกลงรางวัลแล้ว คู่หูจะบอกลูกในรอบอัปเดตถัดไป (พุธ/อาทิตย์) หรือบอกลูกเองได้เลย รางวัลที่ไม่ได้บอกล่วงหน้า เช่น คำชมหรือพาไปเที่ยวแบบเซอร์ไพรส์ ไม่ลดแรงจูงใจ ให้ได้เสมอ</p></section>` })()}
+  ${GUESTS.length?`<section class="card"><h3>🎁 แขกพิเศษประจำสัปดาห์</h3>
+    <p class="small muted">ของหายากที่มาเยี่ยม 3 วัน พร้อมภารกิจเล็กๆ ที่ช่วยการเรียน ลูกจะเห็นเฉพาะรายการที่พ่ออนุมัติ ถ้าไม่ทัน แขกจะกลับมาใหม่ภายหลัง ไม่มีการลงโทษ</p>
+    ${GUESTS.slice(-6).map(g=>{ const dec=fbList.filter(f=>f.kind==="guest"&&f.guestId===g.id&&!f.test), pr=guestProgress(g,realAttempts());
+      return `<div class="logi"><div class="row" style="justify-content:space-between"><b>${g.item.e} ${esc(g.item.n)}</b><span class="pill ${g.status==="approved"?"g":"y"}">${g.status==="approved"?"เปิดให้ลูกแล้ว":"ร่าง รอพ่ออนุมัติ"}</span></div>
+        <span class="small muted">${esc(g.from)} ถึง ${esc(g.to)} · ภารกิจ: ${esc(g.text)}${g.status==="approved"?` · ทำแล้ว ${pr.n}/${g.task.n}${pr.done?" ✅":""}`:""}</span>
+        <span class="small">${esc(g.why||"")}</span>
+        ${dec.map(d=>`<span class="small">${d.decision==="approve"?"✅ พ่ออนุมัติแล้ว (ระบบจะเปิดให้ลูกในรอบอัปเดตถัดไป)":"✏️ พ่อขอปรับ"}${d.note?` · “${esc(d.note)}”`:""}</span>`).join("")}
+        ${g.status!=="approved"&&db?`<textarea data-gsnote="${g.id}" rows="2" placeholder="ถ้าอยากปรับ เช่น เปลี่ยนภารกิจ หรือเปลี่ยนของ" style="font:inherit;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)"></textarea>
+          <div class="row"><button class="btn small" data-gsok="${g.id}">อนุมัติ</button><button class="btn ghost small" data-gsfix="${g.id}">ส่งความเห็นให้ปรับ</button><span class="small" id="gsmsg-${g.id}"></span></div>`:""}</div>` }).join("")}</section>`:""}
   ${MISSIONS.length?`<section class="card"><h3>🌏 ภารกิจโลกจริงประจำเดือน</h3>
     ${MISSIONS.map(m=>{ const dec=fbList.filter(f=>f.kind==="mission"&&f.missionId===m.id&&!f.test); const res=pool.find(a=>a.type==="mission"&&a.setId===m.id);
       return `<div class="logi"><div class="row" style="justify-content:space-between"><b>${esc(m.title)}</b><span class="pill ${m.status==="approved"?"g":"y"}">${m.status==="approved"?"เปิดให้ลูกแล้ว":"ร่าง รอพ่ออนุมัติ"}</span></div>
@@ -2701,6 +2731,11 @@ function renderParent(){
     if(decision==="change"&&!note){ m.textContent="พิมพ์สิ่งที่อยากให้ปรับก่อน"; return }
     m.textContent="กำลังบันทึก…"; try{ await db.collection("feedback").add({kind:"mission",missionId:id,decision,note,at:new Date().toISOString()}); m.textContent=decision==="approve"?"อนุมัติแล้ว":"ส่งแล้ว" }catch(e){ m.textContent="บันทึกไม่สำเร็จ ลองใหม่" } };
   $v.querySelectorAll("[data-mok]").forEach(b=>b.onclick=()=>mdec(b.dataset.mok,"approve"));
+  const gsdec=async(id,decision)=>{ const m=document.getElementById("gsmsg-"+id), note=($v.querySelector(`[data-gsnote="${id}"]`)?.value||"").trim();
+    if(decision==="change"&&!note){ m.textContent="พิมพ์สิ่งที่อยากให้ปรับก่อน"; return }
+    m.textContent="กำลังบันทึก…"; try{ await db.collection("feedback").add({kind:"guest",guestId:id,decision,note,at:new Date().toISOString()}); m.textContent=decision==="approve"?"อนุมัติแล้ว":"ส่งแล้ว" }catch(e){ m.textContent="บันทึกไม่สำเร็จ ลองใหม่" } };
+  $v.querySelectorAll("[data-gsok]").forEach(b=>b.onclick=()=>gsdec(b.dataset.gsok,"approve"));
+  $v.querySelectorAll("[data-gsfix]").forEach(b=>b.onclick=()=>gsdec(b.dataset.gsfix,"change"));
   const gdec=async(id,decision)=>{ const m=document.getElementById("gmsg-"+id), note=($v.querySelector(`[data-gnote="${id}"]`)?.value||"").trim(); m.textContent="กำลังบันทึก…";
     try{ await db.collection("feedback").add({kind:"goal",goalId:id,decision,note,at:new Date().toISOString()}); m.textContent="บันทึกแล้ว" }catch(e){ m.textContent="บันทึกไม่สำเร็จ ลองใหม่" } };
   $v.querySelectorAll("[data-gok]").forEach(b=>b.onclick=()=>gdec(b.dataset.gok,"ok"));

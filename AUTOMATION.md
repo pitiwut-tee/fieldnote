@@ -191,6 +191,20 @@ undermine interest (Deci, Koestner & Ryan 1999) while self-set goals help (Locke
   companions, things to wear and room scenes. Not practice: ignore in learning analysis. In letters you may
   celebrate a hatching or a new form warmly, but never push her to earn or spend, and never tie stars to scores.
 
+## Weekly special guest (content/guests.json)
+
+A rare item visits for 3 days with one small learning task. It uses her love of animals to pull her toward the
+habit she needs most that week. No penalty: a missed guest comes back later.
+- Keep about two weeks of guests ahead. One per week, 3 days long, not overlapping the monthly mission's busiest
+  days. Fields: `id` (g-YYYY-MM-DD), `from`, `to`, `status` ("proposed" → "approved"), `item {key, e, n, slot:
+  "wear"|"prop"}`, `task {kind, n}`, `text` (Thai, what she does), `why` (Thai, for the father: which weakness).
+- Task kinds the app can count: `recallDays`, `reviewRight`, `checkRight`, `level3Right`, `passage`, `teach`,
+  `vocabDays`. Pick the one that matches the week's weakness in the data; keep n small (doable in 3 normal days).
+- **The father approves every guest** on the parent page (feedback `kind:"guest"`, `guestId`, `decision`
+  approve/change, `note`). On each run: set `status:"approved"` for approved ones; rewrite ones he asked to change
+  (new id) and leave them proposed. Only approved guests reach her page.
+- If she missed a guest (window over, not done), add it again 2–3 weeks later with the same `item.key`.
+
 ## Monthly real-world mission (content/missions.json)
 
 One offline mission per month, 30–60 minutes total (data can be collected a little each day), done at home with

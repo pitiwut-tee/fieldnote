@@ -14,7 +14,8 @@ sets = [json.load(open(f, encoding="utf8")) for f in sorted(glob.glob(P("content
 content = {"sets": sets, "spells": load("content/spells.json"), "vocab": load("content/vocab.json"),
            "readings": load("content/readings.json"), "calendar": load("content/calendar.json"),
            "missions": load("content/missions.json"), "letters": load("content/letters.json"),
-           "decisions": load("content/decisions.json"), "variants": load("content/variants.json")}
+           "decisions": load("content/decisions.json"), "variants": load("content/variants.json"),
+           "guests": load("content/guests.json")}
 
 src = open(P("src", "app.html"), encoding="utf8").read()
 import datetime as _dt
@@ -25,7 +26,8 @@ os.makedirs(P("dist"), exist_ok=True)
 open(P("dist", "parent.html"), "w", encoding="utf8").write(page)
 
 # student page: no parent tab, wrapped in a full HTML document; only missions dad has approved
-student_content = dict(content, missions={"missions": [m for m in content["missions"]["missions"] if m.get("status") == "approved"]})
+student_content = dict(content, missions={"missions": [m for m in content["missions"]["missions"] if m.get("status") == "approved"]},
+                       guests={"guests": [g for g in content["guests"]["guests"] if g.get("status") == "approved"]})
 s = src.replace("/*@@CONTENT@@*/null", json.dumps(student_content, ensure_ascii=False).replace("</", "<\\/"))
 def r(a, b):
     global s
