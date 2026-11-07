@@ -70,3 +70,24 @@ Sources: KruNee summary of the MWIT 2570 announcement annex (dated 14 Jul 2569),
   - Tutor report for a recent year: at most 35 items, 90 points, 90 minutes.
 - **Use for item design:** use the book's sample sets for style and difficulty, the annex for scope, and the science weights in
   school-plan.md for science.
+
+### Official facts from the MHESI announcement for ปีการศึกษา 2570 (dated 20 Jul 2569, read from the original 8 Nov 2026)
+These override everything above. Expect the same pattern one year later for her cohort.
+- **Schools and seats:** 18 schools, 30 classrooms, 900 seats.
+  - Choose up to 2 วมว. schools, in order of preference.
+  - Round-1 passers sit round 2 only at one school, decided by score and that order.
+- **Eligibility:** cumulative GPA ≥ 3.00 in ม.1–2 in three areas: overall, science, and math.
+- **Round 1 (15 Nov 2569):** run by MWIT with the same paper as MWIT/PCSHS.
+  - Math: 90 min, 09:00–10:30, *Mathematical literacy* in real contexts (personal, social, career, science).
+  - Science: 90 min, 11:00–12:30, *Scientific literacy* covering knowledge, skills, and scientific attitudes.
+  - Scope: core curriculum ม.1–3 indicators.
+    - Science includes the earth-science indicators listed under social studies.
+    - The detailed list is in the MWIT announcement of 14 Jul 2569.
+  - **Ranking:** math + science with equal weight.
+- **Round 2 (23 Jan 2570):** written exam on ม.1–3 content.
+  - Subjects: math, science (bio/chem/phys/earth & space), **technology (design & technology, computing science)** and **English** (reading, writing, scientific process).
+  - Ranking uses math + science + technology only. The round-1 score is not carried over.
+  - Minimums: English ≥ 34%, and no zero in math, science, or technology.
+- **Not stated officially:** item counts, choice counts, and the SEEN/UNSEEN split. These come only from tutors and prep books.
+- **App implication:** the locked "tech" island (round-2 technology) and basic science English matter after round 1.
+  Keep science equal to math in round-1 preparation.
