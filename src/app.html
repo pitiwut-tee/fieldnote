@@ -118,7 +118,18 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .arrange .sel{outline:3px solid var(--beak)!important;background:rgba(255,255,255,.35)}
 .wishbar{display:flex;gap:10px;align-items:center}
 .islandwrap{margin:6px -6px;border-radius:18px;overflow:hidden}
-.island{display:block;width:100%;height:auto;max-height:78vh}
+.mapscroll{overflow:auto;max-height:78vh;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+.mapscroll .island{max-height:none}
+
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.drift{animation:drift 40s linear infinite}
+@keyframes drift{from{transform:translateX(-60px)}to{transform:translateX(60px)}}
+.spin{animation:spin 6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fall{stroke-dasharray:8 6;animation:fall 1.2s linear infinite}
+@keyframes fall{to{stroke-dashoffset:-28}}
+@media (prefers-reduced-motion: reduce){.drift,.spin,.fall{animation:none}}
+.island{display:block;width:100%;height:auto}
 .mnode{cursor:pointer}
 .dash{display:flex;flex-direction:column;gap:14px}
 .rrows{display:flex;flex-direction:column;gap:4px;margin-top:6px}
@@ -2711,65 +2722,99 @@ const DISTRICTS={sky:{x:200,y:92,n:"เนินดวงดาว",e:"🔭"},nu
   mat:{x:200,y:262,n:"ทะเลสาบแปรธาตุ",e:"🧪"},dat:{x:90,y:318,n:"ลานพยากรณ์",e:"📊"},geo:{x:306,y:312,n:"ภูเขารูปทรง",e:"⛰️"},
   lab:{x:200,y:372,n:"ศาลานักสังเกต",e:"🔎"},life:{x:110,y:448,n:"สวนชีวิต",e:"🌱"},pow:{x:292,y:448,n:"ทุ่งกังหันพลัง",e:"⚡"},tech:{x:200,y:526,n:"ท่าเรือกลไก (วมว. รอบสอง)",e:"⚙️"}};
 let mapSel=null, mapList=false;
-function spellPos(){ const pos={}; Object.keys(DISTRICTS).forEach(rk=>{ const d=DISTRICTS[rk], sps=SPELLS.filter(s=>s.realm===rk), n=sps.length;
-    sps.forEach((sp,i)=>{ const r=n>6?44:n>3?38:32, a=(i/n)*Math.PI*2-Math.PI/2+(n===2?Math.PI/2:0);
-      pos[sp.id]={x:d.x+r*Math.cos(a)*(rk==="tech"?1.6:1.15),y:d.y+r*Math.sin(a)*(rk==="tech"?0.5:0.8)} }) }); return pos }
 function spellLook(sp,info,ss){ const sets=SETS.filter(s=>s.spell===sp.id), tier=info?.tier||0;
   if(!sets.length&&!info) return {e:"☁️",cls:"fog",label:"ยังไม่ค้นพบ"};
   if(info?.faded) return {e:["🌱","🌳","🌲","🏯"][tier]||"🌳",cls:"thirst",label:"ต้องรดน้ำ (ทบทวน)"};
   return {e:["🌱","🌳","🌲","🏯"][tier],cls:"t"+tier,label:TIER[tier]} }
+/* ---------- spell island v2: floating islands (2.5D) per district, rope bridges, a landmark that grows with mastery ---------- */
+const ISLES={sky:{x:400,y:140,rx:105,ry:44},num:{x:175,y:335,rx:118,ry:50},alg:{x:625,y:335,rx:130,ry:54},mat:{x:400,y:500,rx:112,ry:48},
+  dat:{x:160,y:665,rx:110,ry:48},geo:{x:640,y:665,rx:130,ry:54},lab:{x:400,y:790,rx:92,ry:42},life:{x:190,y:935,rx:120,ry:50},pow:{x:610,y:935,rx:120,ry:50},
+  tech:{x:400,y:1075,rx:120,ry:44},__museum:{x:660,y:135,rx:72,ry:32},__lab:{x:140,y:135,rx:78,ry:34}};
+const ISLE_LOOK={sky:["#cfe3ff","#8fb4e6","#6d8fc4"],num:["#8fd17a","#5aa04f","#4a7d3e"],alg:["#d9c6ff","#a68ae0","#7d64b8"],mat:["#a6e3f2","#5fb8d6","#3f8fae"],
+  dat:["#ffe08a","#e0b44a","#b58a2e"],geo:["#d6d6c8","#a9a98f","#7f7f6a"],lab:["#fff4d6","#e6cfa0","#b8a070"],life:["#b8f2a2","#7cc96a","#569a48"],
+  pow:["#ffd8a8","#f0a04b","#c27a2e"],tech:["#d0d4da","#9aa3ad","#6d7680"],__museum:["#f3e6d4","#d6c3a3","#a8906c"],__lab:["#ffd2c2","#e2876c","#b05a44"]};
+let mapZoom=(typeof innerWidth!=="undefined"&&innerWidth<600)?1.6:1, mapCentered=false;
+function isleSvg(k,lv){ const I=ISLES[k], [top,side,dark]=ISLE_LOOK[k], {x,y,rx,ry}=I, depth=ry*2.1;
+  const cliff=`M${x-rx} ${y} C${x-rx*0.95} ${y+depth*0.55} ${x-rx*0.45} ${y+depth} ${x} ${y+depth*1.15} C${x+rx*0.45} ${y+depth} ${x+rx*0.95} ${y+depth*0.55} ${x+rx} ${y}Z`;
+  return `<g class="isle" style="animation-delay:${(x+y)%5*0.4}s">
+    <ellipse cx="${x}" cy="${y+depth*1.35}" rx="${rx*0.55}" ry="${ry*0.25}" fill="#1e3a5f" opacity=".12"/>
+    <path d="${cliff}" fill="${dark}"/><path d="M${x-rx} ${y} C${x-rx*0.9} ${y+depth*0.35} ${x-rx*0.3} ${y+depth*0.55} ${x} ${y+depth*0.6} C${x+rx*0.3} ${y+depth*0.55} ${x+rx*0.9} ${y+depth*0.35} ${x+rx} ${y}Z" fill="${side}"/>
+    ${[0.25,0.5,0.72].map(f=>`<path d="M${x-rx*0.7+f*rx*0.4} ${y+depth*f*0.9} q ${rx*0.25} 8 ${rx*0.5} 0" stroke="${dark}" stroke-width="2" fill="none" opacity=".5"/>`).join("")}
+    ${k==="mat"?`<path d="M${x+rx*0.5} ${y+ry*0.3} q 4 ${depth*0.7} -2 ${depth*1.2}" stroke="#a6dcf2" stroke-width="7" fill="none" opacity=".85" class="fall"/>`:""}
+    <ellipse cx="${x}" cy="${y+5}" rx="${rx*1.01}" ry="${ry}" fill="${side}"/>${Array.from({length:9},(_,i)=>{const a=Math.PI*(0.05+i*0.1);return `<path d="M${x-Math.cos(a)*rx*0.98} ${y+Math.sin(a)*ry*0.9} q3 ${8+(i%3)*4} 6 0" fill="${top}"/>`}).join("")}
+    <ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${top}"/><ellipse cx="${x-rx*0.15}" cy="${y-ry*0.2}" rx="${rx*0.7}" ry="${ry*0.5}" fill="#fff" opacity=".14"/>
+    ${[[-0.82,-0.15],[0.84,-0.1],[-0.55,-0.6],[0.6,-0.55]].map(([fx,fy],i)=>`<g transform="translate(${x+fx*rx} ${y+fy*ry})"><circle r="${7+i%2*3}" fill="${dark}" opacity=".55"/><circle cx="-4" cy="-3" r="${5+i%2*2}" fill="${side}"/></g>`).join("")}
+    ${[[-0.3,0.55],[0.35,0.6],[0.1,-0.75]].map(([fx,fy],i)=>`<circle cx="${x+fx*rx}" cy="${y+fy*ry}" r="2.4" fill="${["#fff59a","#ffffff","#ffb3c7"][i]}"/>`).join("")}
+    ${lv==="lock"?`<ellipse cx="${x}" cy="${y-10}" rx="${rx*1.05}" ry="${ry*1.4}" fill="#eef3f7" opacity=".75"/>`:""}</g>` }
+/* landmark per district, drawn in 4 growth levels: 0 ruins, 1 small, 2 two floors, 3 grand with flag */
+function landmark(k,lv){ const I=ISLES[k], cx=I.x, by=I.y-6, C={sky:["#e8eef5","#6d8fc4"],num:["#c9a06a","#4a7d3e"],alg:["#efe4ff","#7d64b8"],mat:["#e6f7ff","#3f8fae"],dat:["#fff1c9","#c27a2e"],
+    geo:["#f2f2ea","#7f7f6a"],lab:["#fffaf0","#b8a070"],life:["#e8ffe0","#569a48"],pow:["#fff0dc","#c27a2e"],tech:["#e6e9ed","#6d7680"]}[k]||["#fff","#888"];
+  const emb={sky:"🔭",num:"🌳",alg:"📜",mat:"🧪",dat:"📊",geo:"💎",lab:"🔎",life:"🌱",pow:"⚡",tech:"⚙️"}[k];
+  if(lv===0) return `<g transform="translate(${cx} ${by}) scale(1.35)" opacity=".85"><rect x="-26" y="-6" width="52" height="8" rx="2" fill="#b8ab98"/><rect x="-20" y="-26" width="7" height="20" fill="#cfc4b4"/><rect x="10" y="-18" width="7" height="12" fill="#cfc4b4"/><text x="0" y="-10" font-size="14" text-anchor="middle">🚧</text></g>`;
+  const fl=lv, w=34+lv*6, fh=20, H=fl*fh, roof=k==="sky"?`<path d="M${-w/2} ${-H} a${w/2} ${w/2} 0 0 1 ${w} 0Z" fill="${C[1]}"/><rect x="${w/4-3}" y="${-H-w/2+2}" width="6" height="16" fill="#444" transform="rotate(-30 ${w/4} ${-H-w/4})"/>`
+    :k==="geo"?`<path d="M${-w/2-4} ${-H} L0 ${-H-30-lv*6} L${w/2+4} ${-H}Z" fill="#9fe3ff" stroke="#5fb8d6"/>`
+    :k==="pow"?`<path d="M${-w/2} ${-H} h${w} l-${w/2} -18Z" fill="${C[1]}"/><g class="spin" style="transform-origin:0px ${-H-26}px"><path d="M0 ${-H-26} l0 -26 M0 ${-H-26} l22 13 M0 ${-H-26} l-22 13" stroke="#fff" stroke-width="5" stroke-linecap="round"/></g>`
+    :k==="mat"?`<path d="M${-w/2} ${-H} q${w/2} -${w*0.8} ${w} 0Z" fill="#bfeaf7" stroke="${C[1]}" stroke-width="2"/><circle cx="0" cy="${-H-w*0.35}" r="4" fill="#fff" class="twinkle"/>`
+    :k==="num"?`<circle cx="0" cy="${-H-18}" r="${20+lv*4}" fill="#4f9e5a"/><circle cx="-14" cy="${-H-8}" r="${12+lv*2}" fill="#5aa04f"/><circle cx="14" cy="${-H-10}" r="${12+lv*2}" fill="#5aa04f"/>`
+    :k==="life"?`<path d="M${-w/2} ${-H} q${w/2} -${w*0.7} ${w} 0Z" fill="#dff7d6" stroke="${C[1]}" stroke-width="2"/><path d="M0 ${-H} v-${w*0.6} M${-w/4} ${-H} q${w/4} -${w*0.5} ${w/2} 0" stroke="${C[1]}" stroke-width="1.5" fill="none"/>`
+    :`<path d="M${-w/2-4} ${-H} L0 ${-H-22-lv*4} L${w/2+4} ${-H}Z" fill="${C[1]}"/>`;
+  const floors=Array.from({length:fl},(_,i)=>`<rect x="${-w/2}" y="${-(i+1)*fh}" width="${w}" height="${fh}" fill="${C[0]}" stroke="${C[1]}" stroke-width="1.5"/>
+      ${[-1,1].map(s=>`<rect x="${s*w/4-4}" y="${-(i+1)*fh+5}" width="8" height="9" rx="1.5" fill="${i===0&&s===1?"#8a6440":"#ffd97a"}" opacity=".9"/>`).join("")}`).join("");
+  return `<g transform="translate(${cx} ${by}) scale(1.35)"><rect x="${-w/2-6}" y="-3" width="${w+12}" height="6" rx="3" fill="#b8ab98"/>${floors}${roof}
+    <text x="0" y="${-fh/2+5}" font-size="11" text-anchor="middle">${emb}</text>
+    ${lv>=3?`<line x1="${w/2-4}" y1="${-H}" x2="${w/2-4}" y2="${-H-38}" stroke="#7a5634" stroke-width="2"/><path d="M${w/2-4} ${-H-38} l16 5 -16 5Z" fill="#e2574c"/>${[0,1,2].map(i=>`<circle class="twinkle" style="animation-delay:${i*0.5}s" cx="${-w/2+i*w/2}" cy="${-H-12-i*6}" r="2.5" fill="#fff59a"/>`).join("")}`:""}</g>` }
+function bridgeSvg(a,b){ const A=ISLES[a], B=ISLES[b], x1=A.x+(B.x-A.x)*0.18, y1=A.y+(B.y-A.y)*0.18+A.ry*0.4, x2=B.x-(B.x-A.x)*0.18, y2=B.y-(B.y-A.y)*0.18+B.ry*0.4, mx=(x1+x2)/2, my=(y1+y2)/2+28;
+  return `<path d="M${x1} ${y1} Q${mx} ${my} ${x2} ${y2}" stroke="#8a6440" stroke-width="3" fill="none"/><path d="M${x1} ${y1+5} Q${mx} ${my+5} ${x2} ${y2+5}" stroke="#c49a63" stroke-width="7" fill="none" stroke-dasharray="3 4"/>` }
+const BRIDGES=[["sky","num"],["sky","alg"],["sky","__museum"],["sky","__lab"],["num","mat"],["alg","mat"],["num","dat"],["alg","geo"],["mat","lab"],["dat","lab"],["geo","lab"],["dat","life"],["geo","pow"],["lab","life"],["lab","pow"],["lab","tech"]];
+function districtLevel(rk,ss){ const sps=SPELLS.filter(s=>s.realm===rk); if(!sps.length) return 0; const sc=sps.reduce((a,s)=>a+(ss[s.id]?.tier||0),0)/(3*sps.length);
+  return sc>0.6?3:sc>0.3?2:sc>0?1:0 }
+function spellPos(){ const pos={}; Object.keys(DISTRICTS).forEach(rk=>{ const I=ISLES[rk], sps=SPELLS.filter(s=>s.realm===rk), n=sps.length;
+    sps.forEach((sp,i)=>{ const a=Math.PI*(0.08+0.84*(n===1?0.5:i/(n-1))); /* along the front half of the island top */
+      pos[sp.id]={x:I.x-Math.cos(a)*I.rx*0.78,y:I.y+Math.sin(a)*I.ry*0.55-4} }) }); return pos }
 function renderMap(){
   if(mapList) return renderMapList();
   const list=mine(), ss=spellStats(list), pos=spellPos(), bd=getBuddy();
   const got=SPELLS.filter(s=>(ss[s.id]?.tier||0)>=1).length, cnt=[1,2,3].map(t=>SPELLS.filter(s=>(ss[s.id]?.tier||0)===t).length);
   const due=new Set((()=>{try{return dueQuestions(list,20).map(q=>q.spell)}catch(e){return []}})());
-  const cur=new Set(CAL.currentSpells||[]);
-  const sel=mapSel&&SPELLS.find(x=>x.id===mapSel), at=sel?pos[sel.id]:{x:200,y:300};
-  const island=`<defs><radialGradient id="isl" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#9fd88a"/><stop offset="1" stop-color="#6fbf6a"/></radialGradient>
-      <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd3f0"/><stop offset="1" stop-color="#4fa3d1"/></linearGradient></defs>
-    <rect width="400" height="600" fill="url(#sea)"/>
-    ${[60,150,250,350,450,540].map((y,i)=>`<path d="M${i%2?10:330} ${y} q10 -6 20 0 t20 0" stroke="#e8f7ff" stroke-width="2" fill="none" opacity=".7"/>`).join("")}
-    <path d="M200 22 C300 24 382 90 384 200 C388 300 360 360 372 440 C384 530 300 584 200 580 C100 584 18 530 26 440 C34 360 10 300 16 200 C20 90 100 20 200 22Z" fill="#f2dfae"/>
-    <path d="M200 36 C292 38 366 98 368 200 C372 296 346 362 356 440 C366 518 292 566 200 562 C108 566 34 518 44 440 C52 362 28 296 32 200 C36 98 108 34 200 36Z" fill="url(#isl)"/>
-    <ellipse cx="200" cy="262" rx="64" ry="34" fill="#7cc6e8" opacity=".85"/><ellipse cx="200" cy="258" rx="50" ry="22" fill="#a6dcf2" opacity=".7"/>
-    <path d="M262 352 L306 262 L350 352Z" fill="#a9b8a0" opacity=".55"/><path d="M290 318 L306 286 L322 318Z" fill="#fff" opacity=".55"/>
-    ${[[70,150],[132,206],[80,210],[140,150]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="13" fill="#4f9e5a" opacity=".45"/>`).join("")}
-    <path d="M150 512 h100 v22 h-100Z" fill="#b08a5a" opacity=".5"/>
-    <path d="M200 92 C190 150 120 150 104 178 M200 92 C210 150 280 150 298 176 M104 178 C120 230 170 240 200 262 M298 176 C280 230 230 240 200 262 M200 262 C150 290 110 300 90 318 M200 262 C250 290 290 300 306 312 M200 262 L200 372 M90 318 C100 380 110 420 110 448 M306 312 C300 380 292 420 292 448 M110 448 C150 470 180 470 200 372 M292 448 C250 470 220 470 200 372 M200 372 L200 526"
-      stroke="#e9d6a4" stroke-width="7" fill="none" stroke-linecap="round" opacity=".85"/>
-    <ellipse cx="104" cy="178" rx="62" ry="44" fill="#4f9e5a" opacity=".28"/><ellipse cx="298" cy="176" rx="64" ry="46" fill="#c9a6ff" opacity=".18"/>
-    <ellipse cx="90" cy="318" rx="52" ry="34" fill="#ffd45c" opacity=".2"/><ellipse cx="110" cy="448" rx="60" ry="42" fill="#8fd17a" opacity=".35"/>
-    <ellipse cx="292" cy="448" rx="60" ry="42" fill="#ffe08a" opacity=".25"/><ellipse cx="200" cy="92" rx="56" ry="36" fill="#cfe3ff" opacity=".35"/><ellipse cx="200" cy="372" rx="44" ry="30" fill="#fff4d6" opacity=".35"/>
-    ${[[58,140],[150,140],[56,214],[150,214],[100,236],[40,180]].map(([x,y])=>`<text x="${x}" y="${y}" font-size="13" opacity=".8">🌳</text>`).join("")}
-    ${[[62,478],[150,480],[70,420],[160,420]].map(([x,y])=>`<text x="${x}" y="${y}" font-size="11" opacity=".8">🌾</text>`).join("")}
-    ${[[250,480],[336,480],[340,416]].map(([x,y])=>`<g transform="translate(${x} ${y})" opacity=".75"><rect x="-1.5" y="-2" width="3" height="16" fill="#fff"/><path d="M0 -2 l10 -6 M0 -2 l-10 -6 M0 -2 l0 12" stroke="#fff" stroke-width="2.5" transform="rotate(${x%40})"/></g>`).join("")}
-    <g transform="translate(150 74)" opacity=".8"><path d="M-10 6 a10 10 0 0 1 20 0Z" fill="#fff"/><rect x="-10" y="6" width="20" height="8" fill="#e8eef5"/></g>
-    ${Object.entries(DISTRICTS).map(([k,d])=>`<g transform="translate(${d.x} ${d.y})"><rect x="-6" y="-2" width="12" height="16" rx="2" fill="#b08a5a"/>
-      <text y="-6" text-anchor="middle" font-size="9.5" font-weight="700" fill="#24412a" stroke="#f4fbe9" stroke-width="3" paint-order="stroke">${d.e} ${d.n.replace(" (วมว. รอบสอง)","")}</text></g>`).join("")}`;
+  const cur=new Set(CAL.currentSpells||[]), mNew=museumNew(list), eggR=eggsReady(list).length;
+  const sel=mapSel&&SPELLS.find(x=>x.id===mapSel), at=sel?pos[sel.id]:mapSel&&ISLES[mapSel]?{x:ISLES[mapSel].x,y:ISLES[mapSel].y-20}:{x:400,y:470};
+  const sky=`<defs><linearGradient id="msky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fd8f5"/><stop offset=".6" stop-color="#cdeefb"/><stop offset="1" stop-color="#f6f1df"/></linearGradient></defs>
+    <rect width="800" height="1200" fill="url(#msky)"/>
+    <path d="M0 1140 Q120 1080 240 1130 T480 1120 T800 1110 V1200 H0Z" fill="#b9dcc8" opacity=".6"/>
+    ${[[90,60,1],[560,40,1.3],[300,250,.9],[720,520,1.1],[60,800,1],[520,1040,1.2],[260,1150,.8]].map(([x,y,s],i)=>`<g class="drift" style="animation-delay:${-i*7}s"><g transform="translate(${x} ${y}) scale(${s})" opacity=".9"><ellipse cx="0" cy="0" rx="46" ry="16" fill="#fff"/><ellipse cx="-20" cy="-8" rx="22" ry="14" fill="#fff"/><ellipse cx="18" cy="-10" rx="26" ry="17" fill="#fff"/></g></g>`).join("")}`;
+  const bridges=BRIDGES.map(([a,b])=>bridgeSvg(a,b)).join("");
+  const isles=Object.keys(ISLES).map(k=>{ const lock=k==="tech"; return `<g ${k.startsWith("__")?`class="mnode" data-msp="${k}"`:""}>${isleSvg(k,lock?"lock":0)}</g>` }).join("");
+  const marks=Object.keys(DISTRICTS).map(rk=>{ const lv=districtLevel(rk,ss), I=ISLES[rk], d=DISTRICTS[rk];
+    const t=`${d.e} ${d.n.replace(" (วมว. รอบสอง)","")}${lv?` ${"★".repeat(lv)}`:""}`, w=t.length*9+20;
+    return `${landmark(rk,rk==="tech"?0:lv)}<g transform="translate(${I.x} ${I.y+I.ry+26})"><rect x="${-w/2}" y="-15" width="${w}" height="26" rx="13" fill="#fffaf0" opacity=".92" stroke="${ISLE_LOOK[rk][2]}" stroke-width="2"/><text y="4" text-anchor="middle" font-size="16" font-weight="700" fill="#2c3a2e">${t}</text></g>` }).join("");
+  const specials=`<g class="mnode" data-msp="__museum"><g transform="translate(660 120)"><rect x="-34" y="-30" width="68" height="34" fill="#f7f1e6" stroke="#a8906c" stroke-width="2"/><path d="M-40 -30 L0 -52 L40 -30Z" fill="#c9b48e"/>${[-22,-8,6,20].map(x=>`<rect x="${x-3}" y="-28" width="6" height="30" fill="#e6dccb"/>`).join("")}</g>
+      <g transform="translate(660 186)"><rect x="-62" y="-15" width="124" height="26" rx="13" fill="#fffaf0" opacity=".92" stroke="#a8906c" stroke-width="2"/><text y="4" text-anchor="middle" font-size="16" font-weight="700" fill="#2c3a2e">🏛️ พิพิธภัณฑ์</text></g>
+      ${mNew?`<circle cx="700" cy="76" r="13" fill="#e2574c"/><text x="700" y="81" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">${mNew}</text>`:""}</g>
+    <g class="mnode" data-msp="__lab"><g transform="translate(140 118)"><path d="M-36 4 Q0 -46 36 4Z" fill="#7a4a3a"/><text x="0" y="-4" font-size="28" text-anchor="middle">🐉</text></g>
+      <g transform="translate(140 190)"><rect x="-66" y="-15" width="132" height="26" rx="13" fill="#fffaf0" opacity=".92" stroke="#b05a44" stroke-width="2"/><text y="4" text-anchor="middle" font-size="16" font-weight="700" fill="#2c3a2e">🐉 หุบเขามังกร</text></g>
+      ${eggR?`<circle cx="178" cy="74" r="13" fill="#e2574c"/><text x="178" y="79" text-anchor="middle" font-size="12">🐣</text>`:""}</g>`;
   const nodes=SPELLS.map(sp=>{ const p=pos[sp.id], info=ss[sp.id], L=spellLook(sp,info,ss), isSel=sel&&sel.id===sp.id;
     return `<g class="mnode ${L.cls} ${isSel?"sel":""}" data-msp="${sp.id}" transform="translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})" role="button" aria-label="${esc(sp.name)} ${esc(L.label)}">
-      ${cur.has(sp.id)?`<circle r="17" class="pulse" fill="none" stroke="#f08a3c" stroke-width="2.5"/>`:""}
-      ${L.cls==="fog"?`<circle r="11" fill="#000" opacity="0"/><text y="5" text-anchor="middle" font-size="14" opacity=".8">☁️</text>`
-        :`<circle r="13" fill="#fffaf0" stroke="${isSel?"#2f6f8f":L.cls==="thirst"?"#e2a23c":"#ffffff"}" stroke-width="${isSel?3:2}"/><text y="5" text-anchor="middle" font-size="15">${L.e}</text>`}
-      ${due.has(sp.id)||L.cls==="thirst"?`<text x="11" y="-8" font-size="10">💧</text>`:""}</g>` }).join("");
-  const mNew=museumNew(list), eggR=eggsReady(list).length;
-  const museum=`<g class="mnode" data-msp="__museum" transform="translate(342 92)"><circle r="15" fill="#fffaf0" stroke="${mNew?"#e2574c":"#fff"}" stroke-width="2"/><text y="6" text-anchor="middle" font-size="17">🏛️</text>
-    ${mNew?`<circle cx="13" cy="-12" r="8" fill="#e2574c"/><text x="13" y="-8.5" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${mNew}</text>`:""}
-    <text y="27" text-anchor="middle" font-size="9.5" font-weight="700" fill="#24412a" stroke="#f4fbe9" stroke-width="3" paint-order="stroke">พิพิธภัณฑ์</text></g>
-    <g class="mnode" data-msp="__lab" transform="translate(58 92)"><circle r="15" fill="#fffaf0" stroke="${eggR?"#e2574c":"#fff"}" stroke-width="2"/><text y="6" text-anchor="middle" font-size="17">🐉</text>
-    ${eggR?`<circle cx="13" cy="-12" r="8" fill="#e2574c"/><text x="13" y="-8.5" text-anchor="middle" font-size="9">🐣</text>`:""}
-    <text y="27" text-anchor="middle" font-size="9.5" font-weight="700" fill="#24412a" stroke="#f4fbe9" stroke-width="3" paint-order="stroke">หุบเขามังกร</text></g>`;
-  const walker=bd?`<g id="walker" style="transition:transform .9s ease-in-out" transform="translate(${(at.x+12).toFixed(1)} ${(at.y-20).toFixed(1)})"><circle r="12" fill="#fff" opacity=".9"/>
-    <foreignObject x="-11" y="-12" width="22" height="22"><div xmlns="http://www.w3.org/1999/xhtml" style="font-size:18px;line-height:22px;text-align:center">${petLook(bd.kind,growStage(growth(bd.kind,list)))}</div></foreignObject></g>`:"";
-  $v.innerHTML=`<section class="card"><div class="todayhead"><span class="eyebrow">เกาะคาถา · เก็บแล้ว ${got}/${SPELLS.length}</span><button class="btn ghost small" id="maplist">ดูแบบรายการ</button></div>
-      <p class="small" style="margin:0">🌱 ฝึกหัด ${cnt[0]} · 🌲 ชำนาญ ${cnt[1]} · 🏯 ปรมาจารย์ ${cnt[2]} · ☁️ ยังไม่ค้นพบ · 💧 ถึงรอบทวน · ⭕ กำลังเรียนที่โรงเรียน</p>
-      <div class="islandwrap"><svg class="island" viewBox="0 0 400 600" role="img" aria-label="แผนที่เกาะคาถา">${island}${skyEvent(Date.now())?.k==="krathong"?`<text x="190" y="270" font-size="16">🪷</text><text x="222" y="262" font-size="13">🪷</text>`:""}${museum}${nodes}${walker}</svg>${skyOverlay(Date.now(),"island")}</div>
-      <p class="small muted" style="margin:0">${skyCaption(Date.now())}</p>
-      <p class="small muted" style="margin:0">แตะสถานที่บนเกาะ แล้ว${bd?esc(bd.name):"คู่หู"}จะพาไปดู</p></section>
-    <div id="mappanel">${sel?mapPanel(sel,ss,list):mapSel==="__museum"?museumPanel(list):mapSel==="__lab"?labHtml(list):`<section class="card"><p class="small">ทุกคาถามี 3 ขั้น 🌱 ฝึกหัด → 🌲 ชำนาญ → 🏯 ปรมาจารย์ คาถาที่ไม่ได้ใช้นานต้นไม้จะเหี่ยว ต้องรดน้ำด้วยการทบทวนสั้นๆ ก็กลับมาเหมือนเดิม</p></section>`}</div>`;
+      ${cur.has(sp.id)?`<circle r="20" class="pulse" fill="none" stroke="#f08a3c" stroke-width="3"/>`:""}
+      ${L.cls==="fog"?`<circle r="14" fill="#000" opacity="0"/><text y="6" text-anchor="middle" font-size="18" opacity=".85">☁️</text>`
+        :`<ellipse cx="0" cy="12" rx="12" ry="4" fill="#000" opacity=".15"/><circle r="15" fill="#fffaf0" stroke="${isSel?"#2f6f8f":L.cls==="thirst"?"#e2a23c":"#ffffff"}" stroke-width="${isSel?3.5:2.5}"/><text y="6" text-anchor="middle" font-size="18">${L.e}</text>`}
+      ${due.has(sp.id)||L.cls==="thirst"?`<text x="12" y="-10" font-size="13">💧</text>`:""}</g>` }).join("");
+  const walker=bd?`<g id="walker" style="transition:transform .9s ease-in-out" transform="translate(${(at.x+16).toFixed(1)} ${(at.y-26).toFixed(1)})"><circle r="15" fill="#fff" opacity=".92"/>
+    <foreignObject x="-14" y="-15" width="28" height="28"><div xmlns="http://www.w3.org/1999/xhtml" style="font-size:22px;line-height:28px;text-align:center">${petLook(bd.kind,growStage(growth(bd.kind,list)))}</div></foreignObject></g>`:"";
+  $v.innerHTML=`<section class="card"><div class="todayhead"><span class="eyebrow">เกาะคาถา · เก็บแล้ว ${got}/${SPELLS.length}</span>
+      <span class="row" style="gap:4px"><button class="btn ghost small" id="mzo" aria-label="ซูมออก">−</button><button class="btn ghost small" id="mzi" aria-label="ซูมเข้า">＋</button><button class="btn ghost small" id="maplist">รายการ</button></span></div>
+      <p class="small" style="margin:0">🌱 ฝึกหัด ${cnt[0]} · 🌲 ชำนาญ ${cnt[1]} · 🏯 ปรมาจารย์ ${cnt[2]} · ☁️ ยังไม่ค้นพบ · 💧 ถึงรอบทวน · ⭕ กำลังเรียน · ★ อาคารประจำย่านโตตามความเก่ง</p>
+      <div class="islandwrap mapscroll" id="mapscroll"><div style="position:relative;width:${mapZoom*100}%"><svg class="island" viewBox="0 0 800 1200" role="img" aria-label="แผนที่เกาะคาถา">${sky}${bridges}${isles}${marks}${specials}${nodes}${walker}</svg>${skyOverlay(Date.now(),"island")}</div></div>
+      <p class="small muted" style="margin:0">${skyCaption(Date.now())} · แตะสถานที่ แล้ว${bd?esc(bd.name):"คู่หู"}จะพาไปดู${mapZoom>1?" · ลากเพื่อเลื่อนแผนที่":""}</p></section>
+    <div id="mappanel">${sel?mapPanel(sel,ss,list):mapSel==="__museum"?museumPanel(list):mapSel==="__lab"?labHtml(list):`<section class="card"><p class="small">ทุกคาถามี 3 ขั้น 🌱 ฝึกหัด → 🌲 ชำนาญ → 🏯 ปรมาจารย์ ยิ่งเก่ง อาคารประจำแต่ละเกาะยิ่งสร้างใหญ่ขึ้น จากซากที่ยังสร้างไม่เสร็จ 🚧 ไปจนถึงปราสาทที่มีธง คาถาที่ไม่ได้ใช้นานต้นไม้จะเหี่ยว ทบทวนสั้นๆ ก็กลับมาเหมือนเดิม</p></section>`}</div>`;
   document.getElementById("maplist").onclick=()=>{mapList=true;renderMap()};
-  $v.querySelectorAll("[data-msp]").forEach(g=>g.onclick=()=>{ const id=g.dataset.msp; mapSel=id; const p=id==="__museum"?{x:342,y:92}:pos[id]; const w=document.getElementById("walker");
-    if(w) w.setAttribute("transform",`translate(${(p.x+12).toFixed(1)} ${(p.y-20).toFixed(1)})`);
+  const sc=document.getElementById("mapscroll"), keep=()=>({x:sc.scrollLeft/Math.max(1,sc.scrollWidth),y:sc.scrollTop/Math.max(1,sc.scrollHeight)});
+  document.getElementById("mzi").onclick=()=>{ const k=keep(); mapZoom=Math.min(2.2,mapZoom+0.6); renderMap(); const s2=document.getElementById("mapscroll"); s2.scrollLeft=k.x*s2.scrollWidth; s2.scrollTop=k.y*s2.scrollHeight };
+  document.getElementById("mzo").onclick=()=>{ mapZoom=Math.max(1,mapZoom-0.6); renderMap() };
+  const focus=sel?pos[sel.id]:(!mapCentered&&(CAL.currentSpells||[]).map(id=>pos[id]).find(Boolean));
+  if(mapZoom>1&&focus){ mapCentered=true; sc.scrollLeft=focus.x/800*sc.scrollWidth-sc.clientWidth/2; sc.scrollTop=focus.y/1200*sc.scrollHeight-sc.clientHeight/2 }
+  $v.querySelectorAll("[data-msp]").forEach(g=>g.onclick=e=>{ e.stopPropagation(); const id=g.dataset.msp; mapSel=id; const p=ISLES[id]?{x:ISLES[id].x,y:ISLES[id].y-20}:pos[id]; const w=document.getElementById("walker");
+    if(w) w.setAttribute("transform",`translate(${(p.x+16).toFixed(1)} ${(p.y-26).toFixed(1)})`);
     setTimeout(()=>{ renderMap(); document.getElementById("mappanel")?.scrollIntoView({block:"nearest",behavior:"smooth"}) }, w?650:0) });
   bindMapPanel();
 }
