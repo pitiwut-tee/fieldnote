@@ -198,7 +198,11 @@ undermine interest (Deci, Koestner & Ryan 1999) while self-set goals help (Locke
 
 ## Island, museum, sky, genetics lab (app features; read the records, do not change code)
 
-- `type:"lab"` records: genetics lab clutches (`species`, `p1`, `p2`, `grid`, `gridOk`, `ratio`, `ratioOk`, `babies`).
+- Dragon valley (genetics lab v2), research lines in order: `corn` (dominant/recessive) → `mystery` (hidden
+  genotype, test cross; `labverdict` records with `ok`) → `pastel` (incomplete dominance) → `pied` (two genes,
+  product rule) → `dragon` (fantasy codominance). Eggs hatch 06:00 next day (`hatchAt`). `labquest` = research
+  quest done (+100 XP). Shop items `lab:*` are tools (incubator, pen, gene tester, mystery snake).
+- `type:"lab"` records: clutches (`species`, `p1`, `p2`, `grid`, `gridOk`, `ratio`, `expect`, `ratioOk`, `babies`).
   `gridOk`/`ratioOk` show whether she can do a monohybrid Punnett square (ม.3 genetics, s10) before it is taught.
   Mention progress to the father now and then; if she keeps failing the ratio, a short lesson on probability
   (ม.3 m23) or a letter tip helps.

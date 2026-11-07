@@ -612,7 +612,7 @@ function progressOf(list){
     if(a.type==="daymode") return;
     if(a.type==="mission"||a.type==="teach"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* mission / teaching dad: XP only, not a daily unit */
     if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood") return;
-    if(a.type==="lab"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
+    if(a.type==="lab"||a.type==="labverdict"||a.type==="labquest"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
     if(a.type==="sweep"){ sweepDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* old-topic sweep: its own daily step, not a lesson unit */
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
     byDay.set(k,(byDay.get(k)||0)+xpOf(a));
@@ -1693,6 +1693,7 @@ function buddyLines(list,p,plan){
   try{ const w=wallet(list); if(w.stars>=nextPetPrice(list)) L.push(`ดาวเวทพอรับเพื่อนใหม่มาอยู่บ้านแล้วนะ ไปดูที่ "บ้านคู่หู" สิ`); else if(w.stars>=150&&!list.some(a=>a.type==="shop"&&a.cost>0)) L.push(`มีดาวเวท ${w.stars} ดวงแล้ว ไปแต่งบ้านให้เราที่ "บ้านคู่หู" ได้นะ`) }catch(e){}
   try{ const ev=skyEvent(Date.now()); if(ev&&!ev.quiet) L.unshift(ev.line); else if(ev&&new Date().getDay()===1) L.push(ev.line);
     if(skyNow(Date.now())==="night"&&!ev){ const m=moonInfo(Date.now()); L.push(`คืนนี้${m.name} ลองออกไปดูดวงจันทร์สิ ${m.wax?"ข้างขึ้นด้านที่สว่างจะหันไปทางทิศตะวันตก ที่ดวงอาทิตย์เพิ่งตก":"ข้างแรมจะขึ้นดึกขึ้นทุกคืน"}`) } }catch(e){}
+  try{ const er=eggsReady(list).length; if(er) L.unshift(`ไข่ที่หุบเขามังกรฟักแล้ว ${er} ครอก! ไปดูที่ "แผนที่คาถา" แตะ 🐉 สิ ว่าที่ทำนายไว้ตรงไหม`) }catch(e){}
   try{ const fn=factsNew(list).length; if(fn) L.unshift(`มีการ์ดความรู้ใบใหม่ ${fn} ใบรออยู่ที่ "บ้านคู่หู" มาอ่านเรื่องจริงของพวกเราด้วยกันนะ`) }catch(e){}
   try{ const mn=museumNew(list); if(mn) L.unshift(`มีของ ${mn} ชิ้นใหม่เข้าพิพิธภัณฑ์แล้ว ไปดูที่ "แผนที่คาถา" แตะ 🏛️ สิ เราจะเล่าให้ฟัง`) }catch(e){}
   if(plan.mixed) L.push("วันนี้มีชุดผสมแบบข้อสอบ ลองดูว่าเธอแยกออกไหม ข้อไหนต้องใช้คาถาอะไร");
@@ -1743,6 +1744,7 @@ function homeTiles(list,p,pool){
   T.push({id:"week",i:"📜",t:"ภารกิจสัปดาห์",s:p.questDoneThisWeek?"ครบแล้ว ได้ของหายาก ✨":`${qd}/3 ข้อ`,rew:p.questDoneThisWeek?"":`ของหายาก ✨ + ⭐${QUEST_BONUS}`,pr:qd/3,done:p.questDoneThisWeek});
   const g=activeGuest(); if(g){ const pr=guestProgress(g,list); T.push({id:"guest",i:g.item.e,t:"แขกพิเศษ",s:pr.done?"ได้แล้ว 🎉":`${pr.n}/${g.task.n} · ${esc(g.item.n)}`,rew:pr.done?"":`ได้${esc(g.item.n)}`,pr:pr.n/g.task.n,todo:!pr.done,badge:pr.done?"":"!",done:pr.done}) }
   const m=activeMission(); if(m){ const d=missionDone(m); T.push({id:"world",i:"🌏",t:"ภารกิจโลกจริง",s:d?"ทำแล้ว ✓":esc(m.title),rew:d?"":`+${m.xp||100} XP`,todo:!d,done:d}) }
+  { const er=eggsReady(list).length, can=pairsToday(list)<labPairsPerDay(list); T.push({id:"lab",i:"🐉",t:"หุบเขามังกร",s:er?"ไข่ฟักแล้ว ไปดูกัน!":can?"วันนี้จับคู่ได้":"ไข่กำลังฟัก",rew:can?"ทำนายถูก +25 XP":"",todo:!!er||can,badge:er?"🐣":"",done:!er&&!can}) }
   const gl=goalOf(list); T.push({id:"goal",i:"🎯",t:"เป้าหมายเดือนนี้",s:gl?"ดูความคืบหน้า":"ยังไม่ได้ตั้ง",rew:gl?"":"รางวัลจริงที่เลือกเอง",todo:!gl,badge:gl?"":"!"});
   const wk=weekStart(todayKey()), told=list.some(a=>a.type==="teach"&&dayKey(a.endedAt)>=wk); T.push({id:"teach",i:"💬",t:"เล่าให้พ่อฟัง",s:told?"สัปดาห์นี้แล้ว ✓":"สัปดาห์ละครั้ง ราว 3 นาที",rew:told?"":`+50 XP${firstTeach?" · หมวกครู 🎓":""}`,todo:!told,badge:told?"":"!",done:told});
   const panel=homeOpen?tilePanel(homeOpen,list,p,pool):"";
@@ -1772,6 +1774,7 @@ function tilePanel(id,list,p,pool){
     return `<section class="card usebox"><span class="eyebrow">🌏 ภารกิจโลกจริงประจำเดือน${d?" · ทำแล้ว ✓":""}</span><h2>${esc(m.title)}</h2>
       <p class="small">${esc(m.hook||m.why)}</p><p class="small muted">${esc(m.mins)} · ถึง ${new Date(m.to+"T00:00:00").toLocaleDateString("th-TH",{day:"numeric",month:"short"})} · ได้ ${m.xp||100} XP${m.record&&!d?` · บันทึกแล้ว ${(st.rows||[]).length} แถว`:""}</p>
       <button class="btn ${d?"ghost":""}" id="go-mission">${d?"ดูภารกิจ":"เปิดภารกิจ"}</button></section>` }
+  if(id==="lab"){ mapSel="__lab"; view="map"; setTimeout(()=>{ homeOpen=null; render() },0); return "" }
   if(id==="goal") return goalHtml(list);
   if(id==="teach") return teachHtml(list);
   return "" }
@@ -2744,10 +2747,13 @@ function renderMap(){
       ${L.cls==="fog"?`<circle r="11" fill="#000" opacity="0"/><text y="5" text-anchor="middle" font-size="14" opacity=".8">☁️</text>`
         :`<circle r="13" fill="#fffaf0" stroke="${isSel?"#2f6f8f":L.cls==="thirst"?"#e2a23c":"#ffffff"}" stroke-width="${isSel?3:2}"/><text y="5" text-anchor="middle" font-size="15">${L.e}</text>`}
       ${due.has(sp.id)||L.cls==="thirst"?`<text x="11" y="-8" font-size="10">💧</text>`:""}</g>` }).join("");
-  const mNew=museumNew(list);
+  const mNew=museumNew(list), eggR=eggsReady(list).length;
   const museum=`<g class="mnode" data-msp="__museum" transform="translate(342 92)"><circle r="15" fill="#fffaf0" stroke="${mNew?"#e2574c":"#fff"}" stroke-width="2"/><text y="6" text-anchor="middle" font-size="17">🏛️</text>
     ${mNew?`<circle cx="13" cy="-12" r="8" fill="#e2574c"/><text x="13" y="-8.5" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${mNew}</text>`:""}
-    <text y="27" text-anchor="middle" font-size="9.5" font-weight="700" fill="#24412a" stroke="#f4fbe9" stroke-width="3" paint-order="stroke">พิพิธภัณฑ์</text></g>`;
+    <text y="27" text-anchor="middle" font-size="9.5" font-weight="700" fill="#24412a" stroke="#f4fbe9" stroke-width="3" paint-order="stroke">พิพิธภัณฑ์</text></g>
+    <g class="mnode" data-msp="__lab" transform="translate(58 92)"><circle r="15" fill="#fffaf0" stroke="${eggR?"#e2574c":"#fff"}" stroke-width="2"/><text y="6" text-anchor="middle" font-size="17">🐉</text>
+    ${eggR?`<circle cx="13" cy="-12" r="8" fill="#e2574c"/><text x="13" y="-8.5" text-anchor="middle" font-size="9">🐣</text>`:""}
+    <text y="27" text-anchor="middle" font-size="9.5" font-weight="700" fill="#24412a" stroke="#f4fbe9" stroke-width="3" paint-order="stroke">หุบเขามังกร</text></g>`;
   const walker=bd?`<g id="walker" style="transition:transform .9s ease-in-out" transform="translate(${(at.x+12).toFixed(1)} ${(at.y-20).toFixed(1)})"><circle r="12" fill="#fff" opacity=".9"/>
     <foreignObject x="-11" y="-12" width="22" height="22"><div xmlns="http://www.w3.org/1999/xhtml" style="font-size:18px;line-height:22px;text-align:center">${petLook(bd.kind,growStage(growth(bd.kind,list)))}</div></foreignObject></g>`:"";
   $v.innerHTML=`<section class="card"><div class="todayhead"><span class="eyebrow">เกาะคาถา · เก็บแล้ว ${got}/${SPELLS.length}</span><button class="btn ghost small" id="maplist">ดูแบบรายการ</button></div>
@@ -2836,76 +2842,169 @@ function museumHtml(list){ const pr=museumProgress(list), b=getBuddy(), cur=b?es
     <p class="small">ได้ของชิ้นใหม่ทุกครั้งที่คาถาขึ้นขั้น 1 ครั้ง และทุก ๆ ${SWEEP_PER_SPECIMEN} ข้อที่ตอบถูกใน "ย้อนคาถาเก่า"${pr.n<SPECIMENS.length?` · อีก ${pr.toNextSweep} ข้อ จะได้ชิ้นต่อไป`:""}</p>
     ${sel?`<div class="feedback usebox"><div class="row" style="gap:12px;align-items:center"><span style="font-size:3rem">${sel.e}</span><div style="flex:1"><b>${esc(sel.n)}</b><p class="small" style="margin:4px 0 0">${cur}: ${esc(sel.t)}</p></div></div></div>`
       :pr.n?`<p class="small muted">แตะของในตู้ แล้ว${cur}จะเล่าเรื่องให้ฟัง</p>`:`<p class="small muted">ยังไม่มีของในตู้ ฝึกให้คาถาขึ้นขั้น หรือทำย้อนคาถาเก่า แล้วจะได้ชิ้นแรก</p>`}
-    <div class="row"><button class="btn" id="golab">🧬 ห้องวิจัยพันธุกรรม${labDoneToday(list)?"":" · วันนี้จับคู่ได้ 1 ครั้ง"}</button></div>
+    <div class="row"><button class="btn" id="golab">🐉 หุบเขามังกร (ห้องวิจัยพันธุกรรม)${eggsReady(list).length?" · 🐣 ไข่ฟักแล้ว!":pairsToday(list)<labPairsPerDay(list)?" · วันนี้จับคู่ได้":""}</button></div>
     ${halls}</section>` }
 function bindMuseum(){
   const gl=document.getElementById("golab"); if(gl) gl.onclick=()=>{ mapSel="__lab"; renderMap(); document.getElementById("mappanel")?.scrollIntoView({block:"start",behavior:"smooth"}) };
   if(mapSel==="__lab") bindLab();
   $v.querySelectorAll("[data-spec]").forEach(c=>c.onclick=()=>{ museumSel=+c.dataset.spec; renderMap() });
   if(mapSel==="__museum"){ const n=museumProgress(mine()).n; if(n>museumSeen()) setTimeout(()=>{ try{ localStorage.setItem("fieldnote.museumSeen",String(n)) }catch(e){} },4000) } }
-/* ---------- genetics lab: one gene, two alleles (A = makes dark pigment, dominant; a = albino, recessive).
-   Real, welfare-safe morphs only. Free, one clutch a day; XP rewards the prediction (Punnett square + ratio), never luck.
-   Babies hatch by real probability; totals over many clutches show the ratio settling (law of large numbers). ---------- */
-const LAB_SPECIES={
-  corn:{n:"งูคอร์น",clutch:12,normal:"สีส้มแดงขอบดำ",albino:"แอมเมลานิสติก (อัลบิโน) ไม่มีสีดำ ตาแดง",
-    art:{normal:()=>snake("#f08a4b","#fff0dc","#a8321f","blotch"),albino:()=>snake("#ffc2a0","#fffaf0","#ff6b5b","blotch","","#d9412b")}},
-  ball:{n:"งูหลามบอล",clutch:6,normal:"สีน้ำตาลลายทอง",albino:"อัลบิโน สีขาวลายเหลือง ตาแดง",
-    art:{normal:()=>snake("#7a5634","#efe0c2","#d9b77e","blotch"),albino:()=>snake("#fffaf0","#ffffff","#f7d64a","blotch","","#e2574c")}}};
-const LAB_STOCK=[["corn","AA"],["corn","Aa"],["corn","aa"],["ball","AA"],["ball","Aa"],["ball","aa"]].map(([sp,g],i)=>({id:"st"+i,sp,g,stock:true}));
-let labSp="corn", labPick=[], labGrid=["","","",""], labRatio=null, labResult=null;
-function labRecords(list){ return list.filter(a=>a.type==="lab") }
-function labAnimals(list,sp){ const babies=labRecords(list).flatMap(a=>(a.babies||[]).map((g,i)=>({id:a.endedAt+"-"+i,sp:a.species,g,from:a.endedAt}))).filter(x=>x.sp===sp);
-  return [...LAB_STOCK.filter(x=>x.sp===sp),...babies.slice(-6)] }
-function phen(g){ return g.includes("A")?"normal":"albino" }
-function labDoneToday(list){ return labRecords(list).some(a=>dayKey(a.endedAt)===todayKey()) }
-function sortG(a,b){ return [a,b].sort((x,y)=>x===y?0:x==="A"?-1:1).join("") }
-function labCard(x,on){ const S=LAB_SPECIES[x.sp], ph=phen(x.g);
-  return `<button class="labcard ${on?"on":""}" data-lab="${x.id}"><span class="labart"><svg viewBox="0 0 100 100" width="56" height="56">${S.art[ph]()}</svg></span>
-    <span class="small"><b>${ph==="normal"?(x.g==="Aa"?"สีปกติ (แฝงอัลบิโน)":"สีปกติ"):"อัลบิโน"}</b></span><span class="genechip">${x.g}</span>${x.stock?"":`<span class="small muted">ลูกที่เพาะได้</span>`}</button>` }
+/* ---------- dragon valley (genetics lab v2) ----------
+   Research lines, each one idea of genetics. Lines unlock by predicting well on the line before.
+   Real snake morphs (welfare-safe): corn amel (recessive), ball python albino (recessive), pastel (incomplete
+   dominance: 1 copy pastel, 2 copies super pastel), albino + piebald (two genes). Dragons are fantasy (codominance).
+   Eggs hatch the next morning. XP rewards the prediction, never luck; stars buy tools and choices, never random results. */
+function dragonArt(c,belly,wing){ return `<path d="M30 58 C8 40 10 22 22 18 C22 30 30 40 40 48Z M70 58 C92 40 90 22 78 18 C78 30 70 40 60 48Z" fill="${wing}"/>`+quad({body:c,belly,feet:wing,
+  tail:`<path d="M66 82 C88 86 96 70 90 60 l6 -6 -10 2 C92 70 82 74 66 74Z" fill="${c}"/>`,
+  ear:`<path d="M30 30 L24 16 L38 26Z M70 30 L76 16 L62 26Z" fill="${wing}"/>`,
+  horn:`<path d="M40 22 L36 8 L46 20Z M60 22 L64 8 L54 20Z" fill="#f5e6b8"/>`}) }
+function snakeArt(c,belly,pc,eye,pied){ return snake(c,belly,pc,"blotch",pied?`<ellipse cx="34" cy="80" rx="12" ry="6" fill="#fffaf2"/><ellipse cx="66" cy="86" rx="11" ry="5" fill="#fffaf2"/><ellipse cx="50" cy="66" rx="9" ry="4" fill="#fffaf2"/>`:"",eye) }
+const LAB_LINES={
+  corn:{n:"งูคอร์น",lv:1,clutch:12,loci:[["A","a","rec"]],idea:"ลักษณะเด่นและลักษณะด้อย",
+    ph:g=>g==="aa"?"amel":"normal",names:{normal:"สีปกติ",amel:"แอมเมล (อัลบิโน)"},target:"amel",
+    art:{normal:()=>snakeArt("#f08a4b","#fff0dc","#a8321f"),amel:()=>snakeArt("#ffc2a0","#fffaf0","#ff6b5b","#d9412b")},
+    stock:["AA","Aa","aa"]},
+  mystery:{n:"งูคอร์นปริศนา",lv:2,clutch:8,loci:[["A","a","rec"]],idea:"นักสืบยีน: ตัวที่ดูปกติ แฝงยีนไหม",hidden:true,
+    ph:g=>g==="aa"?"amel":"normal",names:{normal:"สีปกติ",amel:"แอมเมล (อัลบิโน)"},target:"amel",
+    art:{normal:()=>snakeArt("#f08a4b","#fff0dc","#a8321f"),amel:()=>snakeArt("#ffc2a0","#fffaf0","#ff6b5b","#d9412b")},
+    stock:["aa","??","??","??"]},
+  pastel:{n:"งูหลามบอลพาสเทล",lv:3,clutch:6,loci:[["B","b","inc"]],idea:"ลักษณะเด่นไม่สมบูรณ์ (ยีน 2 ตัวสีเข้มกว่า 1 ตัว)",
+    ph:g=>g==="BB"?"super":g==="bb"?"normal":"pastel",names:{normal:"สีปกติ",pastel:"พาสเทล",super:"ซูเปอร์พาสเทล"},target:"super",
+    art:{normal:()=>snakeArt("#7a5634","#efe0c2","#d9b77e"),pastel:()=>snakeArt("#b58a3c","#fff1cc","#ffd45c"),super:()=>snakeArt("#e0b44a","#fffbe0","#fff07a")},
+    stock:["bb","Bb","Bb"]},
+  pied:{n:"งูหลามบอล อัลบิโน×ด่าง",lv:4,clutch:8,loci:[["A","a","rec"],["P","p","rec"]],idea:"สองลักษณะพร้อมกัน (กฎการคูณความน่าจะเป็น)",
+    ph:g=>{const [x,y]=g.split(" "); return (x==="aa"?"alb":"n")+(y==="pp"?"pie":"")},names:{n:"สีปกติ",alb:"อัลบิโน",npie:"ด่าง",albpie:"อัลบิโนด่าง"},target:"albpie",
+    art:{n:()=>snakeArt("#7a5634","#efe0c2","#d9b77e"),alb:()=>snakeArt("#fffaf0","#ffffff","#f7d64a","#e2574c"),npie:()=>snakeArt("#7a5634","#efe0c2","#d9b77e","#1d1d2b",1),albpie:()=>snakeArt("#fff3c4","#ffffff","#f7d64a","#e2574c",1)},
+    stock:["Aa Pp","Aa Pp","aa pp"]},
+  dragon:{n:"มังกรธาตุ (เรื่องแต่ง)",lv:5,clutch:6,loci:[["F","W","co"]],idea:"ลักษณะเด่นร่วม: ได้ทั้งสองแบบพร้อมกัน (กติกาสมมติ)",
+    ph:g=>g==="FF"?"fire":g==="WW"?"water":"steam",names:{fire:"มังกรไฟ",water:"มังกรน้ำ",steam:"มังกรไอน้ำ"},target:"steam",
+    art:{fire:()=>dragonArt("#e2574c","#ffd2a8","#b8352c"),water:()=>dragonArt("#4f8fd6","#cfe8ff","#2f5f9e"),steam:()=>dragonArt("#9a6fd6","#ecdcff","#6b45a8")},
+    stock:["FF","WW","FW"]}};
+const LAB_ORDER=["corn","mystery","pastel","pied","dragon"];
+const LAB_SHOP=[{id:"lab:incubator2",n:"เครื่องฟักไข่เครื่องที่ 2 (จับคู่ได้วันละ 2 ครั้ง)",cost:600,once:true},{id:"lab:pen",n:"คอกเพิ่ม (เก็บลูกได้มากขึ้นอีก 6 ตัวต่อสาย)",cost:300},
+  {id:"lab:tester",n:"เครื่องตรวจยีน 1 ครั้ง (เห็นยีนของงูปริศนา 1 ตัว)",cost:80},{id:"lab:mystery",n:"งูปริศนาตัวใหม่ (ฝึกเป็นนักสืบยีน)",cost:150}];
+let labSp="corn", labPick=[], labGrid={}, labRatio=null, labMsg="", labVerdict={};
+function hashU(x){ let h=2166136261; for(const c of x){ h^=c.charCodeAt(0); h=Math.imul(h,16777619) } return (h>>>0)/4294967296 }
+function labRecords(list){ return list.filter(a=>a.type==="lab").map(a=>a.species==="ball"?{...a,species:"pied",legacy:true}:a) }
+function labBought(list,id){ return list.filter(a=>a.type==="shop"&&a.item===id) }
+function labCap(list){ return 6+6*labBought(list,"lab:pen").length }
+function labPairsPerDay(list){ return labBought(list,"lab:incubator2").length?2:1 }
+function hatchAt(t){ const d=new Date(t); d.setDate(d.getDate()+1); d.setHours(6,0,0,0); return d.getTime() }
+function labStats(list){ const recs=labRecords(list).filter(a=>!a.legacy), st={}; LAB_ORDER.forEach(k=>st[k]={ok:0,n:0});
+  recs.forEach(a=>{ const s=st[a.species]; if(!s) return; s.n++; if(a.ratioOk) s.ok++ });
+  list.filter(a=>a.type==="labverdict").forEach(a=>{ st.mystery.n++; if(a.ok) st.mystery.ok++ }); return st }
+function labUnlocked(list){ const st=labStats(list), need={corn:0,mystery:3,pastel:2,pied:3,dragon:2}, prev={mystery:"corn",pastel:"mystery",pied:"pastel",dragon:"pied"};
+  const out=new Set(["corn"]); LAB_ORDER.slice(1).forEach(k=>{ if(out.has(prev[k])&&st[prev[k]].ok>=need[k]) out.add(k) }); return out }
+/* hidden genotype of a mystery snake: fixed per animal, 50/50 AA or Aa */
+function trueG(x){ return x.g==="??"?(hashU(x.id)<0.5?"AA":"Aa"):x.g }
+function knownG(x,list){ if(x.g!=="??") return x.g;
+  if(list.some(a=>a.type==="shop"&&a.item==="lab:tester"&&a.target===x.id)) return trueG(x);
+  if(list.some(a=>a.type==="labverdict"&&a.target===x.id)) return trueG(x);
+  if(labRecords(list).some(a=>a.hatched!==false&&(a.p1id===x.id||a.p2id===x.id)&&Date.now()>=(a.hatchAt||0)&&(a.babies||[]).includes("aa"))) return "Aa";
+  return "A?" }
+function labAnimals(list,sp){ const L=LAB_LINES[sp]; let stock=L.stock.map((g,i)=>({id:sp+"-s"+i,sp,g,stock:true}));
+  if(sp==="mystery") stock=stock.concat(labBought(list,"lab:mystery").map((a,i)=>({id:"mystery-b"+i,sp,g:"??",stock:true})));
+  const babies=labRecords(list).filter(a=>a.species===sp&&Date.now()>=(a.hatchAt||0)).flatMap(a=>(a.babies||[]).map((g,i)=>({id:a.endedAt+"-"+i,sp,g,from:a.endedAt})));
+  return [...stock,...babies.slice(-labCap(list))] }
+function pairsToday(list){ return labRecords(list).filter(a=>!a.legacy&&dayKey(a.endedAt)===todayKey()).length }
+function eggsWaiting(list){ return labRecords(list).filter(a=>!a.legacy&&Date.now()<(a.hatchAt||0)) }
+function eggsReady(list){ const seen=new Set(labSeenHatch()); return labRecords(list).filter(a=>!a.legacy&&a.hatchAt&&Date.now()>=a.hatchAt&&!seen.has(a.endedAt)) }
+function labSeenHatch(){ try{ return JSON.parse(localStorage.getItem("fieldnote.hatchseen")||"[]") }catch(e){ return [] } }
+function cross(L,g1,g2){ /* all equally likely child genotypes (Punnett cells), per locus product */
+  const l1=g1.split(" "), l2=g2.split(" "); let out=[""];
+  L.loci.forEach((loc,k)=>{ const cells=[]; for(const x of l1[k]) for(const y of l2[k]) cells.push(normPair(loc,x,y)); out=out.flatMap(o=>cells.map(c=>o?o+" "+c:c)) }); return out }
+function normPair(loc,x,y){ return [x,y].sort((p,q)=>p===q?0:p===loc[0]?-1:1).join("") }
+function fracStr(n,d){ if(!n) return "0"; if(n===d) return "ทั้งหมด"; const g=(a,b)=>b?g(b,a%b):a, k=g(n,d); return `${n/k}/${d/k}` }
+function labCard(x,on,list){ const L=LAB_LINES[x.sp], g=x.sp==="mystery"?knownG(x,list):x.g, ph=L.ph(x.sp==="mystery"?trueG(x):g);
+  return `<button class="labcard ${on?"on":""}" data-lab="${x.id}"><span class="labart"><svg viewBox="0 0 100 100" width="56" height="56">${L.art[ph]()}</svg></span>
+    <span class="small"><b>${L.names[ph]}</b></span><span class="genechip">${g}</span>${x.stock?(x.g==="??"?`<span class="small muted">งูปริศนา</span>`:""):`<span class="small muted">ลูกที่เพาะได้</span>`}</button>` }
+function labQuests(list){ const recs=labRecords(list).filter(a=>Date.now()>=(a.hatchAt||0));
+  const Q=[{id:"q1",t:"เพาะงูคอร์นแอมเมลจากพ่อแม่สีปกติ",ok:recs.some(a=>a.species==="corn"&&a.p1.includes("A")&&a.p2.includes("A")&&a.babies.includes("aa"))},
+    {id:"q2",t:"ไขปริศนายีนให้ถูก 2 ตัว",ok:list.filter(a=>a.type==="labverdict"&&a.ok).length>=2},
+    {id:"q3",t:"เพาะงูซูเปอร์พาสเทล",ok:recs.some(a=>a.species==="pastel"&&a.babies.includes("BB"))},
+    {id:"q4",t:"เพาะงูหลามบอลอัลบิโนด่าง",ok:recs.some(a=>a.species==="pied"&&!a.legacy&&a.babies.includes("aa pp"))},
+    {id:"q5",t:"เพาะมังกรไอน้ำให้ได้ 3 ตัว",ok:recs.filter(a=>a.species==="dragon").flatMap(a=>a.babies).filter(g=>g==="FW").length>=3}];
+  return Q }
 function labHtml(list){
-  const S=LAB_SPECIES[labSp], animals=labAnimals(list,labSp), picked=labPick.map(id=>animals.find(a=>a.id===id)).filter(Boolean), done=labDoneToday(list);
-  const recs=labRecords(list), first=!recs.length;
-  const tally={}; recs.forEach(a=>{ const k=[a.p1,a.p2].sort().join(" × "); (tally[k]??=[0,0]); tally[k][0]+=a.babies.length; tally[k][1]+=a.babies.filter(g=>g==="aa").length });
+  const un=labUnlocked(list); if(!un.has(labSp)) labSp="corn";
+  const L=LAB_LINES[labSp], animals=labAnimals(list,labSp), picked=labPick.map(id=>animals.find(a=>a.id===id)).filter(Boolean);
+  const left=labPairsPerDay(list)-pairsToday(list), waiting=eggsWaiting(list), ready=eggsReady(list), w=wallet(list).stars, st=labStats(list);
+  const tabs=LAB_ORDER.map(k=>{ const l=LAB_LINES[k], open=un.has(k); return `<button class="btn ${labSp===k?"":"ghost"} small" ${open?`data-labsp="${k}"`:"disabled"}>${open?"":"🔒 "}ด่าน ${l.lv}: ${l.n}</button>` }).join("");
   let mid="";
-  if(labResult){ const r=labResult, al=r.babies.filter(g=>g==="aa").length, exp=r.expect;
-    mid=`<div class="feedback usebox"><b>🥚 ไข่ฟักแล้ว ${r.babies.length} ตัว: อัลบิโน ${al} ตัว · สีปกติ ${r.babies.length-al} ตัว</b>
-      <div class="row" style="gap:4px;flex-wrap:wrap;margin:6px 0">${r.babies.map(g=>`<svg viewBox="0 0 100 100" width="34" height="34">${S.art[phen(g)]()}</svg>`).join("")}</div>
-      <p class="small">ตาราง Punnett ${r.gridOk?"✅ ถูกทั้ง 4 ช่อง":"❌ ยังไม่ถูก"} · ทำนายสัดส่วนอัลบิโน ${r.ratioOk?"✅ ถูก":"❌"} (ที่ถูกคือ ${exp}) · ได้ +${r.xp} XP</p>
-      ${exp==="0"||exp==="ทั้งหมด"?`<p class="small">${exp==="0"?"พ่อแม่คู่นี้มี A อย่างน้อยหนึ่งตัวส่งให้ลูกทุกตัว ลูกจึงไม่มีทางเป็น aa":"พ่อแม่เป็น aa ทั้งคู่ ส่งได้แต่ a ลูกจึงเป็นอัลบิโนทุกตัว"} ลองจับคู่ Aa × Aa ดูสิ จะเห็นว่าอัลบิโนโผล่มาจากพ่อแม่สีปกติได้</p>`:`<p class="small">ตามทฤษฎี ลูกอัลบิโนควรเป็น ${exp} แต่ไข่ครอกเดียวอาจไม่ตรงเป๊ะ เหมือนโยนเหรียญ 6 ครั้งไม่จำเป็นต้องได้หัว 3 ครั้ง ยิ่งเพาะหลายครอก ผลรวมยิ่งเข้าใกล้ทฤษฎี</p>`}</div>`;
-  } else if(done){ mid=`<p class="small">วันนี้จับคู่ไปแล้ว ไข่ครอกต่อไปพรุ่งนี้นะ ระหว่างนี้ดูสถิติรวมด้านล่างได้</p>` }
-  else if(picked.length===2){ const [p,q]=picked, rows=p.g.split(""), cols=q.g.split("");
-    mid=`<div class="feedback"><b>ทำนายก่อนวางไข่: ตาราง Punnett</b><p class="small">แต่ละช่อง = ยีน 1 ตัวจากพ่อพันธุ์ (แถว) + ยีน 1 ตัวจากแม่พันธุ์ (คอลัมน์) แตะช่องเพื่อเลือก</p>
-      <table class="punnett"><tr><th></th>${cols.map(c=>`<th>${c}</th>`).join("")}</tr>${rows.map((r,i)=>`<tr><th>${r}</th>${cols.map((c,j)=>`<td><button class="pcell" data-pc="${i*2+j}">${labGrid[i*2+j]||"?"}</button></td>`).join("")}</tr>`).join("")}</table>
-      <p class="small"><b>ลูกจะเป็นอัลบิโน (aa) ประมาณเท่าไร</b></p>
-      <div class="why">${["0","1/4","1/2","3/4","ทั้งหมด"].map(x=>`<button data-ratio="${x}" aria-pressed="${labRatio===x}">${x}</button>`).join("")}</div>
-      <div class="row"><button class="btn" id="labgo" ${labGrid.every(Boolean)&&labRatio?"":"disabled"}>จับคู่และรอไข่ฟัก 🥚</button></div></div>` }
-  else mid=`<p class="small"><b>เลือกสัตว์ 2 ตัว</b> มาจับคู่ (เลือกแล้ว ${picked.length}/2)</p>`;
-  return `<section class="card"><span class="eyebrow">🧬 ห้องวิจัยพันธุกรรม · พิพิธภัณฑ์</span>
-    <div class="row" style="gap:6px">${Object.entries(LAB_SPECIES).map(([k,v])=>`<button class="btn ${labSp===k?"":"ghost"} small" data-labsp="${k}">${v.n}</button>`).join("")}<button class="btn ghost small" id="labback" style="border:0">← พิพิธภัณฑ์</button></div>
-    ${first?`<div class="feedback"><p class="small"><b>ยีนสีเป็นคู่</b> สัตว์ทุกตัวมียีนสี 2 ตัว ได้จากพ่อ 1 ตัว แม่ 1 ตัว <b>A</b> = ยีนสร้างสีดำ (ลักษณะเด่น) <b>a</b> = ยีนอัลบิโน (ลักษณะด้อย) ตัวที่มี A อย่างน้อย 1 ตัวจะสีปกติ ต้องเป็น <b>aa</b> เท่านั้นถึงจะเป็นอัลบิโน</p></div>`:""}
-    <details class="small"><summary>🐍 เรื่องจริงจากนักเพาะ (อ่านก่อนเริ่ม)</summary><p class="small">นักเพาะงูใช้ตาราง Punnett แบบนี้จริงๆ ผู้เพาะที่รับผิดชอบเลือกเฉพาะมอร์ฟที่สัตว์แข็งแรงดี อย่างอัลบิโนในห้องนี้ และเลี่ยงมอร์ฟที่มากับปัญหาสุขภาพ เช่น งูหลามบอลมอร์ฟ spider ที่มักมีอาการหัวส่ายจากระบบประสาท ในชีวิตจริงยังไม่ควรจับคู่สัตว์ที่เป็นพี่น้องกัน และสัตว์ไม่ใช่ของสะสม ในห้องนี้ลูกที่ได้จะอยู่ในห้องวิจัย ขายไม่ได้</p></details>
-    <p class="small muted">${S.n}: สีปกติ = ${S.normal} · อัลบิโน = ${S.albino} · ไข่ครอกละ ${S.clutch} ฟอง · จับคู่ได้วันละ 1 ครั้ง ฟรี ได้ XP เมื่อทำนายถูก</p>
-    <div class="labgrid">${animals.map(x=>labCard(x,labPick.includes(x.id))).join("")}</div>
+  if(ready.length){ mid=ready.map(a=>{ const LL=LAB_LINES[a.species], tgt=a.babies.filter(g=>LL.ph(g)===LL.target).length;
+      return `<div class="feedback usebox"><b>🐣 ไข่ฟักแล้ว! ${LL.n} ${a.babies.length} ตัว</b>
+      <div class="row" style="gap:4px;flex-wrap:wrap;margin:6px 0">${a.babies.map(g=>`<svg viewBox="0 0 100 100" width="36" height="36">${LL.art[LL.ph(g)]()}</svg>`).join("")}</div>
+      <p class="small">${LL.names[LL.target]} ${tgt}/${a.babies.length} ตัว · เธอทำนายไว้ ${esc(a.ratio||"-")} (ทฤษฎี ${a.expect}) ${a.ratioOk?"✅":"❌"}${a.gridOk!=null?` · ตาราง Punnett ${a.gridOk?"✅":"❌"}`:""} · ได้ +${a.xp} XP</p>
+      <p class="small muted">ครอกเดียวอาจไม่ตรงทฤษฎีเป๊ะ ยิ่งเพาะหลายครอก ผลรวมยิ่งเข้าใกล้ทฤษฎี</p>
+      <button class="btn small" data-seen="${a.endedAt}">เก็บลูกเข้าคอก</button></div>` }).join("") }
+  if(labSp==="mystery"){ const unknown=animals.filter(x=>x.g==="??"&&knownG(x,list)==="A?"&&!list.some(a=>a.type==="labverdict"&&a.target===x.id));
+    mid+=`<div class="feedback"><b>🔎 ภารกิจนักสืบยีน</b><p class="small">งูปริศนาดูสีปกติ แต่อาจเป็น AA หรือ Aa ก็ได้ ลองจับคู่กับงูแอมเมล (aa) ถ้าแฝงยีน (Aa) ลูกครึ่งหนึ่งน่าจะเป็นแอมเมล ถ้าไม่แฝง (AA) จะไม่มีแอมเมลเลยสักตัว พอไข่ฟัก ดูผลแล้วตัดสินว่าแฝงไหม</p>
+      ${unknown.map(x=>`<div class="row" style="gap:6px;align-items:center"><span class="small"><b>${x.id.replace("mystery-","งูปริศนา ")}</b> ตัดสินว่า</span><button class="btn ghost small" data-verdict="${x.id}" data-v="Aa">แฝงยีน (Aa)</button><button class="btn ghost small" data-verdict="${x.id}" data-v="AA">ไม่แฝง (AA)</button></div>`).join("")||`<p class="small muted">งูปริศนาทุกตัวถูกไขแล้ว ซื้อตัวใหม่ได้ที่ร้านด้านล่าง</p>`}
+      ${labMsg?`<p class="small"><b>${labMsg}</b></p>`:""}</div>` }
+  if(left<=0) mid+=`<p class="small">เครื่องฟักไข่ไม่ว่าง${waiting.length?` ไข่ ${waiting.length} ครอกกำลังฟัก จะฟักพรุ่งนี้ 6 โมงเช้า`:""} มาจับคู่ใหม่พรุ่งนี้นะ</p>`;
+  else if(picked.length===2){ const [p,q]=picked, g1=labSp==="mystery"?knownG(p,list):p.g, g2=labSp==="mystery"?knownG(q,list):q.g, hiddenPair=g1.includes("?")||g2.includes("?");
+    const grids=L.loci.map((loc,k)=>{ const r=g1.split(" ")[k].split(""), c=g2.split(" ")[k].split(""), opts=[loc[0]+loc[0],loc[0]+loc[1],loc[1]+loc[1]];
+      return `<table class="punnett"><tr><th></th>${c.map(x=>`<th>${x}</th>`).join("")}</tr>${r.map((x,i)=>`<tr><th>${x}</th>${c.map((y,j)=>`<td><button class="pcell" data-pc="${k}-${i*2+j}">${(labGrid[k]||[])[i*2+j]||"?"}</button></td>`).join("")}</tr>`).join("")}</table>` }).join("");
+    const choices=L.loci.length===2?["0","1/16","1/8","3/16","1/4","9/16"]:["0","1/4","1/2","3/4","ทั้งหมด"];
+    const filled=hiddenPair||L.loci.every((_,k)=>(labGrid[k]||[]).filter(Boolean).length===4);
+    mid+=`<div class="feedback"><b>ทำนายก่อนวางไข่</b>
+      ${hiddenPair?`<p class="small">มีงูปริศนาในคู่นี้ ยังทำตาราง Punnett ไม่ได้เพราะไม่รู้ยีน ทำนายจากเงื่อนไขแทน</p>`:`<p class="small">แต่ละช่อง = ยีน 1 ตัวจากตัวแรก (แถว) + 1 ตัวจากตัวที่สอง (คอลัมน์) แตะช่องเพื่อเลือก${L.loci.length===2?" · สองลักษณะแยกกันคนละตาราง แล้วใช้กฎการคูณ":""}</p><div class="row" style="gap:14px;flex-wrap:wrap">${grids}</div>`}
+      <p class="small"><b>ลูกจะเป็น${L.names[L.target]}ประมาณเท่าไร</b>${hiddenPair?" (ถ้างูปริศนาแฝงยีน)":""}</p>
+      <div class="why">${choices.map(x=>`<button data-ratio="${x}" aria-pressed="${labRatio===x}">${x}</button>`).join("")}</div>
+      <div class="row"><button class="btn" id="labgo" ${filled&&labRatio?"":"disabled"}>จับคู่และเข้าเครื่องฟัก 🥚</button></div></div>` }
+  else mid+=`<p class="small"><b>เลือกสัตว์ 2 ตัว</b> มาจับคู่ (เลือกแล้ว ${picked.length}/2) · วันนี้จับคู่ได้อีก ${left} ครั้ง</p>`;
+  const tally={}; labRecords(list).filter(a=>a.species===labSp&&Date.now()>=(a.hatchAt||0)).forEach(a=>{ const k=[a.p1,a.p2].sort().join(" × "); (tally[k]??=[0,0]); tally[k][0]+=a.babies.length; tally[k][1]+=a.babies.filter(g=>L.ph(g)===L.target).length });
+  const book=Object.entries(L.names).map(([ph,n])=>{ const got=labAnimals(list,labSp).some(x=>!x.stock&&L.ph(x.g)===ph)||labRecords(list).some(a=>a.species===labSp&&Date.now()>=(a.hatchAt||0)&&a.babies.some(g=>L.ph(g)===ph));
+    return `<span class="spchip" style="border-color:${got?"#2e8b57":"var(--line)"}">${got?"✅":"⬜"} ${n}</span>` }).join("");
+  const Q=labQuests(list);
+  return `<section class="card"><span class="eyebrow">🐉 หุบเขามังกร · ห้องวิจัยพันธุกรรม</span>
+    <div class="row" style="gap:6px;flex-wrap:wrap">${tabs}<button class="btn ghost small" id="labback" style="border:0">← พิพิธภัณฑ์</button></div>
+    <p class="small"><b>ด่าน ${L.lv}: ${L.idea}</b> · ${L.n} ไข่ครอกละ ${L.clutch} ฟอง · ฟักพรุ่งนี้ 6 โมงเช้า · ได้ XP เมื่อทำนายถูก</p>
+    ${labSp==="corn"&&!labRecords(list).length?`<div class="feedback"><p class="small"><b>ยีนสีเป็นคู่</b> ได้จากพ่อ 1 ตัว แม่ 1 ตัว <b>A</b> = ยีนสร้างสีดำ (เด่น) <b>a</b> = ยีนแอมเมล/อัลบิโน (ด้อย) ต้องเป็น <b>aa</b> เท่านั้นถึงจะไม่มีสีดำ</p></div>`:""}
+    ${labSp==="pastel"?`<p class="small muted">ลักษณะเด่นไม่สมบูรณ์: bb ปกติ · Bb พาสเทล (สว่างขึ้น) · BB ซูเปอร์พาสเทล (สว่างที่สุด) ยีน 2 ตัวให้ผลมากกว่า 1 ตัว</p>`:""}
+    ${labSp==="pied"?`<p class="small muted">ยีนสองคู่แยกกัน: A/a คุมอัลบิโน · P/p คุมลายด่าง โอกาสที่ได้ทั้งสองอย่าง = โอกาสแรก × โอกาสที่สอง</p>`:""}
+    ${labSp==="dragon"?`<p class="small muted">มังกรเป็นเรื่องแต่ง ใช้กติกาสมมติ: F ไฟ กับ W น้ำ เด่นร่วมกัน ตัวที่ได้ FW จะเป็นไอน้ำ (ทั้งสองอย่าง) ของจริงมีลักษณะแบบนี้ เช่น หมู่เลือด AB ของคน</p>`:""}
+    <details class="small"><summary>🐍 เรื่องจริงจากนักเพาะ</summary><p class="small">มอร์ฟในห้องนี้เป็นของจริงที่สัตว์แข็งแรงดี ผู้เพาะที่รับผิดชอบเลี่ยงมอร์ฟที่มากับปัญหาสุขภาพ เช่น งูหลามบอลมอร์ฟ spider ที่มักมีอาการหัวส่าย ในชีวิตจริงไม่ควรจับคู่พี่น้องกัน และสัตว์ไม่ใช่ของสะสม ลูกในหุบเขาจึงขายไม่ได้</p></details>
+    <div class="labgrid">${animals.map(x=>labCard(x,labPick.includes(x.id),list)).join("")}</div>
+    ${waiting.length?`<p class="small">🥚 กำลังฟัก ${waiting.length} ครอก: ${waiting.map(a=>LAB_LINES[a.species].n).join(", ")} (ฟักพรุ่งนี้ 6 โมงเช้า)</p>`:""}
     ${mid}
-    ${Object.keys(tally).length?`<div><span class="eyebrow">สถิติรวมทุกครอก</span>${Object.entries(tally).map(([k,[n,al]])=>`<p class="small">${k}: อัลบิโน ${al}/${n} = ${Math.round(al/n*100)}%</p>`).join("")}</div>`:""}
+    <div><span class="eyebrow">สมุดมอร์ฟสายนี้</span><div class="spstrip">${book}</div></div>
+    ${Object.keys(tally).length?`<div><span class="eyebrow">สถิติรวมทุกครอกของสายนี้</span>${Object.entries(tally).map(([k,[n,c]])=>`<p class="small">${k}: ${L.names[L.target]} ${c}/${n} = ${Math.round(c/n*100)}%</p>`).join("")}</div>`:""}
+    <div><span class="eyebrow">ภารกิจวิจัย (ครบได้ +100 XP)</span>${Q.map(q=>`<p class="small">${q.ok?"✅":"⬜"} ${q.t}</p>`).join("")}</div>
+    <div><span class="eyebrow">ร้านอุปกรณ์วิจัย · ⭐${w}</span>${LAB_SHOP.map(it=>{ const owned=it.once&&labBought(list,it.id).length; return `<div class="row" style="justify-content:space-between;gap:8px"><span class="small">${it.n}</span>${owned?`<span class="small">✓ มีแล้ว</span>`:`<button class="btn ghost small" data-lbuy="${it.id}" ${w>=it.cost?"":"disabled"}>⭐${it.cost}</button>`}</div>` }).join("")}
+      <p class="small muted">ร้านนี้ขายแต่อุปกรณ์และสัตว์ที่รู้อยู่แล้วว่าเป็นอะไร สีที่หายากต้องได้จากการวางแผนผสมเอง ไม่มีการจ่ายดาวเพื่อสุ่ม</p></div>
+    <p class="small muted">ด่านต่อไปจะเปิดเมื่อทำนายถูกในด่านนี้ครบ (ทำนายถูกแล้ว ${st[labSp].ok} ครั้ง)</p>
   </section>` }
 function bindLab(){
-  const list=mine();
-  $v.querySelectorAll("[data-labsp]").forEach(b=>b.onclick=()=>{ labSp=b.dataset.labsp; labPick=[]; labGrid=["","","",""]; labRatio=null; labResult=null; renderMap() });
-  const bk=document.getElementById("labback"); if(bk) bk.onclick=()=>{ mapSel="__museum"; labResult=null; renderMap() };
-  $v.querySelectorAll("[data-lab]").forEach(b=>b.onclick=()=>{ if(labResult) labResult=null; const id=b.dataset.lab;
-    labPick=labPick.includes(id)?labPick.filter(x=>x!==id):[...labPick,id].slice(-2); labGrid=["","","",""]; labRatio=null; renderMap() });
-  $v.querySelectorAll("[data-pc]").forEach(b=>b.onclick=()=>{ const k=+b.dataset.pc, opts=["AA","Aa","aa"]; labGrid[k]=opts[(opts.indexOf(labGrid[k])+1)%3]; renderMap() });
-  $v.querySelectorAll("[data-ratio]").forEach(b=>b.onclick=()=>{ labRatio=b.dataset.ratio; renderMap() });
+  const list=mine(), L=LAB_LINES[labSp];
+  const rr=()=>renderMap();
+  $v.querySelectorAll("[data-labsp]").forEach(b=>b.onclick=()=>{ labSp=b.dataset.labsp; labPick=[]; labGrid={}; labRatio=null; labMsg=""; rr() });
+  const bk=document.getElementById("labback"); if(bk) bk.onclick=()=>{ mapSel="__museum"; rr() };
+  $v.querySelectorAll("[data-lab]").forEach(b=>b.onclick=()=>{ const id=b.dataset.lab; labPick=labPick.includes(id)?labPick.filter(x=>x!==id):[...labPick,id].slice(-2); labGrid={}; labRatio=null; rr() });
+  $v.querySelectorAll("[data-pc]").forEach(b=>b.onclick=()=>{ const [k,c]=b.dataset.pc.split("-").map(Number), loc=L.loci[k], opts=[loc[0]+loc[0],loc[0]+loc[1],loc[1]+loc[1]];
+    labGrid[k]=labGrid[k]||["","","",""]; labGrid[k][c]=opts[(opts.indexOf(labGrid[k][c])+1)%3]; rr() });
+  $v.querySelectorAll("[data-ratio]").forEach(b=>b.onclick=()=>{ labRatio=b.dataset.ratio; rr() });
+  $v.querySelectorAll("[data-seen]").forEach(b=>b.onclick=()=>{ try{ localStorage.setItem("fieldnote.hatchseen",JSON.stringify([...labSeenHatch(),b.dataset.seen])) }catch(e){} rr() });
+  $v.querySelectorAll("[data-verdict]").forEach(b=>b.onclick=async()=>{ const x=labAnimals(list,"mystery").find(a=>a.id===b.dataset.verdict), truth=trueG(x), ok=b.dataset.v===truth, now=new Date().toISOString();
+    await saveAttempt({type:"labverdict",setId:"lab",target:x.id,guess:b.dataset.v,ok,topic:"นักสืบยีน",startedAt:now,endedAt:now,durationSec:0,correct:ok?1:0,total:1,xp:ok?20:5,items:[]});
+    labMsg=ok?`ถูกต้อง! ตัวนี้คือ ${truth} (+20 XP)`:`ยังไม่ใช่ ตัวนี้คือ ${truth} ${truth==="Aa"?"ถ้าไม่เห็นแอมเมลในครอกเล็กๆ ก็ยังแฝงได้ ลองดูว่าครอกใหญ่ขึ้นช่วยไหม":"เพราะ AA ส่ง A ให้ลูกทุกตัว ลูกจึงไม่มีทางเป็น aa"} (+5 XP)`; rr() });
+  $v.querySelectorAll("[data-lbuy]").forEach(b=>b.onclick=async()=>{ const it=LAB_SHOP.find(x=>x.id===b.dataset.lbuy); if(wallet(list).stars<it.cost) return;
+    let target=null; if(it.id==="lab:tester"){ const u=labAnimals(list,"mystery").find(x=>x.g==="??"&&knownG(x,list)==="A?"); if(!u){ labMsg="ไม่มีงูปริศนาที่ยังไม่รู้ยีน"; rr(); return } target=u.id }
+    const now=new Date().toISOString(); await saveAttempt({type:"shop",setId:"shop",item:it.id,cost:it.cost,...(target?{target}:{}),name:it.n,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
+    labMsg=target?`ตรวจแล้ว: ${target.replace("mystery-","งูปริศนา ")} คือ ${trueG({id:target,g:"??"})}`:`ได้ ${it.n} แล้ว`; rr() });
   const go=document.getElementById("labgo"); if(go) go.onclick=async()=>{ go.disabled=true;
-    const animals=labAnimals(list,labSp), [p,q]=labPick.map(id=>animals.find(a=>a.id===id)), rows=p.g.split(""), cols=q.g.split("");
-    const truth=[0,1,2,3].map(k=>sortG(rows[k>>1],cols[k&1])), gridOk=truth.every((g,k)=>g===labGrid[k]);
-    const nAl=truth.filter(g=>g==="aa").length, exp=["0","1/4","1/2","3/4","ทั้งหมด"][nAl], ratioOk=labRatio===exp;
-    const babies=Array.from({length:LAB_SPECIES[labSp].clutch},()=>sortG(rows[Math.random()<.5?0:1],cols[Math.random()<.5?0:1]));
-    const xp=(gridOk?15:0)+(ratioOk?10:0)+5, now=new Date().toISOString();
-    await saveAttempt({type:"lab",setId:"lab",species:labSp,p1:p.g,p2:q.g,grid:[...labGrid],gridOk,ratio:labRatio,ratioOk,babies,topic:"ห้องวิจัยพันธุกรรม: "+LAB_SPECIES[labSp].n,startedAt:now,endedAt:now,durationSec:0,correct:(gridOk?1:0)+(ratioOk?1:0),total:2,xp,items:[]});
-    labResult={babies,gridOk,ratioOk,expect:exp,xp}; labPick=[]; labGrid=["","","",""]; labRatio=null; renderMap();
-    setTimeout(()=>document.querySelector("#mappanel .usebox")?.scrollIntoView({block:"center",behavior:"smooth"}),50) };
+    const animals=labAnimals(list,labSp), [p,q]=labPick.map(id=>animals.find(a=>a.id===id));
+    const g1=trueG(p), g2=trueG(q), k1=labSp==="mystery"?knownG(p,list):g1, k2=labSp==="mystery"?knownG(q,list):g2, hidden=k1.includes("?")||k2.includes("?");
+    const cells=cross(L,hidden?(k1.includes("?")?"Aa":k1):g1,hidden?(k2.includes("?")?"Aa":k2):g2), nT=cells.filter(g=>L.ph(g)===L.target).length, exp=fracStr(nT,cells.length);
+    let gridOk=null; if(!hidden){ gridOk=L.loci.every((loc,k)=>{ const r=g1.split(" ")[k].split(""), c=g2.split(" ")[k].split(""); return [0,1,2,3].every(i=>normPair(loc,r[i>>1],c[i&1])===(labGrid[k]||[])[i]) }) }
+    const ratioOk=labRatio===exp, real=cross(L,g1,g2), babies=Array.from({length:L.clutch},()=>real[Math.floor(Math.random()*real.length)]);
+    const xp=5+(gridOk?15:0)+(ratioOk?10:0), now=Date.now();
+    await saveAttempt({type:"lab",setId:"lab",species:labSp,p1:k1,p2:k2,p1id:p.id,p2id:q.id,grid:labGrid,gridOk,ratio:labRatio,expect:exp,ratioOk,babies,hatchAt:hatchAt(now),
+      topic:"หุบเขามังกร: "+L.n,startedAt:new Date(now).toISOString(),endedAt:new Date(now).toISOString(),durationSec:0,correct:(gridOk?1:0)+(ratioOk?1:0),total:gridOk==null?1:2,xp,items:[]});
+    labMsg=""; labPick=[]; labGrid={}; labRatio=null; rr() };
+  /* research quests pay once */
+  labQuests(list).forEach(async q=>{ if(q.ok&&!list.some(a=>a.type==="labquest"&&a.setId===q.id)){ const now=new Date().toISOString();
+    await saveAttempt({type:"labquest",setId:q.id,topic:"ภารกิจวิจัย: "+q.t,startedAt:now,endedAt:now,durationSec:0,correct:1,total:1,xp:100,items:[]}) } });
 }
 function museumPanel(list){ return typeof museumHtml==="function"?museumHtml(list):`<section class="card"><h2>🏛️ พิพิธภัณฑ์</h2><p class="small muted">กำลังสร้าง เร็วๆ นี้</p></section>` }
 function bindMapPanel(){
