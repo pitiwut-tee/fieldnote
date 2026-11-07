@@ -406,6 +406,12 @@ Read `content/exam-patterns.md` before writing level-3 questions, probes and mix
 
 Match the style, never copy questions. The official announcement overrides the other sources on scope.
 
+### Current phase: foundations first (father's decision, 8 Nov 2026)
+- Do not write any "level 4" or competition-trick questions yet.
+- Focus every topic on solid understanding and basics: why-first lessons, reason checks, level 1–3.
+- The วมว.-style prep book is used only to calibrate what "level 3" should reach, step by step. Do not use it to raise difficulty now.
+- The father will decide when to move to exam-level practice. This will be after enough sample sets with answer keys are uploaded.
+
 ### Fill-in answers (UNSEEN part of the first round)
 About half of the real first-round math paper has no options. The app answers these questions by typing, through `fillize` in `startSet`:
 - every level-3 question in lessons, probes and challenges;
