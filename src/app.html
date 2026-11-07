@@ -160,7 +160,7 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .genechip{font-family:var(--mono);font-weight:700;font-size:.9rem;background:var(--soft);border-radius:8px;padding:1px 8px}
 .punnett{border-collapse:collapse;margin:6px 0}.punnett th{font-family:var(--mono);padding:4px 10px;font-size:1.05rem}
 .pcell{font:inherit;font-family:var(--mono);font-weight:700;font-size:1.05rem;width:58px;height:44px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
-.skyov{position:absolute!important;inset:0;width:auto!important;pointer-events:none;z-index:3;transition:background .6s}
+.skyov{position:absolute!important;inset:0;width:auto!important;pointer-events:none;z-index:0;transition:background .6s}
 .skyov svg{width:100%;height:100%;display:block}
 .meteor{opacity:0;animation:meteor 5s linear infinite}
 @keyframes meteor{0%{opacity:0;transform:translate(0,0)}3%{opacity:1}12%{opacity:0;transform:translate(-60px,40px)}100%{opacity:0}}
@@ -225,7 +225,7 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 @keyframes heartup{0%{opacity:0;transform:translate(-50%,0) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--dx,0px)),-70px) scale(1.15)}}
 .bbtn.squish .bface{animation:squish .5s ease-out}
 @keyframes squish{0%{transform:scale(1)}30%{transform:scale(1.12,.9)}60%{transform:scale(.95,1.06)}100%{transform:scale(1)}}
-.scene .hero-pet{transition:left 1.6s ease-in-out}
+.scene .hero-pet{transition:left 1.6s ease-in-out;z-index:2}
 .zz{position:absolute;right:-4px;top:-6px;font-size:20px;animation:fxfloat 2.4s ease-in-out infinite;pointer-events:none;z-index:4}
 .bond{display:flex;gap:8px;align-items:center}
 .bond .progress{flex:1}
@@ -2011,6 +2011,11 @@ function quad({body,belly,ear,tail,mane,horn,feet,extra}){
   <ellipse cx="50" cy="40" rx="23" ry="20" fill="${body}"/><ellipse cx="50" cy="50" rx="12" ry="7.5" fill="${belly}"/>${horn||""}${extra||""}
   ${eyes2(39)}<ellipse cx="50" cy="47.5" rx="2.6" ry="2" fill="#2b1d1d"/><path d="M46 50 q2 2.6 4 0 q2 2.6 4 0" fill="none" stroke="#3a2a2a" stroke-width="1.4" stroke-linecap="round"/>${bl(46)}` }
 Object.assign(PET_ART,{
+shelf3:`<rect x="8" y="2" width="84" height="96" rx="4" fill="#a8774a"/><rect x="13" y="6" width="74" height="88" fill="#e8d2ad"/>
+  <rect x="10" y="32" width="80" height="5" fill="#8a5a36"/><rect x="10" y="63" width="80" height="5" fill="#8a5a36"/><rect x="10" y="92" width="80" height="6" fill="#8a5a36"/>`,
+wallshelf:`<path d="M6 62 h88 v7 h-88Z" fill="#a8774a"/><path d="M20 69 l0 12 l10 -12Z M80 69 l0 12 l-10 -12Z" fill="#8a5a36"/>`,
+cabinet:`<rect x="10" y="2" width="80" height="96" rx="5" fill="#6d8fa8"/><rect x="15" y="7" width="70" height="86" rx="2" fill="#dff1fb" opacity=".75"/>
+  <rect x="13" y="36" width="74" height="4" fill="#5a7891"/><rect x="13" y="67" width="74" height="4" fill="#5a7891"/><rect x="13" y="93" width="74" height="5" fill="#5a7891"/><path d="M20 12 l10 20" stroke="#fff" stroke-width="3" opacity=".6"/>`,
 tank:`<rect x="8" y="22" width="84" height="66" rx="6" fill="#d9f2ff" opacity=".55" stroke="#7fb6d6" stroke-width="3"/><rect x="11" y="62" width="78" height="23" fill="#7a5634"/><rect x="11" y="56" width="78" height="8" fill="#5fae5a"/>
   <path d="M20 62 q6 -18 12 0 M60 62 q4 -14 9 0" fill="#3f8f5a"/><ellipse cx="44" cy="70" rx="10" ry="4" fill="#a0784f"/><ellipse cx="72" cy="74" rx="6" ry="3" fill="#9aa3ad"/><circle cx="30" cy="76" r="3" fill="#8f9aa6"/><rect x="6" y="16" width="88" height="8" rx="3" fill="#4f8db0"/>`,
 ballpython:snake("#7a5634","#efe0c2","#d9b77e","blotch"),
@@ -2121,12 +2126,16 @@ const GUEST_TASKS={
 function guestProgress(g,list){ const f=new Date(g.from+"T00:00:00").getTime(), t=new Date(g.to+"T23:59:59").getTime();
   const rs=list.filter(a=>{const e=new Date(a.endedAt).getTime(); return e>=f&&e<=t}); const fn=GUEST_TASKS[g.task.kind]; const n=fn?fn(rs):0; return {n:Math.min(n,g.task.n),done:n>=g.task.n} }
 function activeGuest(){ const t=isoDay(todayKey()); return GUESTS.find(g=>g.status==="approved"&&t>=g.from&&t<=g.to)||null }
+/* shelves: boards (fraction of height where things stand) and slot positions (fraction of width) */
+const SHELVES={shelf3:{boards:[.32,.63,.92],slots:[.3,.5,.7]},wallshelf:{boards:[.62],slots:[.2,.4,.6,.8]},cabinet:{boards:[.36,.67,.93],slots:[.32,.5,.68]}};
 const PROPS=[["plant","🪴","กระถางต้นไม้",150],["candle","🕯️","เทียนเวท",150],["books","📚","กองหนังสือ",200],["paint","🎨","จานสี",250],["potion","🧪","ขวดยาวิเศษ",300],
   ["bed","🛏️","เตียงนุ่ม",300],["moon","🌙","โคมพระจันทร์",350],["scope","🔭","กล้องดูดาว",400],["teddy","🧸","ตุ๊กตาหมี",200],["lantern","🏮","โคมแดง",200],
   ["mushroom","🍄","เห็ดวิเศษ",150],["vase","💐","แจกันดอกไม้",200],["frame","🖼️","ภาพวาด",250],["sofa","🛋️","โซฟา",350],["globe","🌍","ลูกโลก",300],["piano","🎹","เปียโน",500],
   ["rock","🪨","ก้อนหิน",100],["log","🪵","ขอนไม้ผุ",150],["moss","🌿","กอมอส",120],["leaflitter","🍂","กองใบไม้แห้ง",100],["sprout","🌱","ต้นกล้า",100],["cactus","🌵","กระบองเพชร",150],
-  ["terrarium","svg:tank","ตู้เลี้ยงไอโซพอด",400],["shroom2","🍄‍🟫","เห็ดป่า",120],["shell2","🐚","เปลือกหอย",120]]
-  .map(([k,e,n,cost])=>({id:"prop:"+k,e:e.startsWith("svg:")?glyph(e):e,n,cost,slot:"prop"}));
+  ["terrarium","svg:tank","ตู้เลี้ยงไอโซพอด",400],["shroom2","🍄‍🟫","เห็ดป่า",120],["shell2","🐚","เปลือกหอย",120],
+  ["shelf3","svg:shelf3","ชั้นวางไม้ 3 ชั้น",250],["wallshelf","svg:wallshelf","ชั้นลอยติดผนัง",120],["cabinet","svg:cabinet","ตู้โชว์กระจก",450],
+  ["teacup","🍵","ถ้วยชา",60],["bookstack","📚","กองหนังสือ",80],["hourglass","⏳","นาฬิกาทราย",100],["trophy2","🏺","แจกันโบราณ",120],["globe2","🔭","กล้องโทรทรรศน์จิ๋ว",150],["jar","🫙","โหลแก้ว",60]]
+  .map(([k,e,n,cost])=>({id:"prop:"+k,e:e.startsWith("svg:")?glyph(e):e,n,cost,slot:"prop",...(SHELVES[k]?{shelf:SHELVES[k],big:1}:{})}));
 WEAR.forEach(w=>{ if(w.slot!=="fx"){ w.anchor=w.slot; w.slot="wear" } });
 const SHOP=[...WEAR,...PROPS,...RARE,...GUEST_ITEMS,...Object.entries(SCENES).filter(([k,s])=>s.cost>0).map(([id,s])=>({id,n:s.n,cost:s.cost,slot:"bg"}))];
 const WEAR_HOME={head:[50,6],neck:[50,64],side:[86,62]};   /* where items bought in the old slot system start */
@@ -2143,6 +2152,7 @@ function earnedSpecials0(list){ const out=new Set(), p=progressOf(list), ss=spel
   if(list.some(a=>a.type==="teach")) out.add("acc:teacher");
   questWeeks(list).forEach((w,i)=>{ if(i<RARE.length) out.add(RARE[i].id) });
   GUESTS.filter(g=>g.status==="approved").forEach(g=>{ if(guestProgress(g,list).done) out.add("guest:"+g.item.key) });
+  try{ const n=museumProgress(list).n; SPECIMENS.slice(0,n).forEach(x=>out.add("spec:"+x.k)) }catch(e){}
   return out }
 function questWeeks(list){ try{ return progressOf(list).questWeeks||[] }catch(e){ return [] } }
 function owns(list){ const s=new Set(list.filter(a=>a.type==="shop"&&a.item&&!a.item.startsWith("snack:")).map(a=>a.item)); earnedSpecials(list).forEach(x=>s.add(x)); return s }
@@ -2246,7 +2256,7 @@ function renderDen(){
     ${denMsg?`<p class="small" style="color:var(--good)"><b>${esc(denMsg)}</b></p>`:""}
     ${wishHtml(list)}
     <div class="scene ${denArrange?"arrange":""}" id="scene">${scene.svg()}${denArrange?"":skyOverlay(Date.now(),"den",R.bg||"bg:home")}${skyEvent(Date.now())?.k==="krathong"?`<span style="position:absolute;left:12%;bottom:10%;font-size:28px;z-index:2">🪷</span>`:""}
-      <div class="props" id="props">${R.props.map((p,i)=>{const s=SHOP.find(z=>z.id===p.id); return s?`<span class="prop-it ${denSel&&denSel.t==="p"&&denSel.i===i?"sel":""}" data-pi="${i}" title="${esc(s.n)}" style="left:${p.x}%;top:${p.y}%;font-size:${Math.round(32*(p.s||1))}px">${s.e}</span>`:""}).join("")}</div>
+      <div class="props" id="props">${R.props.map((p,i)=>({p,i,s:SHOP.find(z=>z.id===p.id)})).filter(x=>x.s).sort((a,b)=>(b.s.shelf?1:0)-(a.s.shelf?1:0)).map(({p,i,s})=>`<span class="prop-it ${s.shelf?"shelfit":""} ${denSel&&denSel.t==="p"&&denSel.i===i?"sel":""}" data-pi="${i}" ${s.shelf?`data-shelf="${p.id.slice(5)}"`:""} title="${esc(s.n)}" style="left:${p.x}%;top:${p.y}%;font-size:${Math.round((s.big?96:32)*(p.s||1))}px">${s.e}</span>`).join("")}</div>
       <button class="hero-pet bbtn" id="petpat" type="button" aria-label="${esc(b.name)}">${petFace(b.kind,130,true,list)}</button>
       <div class="others">${pets.filter(x=>x.k!==b.kind).map(x=>`<button class="mini" data-act="${x.k}" title="ให้ ${esc(petName(x.k,list))} มาหน้าแรก">${petFace(x.k,46,true,list)}</button>`).join("")}</div>
     </div>
@@ -2276,14 +2286,14 @@ function renderDen(){
           :`<span class="small muted">${formsText(x)}</span>${denBuy==="pet:"+x.k?`<input id="newname" maxlength="20" placeholder="ตั้งชื่อ" value="${esc(denName)}" style="font:inherit;width:100%;padding:6px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)">${buyBtn("pet:"+x.k,price)}`
           :`${buyBtn("pet:"+x.k,price,`รับไข่มาเลี้ยง ⭐${price}`)}${wishBtn("pet:"+x.k)}`}`}</div>` }).join("")}</div>
     <p class="small muted">คู่หูตัวใหม่มาเป็นไข่ ให้อาหารวิเศษแล้วจะฟักและเปลี่ยนร่าง ตัวที่มี 🔒 ซื้อไม่ได้ ต้องทำสำเร็จตามที่เขียนไว้</p>`
-  :`<div class="shopgrid">${SHOP.filter(s=>s.slot===denTab&&(!s.guest||o.has(s.id))).sort((a,b2)=>(o.has(b2.id)-o.has(a.id))).map(s=>{ const have=o.has(s.id),
+  :`<div class="shopgrid">${SHOP.filter(s=>s.slot===denTab&&((!s.guest&&s.replica==null)||o.has(s.id))).sort((a,b2)=>(o.has(b2.id)-o.has(a.id))).map(s=>{ const have=o.has(s.id),
         cnt=denTab==="prop"?R.props.filter(p=>p.id===s.id).length:denTab==="wear"?worn.filter(x=>x.id===s.id).length:0, on=denTab==="bg"?(R.bg===s.id):denTab==="fx"?R.fx[b.kind]===s.id:cnt>0;
-      return `<div class="shopitem ${have?"have":""}">${denTab==="bg"?`<span class="thumb">${SCENES[s.id].svg()}</span>`:`<span style="font-size:2rem">${s.e}</span>`}<b class="small">${esc(s.n)}</b>${s.rare!=null?`<span class="small muted">✨ ของหายาก</span>`:s.guest?`<span class="small muted">🎁 จากแขกพิเศษ</span>`:""}
+      return `<div class="shopitem ${have?"have":""}">${denTab==="bg"?`<span class="thumb">${SCENES[s.id].svg()}</span>`:`<span style="font-size:2rem">${s.e}</span>`}<b class="small">${esc(s.n)}</b>${s.rare!=null?`<span class="small muted">✨ ของหายาก</span>`:s.guest?`<span class="small muted">🎁 จากแขกพิเศษ</span>`:s.replica!=null?`<span class="small muted">🏛️ จากพิพิธภัณฑ์</span>`:s.shelf?`<span class="small muted">วางของบนชั้นได้</span>`:""}
         ${have?(denTab==="prop"?`<button class="btn ghost small" data-equip="${s.id}">วางในห้อง${cnt?` (${cnt})`:""}</button>`
             :denTab==="wear"?`<button class="btn ${on?"":"ghost"} small" data-equip="${s.id}">${on?"✓ ใส่อยู่ (แตะเพื่อถอด)":`ให้ ${esc(b.name)}`}</button>`
             :`<button class="btn ${on?"":"ghost"} small" data-equip="${s.id}">${on?"✓ ใช้อยู่":"ใช้"}</button>`)
           :s.special?`<span class="small muted">🔒 ${esc(s.special)}</span>`:`${buyBtn(s.id,s.cost)}${wishBtn(s.id)}`}</div>` }).join("")}</div>
-    ${denTab==="prop"?`<p class="small muted">วางได้ไม่จำกัด ชิ้นเดิมวางซ้ำหลายอันก็ได้ กด "✋ จัดวางของ" ด้านบนเพื่อลากไปวางตรงไหนก็ได้</p>`
+    ${denTab==="prop"?`<p class="small muted">วางได้ไม่จำกัด กด "✋ จัดวางของ" แล้วลากไปวางตรงไหนก็ได้ ลากของเล็กไปปล่อยบนชั้นวาง ของจะวางลงบนชั้นให้เอง ของที่พิพิธภัณฑ์มี จะได้แบบจำลองมาวางที่บ้านฟรี</p>`
       :denTab==="bg"?`<p class="small muted">${esc(P.n)}ชอบ${esc(SCENES[P.hab]?.n||"ทุกที่")}เป็นพิเศษ</p>`
       :denTab==="fx"?`<p class="small muted">เอฟเฟกต์ลอยอยู่รอบตัว ใช้ได้ทีละ 1 แบบต่อตัว</p>`
       :`<p class="small muted">ใส่ได้หลายชิ้นพร้อมกัน ซื้อครั้งเดียวใช้กับทุกตัว กด "✋ จัดวางของ" แล้วลากไปไว้ตรงไหนก็ได้ ของหายาก ✨ ได้จากภารกิจประจำสัปดาห์</p>`}`}</section>
@@ -2348,8 +2358,17 @@ function bindArrange(kind, reRender){
       el.onpointermove=ev=>{ const rc=box().getBoundingClientRect(); const x=Math.max(-10,Math.min(110,(ev.clientX-rc.left)/rc.width*100)), y=Math.max(-10,Math.min(110,(ev.clientY-rc.top)/rc.height*100));
         el.style.left=x+"%"; el.style.top=y+"%"; el.dataset.nx=x.toFixed(1); el.dataset.ny=y.toFixed(1); moved=true };
       el.onpointerup=()=>{ el.onpointermove=null; el.onpointerup=null; const r=room(), o=t==="p"?r.props[i]:(r.wear[kind]||[])[i];
-        if(o&&moved){ o.x=+el.dataset.nx; o.y=+el.dataset.ny; lsSet("fieldnote.room",r) } reRender() } } };
+        if(o&&moved){ o.x=+el.dataset.nx; o.y=+el.dataset.ny; if(t==="p"&&!el.dataset.shelf) snapShelf(o,el,box()); lsSet("fieldnote.room",r) } reRender() } } };
+  /* drop a small thing onto a shelf: it lands on the nearest board, in the nearest free-looking slot */
+  const snapShelf=(o,el,bx)=>{ const rc=bx.getBoundingClientRect(), it=el.getBoundingClientRect(), px=rc.left+o.x/100*rc.width, py=rc.top+o.y/100*rc.height;
+    for(const sh of $v.querySelectorAll("#props [data-shelf]")){ const b=sh.getBoundingClientRect(), cfg=SHELVES[sh.dataset.shelf]; if(!cfg) continue;
+      if(px<b.left||px>b.right||py<b.top-20||py>b.bottom) continue;
+      const by=cfg.boards.map(f=>b.top+f*b.height).reduce((best,y)=>Math.abs(y-py)<Math.abs(best-py)?y:best);
+      const sx=cfg.slots.map(f=>b.left+f*b.width).reduce((best,x)=>Math.abs(x-px)<Math.abs(best-px)?x:best);
+      const h=Math.min(it.height,b.height*0.3); if((o.s||1)>0.8) o.s=0.8;
+      o.x=+((sx-rc.left)/rc.width*100).toFixed(1); o.y=+((by-h*0.8/2-rc.top)/rc.height*100).toFixed(1); return } };
   $v.querySelectorAll("#props .prop-it").forEach(el=>grab(el,"p",+el.dataset.pi,()=>document.getElementById("props")));
+  /* grab() captures box() lazily; snapShelf needs it too */
   const hero=document.querySelector("#petpat .petwrap");
   $v.querySelectorAll("#petpat .w-it").forEach(el=>{ if(denSel&&denSel.t==="w"&&denSel.i===+el.dataset.wi) el.classList.add("sel"); grab(el,"w",+el.dataset.wi,()=>hero) });
 }
@@ -2796,6 +2815,7 @@ function skyCaption(t){ const st=skyNow(t), m=moonInfo(t), ev=skyEvent(t);
 
 /* ---------- museum: real specimens with real-science labels; one new specimen per spell tier gained, and per 8 right answers in the old-topic sweep ---------- */
 const SPECIMENS=[{"k": "salt", "e": "🧂", "n": "ผลึกเกลือแกง", "cat": "rock", "t": "ผลึกเกลือแกงเป็นรูปลูกบาศก์ เพราะไอออนโซเดียมกับคลอไรด์เรียงตัวสลับกันเป็นตารางสามมิติ ลองส่องเม็ดเกลือด้วยแว่นขยายดูสิ"}, {"k": "ammonite", "e": "🐚", "n": "แอมโมไนต์", "cat": "fossil", "t": "แอมโมไนต์เป็นญาติของหมึก มีเปลือกขดเป็นวง ว่ายอยู่ในทะเลยุคไดโนเสาร์ และสูญพันธุ์ไปพร้อมไดโนเสาร์เมื่อราว 66 ล้านปีก่อน"}, {"k": "bee", "e": "🐝", "n": "ผึ้งงาน", "cat": "bug", "t": "ผึ้งบอกเพื่อนว่าดอกไม้อยู่ที่ไหนด้วยการเต้นระบำส่ายก้น ทิศของการส่ายบอกทิศทาง ความนานบอกระยะทาง"}, {"k": "betta", "e": "🐟", "n": "ปลากัด", "cat": "sea", "t": "ปลากัดฮุบอากาศจากผิวน้ำได้ด้วยอวัยวะพิเศษที่เรียกว่าลาบิรินท์ จึงอยู่ในน้ำที่มีออกซิเจนน้อยได้ และเป็นสัตว์น้ำประจำชาติไทย"}, {"k": "cuso4", "e": "💠", "n": "ผลึกจุนสี", "cat": "rock", "t": "ผลึกคอปเปอร์(II)ซัลเฟตสีฟ้าสด ปลูกได้จากสารละลายอิ่มตัวตอนร้อนที่ปล่อยให้ค่อยๆ เย็นลง วิธีเดียวกับการตกผลึกที่เธอเรียน ยิ่งเย็นช้า ผลึกยิ่งใหญ่"}, {"k": "wood", "e": "🪵", "n": "ไม้กลายเป็นหิน", "cat": "fossil", "t": "เกิดเมื่อซิลิกาในน้ำใต้ดินค่อยๆ เข้าไปแทนที่เนื้อไม้ทีละน้อย จนกลายเป็นหินแต่ยังเห็นลายวงปี ที่จังหวัดตากมีอุทยานแห่งชาติไม้กลายเป็นหิน"}, {"k": "firefly", "e": "🪲", "n": "หิ่งห้อย", "cat": "bug", "t": "หิ่งห้อยเปล่งแสงจากปฏิกิริยาเคมีในท้อง แสงแทบไม่มีความร้อนเลย หิ่งห้อยจะหายไปจากที่ที่มีแสงไฟสว่างและน้ำเสีย จึงใช้บอกความสะอาดของธรรมชาติได้"}, {"k": "clown", "e": "🐠", "n": "ปลาการ์ตูน", "cat": "sea", "t": "ปลาการ์ตูนอยู่ในดอกไม้ทะเลโดยไม่โดนเข็มพิษต่อย ปลาได้ที่หลบภัย ดอกไม้ทะเลได้เศษอาหาร ทั้งคู่ได้ประโยชน์ เรียกว่าภาวะพึ่งพากัน"}, {"k": "quartz", "e": "💎", "n": "ควอตซ์", "cat": "rock", "t": "ควอตซ์เป็นแร่ที่พบมากที่สุดชนิดหนึ่งในเปลือกโลก ทรายชายหาดส่วนใหญ่ก็คือเม็ดควอตซ์ที่ถูกคลื่นขัดจนเล็ก"}, {"k": "megatooth", "e": "🦷", "n": "ฟันฉลามเมกาโลดอน", "cat": "fossil", "t": "เมกาโลดอนเป็นฉลามยักษ์ที่สูญพันธุ์แล้ว ฟันยาวได้กว่า 15 เซนติเมตร โครงกระดูกฉลามเป็นกระดูกอ่อนที่เน่าสลายง่าย ฟอสซิลที่เหลือจึงเป็นฟันเกือบทั้งหมด"}, {"k": "ant", "e": "🐜", "n": "มด", "cat": "bug", "t": "มดบางชนิดยกของหนักได้หลายสิบเท่าของน้ำหนักตัว เพราะยิ่งตัวเล็ก กล้ามเนื้อยิ่งแข็งแรงเมื่อเทียบกับน้ำหนักตัวเอง"}, {"k": "coral", "e": "🪸", "n": "ปะการัง", "cat": "sea", "t": "ปะการังมีสาหร่ายเล็กๆ อาศัยอยู่ในเนื้อเยื่อ คอยสร้างอาหารให้ ถ้าน้ำทะเลร้อนเกินไป สาหร่ายจะออกไป ปะการังจึงขาวซีด เรียกว่าปะการังฟอกขาว"}, {"k": "pumice", "e": "🌋", "n": "หินพัมมิซ", "cat": "rock", "t": "หินพัมมิซเกิดจากลาวาที่มีฟองแก๊สเต็มไปหมดแล้วเย็นตัวเร็ว รูพรุนทำให้ความหนาแน่นน้อยกว่าน้ำ หินก้อนนี้จึงลอยน้ำได้"}, {"k": "feather", "e": "🪶", "n": "ขนนกยุคแรก", "cat": "fossil", "t": "อาร์คีออปเทอริกซ์มีทั้งขนนกและฟันแบบสัตว์เลื้อยคลาน เป็นหลักฐานสำคัญว่านกวิวัฒนาการมาจากไดโนเสาร์"}, {"k": "spider", "e": "🕷️", "n": "แมงมุม", "cat": "bug", "t": "ใยแมงมุมเหนียวมาก ถ้าเทียบที่น้ำหนักเท่ากัน ใยแมงมุมบางชนิดทนแรงดึงได้ดีกว่าเหล็กกล้า และแมงมุมไม่ใช่แมลง เพราะมี 8 ขา"}, {"k": "jelly", "e": "🪼", "n": "แมงกะพรุนเรืองแสง", "cat": "sea", "t": "แมงกะพรุนบางชนิดเรืองแสงสีเขียวได้ นักวิทยาศาสตร์นำโปรตีนเรืองแสงนี้มาใช้ติดตามเซลล์ในห้องแล็บ จนได้รางวัลโนเบลสาขาเคมีปี 2008"}, {"k": "magnetite", "e": "🧲", "n": "แร่แมกนีไทต์", "cat": "rock", "t": "แร่แมกนีไทต์บางก้อนดูดเหล็กได้เองเหมือนแม่เหล็ก คนโบราณใช้หินแบบนี้ทำเข็มทิศชี้ทิศเหนือ"}, {"k": "leaf", "e": "🍂", "n": "ฟอสซิลใบไม้", "cat": "fossil", "t": "ฟอสซิลใบไม้ช่วยบอกว่าที่นั่นเคยมีอากาศแบบไหน เพราะพืชแต่ละชนิดชอบอากาศต่างกัน ใบขอบเรียบมักมาจากที่อากาศร้อน"}, {"k": "beetle", "e": "🪲", "n": "ด้วงกว่าง", "cat": "bug", "t": "ด้วงกว่างตัวผู้ใช้เขางัดคู่แข่ง ด้วงเป็นกลุ่มสัตว์ที่มีจำนวนชนิดมากที่สุดในโลก ราวหนึ่งในสี่ของสัตว์ทุกชนิดที่ตั้งชื่อแล้วคือด้วง"}, {"k": "squid", "e": "🦑", "n": "หมึกกล้วย", "cat": "sea", "t": "หมึกพ่นน้ำออกทางท่อแรงๆ ตัวจึงพุ่งไปทางตรงข้าม เป็นหลักแรงกิริยาและแรงปฏิกิริยา แบบเดียวกับที่จรวดใช้"}, {"k": "stal", "e": "🪨", "n": "หินงอกหินย้อย", "cat": "rock", "t": "หินงอกหินย้อยเกิดจากน้ำที่ละลายแคลเซียมคาร์บอเนตจากหินปูนแล้วหยดลงทีละหยด ส่วนใหญ่ต้องใช้เวลานับร้อยปีกว่าจะยาวขึ้น 1 เซนติเมตร"}, {"k": "mammoth", "e": "🦣", "n": "ฟันช้างดึกดำบรรพ์", "cat": "fossil", "t": "ช้างโบราณมีหลายชนิด ที่จังหวัดนครราชสีมาพบฟอสซิลช้างดึกดำบรรพ์หลายสิบชนิด จนมีพิพิธภัณฑ์เฉพาะเรื่องนี้"}, {"k": "cricket", "e": "🦗", "n": "จิ้งหรีด", "cat": "bug", "t": "จิ้งหรีดร้องด้วยการถูปีกเข้าด้วยกัน และร้องถี่ขึ้นเมื่ออากาศอุ่นขึ้น จนนับจำนวนครั้งที่ร้องแล้วประมาณอุณหภูมิได้"}, {"k": "puffer", "e": "🐡", "n": "ปลาปักเป้า", "cat": "sea", "t": "ปลาปักเป้าพองตัวด้วยการกลืนน้ำเข้าไปเร็วๆ ให้ตัวใหญ่จนนักล่ากลืนไม่ได้ หลายชนิดมีพิษร้ายแรงในเนื้อและอวัยวะ"}, {"k": "meteor", "e": "☄️", "n": "อุกกาบาตเหล็ก", "cat": "rock", "t": "อุกกาบาตเหล็กมาจากแก่นของดาวเคราะห์น้อยที่แตกออก ส่วนใหญ่เป็นเหล็กกับนิกเกิล ตกลงมาให้เราได้ศึกษาว่าข้างในดาวเคราะห์เป็นอย่างไร"}, {"k": "egg", "e": "🥚", "n": "ไข่ไดโนเสาร์", "cat": "fossil", "t": "ไข่ไดโนเสาร์บางฟองมีฟอสซิลตัวอ่อนอยู่ข้างใน ช่วยให้นักวิทยาศาสตร์รู้ว่าลูกไดโนเสาร์หน้าตาเป็นอย่างไรก่อนฟัก"}, {"k": "butterfly", "e": "🦋", "n": "ผีเสื้อ", "cat": "bug", "t": "สีบนปีกผีเสื้อมาจากเกล็ดเล็กๆ นับพันชิ้นที่เรียงซ้อนกันเหมือนกระเบื้องหลังคา ถ้าจับปีกแรงๆ เกล็ดจะหลุดติดนิ้ว"}, {"k": "crab", "e": "🦀", "n": "ปูทะเล", "cat": "sea", "t": "ปูต้องลอกคราบเพื่อโต ช่วงที่เพิ่งลอกคราบ เปลือกใหม่ยังนิ่มอยู่ จึงเป็นที่มาของปูนิ่ม"}];
+SHOP.push(...SPECIMENS.map((x,i)=>({id:"spec:"+x.k,e:x.e,n:"แบบจำลอง"+x.n,cost:0,slot:"prop",replica:i,special:"ได้เมื่อพิพิธภัณฑ์มีชิ้นนี้"})));
 const MUSEUM_HALLS={rock:"🪨 ห้องแร่และผลึก",fossil:"🦴 ห้องฟอสซิล",bug:"🐞 ห้องแมลงและสัตว์ขาปล้อง",sea:"🌊 ห้องสัตว์น้ำ"};
 const SWEEP_PER_SPECIMEN=8;
 let museumSel=null;
@@ -2805,6 +2825,7 @@ function museumProgress(list){ const ss=spellStats(list), tiers=Object.values(ss
   return {n,tiers,sweepOk,toNextSweep:SWEEP_PER_SPECIMEN-(sweepOk%SWEEP_PER_SPECIMEN)} }
 function museumSeen(){ try{ return +(localStorage.getItem("fieldnote.museumSeen")||0) }catch(e){ return 0 } }
 function museumNew(list){ return Math.max(0,museumProgress(list).n-museumSeen()) }
+/* every specimen in the museum also gives a small replica she can put on a shelf at home */
 function museumHtml(list){ const pr=museumProgress(list), b=getBuddy(), cur=b?esc(b.name):"ภัณฑารักษ์", seen=museumSeen();
   const sel=museumSel!=null&&museumSel<pr.n?SPECIMENS[museumSel]:null;
   const halls=Object.entries(MUSEUM_HALLS).map(([cat,name])=>{ const items=SPECIMENS.map((x,i)=>({...x,i})).filter(x=>x.cat===cat);
@@ -3116,7 +3137,7 @@ function renderParent(){
         <span class="small muted">${esc(g.from)} ถึง ${esc(g.to)} · ภารกิจ: ${esc(g.text)}${g.status==="approved"?` · ทำแล้ว ${pr.n}/${g.task.n}${pr.done?" ✅":""}`:""}</span>
         <span class="small">${esc(g.why||"")}</span>
         ${dec.map(d=>`<span class="small">${d.decision==="approve"?"✅ พ่ออนุมัติแล้ว (ระบบจะเปิดให้ลูกในรอบอัปเดตถัดไป)":"✏️ พ่อขอปรับ"}${d.note?` · “${esc(d.note)}”`:""}</span>`).join("")}
-        ${g.status!=="approved"&&db?`<textarea data-gsnote="${g.id}" rows="2" placeholder="ถ้าอยากปรับ เช่น เปลี่ยนภารกิจ หรือเปลี่ยนของ" style="font:inherit;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)"></textarea>
+        ${g.status!=="approved"&&db&&!dec.some(d=>d.decision==="approve")?`<textarea data-gsnote="${g.id}" rows="2" placeholder="ถ้าอยากปรับ เช่น เปลี่ยนภารกิจ หรือเปลี่ยนของ" style="font:inherit;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)"></textarea>
           <div class="row"><button class="btn small" data-gsok="${g.id}">อนุมัติ</button><button class="btn ghost small" data-gsfix="${g.id}">ส่งความเห็นให้ปรับ</button><span class="small" id="gsmsg-${g.id}"></span></div>`:""}</div>` }).join("")}</section>`:""}
   ${MISSIONS.length?`<section class="card"><h3>🌏 ภารกิจโลกจริงประจำเดือน</h3>
     ${MISSIONS.map(m=>{ const dec=fbList.filter(f=>f.kind==="mission"&&f.missionId===m.id&&!f.test); const res=pool.find(a=>a.type==="mission"&&a.setId===m.id);
@@ -3129,7 +3150,7 @@ function renderParent(){
           ${m.record?`<p><b>ลูกบันทึก:</b> ${m.record.cols.map(esc).join(" · ")} (อย่างน้อย ${m.record.min||1} แถว)</p>`:""}
           <p><b>คำถามสรุป:</b></p><ul style="margin:0;padding-left:1.2em">${(m.questions||[]).map(q=>`<li>${esc(q.q)}</li>`).join("")}</ul></div></details>
         ${dec.map(d=>`<span class="small">${d.decision==="approve"?"✅ พ่ออนุมัติแล้ว":"✏️ พ่อขอปรับ"} · ${new Date(d.at).toLocaleDateString("th-TH",{day:"numeric",month:"short"})}${d.note?` · “${esc(d.note)}”`:""}</span>`).join("")}
-        ${m.status!=="approved"&&db?`<textarea data-mnote="${m.id}" rows="2" placeholder="ถ้าอยากปรับ เช่น บ้านไม่มีเครื่องวัด ใช้แอปแทนได้ไหม" style="font:inherit;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)"></textarea>
+        ${m.status!=="approved"&&db&&!dec.some(d=>d.decision==="approve")?`<textarea data-mnote="${m.id}" rows="2" placeholder="ถ้าอยากปรับ เช่น บ้านไม่มีเครื่องวัด ใช้แอปแทนได้ไหม" style="font:inherit;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)"></textarea>
           <div class="row"><button class="btn small" data-mok="${m.id}">อนุมัติภารกิจนี้</button><button class="btn ghost small" data-mfix="${m.id}">ส่งความเห็นให้ปรับ</button><span class="small" id="mmsg-${m.id}"></span></div>`:""}
         ${res?`<span class="small"><b>ลูกทำเสร็จแล้ว</b> ${new Date(res.endedAt).toLocaleDateString("th-TH",{day:"numeric",month:"short"})} · บันทึก ${(res.rows||[]).length} แถว</span>
           ${m.record&&(res.rows||[]).length?`<details class="small"><summary>ดูข้อมูลที่ลูกจด</summary><div style="overflow-x:auto"><table class="mt"><thead><tr>${m.record.cols.map(c=>`<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${res.rows.map(r=>`<tr>${r.map(x=>`<td>${esc(x)}</td>`).join("")}</tr>`).join("")}</tbody></table></div></details>`:""}
