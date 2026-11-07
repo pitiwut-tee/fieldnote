@@ -120,6 +120,17 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .islandwrap{margin:6px -6px;border-radius:18px;overflow:hidden}
 .island{display:block;width:100%;height:auto;max-height:78vh}
 .mnode{cursor:pointer}
+.skyov{position:absolute!important;inset:0;width:auto!important;pointer-events:none;z-index:3;transition:background .6s}
+.skyov svg{width:100%;height:100%;display:block}
+.meteor{opacity:0;animation:meteor 5s linear infinite}
+@keyframes meteor{0%{opacity:0;transform:translate(0,0)}3%{opacity:1}12%{opacity:0;transform:translate(-60px,40px)}100%{opacity:0}}
+.islandwrap{position:relative}
+.cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:8px;margin:6px 0 12px}
+.case{font:inherit;color:var(--ink);background:linear-gradient(#fdfbf6,#efe6d6);border:1px solid var(--line);border-radius:12px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;text-align:center;position:relative}
+.case .ce{font-size:1.9rem;line-height:1.2}
+.case.locked{opacity:.45;cursor:default}
+.case.on{border:2px solid var(--accent)}
+.case.newc::after{content:"ใหม่";position:absolute;top:-6px;right:-4px;background:#e2574c;color:#fff;font-size:.65rem;padding:1px 6px;border-radius:8px}
 .mnode.fog{opacity:.75}
 .mnode.thirst text{filter:saturate(.4)}
 .mnode .pulse{animation:pulse 1.6s ease-in-out infinite;transform-origin:center}
@@ -1639,6 +1650,9 @@ function buddyLines(list,p,plan){
   if(near) L.push(`อีกแค่วันเดียว ${sp(near[0])} จะขึ้นขั้นชำนาญ ถ้าวันนี้เจอข้อประยุกต์เรื่องนี้ ลุยเลย`);
   if(due.length) L.push(`${sp(due[0].spell)} ไม่ได้ใช้มาหลายวัน ถึงรอบทวนแล้ว เราจะหยิบมาให้ลองในชุดฝึกช่วงนี้ ความจำจะได้ไม่จาง`);
   try{ const w=wallet(list); if(w.stars>=nextPetPrice(list)) L.push(`ดาวเวทพอรับเพื่อนใหม่มาอยู่บ้านแล้วนะ ไปดูที่ "บ้านคู่หู" สิ`); else if(w.stars>=150&&!list.some(a=>a.type==="shop"&&a.cost>0)) L.push(`มีดาวเวท ${w.stars} ดวงแล้ว ไปแต่งบ้านให้เราที่ "บ้านคู่หู" ได้นะ`) }catch(e){}
+  try{ const ev=skyEvent(Date.now()); if(ev&&!ev.quiet) L.unshift(ev.line); else if(ev&&new Date().getDay()===1) L.push(ev.line);
+    if(skyNow(Date.now())==="night"&&!ev){ const m=moonInfo(Date.now()); L.push(`คืนนี้${m.name} ลองออกไปดูดวงจันทร์สิ ${m.wax?"ข้างขึ้นด้านที่สว่างจะหันไปทางทิศตะวันตก ที่ดวงอาทิตย์เพิ่งตก":"ข้างแรมจะขึ้นดึกขึ้นทุกคืน"}`) } }catch(e){}
+  try{ const mn=museumNew(list); if(mn) L.unshift(`มีของ ${mn} ชิ้นใหม่เข้าพิพิธภัณฑ์แล้ว ไปดูที่ "แผนที่คาถา" แตะ 🏛️ สิ เราจะเล่าให้ฟัง`) }catch(e){}
   if(plan.mixed) L.push("วันนี้มีชุดผสมแบบข้อสอบ ลองดูว่าเธอแยกออกไหม ข้อไหนต้องใช้คาถาอะไร");
   if(plan.passage) L.push("วันนี้มีบทความให้อ่าน อ่านเงียบๆ ช้าๆ ได้เลย ไม่ต้องรีบ");
   if(p.info.kind==="holiday"&&!L.length) L.push("วันหยุดแบ่งทำเป็นช่วงๆ ได้นะ ทำเสร็จหนึ่งอย่างแล้วไปพักก่อนก็ได้");
@@ -2181,7 +2195,7 @@ function renderDen(){
     <p class="small muted">ดาวเวทได้จาก XP ทุกครั้งที่ฝึก (สะสมแล้ว ${w.earned} XP) ใช้ซื้ออาหารวิเศษให้คู่หูโต รับคู่หูตัวใหม่ และแต่งตัวแต่งบ้าน ทุกอย่างเป็นของเล่น ไม่มีผลกับการเรียน</p>
     ${denMsg?`<p class="small" style="color:var(--good)"><b>${esc(denMsg)}</b></p>`:""}
     ${wishHtml(list)}
-    <div class="scene ${denArrange?"arrange":""}" id="scene">${scene.svg()}
+    <div class="scene ${denArrange?"arrange":""}" id="scene">${scene.svg()}${denArrange?"":skyOverlay(Date.now(),"den")}${skyEvent(Date.now())?.k==="krathong"?`<span style="position:absolute;left:12%;bottom:10%;font-size:28px;z-index:2">🪷</span>`:""}
       <div class="props" id="props">${R.props.map((p,i)=>{const s=SHOP.find(z=>z.id===p.id); return s?`<span class="prop-it ${denSel&&denSel.t==="p"&&denSel.i===i?"sel":""}" data-pi="${i}" title="${esc(s.n)}" style="left:${p.x}%;top:${p.y}%;font-size:${Math.round(32*(p.s||1))}px">${s.e}</span>`:""}).join("")}</div>
       <button class="hero-pet bbtn" id="petpat" type="button" aria-label="${esc(b.name)}">${petFace(b.kind,130,true,list)}</button>
       <div class="others">${pets.filter(x=>x.k!==b.kind).map(x=>`<button class="mini" data-act="${x.k}" title="ให้ ${esc(petName(x.k,list))} มาหน้าแรก">${petFace(x.k,46,true,list)}</button>`).join("")}</div>
@@ -2658,13 +2672,16 @@ function renderMap(){
       ${L.cls==="fog"?`<circle r="11" fill="#000" opacity="0"/><text y="5" text-anchor="middle" font-size="14" opacity=".8">☁️</text>`
         :`<circle r="13" fill="#fffaf0" stroke="${isSel?"#2f6f8f":L.cls==="thirst"?"#e2a23c":"#ffffff"}" stroke-width="${isSel?3:2}"/><text y="5" text-anchor="middle" font-size="15">${L.e}</text>`}
       ${due.has(sp.id)||L.cls==="thirst"?`<text x="11" y="-8" font-size="10">💧</text>`:""}</g>` }).join("");
-  const museum=`<g class="mnode" data-msp="__museum" transform="translate(342 92)"><circle r="15" fill="#fffaf0" stroke="#fff" stroke-width="2"/><text y="6" text-anchor="middle" font-size="17">🏛️</text>
+  const mNew=museumNew(list);
+  const museum=`<g class="mnode" data-msp="__museum" transform="translate(342 92)"><circle r="15" fill="#fffaf0" stroke="${mNew?"#e2574c":"#fff"}" stroke-width="2"/><text y="6" text-anchor="middle" font-size="17">🏛️</text>
+    ${mNew?`<circle cx="13" cy="-12" r="8" fill="#e2574c"/><text x="13" y="-8.5" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">${mNew}</text>`:""}
     <text y="27" text-anchor="middle" font-size="9.5" font-weight="700" fill="#24412a" stroke="#f4fbe9" stroke-width="3" paint-order="stroke">พิพิธภัณฑ์</text></g>`;
   const walker=bd?`<g id="walker" style="transition:transform .9s ease-in-out" transform="translate(${(at.x+12).toFixed(1)} ${(at.y-20).toFixed(1)})"><circle r="12" fill="#fff" opacity=".9"/>
     <foreignObject x="-11" y="-12" width="22" height="22"><div xmlns="http://www.w3.org/1999/xhtml" style="font-size:18px;line-height:22px;text-align:center">${petLook(bd.kind,growStage(growth(bd.kind,list)))}</div></foreignObject></g>`:"";
   $v.innerHTML=`<section class="card"><div class="todayhead"><span class="eyebrow">เกาะคาถา · เก็บแล้ว ${got}/${SPELLS.length}</span><button class="btn ghost small" id="maplist">ดูแบบรายการ</button></div>
       <p class="small" style="margin:0">🌱 ฝึกหัด ${cnt[0]} · 🌲 ชำนาญ ${cnt[1]} · 🏯 ปรมาจารย์ ${cnt[2]} · ☁️ ยังไม่ค้นพบ · 💧 ถึงรอบทวน · ⭕ กำลังเรียนที่โรงเรียน</p>
-      <div class="islandwrap"><svg class="island" viewBox="0 0 400 600" role="img" aria-label="แผนที่เกาะคาถา">${island}${museum}${nodes}${walker}</svg></div>
+      <div class="islandwrap"><svg class="island" viewBox="0 0 400 600" role="img" aria-label="แผนที่เกาะคาถา">${island}${skyEvent(Date.now())?.k==="krathong"?`<text x="190" y="270" font-size="16">🪷</text><text x="222" y="262" font-size="13">🪷</text>`:""}${museum}${nodes}${walker}</svg>${skyOverlay(Date.now(),"island")}</div>
+      <p class="small muted" style="margin:0">${skyCaption(Date.now())}</p>
       <p class="small muted" style="margin:0">แตะสถานที่บนเกาะ แล้ว${bd?esc(bd.name):"คู่หู"}จะพาไปดู</p></section>
     <div id="mappanel">${sel?mapPanel(sel,ss,list):mapSel==="__museum"?museumPanel(list):`<section class="card"><p class="small">ทุกคาถามี 3 ขั้น 🌱 ฝึกหัด → 🌲 ชำนาญ → 🏯 ปรมาจารย์ คาถาที่ไม่ได้ใช้นานต้นไม้จะเหี่ยว ต้องรดน้ำด้วยการทบทวนสั้นๆ ก็กลับมาเหมือนเดิม</p></section>`}</div>`;
   document.getElementById("maplist").onclick=()=>{mapList=true;renderMap()};
@@ -2685,6 +2702,58 @@ function mapPanel(sp,ss,list){ const sets=SETS.filter(s=>s.spell===sp.id), info=
     ${info?.faded?`<span class="small" style="color:var(--warn)">ต้นไม้เริ่มเหี่ยว ทบทวนสั้นๆ เพื่อรดน้ำ</span>`:`<span class="small muted">${sets.length?nextStep(sp,info):"บทเรียนกำลังมา"}</span>`}
     <span class="row" style="gap:6px">${sets.filter(s=>list.some(a=>a.setId===s.id)).slice(0,1).map(s=>`<button class="btn ghost small" data-notes="${s.id}">📖 อ่านสรุป</button>`).join("")}${sets.map(s=>`<button class="btn small" data-set="${s.id}">${s.kind==="probe"?"ด่านสำรวจ":"ฝึก"}${sets.length>1&&s.kind!=="probe"?" "+(sets.filter(x=>x.kind!=="probe").indexOf(s)+1):""}</button>`).join("")}
     ${tier>=1&&store!=="db"?`<button class="btn ghost small" data-art="${sp.id}">🎨 ${art?"เปลี่ยนรูป":"ใส่รูปที่วาดเอง"}</button>`:""}</span><p class="small" id="artmsg" aria-live="polite"></p></section>` }
+/* ---------- real time and sky: day/night by the clock, the real moon phase, and real sky/calendar events ---------- */
+const SYNODIC=29.530588853, NEWMOON0=Date.UTC(2000,0,6,18,14);
+function moonAge(t){ return (((t-NEWMOON0)/86400000)%SYNODIC+SYNODIC)%SYNODIC }
+function moonInfo(t){ const a=moonAge(t), f=(1-Math.cos(2*Math.PI*a/SYNODIC))/2, wax=a<SYNODIC/2, d=Math.max(1,Math.min(15,Math.round(wax?a:a-SYNODIC/2)));
+  return {age:a,lit:Math.round(f*100),wax,name:a<0.8||a>SYNODIC-0.8?"เดือนดับ (จันทร์มืด)":Math.abs(a-SYNODIC/2)<0.8?"วันเพ็ญ (จันทร์เต็มดวง)":`${wax?"ข้างขึ้น":"ข้างแรม"} ${d} ค่ำ`} }
+function moonSvg(t,r=14){ const a=moonAge(t), k=Math.cos(2*Math.PI*a/SYNODIC), wax=a<SYNODIC/2, rx=Math.abs(k)*r;
+  /* lit part: half disc on the lit side + an ellipse that adds (gibbous) or removes (crescent) light */
+  const side=wax?1:0, half=`M0 ${-r} A${r} ${r} 0 0 ${side} 0 ${r}`, term=`A${rx.toFixed(2)} ${r} 0 0 ${(k>0)===wax?1-side:side} 0 ${-r}Z`;
+  return `<circle r="${r}" fill="#3a4466"/><path d="${half} ${term}" fill="#fff6c9"/><circle r="${r}" fill="none" stroke="#fff6c9" stroke-opacity=".35"/>` }
+function skyNow(t){ const h=new Date(t).getHours()+new Date(t).getMinutes()/60; return h>=18.5||h<6?"night":h>=17.3?"dusk":h<7?"dawn":"day" }
+const SKY_EVENTS=[
+  {from:"2026-11-16",to:"2026-11-18",k:"meteor",t:"ฝนดาวตกลีโอนิดส์",line:"คืนนี้มีฝนดาวตกลีโอนิดส์นะ! ดาวตกคือเศษฝุ่นจากดาวหางที่พุ่งเข้าชั้นบรรยากาศแล้วร้อนจนเรืองแสง ดูได้ดีหลังเที่ยงคืนในที่มืดๆ"},
+  {from:"2026-11-24",to:"2026-11-24",k:"krathong",t:"วันลอยกระทง",line:"คืนนี้วันเพ็ญเดือนสิบสอง ดวงจันทร์เต็มดวงเพราะโลกอยู่ระหว่างดวงอาทิตย์กับดวงจันทร์ ถ้าลอยกระทง เลือกแบบที่ย่อยสลายได้ แม่น้ำจะได้ไม่เต็มไปด้วยโฟมนะ"},
+  {from:"2026-12-01",to:"2027-03-31",k:"dust",t:"ฤดูฝุ่น",line:"ช่วงนี้เข้าฤดูฝุ่นแล้ว อากาศเย็นทำให้ชั้นอากาศอุ่นไปทับอยู่ข้างบน ฝุ่นลอยขึ้นไม่ได้ เลยค้างอยู่ใกล้พื้น เช็กค่าฝุ่นก่อนออกไปข้างนอกนะ",quiet:true},
+  {from:"2026-12-13",to:"2026-12-14",k:"meteor",t:"ฝนดาวตกเจมินิดส์",line:"คืนนี้ฝนดาวตกเจมินิดส์ หนึ่งในฝนดาวตกที่เยอะที่สุดของปี แปลกตรงที่มาจากดาวเคราะห์น้อย ไม่ใช่ดาวหาง"},
+  {from:"2026-12-22",to:"2026-12-22",k:"solstice",t:"วันเหมายัน",line:"วันนี้วันเหมายัน กลางวันสั้นที่สุดของปีในซีกโลกเหนือ เพราะแกนโลกเอียง ซีกเหนือหันออกจากดวงอาทิตย์มากที่สุด"}];
+function skyEvent(t){ const d=isoDay(dayKey(t)); return SKY_EVENTS.find(e=>d>=e.from&&d<=e.to)||null }
+function skyOverlay(t,place){ const st=skyNow(t), ev=skyEvent(t), m=moonInfo(t);
+  if(st==="day"&&!(ev&&ev.k==="krathong")) return "";
+  const stars=Array.from({length:22},(_,i)=>`<circle cx="${(i*53)%400}" cy="${(i*37)%(place==="island"?600:140)}" r="${i%3?1:1.6}" fill="#fff" class="twinkle" style="animation-delay:${(i*0.3)%2}s"/>`).join("");
+  const meteors=ev&&ev.k==="meteor"&&st==="night"?Array.from({length:3},(_,i)=>`<line class="meteor" style="animation-delay:${i*1.7}s" x1="${80+i*110}" y1="${20+i*15}" x2="${40+i*110}" y2="${50+i*15}" stroke="#fff" stroke-width="2" stroke-linecap="round"/>`).join(""):"";
+  const tint=st==="night"?"rgba(18,28,64,.55)":st==="dusk"?"rgba(255,140,60,.22)":st==="dawn"?"rgba(255,200,150,.18)":"transparent";
+  return `<div class="skyov" style="background:${tint}"><svg viewBox="0 0 400 ${place==="island"?600:240}" preserveAspectRatio="xMidYMid slice">${st==="night"?stars:""}${meteors}
+    ${st!=="day"?`<g transform="translate(${place==="island"?360:300} ${place==="island"?40:42})">${moonSvg(t)}</g>`:""}</svg></div>` }
+function skyCaption(t){ const st=skyNow(t), m=moonInfo(t), ev=skyEvent(t);
+  return `${st==="night"?`🌙 กลางคืน · ${m.name} (สว่าง ${m.lit}%)`:st==="dusk"?"🌇 ตอนเย็น":st==="dawn"?"🌅 เช้าตรู่":"☀️ กลางวัน"}${ev&&!ev.quiet?` · ✨ ${ev.t}`:""}` }
+
+/* ---------- museum: real specimens with real-science labels; one new specimen per spell tier gained, and per 8 right answers in the old-topic sweep ---------- */
+const SPECIMENS=[{"k": "salt", "e": "🧂", "n": "ผลึกเกลือแกง", "cat": "rock", "t": "ผลึกเกลือแกงเป็นรูปลูกบาศก์ เพราะไอออนโซเดียมกับคลอไรด์เรียงตัวสลับกันเป็นตารางสามมิติ ลองส่องเม็ดเกลือด้วยแว่นขยายดูสิ"}, {"k": "ammonite", "e": "🐚", "n": "แอมโมไนต์", "cat": "fossil", "t": "แอมโมไนต์เป็นญาติของหมึก มีเปลือกขดเป็นวง ว่ายอยู่ในทะเลยุคไดโนเสาร์ และสูญพันธุ์ไปพร้อมไดโนเสาร์เมื่อราว 66 ล้านปีก่อน"}, {"k": "bee", "e": "🐝", "n": "ผึ้งงาน", "cat": "bug", "t": "ผึ้งบอกเพื่อนว่าดอกไม้อยู่ที่ไหนด้วยการเต้นระบำส่ายก้น ทิศของการส่ายบอกทิศทาง ความนานบอกระยะทาง"}, {"k": "betta", "e": "🐟", "n": "ปลากัด", "cat": "sea", "t": "ปลากัดฮุบอากาศจากผิวน้ำได้ด้วยอวัยวะพิเศษที่เรียกว่าลาบิรินท์ จึงอยู่ในน้ำที่มีออกซิเจนน้อยได้ และเป็นสัตว์น้ำประจำชาติไทย"}, {"k": "cuso4", "e": "💠", "n": "ผลึกจุนสี", "cat": "rock", "t": "ผลึกคอปเปอร์(II)ซัลเฟตสีฟ้าสด ปลูกได้จากสารละลายอิ่มตัวตอนร้อนที่ปล่อยให้ค่อยๆ เย็นลง วิธีเดียวกับการตกผลึกที่เธอเรียน ยิ่งเย็นช้า ผลึกยิ่งใหญ่"}, {"k": "wood", "e": "🪵", "n": "ไม้กลายเป็นหิน", "cat": "fossil", "t": "เกิดเมื่อซิลิกาในน้ำใต้ดินค่อยๆ เข้าไปแทนที่เนื้อไม้ทีละน้อย จนกลายเป็นหินแต่ยังเห็นลายวงปี ที่จังหวัดตากมีอุทยานแห่งชาติไม้กลายเป็นหิน"}, {"k": "firefly", "e": "🪲", "n": "หิ่งห้อย", "cat": "bug", "t": "หิ่งห้อยเปล่งแสงจากปฏิกิริยาเคมีในท้อง แสงแทบไม่มีความร้อนเลย หิ่งห้อยจะหายไปจากที่ที่มีแสงไฟสว่างและน้ำเสีย จึงใช้บอกความสะอาดของธรรมชาติได้"}, {"k": "clown", "e": "🐠", "n": "ปลาการ์ตูน", "cat": "sea", "t": "ปลาการ์ตูนอยู่ในดอกไม้ทะเลโดยไม่โดนเข็มพิษต่อย ปลาได้ที่หลบภัย ดอกไม้ทะเลได้เศษอาหาร ทั้งคู่ได้ประโยชน์ เรียกว่าภาวะพึ่งพากัน"}, {"k": "quartz", "e": "💎", "n": "ควอตซ์", "cat": "rock", "t": "ควอตซ์เป็นแร่ที่พบมากที่สุดชนิดหนึ่งในเปลือกโลก ทรายชายหาดส่วนใหญ่ก็คือเม็ดควอตซ์ที่ถูกคลื่นขัดจนเล็ก"}, {"k": "megatooth", "e": "🦷", "n": "ฟันฉลามเมกาโลดอน", "cat": "fossil", "t": "เมกาโลดอนเป็นฉลามยักษ์ที่สูญพันธุ์แล้ว ฟันยาวได้กว่า 15 เซนติเมตร โครงกระดูกฉลามเป็นกระดูกอ่อนที่เน่าสลายง่าย ฟอสซิลที่เหลือจึงเป็นฟันเกือบทั้งหมด"}, {"k": "ant", "e": "🐜", "n": "มด", "cat": "bug", "t": "มดบางชนิดยกของหนักได้หลายสิบเท่าของน้ำหนักตัว เพราะยิ่งตัวเล็ก กล้ามเนื้อยิ่งแข็งแรงเมื่อเทียบกับน้ำหนักตัวเอง"}, {"k": "coral", "e": "🪸", "n": "ปะการัง", "cat": "sea", "t": "ปะการังมีสาหร่ายเล็กๆ อาศัยอยู่ในเนื้อเยื่อ คอยสร้างอาหารให้ ถ้าน้ำทะเลร้อนเกินไป สาหร่ายจะออกไป ปะการังจึงขาวซีด เรียกว่าปะการังฟอกขาว"}, {"k": "pumice", "e": "🌋", "n": "หินพัมมิซ", "cat": "rock", "t": "หินพัมมิซเกิดจากลาวาที่มีฟองแก๊สเต็มไปหมดแล้วเย็นตัวเร็ว รูพรุนทำให้ความหนาแน่นน้อยกว่าน้ำ หินก้อนนี้จึงลอยน้ำได้"}, {"k": "feather", "e": "🪶", "n": "ขนนกยุคแรก", "cat": "fossil", "t": "อาร์คีออปเทอริกซ์มีทั้งขนนกและฟันแบบสัตว์เลื้อยคลาน เป็นหลักฐานสำคัญว่านกวิวัฒนาการมาจากไดโนเสาร์"}, {"k": "spider", "e": "🕷️", "n": "แมงมุม", "cat": "bug", "t": "ใยแมงมุมเหนียวมาก ถ้าเทียบที่น้ำหนักเท่ากัน ใยแมงมุมบางชนิดทนแรงดึงได้ดีกว่าเหล็กกล้า และแมงมุมไม่ใช่แมลง เพราะมี 8 ขา"}, {"k": "jelly", "e": "🪼", "n": "แมงกะพรุนเรืองแสง", "cat": "sea", "t": "แมงกะพรุนบางชนิดเรืองแสงสีเขียวได้ นักวิทยาศาสตร์นำโปรตีนเรืองแสงนี้มาใช้ติดตามเซลล์ในห้องแล็บ จนได้รางวัลโนเบลสาขาเคมีปี 2008"}, {"k": "magnetite", "e": "🧲", "n": "แร่แมกนีไทต์", "cat": "rock", "t": "แร่แมกนีไทต์บางก้อนดูดเหล็กได้เองเหมือนแม่เหล็ก คนโบราณใช้หินแบบนี้ทำเข็มทิศชี้ทิศเหนือ"}, {"k": "leaf", "e": "🍂", "n": "ฟอสซิลใบไม้", "cat": "fossil", "t": "ฟอสซิลใบไม้ช่วยบอกว่าที่นั่นเคยมีอากาศแบบไหน เพราะพืชแต่ละชนิดชอบอากาศต่างกัน ใบขอบเรียบมักมาจากที่อากาศร้อน"}, {"k": "beetle", "e": "🪲", "n": "ด้วงกว่าง", "cat": "bug", "t": "ด้วงกว่างตัวผู้ใช้เขางัดคู่แข่ง ด้วงเป็นกลุ่มสัตว์ที่มีจำนวนชนิดมากที่สุดในโลก ราวหนึ่งในสี่ของสัตว์ทุกชนิดที่ตั้งชื่อแล้วคือด้วง"}, {"k": "squid", "e": "🦑", "n": "หมึกกล้วย", "cat": "sea", "t": "หมึกพ่นน้ำออกทางท่อแรงๆ ตัวจึงพุ่งไปทางตรงข้าม เป็นหลักแรงกิริยาและแรงปฏิกิริยา แบบเดียวกับที่จรวดใช้"}, {"k": "stal", "e": "🪨", "n": "หินงอกหินย้อย", "cat": "rock", "t": "หินงอกหินย้อยเกิดจากน้ำที่ละลายแคลเซียมคาร์บอเนตจากหินปูนแล้วหยดลงทีละหยด ส่วนใหญ่ต้องใช้เวลานับร้อยปีกว่าจะยาวขึ้น 1 เซนติเมตร"}, {"k": "mammoth", "e": "🦣", "n": "ฟันช้างดึกดำบรรพ์", "cat": "fossil", "t": "ช้างโบราณมีหลายชนิด ที่จังหวัดนครราชสีมาพบฟอสซิลช้างดึกดำบรรพ์หลายสิบชนิด จนมีพิพิธภัณฑ์เฉพาะเรื่องนี้"}, {"k": "cricket", "e": "🦗", "n": "จิ้งหรีด", "cat": "bug", "t": "จิ้งหรีดร้องด้วยการถูปีกเข้าด้วยกัน และร้องถี่ขึ้นเมื่ออากาศอุ่นขึ้น จนนับจำนวนครั้งที่ร้องแล้วประมาณอุณหภูมิได้"}, {"k": "puffer", "e": "🐡", "n": "ปลาปักเป้า", "cat": "sea", "t": "ปลาปักเป้าพองตัวด้วยการกลืนน้ำเข้าไปเร็วๆ ให้ตัวใหญ่จนนักล่ากลืนไม่ได้ หลายชนิดมีพิษร้ายแรงในเนื้อและอวัยวะ"}, {"k": "meteor", "e": "☄️", "n": "อุกกาบาตเหล็ก", "cat": "rock", "t": "อุกกาบาตเหล็กมาจากแก่นของดาวเคราะห์น้อยที่แตกออก ส่วนใหญ่เป็นเหล็กกับนิกเกิล ตกลงมาให้เราได้ศึกษาว่าข้างในดาวเคราะห์เป็นอย่างไร"}, {"k": "egg", "e": "🥚", "n": "ไข่ไดโนเสาร์", "cat": "fossil", "t": "ไข่ไดโนเสาร์บางฟองมีฟอสซิลตัวอ่อนอยู่ข้างใน ช่วยให้นักวิทยาศาสตร์รู้ว่าลูกไดโนเสาร์หน้าตาเป็นอย่างไรก่อนฟัก"}, {"k": "butterfly", "e": "🦋", "n": "ผีเสื้อ", "cat": "bug", "t": "สีบนปีกผีเสื้อมาจากเกล็ดเล็กๆ นับพันชิ้นที่เรียงซ้อนกันเหมือนกระเบื้องหลังคา ถ้าจับปีกแรงๆ เกล็ดจะหลุดติดนิ้ว"}, {"k": "crab", "e": "🦀", "n": "ปูทะเล", "cat": "sea", "t": "ปูต้องลอกคราบเพื่อโต ช่วงที่เพิ่งลอกคราบ เปลือกใหม่ยังนิ่มอยู่ จึงเป็นที่มาของปูนิ่ม"}];
+const MUSEUM_HALLS={rock:"🪨 ห้องแร่และผลึก",fossil:"🦴 ห้องฟอสซิล",bug:"🐞 ห้องแมลงและสัตว์ขาปล้อง",sea:"🌊 ห้องสัตว์น้ำ"};
+const SWEEP_PER_SPECIMEN=8;
+let museumSel=null;
+function museumProgress(list){ const ss=spellStats(list), tiers=Object.values(ss).reduce((t,v)=>t+(v.tier||0),0);
+  const sweepOk=list.filter(a=>a.type==="sweep").flatMap(a=>a.items||[]).filter(x=>x.correct).length;
+  const n=Math.min(SPECIMENS.length,tiers+Math.floor(sweepOk/SWEEP_PER_SPECIMEN));
+  return {n,tiers,sweepOk,toNextSweep:SWEEP_PER_SPECIMEN-(sweepOk%SWEEP_PER_SPECIMEN)} }
+function museumSeen(){ try{ return +(localStorage.getItem("fieldnote.museumSeen")||0) }catch(e){ return 0 } }
+function museumNew(list){ return Math.max(0,museumProgress(list).n-museumSeen()) }
+function museumHtml(list){ const pr=museumProgress(list), b=getBuddy(), cur=b?esc(b.name):"ภัณฑารักษ์", seen=museumSeen();
+  const sel=museumSel!=null&&museumSel<pr.n?SPECIMENS[museumSel]:null;
+  const halls=Object.entries(MUSEUM_HALLS).map(([cat,name])=>{ const items=SPECIMENS.map((x,i)=>({...x,i})).filter(x=>x.cat===cat);
+    return `<div><span class="eyebrow">${name} · ${items.filter(x=>x.i<pr.n).length}/${items.length}</span><div class="cases">${items.map(x=>x.i<pr.n
+      ?`<button class="case ${x.i>=seen?"newc":""} ${museumSel===x.i?"on":""}" data-spec="${x.i}"><span class="ce">${x.e}</span><span class="small">${esc(x.n)}</span></button>`
+      :`<div class="case locked"><span class="ce">❔</span><span class="small muted">ยังไม่มี</span></div>`).join("")}</div></div>` }).join("");
+  return `<section class="card museum"><span class="eyebrow">🏛️ พิพิธภัณฑ์เกาะคาถา</span><h2>จัดแสดงแล้ว ${pr.n}/${SPECIMENS.length} ชิ้น</h2>
+    <p class="small">ได้ของชิ้นใหม่ทุกครั้งที่คาถาขึ้นขั้น 1 ครั้ง และทุก ๆ ${SWEEP_PER_SPECIMEN} ข้อที่ตอบถูกใน "ย้อนคาถาเก่า"${pr.n<SPECIMENS.length?` · อีก ${pr.toNextSweep} ข้อ จะได้ชิ้นต่อไป`:""}</p>
+    ${sel?`<div class="feedback usebox"><div class="row" style="gap:12px;align-items:center"><span style="font-size:3rem">${sel.e}</span><div style="flex:1"><b>${esc(sel.n)}</b><p class="small" style="margin:4px 0 0">${cur}: ${esc(sel.t)}</p></div></div></div>`
+      :pr.n?`<p class="small muted">แตะของในตู้ แล้ว${cur}จะเล่าเรื่องให้ฟัง</p>`:`<p class="small muted">ยังไม่มีของในตู้ ฝึกให้คาถาขึ้นขั้น หรือทำย้อนคาถาเก่า แล้วจะได้ชิ้นแรก</p>`}
+    ${halls}</section>` }
+function bindMuseum(){
+  $v.querySelectorAll("[data-spec]").forEach(c=>c.onclick=()=>{ museumSel=+c.dataset.spec; renderMap() });
+  if(mapSel==="__museum"){ const n=museumProgress(mine()).n; if(n>museumSeen()) setTimeout(()=>{ try{ localStorage.setItem("fieldnote.museumSeen",String(n)) }catch(e){} },4000) } }
 function museumPanel(list){ return typeof museumHtml==="function"?museumHtml(list):`<section class="card"><h2>🏛️ พิพิธภัณฑ์</h2><p class="small muted">กำลังสร้าง เร็วๆ นี้</p></section>` }
 function bindMapPanel(){
   $v.querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>{introSet=SETS.find(s=>s.id===b.dataset.set);view="intro";render()});
