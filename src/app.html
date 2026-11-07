@@ -120,6 +120,17 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .islandwrap{margin:6px -6px;border-radius:18px;overflow:hidden}
 .island{display:block;width:100%;height:auto;max-height:78vh}
 .mnode{cursor:pointer}
+.factbox{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 10%,var(--card)),var(--card));border:1.5px solid color-mix(in srgb,var(--accent) 35%,var(--line))}
+.factrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fcard{font:inherit;color:var(--ink);text-align:center;background:#fffdf7;border:1.5px solid var(--line);border-radius:14px;padding:10px 6px;min-height:118px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;position:relative;box-shadow:0 2px 0 rgba(0,0,0,.06)}
+.fcard .fnum{font-size:.72rem;font-weight:700;color:var(--accent)}
+.fcard .fpet{font-size:2rem;line-height:1.1}
+.fcard.open{border:2px solid var(--accent)}
+.factbox .ftext{font-size:.98rem;line-height:1.65;background:#fffdf7;border-radius:12px;padding:10px 12px;border:1px solid var(--line)}
+.fcard.locked{opacity:.55;cursor:default;background:var(--soft)}
+.fcard.newf{border:2px solid var(--beak);animation:glowf 1.8s ease-in-out infinite}
+.fcard.newf::after{content:"ใหม่";position:absolute;top:-7px;right:-4px;background:#e2574c;color:#fff;font-size:.65rem;padding:1px 6px;border-radius:8px}
+@keyframes glowf{0%,100%{box-shadow:0 0 0 rgba(240,138,60,0)}50%{box-shadow:0 0 12px rgba(240,138,60,.55)}}
 .labgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
 .labcard{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;text-align:center}
 .labcard.on{border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--card))}
@@ -1659,6 +1670,7 @@ function buddyLines(list,p,plan){
   try{ const w=wallet(list); if(w.stars>=nextPetPrice(list)) L.push(`ดาวเวทพอรับเพื่อนใหม่มาอยู่บ้านแล้วนะ ไปดูที่ "บ้านคู่หู" สิ`); else if(w.stars>=150&&!list.some(a=>a.type==="shop"&&a.cost>0)) L.push(`มีดาวเวท ${w.stars} ดวงแล้ว ไปแต่งบ้านให้เราที่ "บ้านคู่หู" ได้นะ`) }catch(e){}
   try{ const ev=skyEvent(Date.now()); if(ev&&!ev.quiet) L.unshift(ev.line); else if(ev&&new Date().getDay()===1) L.push(ev.line);
     if(skyNow(Date.now())==="night"&&!ev){ const m=moonInfo(Date.now()); L.push(`คืนนี้${m.name} ลองออกไปดูดวงจันทร์สิ ${m.wax?"ข้างขึ้นด้านที่สว่างจะหันไปทางทิศตะวันตก ที่ดวงอาทิตย์เพิ่งตก":"ข้างแรมจะขึ้นดึกขึ้นทุกคืน"}`) } }catch(e){}
+  try{ const fn=factsNew(list).length; if(fn) L.unshift(`มีการ์ดความรู้ใบใหม่ ${fn} ใบรออยู่ที่ "บ้านคู่หู" มาอ่านเรื่องจริงของพวกเราด้วยกันนะ`) }catch(e){}
   try{ const mn=museumNew(list); if(mn) L.unshift(`มีของ ${mn} ชิ้นใหม่เข้าพิพิธภัณฑ์แล้ว ไปดูที่ "แผนที่คาถา" แตะ 🏛️ สิ เราจะเล่าให้ฟัง`) }catch(e){}
   if(plan.mixed) L.push("วันนี้มีชุดผสมแบบข้อสอบ ลองดูว่าเธอแยกออกไหม ข้อไหนต้องใช้คาถาอะไร");
   if(plan.passage) L.push("วันนี้มีบทความให้อ่าน อ่านเงียบๆ ช้าๆ ได้เลย ไม่ต้องรีบ");
@@ -2158,9 +2170,17 @@ function bondState(){ return ls("fieldnote.bond",{}) }
 function studyDaysSince(list,kind){ const got=list.filter(a=>a.type==="shop"&&a.item==="pet:"+kind).map(a=>dayKey(a.endedAt)).sort()[0]||0;
   return new Set(list.filter(a=>isLesson(a)&&dayKey(a.endedAt)>=got).map(a=>dayKey(a.endedAt))).size }
 function bondPts(kind,list){ const b=bondState()[kind]||{}; return (b.pts||0)+5*studyDaysSince(list||mine(),kind) }
-function factsHtml(kind,name,st){ const F=PET_FACTS[kind]; if(!F) return ""; const open=Math.min(3,st), when=["ฟักออกจากไข่","เข้าสู่วัยรุ่น","โตเต็มวัย"];
-  return `<details class="card" style="padding:10px 12px;margin:0"><summary class="small" style="cursor:pointer"><b>📘 การ์ดความรู้ของ${esc(name)}</b> (${open}/3)</summary>
-    <ol class="small" style="margin:8px 0 0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px">${F.map((f,i)=>`<li>${i<open?esc(f):`<span class="muted">🔒 ปลดล็อกเมื่อ${when[i]}</span>`}</li>`).join("")}</ol></details>` }
+/* knowledge cards: shown as a row of real cards right under the companion; a new one glows until she opens it */
+function factSeen(){ try{ return JSON.parse(localStorage.getItem("fieldnote.factseen")||"[]") }catch(e){ return [] } }
+function factsOpen(list){ const out=[]; ownedPets(list).forEach(x=>{ const st=growStage(growth(x.k,list)), F=PET_FACTS[x.k]; if(F) for(let i=0;i<Math.min(3,st);i++) out.push(x.k+":"+i) }); return out }
+function factsNew(list){ const seen=new Set(factSeen()); return factsOpen(list).filter(k=>!seen.has(k)) }
+let factOpen=null;
+function factsHtml(kind,name,st){ const F=PET_FACTS[kind]; if(!F) return ""; const n=Math.min(3,st), when=["ฟักออกจากไข่","เข้าสู่วัยรุ่น","โตเต็มวัย"], seen=new Set(factSeen());
+  const list=mine(), total=ownedPets(list).filter(x=>PET_FACTS[x.k]).length*3, got=factsOpen(list).length;
+  return `<div class="factbox"><div class="todayhead"><b>📘 การ์ดความรู้ของ${esc(name)}</b><span class="small muted">สะสมแล้ว ${got}/${total} ใบ จากคู่หูทุกตัว</span></div>
+    <div class="factrow">${F.map((f,i)=>i<n?`<button class="fcard ${seen.has(kind+":"+i)||factOpen===i?"":"newf"} ${factOpen===i?"open":""}" data-fact="${i}"><span class="fnum">ใบที่ ${i+1}</span><span class="fpet">${petLook(kind,3)}</span><span class="small">${factOpen===i?"กำลังอ่าน":"แตะเพื่ออ่าน"}</span></button>`
+      :`<div class="fcard locked"><span class="fnum">ใบที่ ${i+1}</span><span class="fpet">🔒</span><span class="small">ปลดล็อกเมื่อ${when[i]}</span></div>`).join("")}</div>
+    ${factOpen!=null&&factOpen<n?`<div class="ftext"><b>ใบที่ ${factOpen+1}:</b> ${esc(F[factOpen])}</div>`:""}</div>` }
 function bondHtml(kind,name,list){ const pts=bondPts(kind,list), lv=Math.floor(pts/BOND_STEP)+1, inLv=pts%BOND_STEP;
   return `<div class="bond"><span class="small"><b>ความผูกพัน ❤️ ระดับ ${lv}</b></span><div class="progress"><i style="width:${Math.round(inLv/BOND_STEP*100)}%;background:#ff6f91"></i></div></div>
     <p class="small muted" style="margin:2px 0 0">ลูบ${esc(name)}ได้ทุกวัน และทุกวันที่ฝึก ความผูกพันจะเพิ่มขึ้น ไม่มีวันลดลง</p>` }
@@ -2202,7 +2222,7 @@ function renderDen(){
     <p class="small muted">ดาวเวทได้จาก XP ทุกครั้งที่ฝึก (สะสมแล้ว ${w.earned} XP) ใช้ซื้ออาหารวิเศษให้คู่หูโต รับคู่หูตัวใหม่ และแต่งตัวแต่งบ้าน ทุกอย่างเป็นของเล่น ไม่มีผลกับการเรียน</p>
     ${denMsg?`<p class="small" style="color:var(--good)"><b>${esc(denMsg)}</b></p>`:""}
     ${wishHtml(list)}
-    <div class="scene ${denArrange?"arrange":""}" id="scene">${scene.svg()}${denArrange?"":skyOverlay(Date.now(),"den")}${skyEvent(Date.now())?.k==="krathong"?`<span style="position:absolute;left:12%;bottom:10%;font-size:28px;z-index:2">🪷</span>`:""}
+    <div class="scene ${denArrange?"arrange":""}" id="scene">${scene.svg()}${denArrange?"":skyOverlay(Date.now(),"den",R.bg||"bg:home")}${skyEvent(Date.now())?.k==="krathong"?`<span style="position:absolute;left:12%;bottom:10%;font-size:28px;z-index:2">🪷</span>`:""}
       <div class="props" id="props">${R.props.map((p,i)=>{const s=SHOP.find(z=>z.id===p.id); return s?`<span class="prop-it ${denSel&&denSel.t==="p"&&denSel.i===i?"sel":""}" data-pi="${i}" title="${esc(s.n)}" style="left:${p.x}%;top:${p.y}%;font-size:${Math.round(32*(p.s||1))}px">${s.e}</span>`:""}).join("")}</div>
       <button class="hero-pet bbtn" id="petpat" type="button" aria-label="${esc(b.name)}">${petFace(b.kind,130,true,list)}</button>
       <div class="others">${pets.filter(x=>x.k!==b.kind).map(x=>`<button class="mini" data-act="${x.k}" title="ให้ ${esc(petName(x.k,list))} มาหน้าแรก">${petFace(x.k,46,true,list)}</button>`).join("")}</div>
@@ -2213,8 +2233,9 @@ function renderDen(){
       ${denSel?(()=>{const o=denSel.t==="p"?R.props[denSel.i]:(R.wear[b.kind]||[])[denSel.i]; return o?`<div class="row" style="gap:10px;align-items:center"><label class="small" for="szr">ขนาด</label>
         <input type="range" id="szr" min="40" max="250" step="5" value="${Math.round((o.s||1)*100)}" style="flex:1;min-width:140px;accent-color:var(--accent)">
         <button class="btn ghost small" data-rm="1">เก็บออก</button></div>`:""})():`<p class="small"><b>แตะของชิ้นที่อยากปรับ</b> แล้วจะมีแถบปรับขนาดขึ้นมา</p>`}</div>`:""}
-    <div id="bondbox">${bondHtml(b.kind,b.name,list)}</div>
     ${factsHtml(b.kind,b.name,st)}
+    <div id="bondbox">${bondHtml(b.kind,b.name,list)}</div>
+
     <label class="small row" style="gap:6px"><input type="checkbox" id="psound" ${petSoundOn()?"checked":""}> เสียงคู่หูเวลาลูบ</label>
     ${next?`<div class="growbox"><span class="nextshape" aria-hidden="true">${petLook(b.kind,st+1)}</span>
       <div style="flex:1;display:flex;flex-direction:column;gap:4px"><span class="small"><b>${st===0?`อีก ${next[0]-g} พลัง ไข่จะฟัก`:`อีก ${next[0]-g} พลังจะเข้าสู่${next[1]}`}</b>${st===3?" (มีออร่าเรืองแสง)":""}</span>
@@ -2269,6 +2290,8 @@ function renderDen(){
     lsSet("fieldnote.room",r); denSel=null; reRender() });
   $v.querySelectorAll("[data-wish]").forEach(x=>x.onclick=()=>{ lsSet("fieldnote.wish",x.dataset.wish); denMsg="ตั้งเป็นของที่อยากได้แล้ว ดูความคืบหน้าได้ที่หน้าแรก"; reRender() });
   on("arrange",()=>{ denArrange=!denArrange; denSel=null; reRender() });
+  $v.querySelectorAll("[data-fact]").forEach(c=>c.onclick=()=>{ const i=+c.dataset.fact; factOpen=factOpen===i?null:i;
+    try{ localStorage.setItem("fieldnote.factseen",JSON.stringify([...new Set([...factSeen(),b.kind+":"+i])])) }catch(e){} reRender() });
   { const sr=document.getElementById("szr"); if(sr&&denSel){ const el=denSel.t==="p"?$v.querySelector(`#props [data-pi="${denSel.i}"]`):$v.querySelector(`#petpat [data-wi="${denSel.i}"]`), base=el?parseFloat(el.style.fontSize)/((denSel.t==="p"?room().props[denSel.i]:room().wear[b.kind][denSel.i]).s||1):0;
     sr.oninput=()=>{ if(el) el.style.fontSize=Math.round(base*sr.value/100)+"px" };
     sr.onchange=()=>{ const r=room(), o2=denSel.t==="p"?r.props[denSel.i]:(r.wear[b.kind]||[])[denSel.i]; if(!o2) return; o2.s=sr.value/100; lsSet("fieldnote.room",r) } } }
@@ -2717,7 +2740,7 @@ function moonInfo(t){ const a=moonAge(t), f=(1-Math.cos(2*Math.PI*a/SYNODIC))/2,
 function moonSvg(t,r=14){ const a=moonAge(t), k=Math.cos(2*Math.PI*a/SYNODIC), wax=a<SYNODIC/2, rx=Math.abs(k)*r;
   /* lit part: half disc on the lit side + an ellipse that adds (gibbous) or removes (crescent) light */
   const side=wax?1:0, half=`M0 ${-r} A${r} ${r} 0 0 ${side} 0 ${r}`, term=`A${rx.toFixed(2)} ${r} 0 0 ${(k>0)===wax?1-side:side} 0 ${-r}Z`;
-  return `<circle r="${r}" fill="#3a4466"/><path d="${half} ${term}" fill="#fff6c9"/><circle r="${r}" fill="none" stroke="#fff6c9" stroke-opacity=".35"/>` }
+  return `<circle r="${r}" fill="#3a4466" opacity=".45"/><path d="${half} ${term}" fill="#fff6c9"/><circle r="${r}" fill="none" stroke="#fff6c9" stroke-opacity=".35"/>` }
 function skyNow(t){ const h=new Date(t).getHours()+new Date(t).getMinutes()/60; return h>=18.5||h<6?"night":h>=17.3?"dusk":h<7?"dawn":"day" }
 const SKY_EVENTS=[
   {from:"2026-11-16",to:"2026-11-18",k:"meteor",t:"ฝนดาวตกลีโอนิดส์",line:"คืนนี้มีฝนดาวตกลีโอนิดส์นะ! ดาวตกคือเศษฝุ่นจากดาวหางที่พุ่งเข้าชั้นบรรยากาศแล้วร้อนจนเรืองแสง ดูได้ดีหลังเที่ยงคืนในที่มืดๆ"},
@@ -2726,13 +2749,25 @@ const SKY_EVENTS=[
   {from:"2026-12-13",to:"2026-12-14",k:"meteor",t:"ฝนดาวตกเจมินิดส์",line:"คืนนี้ฝนดาวตกเจมินิดส์ หนึ่งในฝนดาวตกที่เยอะที่สุดของปี แปลกตรงที่มาจากดาวเคราะห์น้อย ไม่ใช่ดาวหาง"},
   {from:"2026-12-22",to:"2026-12-22",k:"solstice",t:"วันเหมายัน",line:"วันนี้วันเหมายัน กลางวันสั้นที่สุดของปีในซีกโลกเหนือ เพราะแกนโลกเอียง ซีกเหนือหันออกจากดวงอาทิตย์มากที่สุด"}];
 function skyEvent(t){ const d=isoDay(dayKey(t)); return SKY_EVENTS.find(e=>d>=e.from&&d<=e.to)||null }
-function skyOverlay(t,place){ const st=skyNow(t), ev=skyEvent(t), m=moonInfo(t);
-  if(st==="day"&&!(ev&&ev.k==="krathong")) return "";
-  const stars=Array.from({length:22},(_,i)=>`<circle cx="${(i*53)%400}" cy="${(i*37)%(place==="island"?600:140)}" r="${i%3?1:1.6}" fill="#fff" class="twinkle" style="animation-delay:${(i*0.3)%2}s"/>`).join("");
-  const meteors=ev&&ev.k==="meteor"&&st==="night"?Array.from({length:3},(_,i)=>`<line class="meteor" style="animation-delay:${i*1.7}s" x1="${80+i*110}" y1="${20+i*15}" x2="${40+i*110}" y2="${50+i*15}" stroke="#fff" stroke-width="2" stroke-linecap="round"/>`).join(""):"";
-  const tint=st==="night"?"rgba(18,28,64,.55)":st==="dusk"?"rgba(255,140,60,.22)":st==="dawn"?"rgba(255,200,150,.18)":"transparent";
-  return `<div class="skyov" style="background:${tint}"><svg viewBox="0 0 400 ${place==="island"?600:240}" preserveAspectRatio="xMidYMid slice">${st==="night"?stars:""}${meteors}
-    ${st!=="day"?`<g transform="translate(${place==="island"?360:300} ${place==="island"?40:42})">${moonSvg(t)}</g>`:""}</svg></div>` }
+/* where the sky is in each scene: indoor rooms only show it through the window, underwater/cave show no sky */
+const SCENE_SKY={"bg:home":{win:[250,30,110,90]},"bg:library":{sky:true},"bg:cave":{none:true},"bg:sea":{none:true},"bg:night":{none:true},"bg:terrarium":{sky:true}};
+function skyOverlay(t,place,sceneId){ const st=skyNow(t), ev=skyEvent(t);
+  if(st==="day") return "";
+  const cfg=place==="island"?{sky:true}:(SCENE_SKY[sceneId]||{sky:true}), H=place==="island"?600:240;
+  const stars=(n,x0,y0,w,h)=>Array.from({length:n},(_,i)=>`<circle cx="${(x0+(i*53)%w).toFixed(0)}" cy="${(y0+(i*37)%h).toFixed(0)}" r="${i%3?0.9:1.5}" fill="#fff" class="twinkle" style="animation-delay:${(i*0.3)%2}s"/>`).join("");
+  const night=st==="night", tint=night?"rgba(18,28,64,.5)":st==="dusk"?"rgba(255,140,60,.2)":"rgba(255,200,150,.15)";
+  let inner="", bgTint=tint;
+  if(cfg.none){ bgTint=night?"rgba(10,20,50,.35)":"transparent" }
+  else if(cfg.win){ const [x,y,w,h]=cfg.win; bgTint=night?"rgba(40,30,20,.32)":"rgba(255,150,80,.12)";   /* indoors: lamp-lit room, the sky only in the window */
+    inner=`<defs><clipPath id="wclip"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6"/></clipPath><linearGradient id="wsky" x1="0" y1="0" x2="0" y2="1">${night?'<stop offset="0" stop-color="#16224a"/><stop offset="1" stop-color="#2d3f78"/>':'<stop offset="0" stop-color="#f7a05a"/><stop offset="1" stop-color="#ffd59e"/>'}</linearGradient></defs>
+      <g clip-path="url(#wclip)"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#wsky)"/>${night?stars(8,x+4,y+4,w-8,h-8):""}${night?`<g transform="translate(${x+w-24} ${y+20})">${moonSvg(t,10)}</g>`:""}
+        ${ev&&ev.k==="meteor"&&night?`<line class="meteor" x1="${x+70}" y1="${y+12}" x2="${x+40}" y2="${y+32}" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`:""}</g>
+      <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="none" stroke="#8a5a36" stroke-width="7"/><line x1="${x+w/2}" y1="${y}" x2="${x+w/2}" y2="${y+h}" stroke="#8a5a36" stroke-width="5"/><line x1="${x}" y1="${y+h/2}" x2="${x+w}" y2="${y+h/2}" stroke="#8a5a36" stroke-width="5"/>
+      ${night?`<circle cx="60" cy="150" r="70" fill="#ffd27a" opacity=".12"/>`:""}` }
+  else { const skyH=place==="island"?H:120;   /* outdoors: stars only in the sky part, moon low in the sky */
+    inner=`${night?stars(place==="island"?24:14,0,0,400,skyH):""}${ev&&ev.k==="meteor"&&night?Array.from({length:3},(_,i)=>`<line class="meteor" style="animation-delay:${i*1.7}s" x1="${80+i*110}" y1="${20+i*15}" x2="${40+i*110}" y2="${50+i*15}" stroke="#fff" stroke-width="2" stroke-linecap="round"/>`).join(""):""}
+      ${night?`<g transform="translate(${place==="island"?360:330} ${place==="island"?40:34})">${moonSvg(t,place==="island"?14:12)}</g>`:""}` }
+  return `<div class="skyov" style="background:${bgTint}"><svg viewBox="0 0 400 ${H}" preserveAspectRatio="xMidYMid slice">${inner}</svg></div>` }
 function skyCaption(t){ const st=skyNow(t), m=moonInfo(t), ev=skyEvent(t);
   return `${st==="night"?`🌙 กลางคืน · ${m.name} (สว่าง ${m.lit}%)`:st==="dusk"?"🌇 ตอนเย็น":st==="dawn"?"🌅 เช้าตรู่":"☀️ กลางวัน"}${ev&&!ev.quiet?` · ✨ ${ev.t}`:""}` }
 
