@@ -1,11 +1,11 @@
 {
  "note": "Weekly special guest: a rare item that visits for 3 days with a small learning task. The father approves each one on the parent page before it is shown. If she misses it, it comes back later (new entry, same item key).",
  "guests": [
-  {"id": "g-2026-11-09", "from": "2026-11-09", "to": "2026-11-11", "status": "proposed",
+  {"id": "g-2026-11-09", "from": "2026-11-09", "to": "2026-11-11", "status": "approved",
    "item": {"key": "nest", "e": "🪺", "n": "รังนกวิเศษ", "slot": "prop"},
    "task": {"kind": "recallDays", "n": 2}, "text": "ทำ \"ทบทวนวันนี้ 3 ข้อ\" ให้ครบ 2 วัน",
    "why": "ฝึกดึงสิ่งที่เรียนกลับมาจากความจำ (retrieval practice) ให้เป็นนิสัย เป็นวิธีที่งานวิจัยยืนยันว่าช่วยให้จำได้นานที่สุด ใช้เวลาวันละราว 3 นาที"},
-  {"id": "g-2026-11-13", "from": "2026-11-13", "to": "2026-11-15", "status": "proposed",
+  {"id": "g-2026-11-13", "from": "2026-11-13", "to": "2026-11-15", "status": "approved",
    "item": {"key": "butterfly", "e": "🦋", "n": "ผีเสื้อเกาะไหล่", "slot": "wear"},
    "task": {"kind": "level3Right", "n": 3}, "text": "ตอบข้อระดับ 3 (คิดวิเคราะห์) ให้ถูก 3 ข้อ",
    "why": "ข้อระดับ 3 คือแนวข้อสอบรอบแรก ฝึกให้กล้าคิดหลายขั้นและใช้ปุ่มแบ่งโจทย์ ตรงกับจุดที่น้องยังอ่านโจทย์ยาวได้ไม่คล่อง"}
