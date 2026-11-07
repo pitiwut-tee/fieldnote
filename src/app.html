@@ -138,6 +138,30 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .advfoe{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px;text-align:center}
 .advfoe.hit>span:first-child{animation:advhit .45s ease}
 @keyframes advhit{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px) rotate(-6deg)}50%{transform:translateX(8px) rotate(5deg)}80%{transform:translateX(-4px)}}
+.arena{position:relative;display:flex;justify-content:space-between;gap:8px;padding:12px 8px;border-radius:18px;min-height:250px;overflow:hidden;
+  background:linear-gradient(#bfe6f7 0%,#dff3fb 45%,#9cc9a0 46%,#7fb27f 62%,#8a9f7a 63%,#6f8f9e 100%)}
+.aside{display:flex;flex-direction:column;justify-content:space-around;gap:6px;width:46%}
+.fighter{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:14px;position:relative;transition:opacity .3s}
+.fighter.t.active{background:rgba(255,255,255,.55);box-shadow:0 0 0 2px #e0a23c}
+.fighter.e{cursor:pointer}.fighter.e.tgt{background:rgba(255,255,255,.45);box-shadow:0 0 0 2px #e2574c}
+.fighter.ko{opacity:.45}.fart{position:relative;height:56px;display:flex;align-items:center}
+.fighter.t .fart{animation:bob 2.4s ease-in-out infinite}.fighter.ko .fart{animation:none}
+.fn{font-size:.72rem;font-weight:700;color:#1f2d24;text-align:center;line-height:1.15;max-width:100%}
+.fighter .hp{width:86%;height:7px;border-radius:4px;background:rgba(0,0,0,.18);overflow:hidden}.fighter .hp i{display:block;height:100%;transition:width .35s}
+.zz{position:absolute;right:-12px;top:-6px;font-size:18px}.sh{position:absolute;left:-10px;top:-6px;font-size:16px}
+.mk{font-size:.68rem;font-weight:700;color:#555}.mk.up{color:#1f7a3a}.mk.down{color:#b0402f}
+.lunge{animation:lunge .38s ease}.lungeL{animation:lungeL .38s ease}.shake{animation:advhit .42s ease}
+@keyframes lunge{50%{transform:translateX(26px) scale(1.08)}}@keyframes lungeL{50%{transform:translateX(-26px) scale(1.08)}}
+.proj{position:absolute;font-size:28px;z-index:3;pointer-events:none}
+.dmg{position:absolute;transform:translateX(-50%);font-weight:800;font-size:1.05rem;color:#c0392b;text-shadow:0 1px 0 #fff,0 0 4px #fff;animation:dmgup 1.1s ease forwards;z-index:4;pointer-events:none}
+.dmg.big{font-size:1.35rem;color:#d35400}.dmg.heal{color:#1f7a3a}
+@keyframes dmgup{0%{opacity:0;margin-top:6px}15%{opacity:1}100%{opacity:0;margin-top:-34px}}
+.alog{display:flex;flex-direction:column;gap:2px;margin:8px 0;min-height:3.6em}
+.apanel,.gauge{display:flex;flex-direction:column;gap:8px}
+.gbar{position:relative;height:22px;border-radius:11px;background:linear-gradient(90deg,#f3c1b8,#f6e3b0 30%,#fff3b0 41%,#ffe36b 50%,#fff3b0 59%,#f6e3b0 70%,#f3c1b8)}
+.gz{position:absolute;left:41%;width:18%;top:0;bottom:0;border-left:2px solid #e0a23c;border-right:2px solid #e0a23c}
+.gbar i{position:absolute;top:-6px;width:4px;height:34px;margin-left:-2px;background:#1f2d24;border-radius:2px}
+@media (prefers-reduced-motion: reduce){.fighter.t .fart,.lunge,.lungeL,.shake{animation:none}}
 .advbar,.xpbar{width:100%;height:12px;border-radius:6px;background:var(--soft);overflow:hidden;display:flex}
 .advbar i,.xpbar i{display:block;height:100%;transition:width .4s}
 @media (prefers-reduced-motion: reduce){.advfoe.hit>span:first-child{animation:none}}
@@ -3246,7 +3270,7 @@ let advSel=null, advB=null, advMsg="";
 function advRecs(list){ return list.filter(a=>a.type==="adv") }
 function advTrainLv(list,uid){ return list.filter(a=>(a.type==="shop"&&a.item==="train:"+uid)||(a.type==="adv"&&a.act==="freelevel"&&a.unit===uid)).length }
 function advUnits(list){
-  const pets=ownedPets(list).map(p=>{ const st=growStage(growth(p.k,list)); return {uid:"pet:"+p.k,name:petName(p.k,list),el:PET_ELEM[p.k]||"plant",base:10+st*2,look:petLook(p.k,st),pet:true} });
+  const pets=ownedPets(list).map(p=>{ const st=growStage(growth(p.k,list)); return {uid:"pet:"+p.k,name:petName(p.k,list),el:PET_ELEM[p.k]||"plant",base:10+st*2,look:petLook(p.k,Math.max(1,st)),pet:true} });
   const lab=[]; LAB_ORDER.forEach(sp=>{ const L=LAB_LINES[sp]; labAnimals(list,sp).filter(x=>!x.stock&&x.g&&!/\?/.test(x.g)).forEach(x=>{ const ph=L.ph(x.g);
     lab.push({uid:"lab:"+x.id,name:(L.names[ph]||L.n),el:LAB_ELEM[ph]||"plant",base:sp==="dragon"?12:9,svg:L.art[ph](),sp}) }) });
   return [...pets,...lab].map(u=>{ const lv=advTrainLv(list,u.uid); return {...u,lv,power:u.base+3*lv+advGearP(list),skill:lv>=3} }) }
@@ -3281,7 +3305,7 @@ function renderAdv(){
   const selHtml=sel?(()=>{ const done=cleared.has(sel.id), can=open(sel), i=R.stages.indexOf(sel);
     const lock=!can?(i>0&&!cleared.has(R.stages[i-1].id)?"ต้องผ่านด่านก่อนหน้าก่อน":`ต้องเก็บคาถาบนเกาะคาถาให้ได้ ${sel.needSpells} อัน (ตอนนี้ ${got}) ด่านนี้ต้องใช้ความรู้จริงช่วยเปิดทาง`):"";
     return `<section class="card"><span class="eyebrow">ด่าน ${i+1}${sel.boss?" · บอส":""}</span><h3 style="margin:0">${sel.e} ${esc(sel.n)}</h3>
-      <p class="small">พลังชีวิต ${sel.hp} · แรงโจมตี ${sel.atk} · แพ้ทาง ${ELEM[sel.weak].e} ${ELEM[sel.weak].n}</p>
+      <p class="small">ศัตรู: ${(ADV_FOES[sel.id]||[]).map(f=>`${f.e} ${esc(f.n)} (พลังชีวิต ${f.hp})`).join(" · ")}</p><p class="small">แพ้ทาง ${ELEM[sel.weak].e} ${ELEM[sel.weak].n} ▲ · ทนทาน ${ELEM[(ADV_FOES[sel.id]||[{}])[0].resist||sel.weak].e} ▼</p>
       ${done?`<div class="feedback usebox"><b>📘 เรื่องจริงของด่านนี้</b><span class="small">${esc(sel.fact)}</span></div>`:`<p class="small muted">ชนะแล้วจะได้การ์ดเรื่องจริงของปัญหานี้ และสมาชิกที่เก่งที่สุดในทีมได้เลเวลฟรี 1 ขั้น</p>`}
       ${lock?`<p class="small"><b>🔒 ${lock}</b></p>`:`<div class="row"><button class="btn" id="advgo" ${en.left&&team.length?"":"disabled"}>${done?"ลุยอีกรอบ":"ออกผจญภัย"} (ใช้พลัง 1)</button></div>
       ${!en.left?`<p class="small muted">พลังผจญภัยวันนี้หมดแล้ว${progressOf(list).goalToday?"":" ทำภารกิจวันนี้ให้ครบได้พลังเพิ่มอีก 3"} พรุ่งนี้มาใหม่นะ</p>`:""}`}</section>` })():"";
@@ -3306,7 +3330,7 @@ function renderAdv(){
       ${advMsg?`<p class="small"><b>${esc(advMsg)}</b></p>`:""}</section>
     ${selHtml}
     <section class="card"><span class="eyebrow">ทีมที่ออกผจญภัย (สูงสุด 3) · ความอึดของทีม ${advStamina(team)}</span><div class="advteam">${teamHtml}</div>
-      <p class="small muted">เลือกสมาชิกให้ธาตุตรงกับจุดอ่อนของศัตรูจะแรงขึ้น 2 เท่า ฝึกถึง Lv 3 ปลดท่าพิเศษ ใช้ได้ด่านละครั้ง แรงขึ้น 2 เท่า</p></section>
+      <p class="small muted">ธาตุตรงจุดอ่อนของศัตรู ▲ แรงขึ้น 1.5 เท่า ธาตุที่ศัตรูทนทาน ▼ เบาลงครึ่งหนึ่ง ฝึกถึง Lv 3 ปลดท่าพิเศษประจำธาตุ ตอนโจมตีแตะหยุดลูกศรให้ตรงช่องเหลืองจะได้เพอร์เฟกต์</p></section>
     <section class="card"><span class="eyebrow">สมาชิกทั้งหมด · ฝึกด้วย XP</span>${roster||`<p class="small">ยังไม่มีสมาชิก</p>`}
       <p class="small muted">ได้สมาชิกใหม่จากการรับคู่หูที่บ้านคู่หู และลูกที่ฟักจากหุบเขามังกร สายพันธุ์ต่างกันได้ธาตุต่างกัน</p></section>
     <section class="card"><span class="eyebrow">อุปกรณ์ทีม</span>${gear}</section>
@@ -3314,7 +3338,7 @@ function renderAdv(){
   document.getElementById("advback").onclick=()=>{ advSel=null; advMsg=""; location.hash="#home"; view="home"; render() };
   $v.querySelectorAll("[data-adv]").forEach(g=>g.onclick=()=>{ advSel=g.dataset.adv; advMsg=""; renderAdv() });
   const go=document.getElementById("advgo"); if(go) go.onclick=()=>{ const st=R.stages.find(s=>s.id===advSel), tm=advTeam(list);
-    advB={st,team:tm,hp:st.hp,sta:advStamina(tm),staMax:advStamina(tm),turn:0,used:{},skillUsed:{},log:[`${st.e} ${st.n} ปรากฏตัว! เลือกสมาชิกที่จะส่งออกไป`],over:null}; renderAdv(); window.scrollTo({top:0}) };
+    advStart(st,tm); renderAdv(); window.scrollTo({top:0}) };
   $v.querySelectorAll("[data-advteam]").forEach(b=>b.onclick=()=>{ let t=advTeam(list).map(u=>u.uid); const id=b.dataset.advteam;
     if(t.includes(id)) t=t.filter(x=>x!==id); else { if(t.length>=3) t.shift(); t.push(id) } lsSet("fieldnote.advteam",t); renderAdv() });
   $v.querySelectorAll("[data-advtrain]").forEach(b=>b.onclick=async()=>{ const u=advUnits(list).find(x=>x.uid===b.dataset.advtrain); if(!u) return; const cost=advTrainCost(u.lv);
@@ -3325,41 +3349,114 @@ function renderAdv(){
     const now=new Date().toISOString(); await saveAttempt({type:"shop",setId:"shop",item:g.id,cost:g.cost,name:g.n,topic:"อุปกรณ์ทีมกู้โลก",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
     advMsg=`ได้${g.n}แล้ว ทั้งทีมแรงขึ้น +${g.p}`; renderAdv() });
 }
-function renderAdvBattle(list){
-  const B=advB, st=B.st, hpPct=Math.max(0,B.hp/st.hp*100), saPct=Math.max(0,B.sta/B.staMax*100);
-  const acts=B.over?"":B.team.map(u=>{ const tired=B.used[u.uid]>=4;
-    return `<div class="advrow"><span>${advUnitArt(u,36)}</span><span class="small" style="flex:1"><b>${esc(u.name)}</b> ${ELEM[u.el].e} พลัง ${u.power}${u.el===st.weak?" · ธาตุตรงจุดอ่อน!":""}${tired?" · เหนื่อยแล้ว":""}</span>
-      <button class="btn small" data-advact="${u.uid}" ${tired?"disabled":""}>ส่งออกไป</button>
-      ${u.skill&&!B.skillUsed[u.uid]?`<button class="btn ghost small" data-advskill="${u.uid}" ${tired?"disabled":""}>⚡ ท่าพิเศษ</button>`:""}</div>` }).join("");
-  $v.innerHTML=`<section class="card"><span class="eyebrow">🌍 ภารกิจกู้โลก · ด่าน ${esc(st.n)} · ตาที่ ${B.turn+1}</span>
-    <div class="advfoe ${B.hit?"hit":""}"><span style="font-size:64px;line-height:1">${B.over==="win"?"🌿":st.e}</span><b>${esc(st.n)}</b>
-      <div class="advbar"><i style="width:${hpPct}%;background:#e2574c"></i></div><span class="small">พลังชีวิต ${Math.max(0,Math.round(B.hp))}/${st.hp} · แพ้ทาง ${ELEM[st.weak].e}</span></div>
-    <div><span class="small">💪 ความอึดของทีม ${Math.max(0,Math.round(B.sta))}/${B.staMax}</span><div class="advbar"><i style="width:${saPct}%;background:#3f9b5a"></i></div></div>
-    <div class="feedback">${B.log.slice(-4).map(l=>`<span class="small">${esc(l)}</span>`).join("")}</div>
-    ${acts}
-    ${B.over==="win"?`<div class="feedback usebox"><b>🎉 กู้สำเร็จ!</b><span class="small">${esc(st.fact)}</span>${B.reward?`<span class="small">${esc(B.reward)}</span>`:""}</div>`
-      :B.over==="rest"?`<div class="feedback"><b>😮‍💨 ทีมเหนื่อยแล้ว กลับไปพักก่อน</b><span class="small">ไม่มีใครบาดเจ็บ ลองฝึกทีม ใส่อุปกรณ์ หรือเลือกสมาชิกธาตุ ${ELEM[st.weak].e} แล้วกลับมาใหม่นะ</span></div>`:""}
-    ${B.over?`<div class="row"><button class="btn" id="advdone">กลับแผนที่</button></div>`:`<p class="small muted">สมาชิกแต่ละตัวออกไปได้ 4 ครั้งต่อด่าน ศัตรูจะสวนกลับทุกตา ความอึดหมดเมื่อไรทีมต้องกลับไปพัก</p>`}</section>`;
-  B.hit=false;
-  const act=async(uid,skill)=>{ const u=B.team.find(x=>x.uid===uid); if(!u||B.over) return;
-    B.used[uid]=(B.used[uid]||0)+1; if(skill) B.skillUsed[uid]=true;
-    const mult=(u.el===st.weak?2:1)*(skill?2:1), dmg=Math.round(u.power*mult*(0.9+Math.random()*0.2));
-    B.hp-=dmg; B.hit=true; B.turn++;
-    B.log.push(`${u.name}${skill?" ใช้ท่าพิเศษ ⚡":""} ${ELEM[u.el].e} ทำได้ ${dmg}${u.el===st.weak?" (ตรงจุดอ่อน!)":""}`);
-    if(B.hp<=0){ B.over="win" } else {
-      const back=Math.round(st.atk*(0.8+Math.random()*0.4)); B.sta-=back; B.log.push(`${st.n} สวนกลับ ทีมเหนื่อยลง ${back}`);
-      const canAct=B.team.some(x=>(B.used[x.uid]||0)<4);
-      if(B.sta<=0||!canAct) B.over="rest" }
-    if(B.over){ const L2=mine(), first=B.over==="win"&&!advCleared(L2).has(st.id), now=new Date().toISOString();
-      await saveAttempt({type:"adv",act:"battle",setId:"adv-"+st.id,stage:st.id,win:B.over==="win",turns:B.turn,team:B.team.map(x=>x.uid),topic:"ภารกิจกู้โลก: "+st.n,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
-      if(first){ const mvp=B.team.slice().sort((a,b)=>b.power-a.power)[0];
-        await saveAttempt({type:"adv",act:"freelevel",unit:mvp.uid,setId:"adv-free",topic:"เลเวลฟรีจากภารกิจกู้โลก",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
-        B.reward=`ครั้งแรกที่ชนะด่านนี้ ${mvp.name} ได้เลเวลฟรี 1 ขั้น แม่น้ำช่วงนี้ใสขึ้นแล้ว` } }
-    renderAdvBattle(mine()) };
-  $v.querySelectorAll("[data-advact]").forEach(b=>b.onclick=()=>act(b.dataset.advact,false));
-  $v.querySelectorAll("[data-advskill]").forEach(b=>b.onclick=()=>act(b.dataset.advskill,true));
-  const d=document.getElementById("advdone"); if(d) d.onclick=()=>{ advB=null; renderAdv() };
+/* battle scene v2 (father's feedback 8 Nov: should feel like a real turn-based fight, like dragon-raising games):
+   team on the left, pollution on the right, each side takes turns. Each awake team member picks an action and a target;
+   a timing bar decides a weak / good / perfect hit; then one enemy strikes back. Element matchups: ▲ ×1.5, ▼ ×0.5.
+   From Lv 3 each element has a special move with a cooldown. A member whose stamina runs out falls asleep 💤 (never hurt). */
+const ADV_FOES={
+  r1:[{n:"ขวดพลาสติก",e:"🧴",hp:24,atk:4,weak:"wind",resist:"water"},{n:"ขวดพลาสติก",e:"🧴",hp:24,atk:4,weak:"wind",resist:"water"}],
+  r2:[{n:"ก้อนคราบน้ำมัน",e:"🛢️",hp:50,atk:5,weak:"fire",resist:"water"},{n:"ถุงพลาสติก",e:"🛍️",hp:24,atk:3,weak:"wind",resist:"water"}],
+  r3:[{n:"ภูตน้ำร้อน",e:"♨️",hp:70,atk:6,weak:"water",resist:"fire"},{n:"ไอร้อน",e:"💨",hp:26,atk:4,weak:"water",resist:"fire"}],
+  r4:[{n:"สาหร่ายบลูมยักษ์",e:"🟢",hp:90,atk:7,weak:"plant",resist:"light"},{n:"สาหร่ายจิ๋ว",e:"🦠",hp:24,atk:3,weak:"plant",resist:"light"},{n:"สาหร่ายจิ๋ว",e:"🦠",hp:24,atk:3,weak:"plant",resist:"light"}],
+  r5:[{n:"ราชาโคลนไร้ออกซิเจน",e:"🌫️",hp:150,atk:9,weak:"wind",resist:"plant",boss:true},{n:"ฟองก๊าซเน่า",e:"🫧",hp:28,atk:4,weak:"wind",resist:"water"},{n:"ฟองก๊าซเน่า",e:"🫧",hp:28,atk:4,weak:"wind",resist:"water"}]};
+const ADV_SKILL={fire:{n:"ลมหายใจไฟ",d:"พ่นไฟโดนศัตรูทุกตัว 70%",k:"all"},water:{n:"คลื่นฟื้นพลัง",d:"ฟื้นความอึดทั้งทีม 35%",k:"heal"},
+  plant:{n:"รากพันธนาการ",d:"แรง 150% และศัตรูตัวนั้นข้ามตาถัดไป",k:"root"},wind:{n:"ลมกรด",d:"โจมตี 2 ครั้ง ครั้งละ 80%",k:"double"},light:{n:"โล่แสง",d:"ทั้งทีมได้โล่กันแรงโจมตีครั้งถัดไปครึ่งหนึ่ง",k:"shield"}};
+const advSleep=ms=>new Promise(r=>setTimeout(r,ms/(advSpeed||1)));
+let advSpeed=1;
+function advMult(el,f){ return el===f.weak?1.5:el===f.resist?0.5:1 }
+function advStart(st,team){
+  const tm=team.map(u=>({...u,max:30+6*u.lv+(u.pet?8:4),hp:0,cd:0,shield:0,ko:false})); tm.forEach(u=>u.hp=u.max);
+  const foes=(ADV_FOES[st.id]||[{n:st.n,e:st.e,hp:st.hp,atk:st.atk,weak:st.weak}]).map(f=>({...f,max:f.hp,stun:false}));
+  advB={st,team:tm,foes,cur:tm.findIndex(u=>!u.ko),target:0,phase:"pick",act:null,log:[`${st.e} ${st.n} ปรากฏตัว!`],round:1,over:null};
 }
+function advFighter(u,i,side,B){
+  const pct=Math.max(0,u.hp/u.max*100), active=side==="t"&&B.phase!=="over"&&B.cur===i&&!u.ko, tgt=side==="e"&&B.target===i&&B.phase!=="over";
+  const cur=B.team[B.cur], mk=side==="e"&&cur&&!u.ko?advMult(cur.el,u):1;
+  return `<div class="fighter ${side} ${u.ko?"ko":""} ${active?"active":""} ${tgt?"tgt":""}" id="f-${side}${i}" ${side==="e"&&!u.ko?`data-tgt="${i}"`:""}>
+    <div class="fart">${side==="t"?advUnitArt(u,u.pet?44:52):`<span style="font-size:${u.boss?54:40}px;line-height:1">${u.e}</span>`}${u.ko?`<span class="zz">${side==="t"?"💤":"🌿"}</span>`:""}${u.shield?`<span class="sh">🛡️</span>`:""}${u.stun?`<span class="sh">🌿</span>`:""}</div>
+    <span class="fn">${esc(u.name||u.n)}${side==="t"?` ${ELEM[u.el].e}`:""}</span>
+    <div class="hp"><i style="width:${pct}%;background:${side==="t"?"#3f9b5a":"#e2574c"}"></i></div>
+    ${side==="e"&&!u.ko?`<span class="mk ${mk>1?"up":mk<1?"down":""}">${mk>1?"▲ แรง":mk<1?"▼ เบา":"·"}</span>`:""}</div>` }
+function renderAdvBattle(list){
+  const B=advB, st=B.st, cur=B.team[B.cur];
+  const sk=cur&&cur.skill?ADV_SKILL[cur.el]:null;
+  const panel=B.phase==="over"?"":B.phase==="gauge"?`<div class="gauge"><div class="gbar"><span class="gz"></span><i id="gptr"></i></div>
+      <button class="btn" id="gstop">${B.act==="skill"?"⚡ ปล่อยท่า!":"⚔️ โจมตี!"}</button><span class="small muted">แตะตอนลูกศรอยู่ในช่องสีเหลือง = เพอร์เฟกต์</span></div>`
+    :B.phase==="pick"&&cur?`<div class="apanel"><span class="small"><b>ตาของ ${esc(cur.name)}</b> ${ELEM[cur.el].e}${ELEM[cur.el].n} · แตะศัตรูเพื่อเลือกเป้า</span>
+      <div class="row" style="gap:8px"><button class="btn" id="aatk">⚔️ โจมตี ${ELEM[cur.el].e}</button>
+      ${sk?`<button class="btn ghost" id="askl" ${cur.cd?"disabled":""}>⚡ ${sk.n}${cur.cd?` (อีก ${cur.cd} ตา)`:""}</button>`:`<span class="small muted">⚡ ท่าพิเศษปลดที่ Lv 3</span>`}</div>
+      ${sk?`<span class="small muted">${sk.d}</span>`:""}</div>`:`<div class="apanel"><span class="small muted">…</span></div>`;
+  $v.innerHTML=`<section class="card"><div class="todayhead"><span class="eyebrow">🌍 ${esc(st.n)} · รอบ ${B.round}</span>
+      <button class="btn ghost small" id="aspd">ความเร็ว ×${advSpeed}</button></div>
+    <div class="arena" id="arena"><div class="aside t">${B.team.map((u,i)=>advFighter(u,i,"t",B)).join("")}</div>
+      <div class="aside e">${B.foes.map((f,i)=>advFighter(f,i,"e",B)).join("")}</div></div>
+    <div class="alog">${B.log.slice(-3).map(l=>`<span class="small">${esc(l)}</span>`).join("")}</div>
+    ${panel}
+    ${B.over==="win"?`<div class="feedback usebox"><b>🎉 กู้สำเร็จ!</b><span class="small">${esc(st.fact)}</span>${B.reward?`<span class="small">${esc(B.reward)}</span>`:""}</div>`
+      :B.over==="rest"?`<div class="feedback"><b>😴 ทีมเหนื่อยหมดแล้ว กลับไปพักก่อน</b><span class="small">ไม่มีใครบาดเจ็บ ลองฝึกทีม ใส่อุปกรณ์ หรือพาสมาชิกธาตุ ${ELEM[st.weak].e} มาด้วย แล้วกลับมาใหม่นะ</span></div>`:""}
+    ${B.over?`<div class="row"><button class="btn" id="advdone">กลับแผนที่</button></div>`:""}</section>`;
+  const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
+  on("aspd",()=>{ advSpeed=advSpeed===1?2:advSpeed===2?3:1; document.getElementById("aspd").textContent="ความเร็ว ×"+advSpeed });
+  on("advdone",()=>{ advB=null; renderAdv() });
+  $v.querySelectorAll("[data-tgt]").forEach(e=>e.onclick=()=>{ if(B.phase!=="pick") return; B.target=+e.dataset.tgt; renderAdvBattle(list) });
+  on("aatk",()=>{ B.act="atk"; B.phase="gauge"; renderAdvBattle(list) });
+  on("askl",()=>{ B.act="skill"; if(["heal","shield"].includes(ADV_SKILL[cur.el].k)){ advResolve(1) } else { B.phase="gauge"; renderAdvBattle(list) } });
+  if(B.phase==="gauge"){ const ptr=document.getElementById("gptr"), t0=performance.now(); let pos=0, run=true;
+    const step=t=>{ if(!run) return; pos=(Math.sin((t-t0)/(420/Math.max(1,advSpeed*0.8)))+1)/2; ptr.style.left=(pos*100)+"%"; requestAnimationFrame(step) }; requestAnimationFrame(step);
+    on("gstop",()=>{ run=false; const d=Math.abs(pos-0.5); advResolve(d<0.09?1.2:d<0.3?1:0.8) }) }
+}
+function advFloat(id,text,cls){ const ar=document.getElementById("arena"), el=document.getElementById(id); if(!ar||!el) return;
+  const a=ar.getBoundingClientRect(), r=el.getBoundingClientRect(), d=document.createElement("div"); d.className="dmg "+(cls||""); d.textContent=text;
+  d.style.left=(r.left-a.left+r.width/2)+"px"; d.style.top=(r.top-a.top+8)+"px"; ar.appendChild(d); setTimeout(()=>d.remove(),1100/(advSpeed||1)) }
+async function advShot(fromId,toId,emo){ const ar=document.getElementById("arena"), f=document.getElementById(fromId), t=document.getElementById(toId); if(!ar||!f||!t) return;
+  const a=ar.getBoundingClientRect(), fr=f.getBoundingClientRect(), tr=t.getBoundingClientRect(), p=document.createElement("div"); p.className="proj"; p.textContent=emo;
+  p.style.left=(fr.left-a.left+fr.width/2-14)+"px"; p.style.top=(fr.top-a.top+18)+"px"; p.style.transition=`transform ${320/(advSpeed||1)}ms ease-in`; ar.appendChild(p);
+  await advSleep(20); p.style.transform=`translate(${tr.left-fr.left}px,${tr.top-fr.top}px) scale(1.3)`; await advSleep(330); p.remove() }
+function advAnim(id,cls,ms){ const el=document.getElementById(id); if(!el) return; el.classList.remove(cls); void el.offsetWidth; el.style.animationDuration=(ms/(advSpeed||1))+"ms"; el.classList.add(cls) }
+function advBar(id,u){ const el=document.querySelector(`#${id} .hp i`); if(el) el.style.width=Math.max(0,u.hp/u.max*100)+"%" }
+async function advResolve(hitMul){
+  const B=advB, u=B.team[B.cur], sk=B.act==="skill"?ADV_SKILL[u.el]:null; B.phase="anim"; renderAdvBattle(mine());
+  const alive=()=>B.foes.map((f,i)=>[f,i]).filter(([f])=>!f.ko);
+  if(!alive().some(([,i])=>i===B.target)) B.target=alive()[0][1];
+  const tag=hitMul>1?" เพอร์เฟกต์!":hitMul<1?" (เบาไปนิด)":"";
+  advAnim("f-t"+B.cur,"lunge",380);
+  const hit=async(i,pct)=>{ const f=B.foes[i]; const m=advMult(u.el,f), dmg=Math.max(1,Math.round(u.power*pct*m*hitMul*(0.92+Math.random()*0.16)));
+    await advShot("f-t"+B.cur,"f-e"+i,ELEM[u.el].e); f.hp-=dmg; advAnim("f-e"+i,"shake",420); advBar("f-e"+i,f);
+    advFloat("f-e"+i,"-"+dmg+(m>1?" ▲":m<1?" ▼":""),m>1?"big":""); if(f.hp<=0){ f.ko=true; f.hp=0; B.log.push(`${f.e} ${f.n} ถูกกำจัดแล้ว 🌿`) } return dmg };
+  if(!sk){ const d=await hit(B.target,1); if(u.cd) u.cd--; B.log.push(`${u.name} ${ELEM[u.el].e} ทำได้ ${d}${tag}`) }
+  else { u.cd=2;
+    if(sk.k==="all"){ let s=0; for(const [,i] of alive()) s+=await hit(i,0.7); B.log.push(`${u.name} ใช้${sk.n}! รวม ${s}${tag}`) }
+    else if(sk.k==="double"){ let s=0; for(let k=0;k<2;k++){ const al=alive(); if(!al.length) break; const i=al.some(([,j])=>j===B.target)?B.target:al[0][1]; s+=await hit(i,0.8) } B.log.push(`${u.name} ใช้${sk.n}! รวม ${s}${tag}`) }
+    else if(sk.k==="root"){ const i=B.target, d=await hit(i,1.5); if(!B.foes[i].ko) B.foes[i].stun=true; B.log.push(`${u.name} ใช้${sk.n}! ${d}${tag} ศัตรูขยับไม่ได้ 1 ตา`) }
+    else if(sk.k==="heal"){ B.team.forEach((m,i)=>{ if(!m.ko){ const h=Math.round(m.max*0.35); m.hp=Math.min(m.max,m.hp+h); advBar("f-t"+i,m); advFloat("f-t"+i,"+"+h,"heal") } }); B.log.push(`${u.name} ใช้${sk.n} ทั้งทีมสดชื่นขึ้น 💧`); await advSleep(500) }
+    else if(sk.k==="shield"){ B.team.forEach((m,i)=>{ if(!m.ko){ m.shield=1; advFloat("f-t"+i,"🛡️","heal") } }); B.log.push(`${u.name} ใช้${sk.n} ทั้งทีมมีโล่ ✨`); await advSleep(500) } }
+  await advSleep(250);
+  if(!alive().length) return advEnd("win");
+  /* enemy turn: the first awake, not-rooted enemy after the last one that acted strikes one awake member */
+  B.eIdx=B.eIdx||0; const order=B.foes.map((_,k)=>(B.eIdx+k)%B.foes.length).filter(k=>!B.foes[k].ko);
+  const ei=order[0]; B.eIdx=(ei+1)%B.foes.length; const f=B.foes[ei];
+  if(f.stun){ f.stun=false; B.log.push(`${f.e} ${f.n} ติดรากพันธนาการ ขยับไม่ได้`); }
+  else { const awake=B.team.map((m,i)=>[m,i]).filter(([m])=>!m.ko), [m,mi]=awake[Math.floor(Math.random()*awake.length)];
+    advAnim("f-e"+ei,"lungeL",380); await advShot("f-e"+ei,"f-t"+mi,f.e);
+    let dmg=Math.max(1,Math.round(f.atk*(0.85+Math.random()*0.3))); if(m.shield){ dmg=Math.round(dmg/2); m.shield=0 }
+    m.hp-=dmg; advAnim("f-t"+mi,"shake",420); advBar("f-t"+mi,m); advFloat("f-t"+mi,"-"+dmg,"");
+    B.log.push(`${f.e} ${f.n} โจมตี ${m.name} ความอึด -${dmg}`);
+    if(m.hp<=0){ m.hp=0; m.ko=true; B.log.push(`${m.name} เหนื่อยจนหลับไป 💤`) } }
+  await advSleep(350);
+  if(B.team.every(m=>m.ko)) return advEnd("rest");
+  /* next awake member; a new round when we wrap around */
+  let n=B.cur; for(let k=1;k<=B.team.length;k++){ const j=(B.cur+k)%B.team.length; if(!B.team[j].ko){ if(j<=B.cur) B.round++; n=j; break } }
+  B.cur=n; B.phase="pick"; B.act=null; renderAdvBattle(mine());
+}
+async function advEnd(res){
+  const B=advB, st=B.st; B.over=res; B.phase="over";
+  const L2=mine(), first=res==="win"&&!advCleared(L2).has(st.id), now=new Date().toISOString();
+  await saveAttempt({type:"adv",act:"battle",setId:"adv-"+st.id,stage:st.id,win:res==="win",turns:B.round,team:B.team.map(x=>x.uid),topic:"ภารกิจกู้โลก: "+st.n,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
+  if(first){ const mvp=B.team.slice().sort((a,b)=>b.power-a.power)[0];
+    await saveAttempt({type:"adv",act:"freelevel",unit:mvp.uid,setId:"adv-free",topic:"เลเวลฟรีจากภารกิจกู้โลก",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
+    B.reward=`ครั้งแรกที่ชนะด่านนี้ ${mvp.name} ได้เลเวลฟรี 1 ขั้น แม่น้ำช่วงนี้ใสขึ้นแล้ว` }
+  renderAdvBattle(mine()) }
+
 /* parent view: where XP came from in the last 7 days, and the adventure at a glance */
 function xpSourceCard(list){
   const t=todayKey(), recent=list.filter(a=>dayKey(a.endedAt)>t-7*DAY);
