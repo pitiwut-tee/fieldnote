@@ -209,6 +209,23 @@ undermine interest (Deci, Koestner & Ryan 1999) while self-set goals help (Locke
 - The museum adds one specimen per spell tier gained and per 8 right sweep answers. Sky events (moon phase, meteor
   showers, Loy Krathong, dust season) are built in; you can refer to them in letters on those days.
 
+## Adventure map "ภารกิจกู้โลก" and XP rules (app features; read the records, do not change code)
+- **Separate adventure:** never mixed into lessons.
+  - Her team (companion pets + animals bred in the dragon valley) fights pollution enemies on a river map.
+  - Battles use team power and element choice only. No lesson questions, so lesson data stays a clean measure.
+- **Energy:** 3 battles a day, +3 after the day's mission is complete.
+- **The boss stage needs spells collected on the spell island.**
+- **Records:**
+  - `type:"adv"` with `act:"battle"` (`stage`, `win`, `turns`, `team`) or `act:"freelevel"`.
+  - Training and gear are `shop` records with item `train:<unit>` / `gear:*`.
+  - Do not count adventure records as study.
+- **XP rules (anti-grinding):**
+  - A replayed set pays only for questions she had missed before and now gets right. The record carries `replay:true`, `xpBase`, `xpNote`.
+  - A wrong answer in under 4 s pays 0.
+  - Lesson XP above 450 a day counts half.
+  - If replays or quick wrong answers rise, mention it to the father gently. Never in the letter to her as blame.
+- **Feedback on the adventure:** if she gives any, it reaches you through feedback records. Do not change the adventure in the daily run; list her ideas for the father.
+
 ## Weekly special guest (content/guests.json)
 
 A rare item visits for 3 days with one small learning task. It uses her love of animals to pull her toward the

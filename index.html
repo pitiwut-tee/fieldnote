@@ -131,6 +131,16 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 @media (prefers-reduced-motion: reduce){.drift,.spin,.fall{animation:none}}
 .island{display:block;width:100%;height:auto}
 .mnode{cursor:pointer}
+.advteam{display:flex;gap:8px;flex-wrap:wrap}
+.advunit{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;border:1.5px solid var(--line);border-radius:14px;background:var(--paper);min-width:92px;text-align:center}
+.advrow{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
+.advrow:last-child{border-bottom:0}
+.advfoe{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px;text-align:center}
+.advfoe.hit>span:first-child{animation:advhit .45s ease}
+@keyframes advhit{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px) rotate(-6deg)}50%{transform:translateX(8px) rotate(5deg)}80%{transform:translateX(-4px)}}
+.advbar,.xpbar{width:100%;height:12px;border-radius:6px;background:var(--soft);overflow:hidden;display:flex}
+.advbar i,.xpbar i{display:block;height:100%;transition:width .4s}
+@media (prefers-reduced-motion: reduce){.advfoe.hit>span:first-child{animation:none}}
 .dash{display:flex;flex-direction:column;gap:14px}
 .rrows{display:flex;flex-direction:column;gap:4px;margin-top:6px}
 .rrow{display:flex;gap:8px;align-items:center}
@@ -535,7 +545,7 @@ async function importCode(raw, asTest){
 }
 
 /* ---------- updates: GitHub Pages lets the browser keep an old copy for a while, so check for a newer build ---------- */
-const BUILD="2026-11-08 00:04";
+const BUILD="2026-11-08 00:50";
 async function checkUpdate(){ if(!/^https?:/.test(location.protocol)||typeof db!=="undefined"&&db) return;
   try{ const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text(); const m=t.match(/const BUILD="(\d{4}-\d\d-\d\d \d\d:\d\d)"/);
     if(m&&m[1]!==BUILD&&!m[1].includes("@@")&&!document.getElementById("updbar")){ const d=document.createElement("button"); d.id="updbar"; d.className="btn";
@@ -601,7 +611,26 @@ function todayKey(){ return dayKey(new Date().toISOString()) }
 function nextDay(d){ const t=new Date(d); t.setDate(t.getDate()+1); t.setHours(0,0,0,0); return t.getTime() }
 function weekStart(d){ const t=new Date(d); t.setHours(0,0,0,0); t.setDate(t.getDate()-((t.getDay()+6)%7)); return t.getTime() }
 function xpOf(a){ if(isSkip(a)||a.type==="daymode") return 0; if(typeof a.xp==="number") return a.xp; return (a.correct||0)*10+((a.total||0)-(a.correct||0))*5+20 }
-function itemXp(items){ return items.reduce((s,x)=>s+(x.skipped||x.dontknow?0:x.correct?10:5)+(x.checkOk?5:0),0) }
+/* a wrong answer given in under 4 seconds looks like a tap, not a try: 0 XP instead of 5 */
+function itemXp(items){ return items.reduce((s,x)=>s+(x.skipped||x.dontknow?0:x.correct?10:(x.timeSec!=null&&x.timeSec<4?0:5))+(x.checkOk?5:0),0) }
+/* anti-grinding (father, 8 Nov 2026), applied when a lesson-type record is saved:
+   - replaying a set she already finished pays only for questions she had missed before and now gets right, no finish bonus
+   - lesson XP above DAY_XP_SOFT in one day counts half ("พักบ้างนะ") */
+const DAY_XP_SOFT=450;
+function xpRules(rec,prev){
+  if(!["set","probe","mixed","passage"].includes(rec.type)||typeof rec.xp!=="number") return rec;
+  const before=prev.filter(a=>a.setId===rec.setId&&a.type===rec.type);
+  let xp=rec.xp, note=[];
+  if(before.length){
+    const everRight=new Set(before.flatMap(a=>(a.items||[]).filter(x=>x.correct).map(x=>x.qid)));
+    const missed=new Set(before.flatMap(a=>(a.items||[]).filter(x=>!x.correct&&!x.skipped).map(x=>x.qid)));
+    const fixed=(rec.items||[]).filter(x=>x.correct&&missed.has(x.qid)&&!everRight.has(x.qid));
+    xp=fixed.length*10; note.push(`ชุดนี้เคยทำแล้ว รอบนี้ได้ XP เฉพาะข้อที่เคยพลาดแล้วแก้ได้ (${fixed.length} ข้อ)`);
+  }
+  const t=todayKey(), today=prev.filter(a=>isLesson(a)&&dayKey(a.endedAt)===t).reduce((s,a)=>s+Math.max(0,xpOf(a)),0);
+  if(today+xp>DAY_XP_SOFT){ const over=today+xp-Math.max(DAY_XP_SOFT,today), keep=xp-over+Math.round(over/2); if(keep<xp){ note.push("วันนี้เก็บ XP เยอะมากแล้ว ส่วนที่เกินนับครึ่งเดียว พักบ้างนะ"); xp=keep } }
+  return xp===rec.xp&&!before.length?rec:{...rec,xp,xpBase:rec.xp,...(before.length?{replay:true}:{}),xpNote:note.join(" · ")};
+}
 
 /* ---------- day types: school day or holiday (Thai public holidays, school days off, weekends), plus a manual switch ---------- */
 const LEVELS={full:{label:"เต็ม",mins:"ราว 75–90 นาที แบ่งทำเป็นช่วงๆ",units:2,probe:true,sweep:10},mid:{label:"กลาง",mins:"ราว 60 นาที",units:2,probe:true,sweep:5},light:{label:"เบา",mins:"ราว 40 นาที",units:1,probe:false,sweep:5}};
@@ -643,7 +672,7 @@ function progressOf(list){
   list.forEach(a=>{ const k=dayKey(a.endedAt);
     if(a.type==="daymode") return;
     if(a.type==="mission"||a.type==="teach"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* mission / teaching dad: XP only, not a daily unit */
-    if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood") return;
+    if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood"||a.type==="adv") return;
     if(a.type==="lab"||a.type==="labverdict"||a.type==="labquest"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
     if(a.type==="sweep"){ sweepDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* old-topic sweep: its own daily step, not a lesson unit */
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
@@ -895,6 +924,7 @@ function render(){
   document.querySelectorAll(".tabs a").forEach(a=>a.setAttribute("aria-current", a.dataset.v===tab?"page":"false"));
   if(view==="home") return renderHome();
   if(view==="map") return renderMap();
+  if(view==="adv") return renderAdv();
   if(view==="den") return renderDen();
   if(view==="intro") return renderIntro();
   if(view==="feedback") return renderFeedback();
@@ -1039,7 +1069,7 @@ function renderHome(){
     <button class="btn ghost" id="send-all">ส่งผลทั้งหมดให้พ่ออีกครั้ง</button>
     <p style="margin:12px 0 0">แอปรุ่น ${esc(BUILD)}</p></details>`:""}`;
   bindDayPanel(p); bindBuddySetup(); bindBuddyHero(); bindLetter(); bindGoal(list); bindTeach(); buddyNote="";
-  $v.querySelectorAll("[data-tile]").forEach(t=>t.onclick=()=>{ homeOpen=homeOpen===t.dataset.tile?null:t.dataset.tile; renderHome();
+  $v.querySelectorAll("[data-tile]").forEach(t=>t.onclick=()=>{ if(t.dataset.tile==="adv"){ homeOpen=null; advSel=advSel||"r1"; view="adv"; render(); window.scrollTo({top:0}); return } homeOpen=homeOpen===t.dataset.tile?null:t.dataset.tile; renderHome();
     const tp=document.getElementById("tpanel"); if(tp) tp.scrollIntoView({block:"nearest",behavior:"smooth"}) });
   $v.querySelectorAll("[data-mood]").forEach(m=>m.onclick=async()=>{ const now=new Date().toISOString();
     await saveAttempt({type:"mood",setId:"mood",mood:m.dataset.mood,topic:"ความพร้อมวันนี้: "+MOODS.find(x=>x[0]===m.dataset.mood)[2],startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
@@ -1636,6 +1666,7 @@ async function finishWith(rec){
   if(S&&rec.type!=="vocab"){ S.active=false; if(S.mode==="set") clearProgress() }
   PAD.open=false; document.body.classList.remove("padopen");
   const prevList=mine(), before=progressOf(prevList), ssB=spellStats(prevList);
+  { const adj=xpRules(rec,prevList); if(adj!==rec) Object.assign(rec,adj); }
   const where=await saveAttempt(rec);
   const list=attempts.includes(rec)?mine():[rec,...mine()];
   const after=progressOf(list), ssA=spellStats(list);
@@ -1671,7 +1702,7 @@ function renderDone(){
   const sp=r.spell&&SPELLS.find(x=>x.id===r.spell), info=sp&&spellStats(S.list)[sp.id];
   const ce=S.cele&&S.ci<S.cele.length?celeHtml(S.cele[S.ci]):null;
   $v.innerHTML=`<section class="card"><span class="eyebrow">เสร็จแล้ว</span>
-    <h2>+${r.xp} XP</h2>
+    <h2>+${r.xp} XP</h2>${r.xpNote?`<p class="small muted">${esc(r.xpNote)}</p>`:""}
     <p>${r.type==="vocab"?`คำศัพท์ถูก ${r.correct} จาก ${r.total}`:`ทำได้ ${r.correct} จาก ${r.total} ข้อ`} ใน ${mins} นาที</p>
     ${byL?`<p class="small muted">${byL}</p>`:""}
     ${r.type!=="vocab"&&getBuddy()?buddyHtml([buddyAfter(r)].filter(Boolean)):""}
@@ -1778,6 +1809,7 @@ function homeTiles(list,p,pool){
   const g=activeGuest(); if(g){ const pr=guestProgress(g,list); T.push({id:"guest",i:g.item.e,t:"แขกพิเศษ",s:pr.done?"ได้แล้ว 🎉":`${pr.n}/${g.task.n} · ${esc(g.item.n)}`,rew:pr.done?"":`ได้${esc(g.item.n)}`,pr:pr.n/g.task.n,todo:!pr.done,badge:pr.done?"":"!",done:pr.done}) }
   const m=activeMission(); if(m){ const d=missionDone(m); T.push({id:"world",i:"🌏",t:"ภารกิจโลกจริง",s:d?"ทำแล้ว ✓":esc(m.title),rew:d?"":`+${m.xp||100} XP`,todo:!d,done:d}) }
   { const er=eggsReady(list).length, can=pairsToday(list)<labPairsPerDay(list); T.push({id:"lab",i:"🐉",t:"หุบเขามังกร",s:er?"ไข่ฟักแล้ว ไปดูกัน!":can?"วันนี้จับคู่ได้":"ไข่กำลังฟัก",rew:can?"ทำนายถูก +25 XP":"",todo:!!er||can,badge:er?"🐣":"",done:!er&&!can}) }
+  { const en=advEnergy(list), n=advUnits(list).length; T.push({id:"adv",i:"🌍",t:"ภารกิจกู้โลก",s:n?`พลังผจญภัย ${en.left}/${en.max}`:"ต้องมีคู่หูก่อน",rew:"",todo:!!(n&&en.left&&p.goalToday),badge:n&&en.left&&p.goalToday?String(en.left):""}) }
   const gl=goalOf(list); T.push({id:"goal",i:"🎯",t:"เป้าหมายเดือนนี้",s:gl?"ดูความคืบหน้า":"ยังไม่ได้ตั้ง",rew:gl?"":"รางวัลจริงที่เลือกเอง",todo:!gl,badge:gl?"":"!"});
   const wk=weekStart(todayKey()), told=list.some(a=>a.type==="teach"&&dayKey(a.endedAt)>=wk); T.push({id:"teach",i:"💬",t:"เล่าให้พ่อฟัง",s:told?"สัปดาห์นี้แล้ว ✓":"สัปดาห์ละครั้ง ราว 3 นาที",rew:told?"":`+50 XP${firstTeach?" · หมวกครู 🎓":""}`,todo:!told,badge:told?"":"!",done:told});
   const panel=homeOpen?tilePanel(homeOpen,list,p,pool):"";
@@ -3185,6 +3217,163 @@ function readinessCard(list){ if(!list.length) return "";
 
 /* ---------- parent dashboard: what needs attention first, then this fortnight in charts ---------- */
 const DAY_GROUPS=[["lesson","บทเรียน/ด่าน","#2f6f8f",["set","probe","mixed","passage"]],["review","ทบทวน","#7fb6d6",["review","recall"]],["sweep","ย้อนคาถาเก่า","#f0a04b",["sweep"]],["vocab","คำศัพท์","#8fc98a",["vocab"]],["other","อื่นๆ","#c9a6ff",["lab","mission","teach"]]];
+/* ---------- ภารกิจกู้โลก: a separate adventure map (father + daughter, 8 Nov 2026)
+   Team = companion pets + animals bred in the dragon valley. XP trains them and buys gear. Battles never use lesson
+   questions, so they cannot distort what lessons measure. Enemies are pollution, never animals; nobody gets hurt —
+   a team that runs out of stamina just goes home to rest. Energy: 3 a day, +3 after the day's mission is complete.
+   Some stages also need spells collected on the spell island, so real learning opens the way, not XP alone. */
+const ELEM={water:{e:"💧",n:"น้ำ"},plant:{e:"🌱",n:"พฤกษ์"},fire:{e:"🔥",n:"ไฟ"},wind:{e:"🌬️",n:"ลม"},light:{e:"✨",n:"แสง"}};
+const PET_ELEM={dragon:"fire",owl:"wind",fox:"fire",cat:"light",bunny:"light",wolf:"light",tiger:"fire",peacock:"light",swan:"water",dino:"plant",
+  dolphin:"water",bubble:"water",butterfly:"wind",turtle:"water",panda:"plant",penguin:"water",deer:"plant",otter:"water",unicorn:"light",whale:"water",
+  hedgehog:"plant",ballpython:"plant",banana:"light",corn:"fire",greentree:"plant",duck:"plant",cow:"plant",orangeiso:"plant",potion:"plant",
+  kilen:"fire",lion:"fire",naga:"water",robot:"wind"};
+const LAB_ELEM={normal:"plant",amel:"light",pastel:"fire",super:"light",n:"plant",alb:"light",npie:"wind",albpie:"light",fire:"fire",water:"water",steam:"wind"};
+const ADV_GEAR=[{id:"gear:band",e:"🎗️",n:"สายรัดพลังใบไม้",p:2,cost:80},{id:"gear:goggles",e:"🥽",n:"แว่นดำน้ำนักสำรวจ",p:3,cost:150},
+  {id:"gear:pack",e:"🎒",n:"เป้กู้ภัยอเนกประสงค์",p:4,cost:250},{id:"gear:cape",e:"🧣",n:"ผ้าคลุมพลังแสงอาทิตย์",p:6,cost:400}];
+const ADV_REGIONS=[{id:"river",n:"แม่น้ำสายเศร้า",e:"🏞️",intro:"แม่น้ำที่เคยใส ตอนนี้ขุ่นและมีกลิ่น ปลาหายไปหมด ทีมกู้โลกต้องไล่ปัญหาไปทีละจุด จากต้นน้ำถึงปากแม่น้ำ",
+  stages:[
+  {id:"r1",n:"ภูตขวดพลาสติก",e:"🧴",hp:40,atk:4,weak:"wind",x:80,y:70,
+   fact:"ขวดพลาสติกใช้เวลาย่อยสลายหลายร้อยปี และค่อยๆ แตกเป็นไมโครพลาสติกที่ปลากินเข้าไปได้ ทุ่นดักขยะกลางแม่น้ำอาศัยกระแสน้ำและลมช่วยต้อนขยะเข้าที่เก็บ"},
+  {id:"r2",n:"ก้อนคราบน้ำมัน",e:"🛢️",hp:60,atk:5,weak:"fire",x:250,y:120,
+   fact:"น้ำมันลอยบนน้ำเพราะมีความหนาแน่นน้อยกว่าน้ำ คราบน้ำมันกั้นไม่ให้ออกซิเจนจากอากาศละลายลงน้ำ วิธีกำจัดมีทั้งทุ่นดูดซับ จุลินทรีย์ที่ย่อยน้ำมันได้ และการเผาแบบควบคุมกลางทะเล ซึ่งใช้เป็นทางสุดท้ายเพราะทำให้เกิดควัน"},
+  {id:"r3",n:"ภูตน้ำร้อน",e:"♨️",hp:80,atk:6,weak:"water",x:120,y:200,
+   fact:"น้ำทิ้งร้อนจากโรงงานทำให้แม่น้ำอุ่นขึ้น น้ำอุ่นละลายออกซิเจนได้น้อยกว่าน้ำเย็น ปลาจึงขาดออกซิเจน โรงงานต้องพักน้ำให้เย็นก่อนปล่อยลงแม่น้ำ"},
+  {id:"r4",n:"สาหร่ายบลูมยักษ์",e:"🟢",hp:105,atk:7,weak:"plant",x:270,y:270,
+   fact:"ปุ๋ยจากไร่นาไหลลงแม่น้ำ ทำให้สาหร่ายโตเร็วเกินไปจนน้ำเขียว พอสาหร่ายตาย จุลินทรีย์ที่ย่อยสลายใช้ออกซิเจนในน้ำจนหมด พื้นที่ชุ่มน้ำและพืชริมตลิ่งช่วยดูดธาตุอาหารไว้ก่อนไหลลงแม่น้ำ"},
+  {id:"r5",n:"ราชาโคลนไร้ออกซิเจน",e:"🌫️",hp:150,atk:9,weak:"wind",x:160,y:345,boss:true,needSpells:3,
+   fact:"น้ำที่ไม่มีออกซิเจนเรียกว่าน้ำเน่า สัตว์น้ำอยู่ไม่ได้ เครื่องเติมอากาศ เช่น กังหันน้ำชัยพัฒนาที่คนไทยประดิษฐ์ ตีน้ำให้สัมผัสอากาศ ออกซิเจนจึงละลายลงน้ำได้มากขึ้น แม่น้ำก็ค่อยๆ ฟื้น"}]}];
+let advSel=null, advB=null, advMsg="";
+function advRecs(list){ return list.filter(a=>a.type==="adv") }
+function advTrainLv(list,uid){ return list.filter(a=>(a.type==="shop"&&a.item==="train:"+uid)||(a.type==="adv"&&a.act==="freelevel"&&a.unit===uid)).length }
+function advUnits(list){
+  const pets=ownedPets(list).map(p=>{ const st=growStage(growth(p.k,list)); return {uid:"pet:"+p.k,name:petName(p.k,list),el:PET_ELEM[p.k]||"plant",base:10+st*2,look:petLook(p.k,st),pet:true} });
+  const lab=[]; LAB_ORDER.forEach(sp=>{ const L=LAB_LINES[sp]; labAnimals(list,sp).filter(x=>!x.stock&&x.g&&!/\?/.test(x.g)).forEach(x=>{ const ph=L.ph(x.g);
+    lab.push({uid:"lab:"+x.id,name:(L.names[ph]||L.n),el:LAB_ELEM[ph]||"plant",base:sp==="dragon"?12:9,svg:L.art[ph](),sp}) }) });
+  return [...pets,...lab].map(u=>{ const lv=advTrainLv(list,u.uid); return {...u,lv,power:u.base+3*lv+advGearP(list),skill:lv>=3} }) }
+function advGearP(list){ const o=new Set(list.filter(a=>a.type==="shop").map(a=>a.item)); return ADV_GEAR.filter(g=>o.has(g.id)).reduce((s,g)=>s+g.p,0) }
+function advUnitArt(u,size){ return u.svg?`<svg viewBox="0 0 100 100" width="${size}" height="${size}">${u.svg}</svg>`:`<span style="font-size:${Math.round(size*0.8)}px;line-height:1">${u.look}</span>` }
+function advTeam(list){ const us=advUnits(list); let t=ls("fieldnote.advteam",null);
+  t=(Array.isArray(t)?t:[]).filter(id=>us.some(u=>u.uid===id)).slice(0,3);
+  if(!t.length){ const b=getBuddy(); if(b&&us.some(u=>u.uid==="pet:"+b.kind)) t.push("pet:"+b.kind);
+    us.slice().sort((a,b)=>b.power-a.power).forEach(u=>{ if(t.length<3&&!t.includes(u.uid)) t.push(u.uid) }) }
+  return t.map(id=>us.find(u=>u.uid===id)) }
+function advEnergy(list){ const t=todayKey(), used=advRecs(list).filter(a=>a.act==="battle"&&dayKey(a.endedAt)===t).length, max=3+(progressOf(list).goalToday?3:0);
+  return {used,max,left:Math.max(0,max-used)} }
+function advCleared(list){ return new Set(advRecs(list).filter(a=>a.act==="battle"&&a.win).map(a=>a.stage)) }
+function advSpellsGot(list){ return Object.values(spellStats(list)).filter(v=>(v.tier||0)>=1).length }
+function advStamina(team){ return 30+team.reduce((s,u)=>s+u.lv*4,0) }
+function advTrainCost(lv){ return 30+20*lv }
+
+function renderAdv(){
+  const list=mine(), w=wallet(list), R=ADV_REGIONS[0], cleared=advCleared(list), en=advEnergy(list), team=advTeam(list), units=advUnits(list);
+  if(advB) return renderAdvBattle(list);
+  const got=advSpellsGot(list);
+  const open=st=>{ const i=R.stages.indexOf(st); return (i===0||cleared.has(R.stages[i-1].id))&&(!st.needSpells||got>=st.needSpells) };
+  const clean=cleared.size/R.stages.length;
+  const water=`rgb(${Math.round(150-90*clean)},${Math.round(130+40*clean)},${Math.round(100+130*clean)})`;
+  const path="M80 40 C 40 90, 140 110, 250 120 S 330 170, 200 205 S 60 230, 150 260 S 330 290, 270 300 S 120 330, 160 380";
+  const nodes=R.stages.map((st,i)=>{ const done=cleared.has(st.id), can=open(st), sel=advSel===st.id;
+    return `<g class="mnode" data-adv="${st.id}" transform="translate(${st.x} ${st.y})" role="button" aria-label="${esc(st.n)}">
+      <circle r="${st.boss?26:21}" fill="${done?"#e6f7ee":can?"#fff7e8":"#e9e9e4"}" stroke="${sel?"#2f6f8f":done?"#3f9b5a":can?"#e08a2c":"#b9b9b0"}" stroke-width="${sel?4:3}"/>
+      <text y="${st.boss?9:7}" text-anchor="middle" font-size="${st.boss?26:20}" ${done?'opacity=".35"':!can?'opacity=".45"':""}>${done?"🌿":st.e}</text>
+      ${done?`<text x="15" y="-14" font-size="14">✅</text>`:!can?`<text x="14" y="-12" font-size="13">🔒</text>`:""}</g>` }).join("");
+  const sel=R.stages.find(s=>s.id===advSel);
+  const selHtml=sel?(()=>{ const done=cleared.has(sel.id), can=open(sel), i=R.stages.indexOf(sel);
+    const lock=!can?(i>0&&!cleared.has(R.stages[i-1].id)?"ต้องผ่านด่านก่อนหน้าก่อน":`ต้องเก็บคาถาบนเกาะคาถาให้ได้ ${sel.needSpells} อัน (ตอนนี้ ${got}) ด่านนี้ต้องใช้ความรู้จริงช่วยเปิดทาง`):"";
+    return `<section class="card"><span class="eyebrow">ด่าน ${i+1}${sel.boss?" · บอส":""}</span><h3 style="margin:0">${sel.e} ${esc(sel.n)}</h3>
+      <p class="small">พลังชีวิต ${sel.hp} · แรงโจมตี ${sel.atk} · แพ้ทาง ${ELEM[sel.weak].e} ${ELEM[sel.weak].n}</p>
+      ${done?`<div class="feedback usebox"><b>📘 เรื่องจริงของด่านนี้</b><span class="small">${esc(sel.fact)}</span></div>`:`<p class="small muted">ชนะแล้วจะได้การ์ดเรื่องจริงของปัญหานี้ และสมาชิกที่เก่งที่สุดในทีมได้เลเวลฟรี 1 ขั้น</p>`}
+      ${lock?`<p class="small"><b>🔒 ${lock}</b></p>`:`<div class="row"><button class="btn" id="advgo" ${en.left&&team.length?"":"disabled"}>${done?"ลุยอีกรอบ":"ออกผจญภัย"} (ใช้พลัง 1)</button></div>
+      ${!en.left?`<p class="small muted">พลังผจญภัยวันนี้หมดแล้ว${progressOf(list).goalToday?"":" ทำภารกิจวันนี้ให้ครบได้พลังเพิ่มอีก 3"} พรุ่งนี้มาใหม่นะ</p>`:""}`}</section>` })():"";
+  const teamHtml=team.length?team.map(u=>`<div class="advunit">${advUnitArt(u,40)}<b class="small">${esc(u.name)}</b><span class="small">${ELEM[u.el].e} พลัง ${u.power} · Lv ${u.lv}${u.skill?" · ⚡":""}</span></div>`).join("")
+    :`<p class="small">ยังไม่มีสมาชิก ไปรับคู่หูที่บ้านคู่หู หรือฟักไข่ที่หุบเขามังกรก่อนนะ</p>`;
+  const roster=units.map(u=>{ const inT=team.some(t=>t.uid===u.uid), cost=advTrainCost(u.lv);
+    return `<div class="advrow"><span>${advUnitArt(u,32)}</span><span class="small" style="flex:1"><b>${esc(u.name)}</b> ${ELEM[u.el].e}${ELEM[u.el].n} · Lv ${u.lv} · พลัง ${u.power}${u.skill?" · ⚡ท่าพิเศษ":u.lv<3?` · ⚡ ที่ Lv 3`:""}</span>
+      <button class="btn ghost small" data-advteam="${u.uid}">${inT?"ออกจากทีม":"เข้าทีม"}</button>
+      <button class="btn ghost small" data-advtrain="${u.uid}" ${w.stars>=cost&&u.lv<10?"":"disabled"}>ฝึก ⭐${cost}</button></div>` }).join("");
+  const owned=new Set(list.filter(a=>a.type==="shop").map(a=>a.item));
+  const gear=ADV_GEAR.map(g=>`<div class="advrow"><span style="font-size:24px">${g.e}</span><span class="small" style="flex:1"><b>${g.n}</b> · ทั้งทีม +${g.p} พลัง</span>
+    ${owned.has(g.id)?`<span class="small">มีแล้ว ✓</span>`:`<button class="btn ghost small" data-advgear="${g.id}" ${w.stars>=g.cost?"":"disabled"}>⭐${g.cost}</button>`}</div>`).join("");
+  $v.innerHTML=`<section class="card"><div class="todayhead"><span class="eyebrow">🌍 ภารกิจกู้โลก · ${R.e} ${R.n}</span><span class="small">⚡ พลัง ${en.left}/${en.max} · ⭐ ${w.stars}</span></div>
+      <p class="small">${R.intro}</p>
+      <div class="islandwrap"><svg class="island" viewBox="0 0 340 420" role="img" aria-label="แผนที่แม่น้ำ">
+        <rect width="340" height="420" fill="#cfe8c6"/>
+        ${[[30,20],[300,60],[40,300],[310,230],[20,170],[300,380],[200,40]].map(([x,y],k)=>`<text x="${x}" y="${y}" font-size="${16+k%3*4}" opacity="${0.35+clean*0.6}">${k%2?"🌳":"🌲"}</text>`).join("")}
+        <path d="${path}" stroke="${water}" stroke-width="34" fill="none" stroke-linecap="round"/>
+        <path d="${path}" stroke="#fff" stroke-opacity=".25" stroke-width="3" fill="none" stroke-dasharray="6 14" class="fall"/>
+        ${clean>=1?`<text x="210" y="360" font-size="20">🐟</text><text x="60" y="130" font-size="18">🐟</text>`:""}${nodes}</svg></div>
+      <p class="small muted">ชนะด่านไหน แม่น้ำช่วงนั้นจะใสขึ้น ${cleared.size}/${R.stages.length} ด่าน · ด่านบอสต้องใช้คาถาที่เก็บจากเกาะคาถา</p>
+      ${advMsg?`<p class="small"><b>${esc(advMsg)}</b></p>`:""}</section>
+    ${selHtml}
+    <section class="card"><span class="eyebrow">ทีมที่ออกผจญภัย (สูงสุด 3) · ความอึดของทีม ${advStamina(team)}</span><div class="advteam">${teamHtml}</div>
+      <p class="small muted">เลือกสมาชิกให้ธาตุตรงกับจุดอ่อนของศัตรูจะแรงขึ้น 2 เท่า ฝึกถึง Lv 3 ปลดท่าพิเศษ ใช้ได้ด่านละครั้ง แรงขึ้น 2 เท่า</p></section>
+    <section class="card"><span class="eyebrow">สมาชิกทั้งหมด · ฝึกด้วย XP</span>${roster||`<p class="small">ยังไม่มีสมาชิก</p>`}
+      <p class="small muted">ได้สมาชิกใหม่จากการรับคู่หูที่บ้านคู่หู และลูกที่ฟักจากหุบเขามังกร สายพันธุ์ต่างกันได้ธาตุต่างกัน</p></section>
+    <section class="card"><span class="eyebrow">อุปกรณ์ทีม</span>${gear}</section>
+    <button class="btn ghost" id="advback" style="border:0;padding-left:0">← กลับ</button>`;
+  document.getElementById("advback").onclick=()=>{ advSel=null; advMsg=""; location.hash="#home"; view="home"; render() };
+  $v.querySelectorAll("[data-adv]").forEach(g=>g.onclick=()=>{ advSel=g.dataset.adv; advMsg=""; renderAdv() });
+  const go=document.getElementById("advgo"); if(go) go.onclick=()=>{ const st=R.stages.find(s=>s.id===advSel), tm=advTeam(list);
+    advB={st,team:tm,hp:st.hp,sta:advStamina(tm),staMax:advStamina(tm),turn:0,used:{},skillUsed:{},log:[`${st.e} ${st.n} ปรากฏตัว! เลือกสมาชิกที่จะส่งออกไป`],over:null}; renderAdv(); window.scrollTo({top:0}) };
+  $v.querySelectorAll("[data-advteam]").forEach(b=>b.onclick=()=>{ let t=advTeam(list).map(u=>u.uid); const id=b.dataset.advteam;
+    if(t.includes(id)) t=t.filter(x=>x!==id); else { if(t.length>=3) t.shift(); t.push(id) } lsSet("fieldnote.advteam",t); renderAdv() });
+  $v.querySelectorAll("[data-advtrain]").forEach(b=>b.onclick=async()=>{ const u=advUnits(list).find(x=>x.uid===b.dataset.advtrain); if(!u) return; const cost=advTrainCost(u.lv);
+    if(wallet(mine()).stars<cost) return; b.disabled=true; const now=new Date().toISOString();
+    await saveAttempt({type:"shop",setId:"shop",item:"train:"+u.uid,cost,name:u.name,topic:"ฝึกทีมกู้โลก",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
+    advMsg=`${u.name} ฝึกจนถึง Lv ${u.lv+1} แล้ว${u.lv+1===3?" ปลดท่าพิเศษ ⚡":""}`; renderAdv() });
+  $v.querySelectorAll("[data-advgear]").forEach(b=>b.onclick=async()=>{ const g=ADV_GEAR.find(x=>x.id===b.dataset.advgear); if(!g||wallet(mine()).stars<g.cost) return; b.disabled=true;
+    const now=new Date().toISOString(); await saveAttempt({type:"shop",setId:"shop",item:g.id,cost:g.cost,name:g.n,topic:"อุปกรณ์ทีมกู้โลก",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
+    advMsg=`ได้${g.n}แล้ว ทั้งทีมแรงขึ้น +${g.p}`; renderAdv() });
+}
+function renderAdvBattle(list){
+  const B=advB, st=B.st, hpPct=Math.max(0,B.hp/st.hp*100), saPct=Math.max(0,B.sta/B.staMax*100);
+  const acts=B.over?"":B.team.map(u=>{ const tired=B.used[u.uid]>=4;
+    return `<div class="advrow"><span>${advUnitArt(u,36)}</span><span class="small" style="flex:1"><b>${esc(u.name)}</b> ${ELEM[u.el].e} พลัง ${u.power}${u.el===st.weak?" · ธาตุตรงจุดอ่อน!":""}${tired?" · เหนื่อยแล้ว":""}</span>
+      <button class="btn small" data-advact="${u.uid}" ${tired?"disabled":""}>ส่งออกไป</button>
+      ${u.skill&&!B.skillUsed[u.uid]?`<button class="btn ghost small" data-advskill="${u.uid}" ${tired?"disabled":""}>⚡ ท่าพิเศษ</button>`:""}</div>` }).join("");
+  $v.innerHTML=`<section class="card"><span class="eyebrow">🌍 ภารกิจกู้โลก · ด่าน ${esc(st.n)} · ตาที่ ${B.turn+1}</span>
+    <div class="advfoe ${B.hit?"hit":""}"><span style="font-size:64px;line-height:1">${B.over==="win"?"🌿":st.e}</span><b>${esc(st.n)}</b>
+      <div class="advbar"><i style="width:${hpPct}%;background:#e2574c"></i></div><span class="small">พลังชีวิต ${Math.max(0,Math.round(B.hp))}/${st.hp} · แพ้ทาง ${ELEM[st.weak].e}</span></div>
+    <div><span class="small">💪 ความอึดของทีม ${Math.max(0,Math.round(B.sta))}/${B.staMax}</span><div class="advbar"><i style="width:${saPct}%;background:#3f9b5a"></i></div></div>
+    <div class="feedback">${B.log.slice(-4).map(l=>`<span class="small">${esc(l)}</span>`).join("")}</div>
+    ${acts}
+    ${B.over==="win"?`<div class="feedback usebox"><b>🎉 กู้สำเร็จ!</b><span class="small">${esc(st.fact)}</span>${B.reward?`<span class="small">${esc(B.reward)}</span>`:""}</div>`
+      :B.over==="rest"?`<div class="feedback"><b>😮‍💨 ทีมเหนื่อยแล้ว กลับไปพักก่อน</b><span class="small">ไม่มีใครบาดเจ็บ ลองฝึกทีม ใส่อุปกรณ์ หรือเลือกสมาชิกธาตุ ${ELEM[st.weak].e} แล้วกลับมาใหม่นะ</span></div>`:""}
+    ${B.over?`<div class="row"><button class="btn" id="advdone">กลับแผนที่</button></div>`:`<p class="small muted">สมาชิกแต่ละตัวออกไปได้ 4 ครั้งต่อด่าน ศัตรูจะสวนกลับทุกตา ความอึดหมดเมื่อไรทีมต้องกลับไปพัก</p>`}</section>`;
+  B.hit=false;
+  const act=async(uid,skill)=>{ const u=B.team.find(x=>x.uid===uid); if(!u||B.over) return;
+    B.used[uid]=(B.used[uid]||0)+1; if(skill) B.skillUsed[uid]=true;
+    const mult=(u.el===st.weak?2:1)*(skill?2:1), dmg=Math.round(u.power*mult*(0.9+Math.random()*0.2));
+    B.hp-=dmg; B.hit=true; B.turn++;
+    B.log.push(`${u.name}${skill?" ใช้ท่าพิเศษ ⚡":""} ${ELEM[u.el].e} ทำได้ ${dmg}${u.el===st.weak?" (ตรงจุดอ่อน!)":""}`);
+    if(B.hp<=0){ B.over="win" } else {
+      const back=Math.round(st.atk*(0.8+Math.random()*0.4)); B.sta-=back; B.log.push(`${st.n} สวนกลับ ทีมเหนื่อยลง ${back}`);
+      const canAct=B.team.some(x=>(B.used[x.uid]||0)<4);
+      if(B.sta<=0||!canAct) B.over="rest" }
+    if(B.over){ const L2=mine(), first=B.over==="win"&&!advCleared(L2).has(st.id), now=new Date().toISOString();
+      await saveAttempt({type:"adv",act:"battle",setId:"adv-"+st.id,stage:st.id,win:B.over==="win",turns:B.turn,team:B.team.map(x=>x.uid),topic:"ภารกิจกู้โลก: "+st.n,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
+      if(first){ const mvp=B.team.slice().sort((a,b)=>b.power-a.power)[0];
+        await saveAttempt({type:"adv",act:"freelevel",unit:mvp.uid,setId:"adv-free",topic:"เลเวลฟรีจากภารกิจกู้โลก",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
+        B.reward=`ครั้งแรกที่ชนะด่านนี้ ${mvp.name} ได้เลเวลฟรี 1 ขั้น แม่น้ำช่วงนี้ใสขึ้นแล้ว` } }
+    renderAdvBattle(mine()) };
+  $v.querySelectorAll("[data-advact]").forEach(b=>b.onclick=()=>act(b.dataset.advact,false));
+  $v.querySelectorAll("[data-advskill]").forEach(b=>b.onclick=()=>act(b.dataset.advskill,true));
+  const d=document.getElementById("advdone"); if(d) d.onclick=()=>{ advB=null; renderAdv() };
+}
+/* parent view: where XP came from in the last 7 days, and the adventure at a glance */
+function xpSourceCard(list){
+  const t=todayKey(), recent=list.filter(a=>dayKey(a.endedAt)>t-7*DAY);
+  const g={new:0,replay:0,review:0,other:0}; recent.forEach(a=>{ if(a.type==="shop"||a.type==="adv") return; const x=Math.max(0,xpOf(a));
+    if(["set","probe","mixed","passage"].includes(a.type)) g[a.replay?"replay":"new"]+=x; else if(["review","recall","sweep","vocab"].includes(a.type)) g.review+=x; else g.other+=x });
+  const tot=g.new+g.replay+g.review+g.other; if(!tot) return "";
+  const spent=recent.filter(a=>a.type==="shop").reduce((s,a)=>s+(a.cost||0),0), adv=recent.filter(a=>a.type==="adv"&&a.act==="battle"), wins=adv.filter(a=>a.win).length;
+  const cut=recent.filter(a=>a.xpBase&&a.xpBase>a.xp).reduce((s,a)=>s+a.xpBase-a.xp,0);
+  const pc=v=>Math.round(v/tot*100);
+  return `<div><span class="eyebrow">XP 7 วันมาจากไหน · รวม ${tot}</span>
+    <div class="xpbar">${[["new","#2f6f8f","บทเรียนใหม่"],["review","#7fb6d6","ทบทวน/ศัพท์"],["replay","#f0a04b","ทำชุดเดิมซ้ำ"],["other","#c9a6ff","อื่นๆ"]].map(([k,c])=>g[k]?`<i style="width:${pc(g[k])}%;background:${c}"></i>`:"").join("")}</div>
+    <p class="small muted" style="margin:4px 0 0">บทเรียนใหม่ ${g.new} · ทบทวน/ศัพท์ ${g.review} · ทำชุดเดิมซ้ำ ${g.replay} · อื่นๆ ${g.other}${cut?` · ถูกหักตามกติกากันปั๊ม ${cut}`:""} · ใช้ไป ${spent}
+    ${adv.length?` · ภารกิจกู้โลก ${adv.length} ครั้ง ชนะ ${wins}`:""}</p></div>` }
+
 function parentDash(list){
   if(!list.length) return "";
   const p=progressOf(list), t=todayKey(), days=Array.from({length:14},(_,i)=>t-(13-i)*DAY);
@@ -3237,6 +3426,7 @@ function parentDash(list){
     <div><span class="eyebrow">นาทีที่ฝึกแต่ละวัน (14 วัน) · แถบจางคือช่วงเป้า · ✓ ภารกิจครบ</span>${chart}
       <div class="legend">${DAY_GROUPS.map(([k,n,c])=>`<span><i style="background:${c}"></i>${n}</span>`).join("")}</div></div>
     ${readinessCard(list)}
+    ${xpSourceCard(list)}
     ${strip?`<div><span class="eyebrow">สถานะเรื่องที่ฝึกแล้ว · เขียวเข้ม=ชำนาญ เขียว=ฝึกหัด ส้ม=เริ่มจาง แดง=ย้อนคาถาเก่าแล้วลืม</span><div class="spstrip">${strip}</div></div>`:""}
   </div>` }
 
@@ -3527,7 +3717,7 @@ async function setupAsk(sum){ const skips=sum.skips||[], conf=sum.conf||[];
   };
 }
 
-function route(){ const h=location.hash.replace("#",""); if(false){} else if(h==="map"){view="map"} else if(h==="den"){view="den";denMsg=""} else if(!["session","intro","feedback","done","skip","send","vocab","mission","notes","words"].includes(view)){view="home"} else if(view==="done"){view="home"} render() }
+function route(){ const h=location.hash.replace("#",""); if(false){} else if(h==="map"){view="map"} else if(h==="den"){view="den";denMsg=""} else if(!["session","intro","feedback","done","skip","send","vocab","mission","notes","words","adv"].includes(view)){view="home"} else if(view==="done"){view="home"} render() }
 window.addEventListener("hashchange",route);
 route();
 </script>
