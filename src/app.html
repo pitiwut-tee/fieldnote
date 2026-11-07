@@ -242,7 +242,36 @@ table.mt input{font:inherit;width:100%;min-width:5.5em;padding:6px;border-radius
 .pick{border:2px solid var(--accent)}
 .mission{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
 .mission:first-of-type{border-top:0}
-.mission.done{opacity:.75}
+.mission.done{opacity:.7;padding:8px 0}
+.mission.done h2{font-size:1rem;margin:0}
+.mission.later h2{font-size:1.05rem;margin:0}
+.mission.later p,.mission.later .chip{display:none}
+.mission.later .btn{padding:6px 14px;font-size:.9rem;min-height:0}
+.mission.later .btn:not(.ghost){background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
+.mission.next{background:color-mix(in srgb,var(--accent) 7%,transparent);border-radius:14px;padding:12px;margin:4px -6px;border-top:0}
+.mission.next .mcheck{background:var(--accent);color:#fff}
+/* home v2 */
+.strip{display:flex;gap:12px;align-items:flex-start}
+.strip .bbtn{flex:none}
+.strip .say{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.strip .say .line{background:var(--soft);border-radius:14px 14px 14px 4px;padding:8px 12px;font-size:.95rem;line-height:1.45}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chipbtn{font:inherit;font-size:.85rem;display:inline-flex;gap:4px;align-items:center;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;position:relative;text-decoration:none}
+.chipbtn .dotnew{position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:#e2574c}
+.moods{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.todayhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:560px){.tiles{grid-template-columns:repeat(3,1fr)}}
+.tile{font:inherit;text-align:left;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:4px;cursor:pointer;position:relative;min-height:92px}
+.tile .ti{font-size:1.6rem;line-height:1}
+.tile b{font-size:.95rem}
+.tile .small{line-height:1.35}
+.tile[aria-expanded="true"]{border:2px solid var(--accent)}
+.tile.doneT{opacity:.7}
+.tile .progress{height:6px;margin-top:auto}
+.tile .dotnew{position:absolute;top:8px;right:8px;width:10px;height:10px;border-radius:50%;background:#e2574c}
+.tpanel{animation:fadein .2s ease-out}
+@keyframes fadein{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .mcheck{flex:none;width:30px;height:30px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-family:var(--display)}
 .realm summary{cursor:pointer;padding:6px 0}
 .realm h3 small{color:var(--muted);font-family:var(--body);font-size:.8rem;font-weight:400}
@@ -471,7 +500,7 @@ const VOID=new Set(CAL.voidRecords||[]);   /* records the father said were only 
 function realAttempts(){ return attempts.filter(a=>!a.example&&!a.test&&!VOID.has(a.endedAt)) }
 function mine(){ return TEST ? attempts.filter(a=>!a.example) : realAttempts() }
 function isSkip(a){ return a.type==="skip" }
-const LESSON_TYPES=["set","probe","mixed","passage","review"];
+const LESSON_TYPES=["set","probe","mixed","passage","review","sweep"];
 function isLesson(a){ return LESSON_TYPES.includes(a.type||"set") }
 function dayKey(iso){ const d=new Date(iso); d.setHours(0,0,0,0); return d.getTime() }
 function todayKey(){ return dayKey(new Date().toISOString()) }
@@ -481,7 +510,8 @@ function xpOf(a){ if(isSkip(a)||a.type==="daymode") return 0; if(typeof a.xp==="
 function itemXp(items){ return items.reduce((s,x)=>s+(x.skipped||x.dontknow?0:x.correct?10:5)+(x.checkOk?5:0),0) }
 
 /* ---------- day types: school day or holiday (Thai public holidays, school days off, weekends), plus a manual switch ---------- */
-const LEVELS={full:{label:"เต็ม",mins:"ราว 90 นาที แบ่งทำ 3 ช่วง",units:3,probe:true},mid:{label:"กลาง",mins:"ราว 60 นาที",units:2,probe:true},light:{label:"เบา",mins:"ราว 40 นาที",units:1,probe:false}};
+const LEVELS={full:{label:"เต็ม",mins:"ราว 75–90 นาที แบ่งทำเป็นช่วงๆ",units:2,probe:true,sweep:10},mid:{label:"กลาง",mins:"ราว 60 นาที",units:2,probe:true,sweep:5},light:{label:"เบา",mins:"ราว 40 นาที",units:1,probe:false,sweep:5}};
+const SWEEP_SCHOOL=5;
 const LOWER_REASONS=["มีธุระครอบครัว","ไปเที่ยว/ออกนอกบ้าน","การบ้านหรืองานเยอะ","เรียนพิเศษ/กิจกรรม","ไม่สบาย","อื่นๆ"];
 const MILESTONES=[3,7,14,30,50,100,200,365];
 function isoDay(dk){ const d=new Date(dk); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0") }
@@ -515,11 +545,12 @@ function questStatus(list, wk, upto, met){
 
 function progressOf(list){
   const modes=dayModes(list);
-  const byDay=new Map(), skipDays=new Set(), leaveDays=new Set(), vocabDays=new Set(), units=new Map(), probes=new Map(), met=new Set();
+  const byDay=new Map(), sweepDays=new Set(), skipDays=new Set(), leaveDays=new Set(), vocabDays=new Set(), units=new Map(), probes=new Map(), met=new Set();
   list.forEach(a=>{ const k=dayKey(a.endedAt);
     if(a.type==="daymode") return;
     if(a.type==="mission"||a.type==="teach"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* mission / teaching dad: XP only, not a daily unit */
-    if(a.type==="goal"||a.type==="goaldone"||a.type==="shop") return;
+    if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood") return;
+    if(a.type==="sweep"){ sweepDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* old-topic sweep: its own daily step, not a lesson unit */
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
     byDay.set(k,(byDay.get(k)||0)+xpOf(a));
     if(a.type==="vocab") vocabDays.add(k); else { units.set(k,(units.get(k)||0)+1); if(a.type==="probe"||a.type==="mixed"||a.type==="passage") probes.set(k,(probes.get(k)||0)+1) } });
@@ -529,7 +560,9 @@ function progressOf(list){
   const today=todayKey();
   const noVocabToday=(()=>{try{const v=vocabToday();return !v.due.length&&!v.fresh.length}catch(e){return false}})();
   const need=d=>{ const info=dayInfo(d,modes); if(info.level==="school") return {units:1,probe:false,info}; const L=LEVELS[info.level]; return {units:L.units,probe:L.probe&&probesLeft(d),info} };
-  const isMet=d=>{ const n=need(d); return (vocabDays.has(d)||(d===today&&noVocabToday))&&(units.get(d)||0)>=n.units&&(!n.probe||(probes.get(d)||0)>=1) };
+  const sweepFrom=CAL.sweepFrom?new Date(CAL.sweepFrom+"T00:00:00").getTime():Infinity, noSweepToday=(()=>{try{return !sweepQuestions(list,1).length}catch(e){return true}})();
+  const sweepOk=d=>d<sweepFrom||sweepDays.has(d)||(d===today&&noSweepToday);
+  const isMet=d=>{ const n=need(d); return (vocabDays.has(d)||(d===today&&noVocabToday))&&(units.get(d)||0)>=n.units&&(!n.probe||(probes.get(d)||0)>=1)&&sweepOk(d) };
   const keys=[...byDay.keys(),...skipDays,...[...leaveDays].filter(d=>d<=today)];
   let streak=0, best=0, freeze=0, goalDays=0; const frozen=new Set(), earned=[], questDone=new Set();
   if(keys.length){
@@ -549,7 +582,7 @@ function progressOf(list){
   }
   const n=need(today), u=units.get(today)||0, pr=probes.get(today)||0;
   return {streak,best,freeze,goalDays,frozen,skipDays,byDay,met,todayXp:byDay.get(today)||0,leaveDays,onLeave:leaveDays.has(today),
-    unitsToday:u,probesToday:pr,lessonToday:u-pr>=1||(u>=1&&!n.probe),vocabToday:vocabDays.has(today),noVocabToday,need:n,info:n.info,modes,
+    unitsToday:u,probesToday:pr,sweepToday:sweepDays.has(today),sweepNeeded:today>=sweepFrom&&!noSweepToday,lessonToday:u-pr>=1||(u>=1&&!n.probe),vocabToday:vocabDays.has(today),noVocabToday,need:n,info:n.info,modes,
     goalToday:met.has(today),earnedToday:earned.filter(e=>e.d===today),quests:questStatus(list,weekStart(today),today,met),questDoneThisWeek:questDone.has(weekStart(today)),questWeeks:[...questDone].sort()};
 }
 
@@ -721,9 +754,32 @@ function startReview(n, title){
   view="session"; render(); window.scrollTo({top:0});
 }
 
+/* old-topic sweep ("ย้อนคาถาเก่า"): a few questions a day from ม.1–2 topics, mixed, one per spell, the spell checked
+   longest ago first. Shows what she still remembers before the Jan–Mar review. Wrong ones join the mistakes pool. */
+function sweepQuestions(list,n){
+  const bank=SETS.filter(s=>s.kind==="sweep").flatMap(s=>s.practice); if(!bank.length) return [];
+  const cur=new Set(CAL.currentSpells||[]), seen=new Map(), lastSpell=new Map(), t=todayKey();
+  list.filter(a=>a.type==="sweep").forEach(a=>(a.items||[]).forEach(x=>{ const d=dayKey(a.endedAt); seen.set(x.qid,Math.max(seen.get(x.qid)||0,d)); const sp=QBANK[x.qid]?.q.spell; if(sp) lastSpell.set(sp,Math.max(lastSpell.get(sp)||0,d)) }));
+  const fresh=bank.filter(q=>!cur.has(q.spell)&&!seen.has(q.id));
+  const bySpell=new Map(); fresh.forEach(q=>{ if(!bySpell.has(q.spell)) bySpell.set(q.spell,[]); bySpell.get(q.spell).push(q) });
+  const order=[...bySpell.keys()].sort((a,b)=>(lastSpell.get(a)||0)-(lastSpell.get(b)||0)||(hashStr(a+t)%97)-(hashStr(b+t)%97));
+  const out=[]; let round=0;
+  while(out.length<n&&round<4){ for(const sp of order){ const q=bySpell.get(sp)[round]; if(q&&out.length<n) out.push(q) } round++ }
+  return out }
+function hashStr(x){ let h=0; for(const c of x) h=(h*31+c.charCodeAt(0))|0; return Math.abs(h) }
+function sweepSize(p){ return p.info.kind==="school"?SWEEP_SCHOOL:(LEVELS[p.info.level]||LEVELS.full).sweep }
+function startSweep(){
+  const list=mine(), p=progressOf(list), qs=sweepQuestions(list,sweepSize(p)); if(!qs.length) return;
+  const t="ย้อนคาถาเก่า";
+  const steps=[...qs.map(q=>({kind:"q",phase:t,q:shuffleQ(q)})),{kind:"finish",phase:"เสร็จ"}];
+  S = {mode:"review", sweep:true, set:{id:"sweep",subject:"ย้อนคาถาเก่า",topic:"ย้อนคาถาเก่า ม.1–2"}, steps, trial:[], trialVote:{},
+       active:true, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
+  view="session"; render(); window.scrollTo({top:0});
+}
+
 /* daily recall: 3 questions from what she learned today (or the last day she learned), answered from memory
    (a twin, typed answer, or hidden options). Once a day, small XP. Retrieval practice, not new content. */
-function recallSource(list){ const ls_=list.filter(a=>isLesson(a)&&a.type!=="review"&&(a.items||[]).length);
+function recallSource(list){ const ls_=list.filter(a=>isLesson(a)&&a.type!=="review"&&a.type!=="sweep"&&(a.items||[]).length);
   if(!ls_.length) return null; const t=todayKey(), days=[...new Set(ls_.map(a=>dayKey(a.endedAt)))].sort((a,b)=>b-a);
   const day=days.includes(t)?t:days[0]; if(t-day>3*86400000) return null;
   const ids=[...new Set(ls_.filter(a=>dayKey(a.endedAt)===day).flatMap(a=>a.items.filter(x=>!x.skipped&&QBANK[x.qid]).map(x=>x.qid)))];
@@ -776,7 +832,7 @@ function missionList(p){
   const lv=p.info.level, probeLeft=p.need.probe, u=p.unitsToday, nonProbe=u-p.probesToday;
   const m=[{key:"lesson",done:nonProbe>=1||(!probeLeft&&u>=1)},{key:"vocab",done:p.vocabToday||p.noVocabToday}];
   if(lv==="full"||lv==="mid") m.push({key:"probe",done:probeLeft?p.probesToday>=1:u>=2});
-  if(lv==="full") m.push({key:"extra",done:u>=3});
+  if(p.sweepNeeded||p.sweepToday) m.push({key:"sweep",done:p.sweepToday});
   return m;
 }
 function missionsDone(p){ const m=missionList(p); return {done:m.filter(x=>x.done).length,total:m.length} }
@@ -784,7 +840,7 @@ function missionsDone(p){ const m=missionList(p); return {done:m.filter(x=>x.don
 let dmOpen=null, dmLevel=null, dmReason=null;
 function dayPanel(p){
   const i=p.info, L=LEVELS[i.level];
-  const head=i.kind==="school"?`<b>วันนี้: ${esc(i.name)}</b> · ภารกิจ 2 อย่าง ราว 40 นาที`
+  const head=i.kind==="school"?`<b>วันนี้: ${esc(i.name)}</b> · ราว 45–60 นาที`
     :`<b>วันนี้: วันหยุด (${esc(i.name)})</b> · ระดับ${L.label} ${L.mins}${i.lowered?` · ลดระดับเพราะ${esc(i.reason)}`:""}`;
   let body="";
   if(dmOpen==="lower"){
@@ -825,8 +881,10 @@ function renderHome(){
         <span class="row" style="gap:6px"><span class="chip">${s.subject} · ${s.grade}</span>${s.current?`<span class="chip l2">เรียนอยู่ตอนนี้</span>`:""}</span>
         <span class="subj">${esc(s.topic)}</span>
         <span class="meta">${s.kind==="probe"?"ด่านสำรวจ ":s.kind==="mixed"?"ชุดผสมแบบข้อสอบ ":s.kind==="passage"?"อ่านจับใจความ ":""}ฝึก ${s.practice.length} ข้อ · ${s.mins}</span></button>`;
-  const mission=(n,key,label,title,btn,extraHtml)=>`<div class="mission ${md[key]?"done":""}"><span class="mcheck">${md[key]?"✅":n}</span>
-      <div style="display:flex;flex-direction:column;gap:6px;flex:1"><span class="small muted">${label}</span>${title}${btn}${extraHtml||""}</div></div>`;
+  const nextKey=(ms.find(x=>!x.done)||{}).key;
+  const mission=(n,key,label,title,btn,extraHtml)=>{ const st=md[key]?"done":key===nextKey?"next":"later";
+    return `<div class="mission ${st}"><span class="mcheck">${md[key]?"✅":n}</span>
+      <div style="display:flex;flex-direction:column;gap:6px;flex:1"><span class="small muted">${label}</span>${title}${st==="done"?"":btn}${st==="done"&&/data-notes/.test(btn)?btn:""}${extraHtml||""}</div></div>` };
   const doneToday=list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===today).sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt));
   const doneNP=doneToday.filter(a=>!["probe","mixed","passage"].includes(a.type)), doneProbe=doneToday.find(a=>a.type==="mixed"||a.type==="passage")||doneToday.find(a=>a.type==="probe");
   const tr=trialsToday();
@@ -841,26 +899,20 @@ function renderHome(){
   ${TEST?`<section class="card" style="border-color:var(--beak)"><b style="color:var(--beak)">โหมดทดสอบ</b>
     <p class="small">ผลจากเครื่องนี้จะติดป้าย "ทดสอบ" และไม่ถูกนับในการวิเคราะห์ ลองกดทุกอย่างได้ตามสบาย</p>
     <button class="btn ghost" id="leave-test">ออกจากโหมดทดสอบ และล้างผลทดสอบในเครื่องนี้</button></section>`:""}
-  ${getBuddy()?buddyHero(list,p,plan):buddySetupHtml()}
-  <section class="card">
-    ${flameHtml(p)}
-    <div class="week">${dots}</div>
-    <p class="small muted">${p.goalToday?"วันนี้ภารกิจครบแล้ว ไฟยังลุกอยู่ 🔥":"ทำภารกิจวันนี้ให้ครบ ไฟถึงจะติด"} · ทำครบทุก 5 วัน หรือทำชุดฝึกเกินภารกิจของวัน ได้น้ำแข็ง 1 ก้อน (เก็บได้สูงสุด ${FREEZE_MAX}) วันที่ไม่ได้ทำ น้ำแข็งจะละลายแทนไฟ</p>
-    ${p.onLeave&&!p.goalToday?`<p class="small">🏕 ช่วงนี้ลาไว้ ไฟหยุดรออยู่ กลับมาเมื่อไรก็ทำต่อได้เลย (ทำระหว่างลาก็นับนะ)</p>`
-      :p.goalToday||skippedToday?(skippedToday&&!p.goalToday?`<p class="small muted">วันนี้บอกพักไว้แล้ว พรุ่งนี้มาต่อนะ</p>`:""):`<button class="btn ghost" id="skip-open">ขอพัก (วันเดียว หรือ ไปค่ายหลายวัน)</button>`}
-  </section>
+  ${getBuddy()?buddyStrip(list,p,plan):buddySetupHtml()}
   ${V&&V.active&&view!=="vocab"?`<section class="card" style="border:2px solid var(--beak)"><b>คำศัพท์วันนี้ทำค้างไว้</b><div class="row"><button class="btn" id="resume-v">ทำต่อ</button></div></section>`:""}
   ${(()=>{const pd=pendingSet(); return pd?`<section class="card" style="border:2px solid var(--beak)"><b>ทำชุด "${esc(pd.set.topic)}" ค้างไว้</b>
     <p class="small muted">ทำต่อจากข้อที่ค้างได้เลย ข้อที่ตอบไปแล้วยังอยู่ครบ</p>
     <div class="row"><button class="btn" id="resume">ทำต่อ</button><button class="btn ghost" id="discard">เริ่มชุดใหม่แทน</button></div></section>`:""})()}
   <section class="card pick">
-    <span class="eyebrow">ภารกิจวันนี้ · ทำให้ครบ ${ms.length} อย่าง</span>
+    <div class="todayhead"><span class="eyebrow">ภารกิจวันนี้ · ${md?Object.values(md).filter(Boolean).length:0}/${ms.length}</span></div>
+    <div class="progress" style="height:8px"><i style="width:${Math.round(ms.filter(x=>x.done).length/ms.length*100)}%;background:var(--beak)"></i></div>
     ${dayPanel(p)}
     ${tr.length?`<div class="daypanel trialbox"><p class="small"><b>🧪 ทดลองของใหม่วันนี้:</b> ${tr.map(k=>TRIAL_NAMES[k]).join(" และ ")} · ลองสัปดาห์นี้แล้วบอกหน่อยว่าชอบไหม</p></div>`:""}
     ${mission(1,"lesson",plan.repair?"ชุดซ่อมจุดอ่อน (วันศุกร์) · ราว 20 นาที":"ชุดฝึก"+(md.lesson?" · ทำแล้ว":" · ราว 30 นาที"),lessonTitle,
       md.lesson&&doneLesson?`<div class="row">${notesBtn(doneLesson)}<button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"เลือกชุดอื่น"}</button></div>`
       :`<div class="row"><button class="btn" id="go-rec">${plan.repair?"เริ่มซ่อม":"เริ่มชุดนี้"}</button><button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"อยากทำเรื่องอื่น"}</button></div>`,
-      showAll?`<div class="sets">${SETS.map((s,k)=>s===plan.lesson?"":setCard(s,k)).join("")}</div>`:"")}
+      showAll?`<div class="sets">${SETS.map((s,k)=>s===plan.lesson||s.kind==="sweep"?"":setCard(s,k)).join("")}</div>`:"")}
     ${mission(2,"vocab","คำศัพท์อังกฤษ · ราว 10 นาที",`<h2>คำศัพท์วันนี้</h2><p class="small muted">${md.vocab?"ทำแล้ว เก่งมาก":vt.fresh.length||vt.due.length?`คำใหม่ ${vt.fresh.length} คำ · ทบทวน ${vt.due.length} คำ · ฟังเสียง ฝึกสะกด${isWeekend()?" · อ่านภาษาอังกฤษสั้นๆ":""}`:"วันนี้ไม่มีคำค้าง ข้ามได้"}</p>`,
       !p.vocabToday&&(vt.fresh.length||vt.due.length)?`<button class="btn" id="vocab-go">เริ่มคำศัพท์</button>`:Object.keys(vocabState()).length?`<button class="btn ghost" id="go-words">📖 ทบทวนคำศัพท์ที่เรียนแล้ว</button>`:"")}
     ${ms.some(x=>x.key==="probe")?(plan.passage&&!(md.probe&&doneProbe&&doneProbe.type!=="passage")?mission(3,"probe","อ่านจับใจความวิทย์ (สัปดาห์ละครั้ง) · ราว 20 นาที",
@@ -872,40 +924,16 @@ function renderHome(){
       :mission(3,"probe",plan.probe?"ด่านสำรวจ · เช็กเรื่องที่เรียนมาแล้ว ราว 20 นาที":"ชุดฝึกเพิ่ม (ด่านสำรวจครบแล้ว)",
       md.probe&&doneProbe?doneTitle(doneProbe):plan.probe?`<h2>${esc(plan.probe.topic)}</h2><p class="small muted">${plan.probe.practice.length} ข้อ ไม่มีการ์ดก่อนทำ ทำได้ดีคาถาขึ้นขั้นทันที</p>`:`<p class="small muted">ทำชุดไหนก็ได้อีก 1 ชุด</p>`,
       md.probe&&doneProbe?notesBtn(doneProbe):`<button class="btn" id="${plan.probe?"go-probe":"go-extra2"}">${plan.probe?"เข้าด่าน":"เลือกชุด"}</button>`)):""}
-    ${ms.some(x=>x.key==="extra")?mission(4,"extra",plan.extra&&plan.extra.kind==="probe"?"ด่านสำรวจ · เช็กเรื่องที่เรียนมาแล้ว ราว 20 นาที (พักก่อนค่อยทำก็ได้)":"ชุดเพิ่มวันหยุด · ราว 25 นาที (พักก่อนค่อยทำก็ได้)",
-      md.extra&&(doneNP[1]||doneToday.filter(a=>a!==doneNP[0]&&a!==doneProbe)[0])?doneTitle(doneNP[1]||doneToday.filter(a=>a!==doneNP[0]&&a!==doneProbe)[0]):plan.extra?`<h2>${esc(plan.extra.topic)}</h2>`:"",(()=>{const a=doneNP[1]||doneToday.filter(x=>x!==doneNP[0]&&x!==doneProbe)[0]; return md.extra&&a?notesBtn(a):`<button class="btn" id="go-extra">เริ่มชุดนี้</button>`})()):""}
+    ${ms.some(x=>x.key==="sweep")?mission(ms.findIndex(x=>x.key==="sweep")+1,"sweep",`ย้อนคาถาเก่า ม.1–2 · ราว ${sweepSize(p)>5?"12":"7"} นาที`,
+      md.sweep?`<h2>ย้อนคาถาเก่า</h2><p class="small muted">ทำแล้ว ✓ ข้อที่พลาดจะวนมาให้ทวน</p>`:`<h2>${sweepSize(p)} ข้อคละเรื่องที่เคยเรียน</h2><p class="small muted">เช็กว่ายังจำได้ไหม ไม่บอกล่วงหน้าว่าเรื่องอะไร ลืมไม่เป็นไร เราจะได้รู้ว่าต้องทวนตรงไหน</p>`,
+      md.sweep?"":`<button class="btn" id="sweep-go">เริ่มย้อน</button>`):""}
   </section>
   ${p.goalToday?`<section class="card usebox"><span class="eyebrow">🎉 ภารกิจวันนี้ครบแล้ว · อยากทำต่อไหม (ไม่บังคับ)</span>
-    <div class="row">${nextLesson?`<button class="btn" data-more="${nextLesson.id}">ฝึกต่อ: ${esc(nextLesson.topic)}</button>`:""}
-      ${pool.length?`<button class="btn ghost" id="review-go2">ทบทวนข้อที่เคยพลาด (${Math.min(5,pool.length)} ข้อ)</button>`:""}
+    <div class="row">${plan.extra&&!doneToday.some(a=>a.setId===plan.extra.id)?`<button class="btn" data-more="${plan.extra.id}">ฝึกต่อ: ${esc(plan.extra.topic)}</button>`:nextLesson?`<button class="btn" data-more="${nextLesson.id}">ฝึกต่อ: ${esc(nextLesson.topic)}</button>`:""}
       ${doneLesson?notesBtn(doneLesson):""}
       ${Object.keys(vocabState()).length?`<button class="btn ghost" id="go-words2">📖 คำศัพท์ที่เรียนแล้ว</button>`:""}</div>
     <p class="small muted">ชุดที่ทำเกินภารกิจ ได้น้ำแข็งกันไฟดับด้วยนะ</p></section>`:""}
-  ${letterHtml()}
-  ${goalHtml(list)}
-  ${teachHtml(list)}
-  ${(()=>{const m=activeMission(); if(!m) return ""; const d=missionDone(m), st=mState(m.id);
-    return `<section class="card usebox"><span class="eyebrow">🌏 ภารกิจโลกจริงประจำเดือน${d?" · ทำแล้ว ✓":""}</span><h2>${esc(m.title)}</h2>
-      <p class="small">${esc(m.hook||m.why)}</p><p class="small muted">${esc(m.mins)} · ถึง ${new Date(m.to+"T00:00:00").toLocaleDateString("th-TH",{day:"numeric",month:"short"})} · ไม่นับในไฟประจำวัน · ได้ ${m.xp||100} XP${m.record&&!d?` · บันทึกแล้ว ${(st.rows||[]).length} แถว`:""}</p>
-      <button class="btn ${d?"ghost":""}" id="go-mission">${d?"ดูภารกิจ":"เปิดภารกิจ"}</button></section>`})()}
-  <section class="card"><h3>ภารกิจประจำสัปดาห์ ${p.questDoneThisWeek?"✅ ครบแล้ว ได้ของหายาก ✨":""}</h3>
-    ${quests.q.map(q=>`<div class="quest"><span>${q.have>=q.need?"✅":"⬜"} ${q.label}</span><span class="small muted">${Math.min(q.have,q.need)}/${q.need}</span></div>`).join("")}
-    <p class="small muted">ครบทั้ง 3 ข้อ ได้<b>ของหายาก ✨ 1 ชิ้น</b> ที่ซื้อด้วยดาวไม่ได้ และดาวเวทพิเศษ ⭐${QUEST_BONUS} เริ่มใหม่ทุกวันจันทร์${(()=>{const nx=RARE[questWeeks(mine()).length]; return nx?` · ชิ้นต่อไป: ${nx.e} ${esc(nx.n)}`:""})()}</p></section>
-  ${(()=>{const g=activeGuest(); if(!g) return ""; const pr=guestProgress(g,list), left=Math.round((new Date(g.to+"T23:59:59")-Date.now())/86400000);
-    return `<section class="card" style="border:2px dashed var(--beak)"><div class="row" style="gap:12px;align-items:center"><span style="font-size:2.6rem" class="float">${g.item.e}</span>
-      <div style="flex:1;display:flex;flex-direction:column;gap:4px"><h3 style="margin:0">🎁 แขกพิเศษมาเยี่ยม: ${esc(g.item.n)}</h3>
-      ${pr.done?`<span class="small"><b>ได้แล้ว! ไปใช้ที่บ้านคู่หูได้เลย 🎉</b></span>`:`<span class="small">${esc(g.text)} · ทำแล้ว ${pr.n}/${g.task.n}</span>
-      <div class="progress"><i style="width:${Math.round(pr.n/g.task.n*100)}%;background:var(--beak)"></i></div>
-      <span class="small muted">อยู่ถึง ${new Date(g.to+"T12:00:00").toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"short"})}${left<=0?" (วันสุดท้าย)":""} ถ้าไม่ทัน ไม่เป็นไร แขกจะกลับมาอีกในอีกไม่กี่สัปดาห์</span>`}</div></div></section>` })()}
-  <span class="eyebrow">เก็บ XP เพิ่ม (ไม่บังคับ)</span>
-  <section class="sets">
-    ${(()=>{const src=recallSource(list); if(!src) return ""; const done=recallDoneToday(list);
-      return `<div class="card"><h3>🧠 ทบทวนวันนี้ 3 ข้อ</h3><p class="small muted">${done?"วันนี้ทบทวนแล้ว เก่งมาก พรุ่งนี้มาใหม่นะ":"ดึงสิ่งที่เรียนล่าสุดกลับมาจากความจำ ข้อละ +5 XP และโบนัส +5 (วันละครั้ง) ช่วยให้จำได้นานขึ้นมาก"}</p>
-      ${done?"":`<button class="btn ghost" id="recall-go">ทบทวน 3 ข้อ</button>`}</div>`})()}
-    <div class="card"><h3>ทบทวนข้อที่เคยพลาด</h3>
-      <p class="small muted">${pool.length?`มีค้างอยู่ ${pool.length} ข้อ ครั้งนี้ทำ ${Math.min(5,pool.length)} ข้อ ตัวเลือกจะสลับที่ใหม่`:"ยังไม่มีข้อค้าง"}</p>
-      ${pool.length?`<button class="btn ghost" id="review-go">ทบทวน</button>`:""}</div>
-  </section>
+  ${homeTiles(list,p,pool)}
   ${store!=="db"&&(unsent().a.length||unsent().f.length)?`<section class="card"><h3>มีผลที่ยังไม่ได้ส่งให้พ่อ ${unsent().a.length} ครั้ง</h3>
     <p class="small muted">เครื่องนี้ยังไม่ได้เชื่อมบัญชี ผลจึงเก็บไว้ในเครื่อง ส่งให้พ่อผ่าน LINE ได้ในไม่กี่วินาที</p>
     <button class="btn" id="send-open">ส่งผลให้พ่อ</button></section>`:""}
@@ -916,6 +944,12 @@ function renderHome(){
     <button class="btn ghost" id="send-all">ส่งผลทั้งหมดให้พ่ออีกครั้ง</button>
     <p style="margin:12px 0 0">แอปรุ่น ${esc(BUILD)}</p></details>`:""}`;
   bindDayPanel(p); bindBuddySetup(); bindBuddyHero(); bindLetter(); bindGoal(list); bindTeach(); buddyNote="";
+  $v.querySelectorAll("[data-tile]").forEach(t=>t.onclick=()=>{ homeOpen=homeOpen===t.dataset.tile?null:t.dataset.tile; renderHome();
+    const tp=document.getElementById("tpanel"); if(tp) tp.scrollIntoView({block:"nearest",behavior:"smooth"}) });
+  $v.querySelectorAll("[data-mood]").forEach(m=>m.onclick=async()=>{ const now=new Date().toISOString();
+    await saveAttempt({type:"mood",setId:"mood",mood:m.dataset.mood,topic:"ความพร้อมวันนี้: "+MOODS.find(x=>x[0]===m.dataset.mood)[2],startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
+    buddyNote=moodReply(m.dataset.mood); renderHome() });
+  { const sg=document.getElementById("sweep-go"); if(sg) sg.onclick=()=>startSweep() }
   const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
   on("go-rec",()=>{ if(plan.repair) return startReview(8,"ชุดซ่อมจุดอ่อน"); if(plan.lesson){introSet=plan.lesson;view="intro";render()} });
   on("go-probe",()=>{introSet=plan.probe;view="intro";render()});
@@ -1369,24 +1403,48 @@ function renderStep(){
 function answer(a){ readStop(); S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
 function advance(){ readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.hints=0; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
 
+/* concept card, one idea per screen: (1) why this topic exists — a puzzle to guess first (c.hook) or the "use" line,
+   (2) each point alone with "เข้าใจแล้ว" / "ขออธิบายอีกแบบ" (c.more[i], else the next whole alternative),
+   (3) a short summary with formulas and vocab. Which points needed another explanation is saved as conceptHelp. */
+function conceptStages(c){ return [{t:"why"},...c.points.map((x,i)=>({t:"pt",i})),{t:"sum"}] }
 function renderConcept(){
-  const c=S.set.concept;
-  $v.innerHTML=`<section class="card concept">${header()}
-    <h2>${esc(c.title)}</h2>
-    <div>${readBtn("concept","🔊 ฟังการ์ดนี้")}</div>
-    <ul>${c.points.map(p=>`<li>${gloss(p)}</li>`).join("")}</ul>
-    ${c.use?`<div class="feedback usebox"><span class="small"><b>🌏 เอาไปใช้ที่ไหน</b> ${gloss(c.use)}</span></div>`:""}
+  const c=S.set.concept, st=conceptStages(c); S.cStage=S.cStage||0; const cur=st[Math.min(S.cStage,st.length-1)], n=c.points.length;
+  const dots=`<div class="row" style="gap:4px;margin:4px 0">${st.map((x,k)=>`<span style="width:${k===S.cStage?18:8}px;height:8px;border-radius:4px;background:${k<=S.cStage?"var(--accent)":"var(--line)"};display:inline-block;transition:width .2s"></span>`).join("")}</div>`;
+  let body="", btns="";
+  if(cur.t==="why"){ const h=c.hook;
+    body=h?`<span class="eyebrow">🤔 ลองคิดก่อน</span><p>${gloss(h.text)}</p>${h.q?`<p><b>${gloss(h.q)}</b></p>`:""}
+      ${h.opts&&S.hookPick==null?`<div class="opts">${h.opts.map((o,k)=>`<button class="opt" data-hk="${k}">${esc(o)}</button>`).join("")}</div><p class="small muted">เดาได้เลย ไม่มีผิดถูก ไม่นับคะแนน</p>`
+        :`<div class="feedback usebox"><p>${gloss(h.reveal)}</p></div>`}`
+      :`<span class="eyebrow">🌏 เรื่องนี้ใช้ทำอะไร</span><h2>${esc(c.title)}</h2>${c.use?`<p>${gloss(c.use)}</p>`:""}<p class="small muted">มี ${n} ส่วน อ่านทีละส่วน ส่วนไหนยังงง กด "ขออธิบายอีกแบบ" ได้เลย</p>`;
+    btns=h&&h.opts&&S.hookPick==null?"":`<button class="btn" id="cnext">ไปเรียนกันเลย</button>`;
+  } else if(cur.t==="pt"){ const i=cur.i, more=(c.more||[])[i], helped=(S.conceptHelp||[]).filter(x=>x===i).length;
+    body=`<span class="eyebrow">ส่วนที่ ${i+1} จาก ${n}</span><p style="font-size:1.08rem;line-height:1.7">${gloss(c.points[i])}</p>
+      ${helped&&more?`<div class="feedback"><b>อธิบายอีกแบบ</b><p class="small">${gloss(more)}</p></div>`:""}
+      ${helped&&!more?c.alts.slice(0,S.altShown).map(a=>`<div class="feedback"><b>${esc(a.label)}</b>${a.lines.map(l=>`<p class="small">${gloss(l)}</p>`).join("")}</div>`).join(""):""}`;
+    const canMore=more?!helped:S.altShown<(c.alts||[]).length;
+    btns=`<button class="btn" id="cnext">เข้าใจแล้ว ✓</button>${canMore?`<button class="btn ghost" id="cmore">ขออธิบายอีกแบบ</button>`:""}`;
+  } else {
+    body=`<span class="eyebrow">สรุปทั้งหมด</span><h2>${esc(c.title)}</h2><ul>${c.points.map(p=>`<li>${gloss(p)}</li>`).join("")}</ul>
+      ${c.hook&&c.use?`<div class="feedback usebox"><span class="small"><b>🌏 เอาไปใช้ที่ไหน</b> ${gloss(c.use)}</span></div>`:""}
+      ${c.formulas.map(f=>`<div class="formula">${esc(f)}</div>`).join("")}
+      <div><span class="eyebrow">คำศัพท์อังกฤษของบทนี้</span><div class="vocab">${c.vocab.map(([e,t])=>`<span>${e} <i>${t}</i></span>`).join("")}</div></div>`;
+    btns=`<button class="btn" id="next">พร้อมแล้ว ไปฝึกทำ</button>`;
+  }
+  $v.innerHTML=`<section class="card concept">${header()}${dots}
+    <div>${readBtn("concept","🔊 ฟังส่วนนี้")}</div>
+    ${body}
     <div class="feedback" id="gloss-box" hidden></div>
-    ${c.formulas.map(f=>`<div class="formula">${esc(f)}</div>`).join("")}
-    <div><span class="eyebrow">คำศัพท์อังกฤษของบทนี้</span><div class="vocab">${c.vocab.map(([e,t])=>`<span>${e} <i>${t}</i></span>`).join("")}</div></div>
-    ${c.alts.slice(0,S.altShown).map(a=>`<div class="feedback"><b>${esc(a.label)}</b>${a.lines.map(l=>`<p class="small">${gloss(l)}</p>`).join("")}</div>`).join("")}
-    <div class="row"><button class="btn" id="next">เข้าใจแล้ว ไปต่อ</button>
-    ${S.altShown<c.alts.length?`<button class="btn ghost" id="alt">อธิบายอีกแบบ</button>`:""}</div>
+    <div class="row">${S.cStage>0?`<button class="btn ghost small" id="cback" style="border:0">← ย้อน</button>`:""}${btns}</div>
     ${askHtml("concept")}</section>${padHtml()}`;
   bindGloss(); padSetup(); bindAsk("concept",{topic:S.set.topic});
-  const cb=$v.querySelector('[data-read="concept"]'); if(cb) cb.onclick=()=>readAloud("concept",[c.title,...c.points,...(c.use?["เอาไปใช้ที่ไหน: "+c.use]:[])],()=>{S.conceptListen=(S.conceptListen||0)+1});
-  const al=document.getElementById("alt"); if(al) al.onclick=()=>{S.altShown++;renderConcept()};
-  document.getElementById("next").onclick=()=>{S.conceptSec=Math.round((Date.now()-S.qStart)/1000);advance()};
+  const said=cur.t==="why"?(c.hook?[c.hook.text,c.hook.q||"",...(S.hookPick!=null||!c.hook.opts?[c.hook.reveal]:[])]:[c.title,c.use||""]):cur.t==="pt"?[c.points[cur.i]]:[c.title,...c.points];
+  const cb=$v.querySelector('[data-read="concept"]'); if(cb) cb.onclick=()=>readAloud("concept",said.filter(Boolean),()=>{S.conceptListen=(S.conceptListen||0)+1});
+  const go=k=>{ readStop(); S.cStage=k; renderConcept(); window.scrollTo({top:0}) };
+  $v.querySelectorAll("[data-hk]").forEach(b=>b.onclick=()=>{ S.hookPick=+b.dataset.hk; renderConcept() });
+  const nx=document.getElementById("cnext"); if(nx) nx.onclick=()=>go(S.cStage+1);
+  const bk=document.getElementById("cback"); if(bk) bk.onclick=()=>go(S.cStage-1);
+  const mo=document.getElementById("cmore"); if(mo) mo.onclick=()=>{ S.conceptHelp=[...(S.conceptHelp||[]),cur.i]; if(!(c.more||[])[cur.i]) S.altShown++; renderConcept() };
+  const fin=document.getElementById("next"); if(fin) fin.onclick=()=>{S.conceptSec=Math.round((Date.now()-S.qStart)/1000);S.cStage=0;advance()};
 }
 
 /* ---------- reading passage ---------- */
@@ -1435,7 +1493,7 @@ function renderRate(){
     e.target.disabled=true; e.target.textContent="กำลังบันทึก…";
     const items=S.items, scored=items.filter(x=>!x.skipped);
     const rec={...trialRec(),...((S.reflect||"").trim()?{reflect:S.reflect.trim()}:{}),...(S.dueIds&&S.dueIds.length?{dueIds:S.dueIds}:{}),type:S.set.kind==="probe"?"probe":S.set.kind==="mixed"?"mixed":S.set.kind==="passage"?"passage":"set",setId:S.set.id,spell:S.set.spell,subject:S.set.subject,topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
-      durationSec:Math.round((Date.now()-S.start)/1000),conceptSec:S.conceptSec||0,...(S.conceptListen?{conceptListen:S.conceptListen}:{}),...(S.readSec?{readSec:S.readSec,readChars:S.readChars}:{}),...(S.listenPassage?{listenPassage:S.listenPassage}:{}),rating:S.rating,memo:document.getElementById("memo").value.trim(),
+      durationSec:Math.round((Date.now()-S.start)/1000),conceptSec:S.conceptSec||0,...(S.conceptHelp&&S.conceptHelp.length?{conceptHelp:[...new Set(S.conceptHelp)],...(S.hookPick!=null?{hookPick:S.hookPick}:{})}:S.hookPick!=null?{hookPick:S.hookPick}:{}),...(S.conceptListen?{conceptListen:S.conceptListen}:{}),...(S.readSec?{readSec:S.readSec,readChars:S.readChars}:{}),...(S.listenPassage?{listenPassage:S.listenPassage}:{}),rating:S.rating,memo:document.getElementById("memo").value.trim(),
       correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items)+20,altShown:S.altShown,glossed:S.glossed,confused:S.confused,items};
     await finishWith(rec);
   };
@@ -1469,6 +1527,9 @@ async function finishReview(){
   }
   $v.innerHTML=`<section class="card"><p class="muted">กำลังบันทึก…</p></section>`;
   const items=S.items, scored=items.filter(x=>!x.skipped);
+  if(S.sweep){ const sc=items.filter(x=>!x.skipped), c=sc.filter(x=>x.correct).length;
+    return finishWith({type:"sweep",setId:"sweep",subject:"ย้อนคาถาเก่า",topic:"ย้อนคาถาเก่า ม.1–2",startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
+      durationSec:Math.round((Date.now()-S.start)/1000),correct:c,total:sc.length,xp:itemXp(items),confused:S.confused,items}) }
   if(S.recall){ const sc=items.filter(x=>!x.skipped), c=sc.filter(x=>x.correct).length;
     return finishWith({type:"recall",setId:"recall",subject:"ทบทวน",topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
       durationSec:Math.round((Date.now()-S.start)/1000),correct:c,total:sc.length,xp:c*5+5,confused:S.confused,items}) }
@@ -1589,6 +1650,61 @@ function buddyAfter(rec){
   if(pc<0.5) return "วันนี้ยากหน่อยใช่ไหม ไม่เป็นไรเลย ข้อที่พลาดเราเก็บไว้ทวนให้ รอบหน้าจะง่ายขึ้น";
   return pickDay(["ทำจบอีกชุดแล้ว ทีละนิดแบบนี้แหละที่ไปถึงได้จริง","ข้อที่พลาด เราจะเอามาให้ลองใหม่ตอนที่ใช่"]);
 }
+/* ---------- home v2: a small companion strip, one main "today" card, then tiles that open in place ---------- */
+let homeOpen=null;
+const MOODS=[["ready","😄","พร้อมลุย"],["ok","🙂","ปกติ"],["tired","😪","เหนื่อย"]];
+function moodToday(list){ return list.find(a=>a.type==="mood"&&dayKey(a.endedAt)===todayKey()) }
+function moodReply(m){ return m==="tired"?"เหนื่อยก็พักก่อนได้นะ วันนี้ทำแค่ภารกิจข้อ 1 ก่อนก็พอ ที่เหลือค่อยดูอีกที เราบอกพ่อไว้แล้วว่าวันนี้เธอเพลีย"
+  :m==="ready"?"เยี่ยม! ไฟแรงแบบนี้ ลองข้อระดับ 3 ให้เต็มที่เลย":"โอเค ค่อยๆ ไปทีละข้อนะ" }
+function buddyStrip(list,p,plan){ const b=getBuddy(); if(!b) return "";
+  const lines=buddyNote?[buddyNote]:buddyLines(list,p,plan), mood=moodToday(list);
+  const line=buddyTap?buddyLast.tips[buddyTap%buddyLast.tips.length]:mood&&!buddyNote&&dayKey(mood.endedAt)===todayKey()&&lines.length<2?moodReply(mood.mood):(lines[1]||lines[0]);
+  const t=isoDay(todayKey()), L=LETTERS.find(l=>l.date<=t), unread=L&&!lettersRead().includes(L.id), w=wallet(list);
+  return `<section class="card buddyhero"><div class="strip">
+    <button class="bbtn ${buddyTap?"hop":""}" id="btap" type="button" aria-label="คุยกับ ${esc(b.name)}">${buddyFace(b,64)}</button>
+    <div class="say"><span class="line"><b>${esc(b.name)}:</b> ${esc(line)}</span>
+      ${mood?"":`<div class="moods"><span class="small muted">วันนี้พร้อมแค่ไหน</span>${MOODS.map(([k,e,n])=>`<button class="chipbtn" data-mood="${k}">${e} ${n}</button>`).join("")}</div>`}
+      <div class="chips"><button class="chipbtn" data-tile="fire">🔥 ${p.streak} วัน</button><a class="chipbtn" href="#den">⭐ ${w.stars}</a>
+        ${L?`<button class="chipbtn" data-tile="letter">💌 จดหมาย${unread?`<span class="dotnew"></span>`:""}</button>`:""}</div></div></div>
+    ${wishItem(list)?`<div style="margin-top:10px">${wishHtml(list)}</div>`:""}</section>` }
+function homeTiles(list,p,pool){
+  const T=[], q=p.quests, qd=q.q.filter(x=>x.have>=x.need).length;
+  const src=recallSource(list); if(src){ const d=recallDoneToday(list); T.push({id:"recall",i:"🧠",t:"ทบทวนวันนี้",s:d?"ทำแล้ววันนี้ ✓":"3 ข้อ · +20 XP",done:d}) }
+  T.push({id:"mistakes",i:"🔁",t:"ข้อที่เคยพลาด",s:pool.length?`ค้าง ${pool.length} ข้อ`:"ไม่มีข้อค้าง 👍",done:!pool.length});
+  T.push({id:"week",i:"📜",t:"ภารกิจสัปดาห์",s:p.questDoneThisWeek?"ครบแล้ว ได้ของหายาก ✨":`${qd}/3 ข้อ`,pr:qd/3,done:p.questDoneThisWeek});
+  const g=activeGuest(); if(g){ const pr=guestProgress(g,list); T.push({id:"guest",i:g.item.e,t:"แขกพิเศษ",s:pr.done?"ได้แล้ว 🎉":`${pr.n}/${g.task.n} · ${esc(g.item.n)}`,pr:pr.n/g.task.n,dot:!pr.done,done:pr.done}) }
+  const m=activeMission(); if(m){ const d=missionDone(m); T.push({id:"world",i:"🌏",t:"ภารกิจโลกจริง",s:d?"ทำแล้ว ✓":esc(m.title),done:d}) }
+  const gl=goalOf(list); T.push({id:"goal",i:"🎯",t:"เป้าหมายเดือนนี้",s:gl?"ดูความคืบหน้า":"ยังไม่ได้ตั้ง",dot:!gl});
+  const wk=weekStart(todayKey()), told=list.some(a=>a.type==="teach"&&dayKey(a.endedAt)>=wk); T.push({id:"teach",i:"💬",t:"เล่าให้พ่อฟัง",s:told?"สัปดาห์นี้แล้ว ✓":"สัปดาห์ละครั้ง",done:told});
+  const panel=homeOpen?tilePanel(homeOpen,list,p,pool):"";
+  const grid=`<div class="tiles">${T.map(x=>`<button class="tile ${x.done?"doneT":""}" data-tile="${x.id}" aria-expanded="${homeOpen===x.id}"><span class="ti">${x.i}</span><b>${x.t}</b><span class="small muted">${x.s}</span>${x.pr!=null&&!x.done?`<div class="progress"><i style="width:${Math.round(x.pr*100)}%;background:var(--beak)"></i></div>`:""}${x.dot?`<span class="dotnew"></span>`:""}</button>`).join("")}</div>`;
+  return `<span class="eyebrow">เพิ่มเติม · แตะเพื่อเปิด</span>${homeOpen&&["fire","letter"].includes(homeOpen)?`<div class="tpanel" id="tpanel">${panel}</div>`:""}${grid}${homeOpen&&!["fire","letter"].includes(homeOpen)?`<div class="tpanel" id="tpanel">${panel}</div>`:""}` }
+function tilePanel(id,list,p,pool){
+  if(id==="fire"){ const today=todayKey(), days=["จ","อ","พ","พฤ","ศ","ส","อา"], mon=new Date(weekStart(today)), skippedToday=p.skipDays.has(today);
+    const dots=days.map((d,k)=>{const t=new Date(mon);t.setDate(mon.getDate()+k);const tk=t.getTime();
+      const on=p.met.has(tk), ice=p.frozen.has(tk), lv=!on&&p.leaveDays.has(tk), sk=!on&&!lv&&p.skipDays.has(tk), hol=dayInfo(tk,p.modes).kind==="holiday";
+      return `<div class="day"><span class="dot ${on?"on":ice?"ice":lv?"leave":""} ${sk&&!ice?"rest":""} ${hol&&!on&&!ice&&!lv?"hol":""}">${lv?"🏕":""}</span>${tk===today?"<b>วันนี้</b>":d}</div>`}).join("");
+    return `<section class="card">${flameHtml(p)}<div class="week">${dots}</div>
+      <p class="small muted">${p.goalToday?"วันนี้ภารกิจครบแล้ว ไฟยังลุกอยู่ 🔥":"ทำภารกิจวันนี้ให้ครบ ไฟถึงจะติด"} · ทำครบทุก 5 วัน หรือทำชุดฝึกเกินภารกิจของวัน ได้น้ำแข็ง 1 ก้อน (เก็บได้สูงสุด ${FREEZE_MAX}) วันที่ไม่ได้ทำ น้ำแข็งจะละลายแทนไฟ</p>
+      ${p.onLeave&&!p.goalToday?`<p class="small">🏕 ช่วงนี้ลาไว้ ไฟหยุดรออยู่ กลับมาเมื่อไรก็ทำต่อได้เลย</p>`:p.goalToday||skippedToday?(skippedToday&&!p.goalToday?`<p class="small muted">วันนี้บอกพักไว้แล้ว พรุ่งนี้มาต่อนะ</p>`:""):`<button class="btn ghost" id="skip-open">ขอพัก (วันเดียว หรือ ไปค่ายหลายวัน)</button>`}</section>` }
+  if(id==="letter") return letterHtml(true);
+  if(id==="recall"){ const d=recallDoneToday(list); return `<section class="card"><h3>🧠 ทบทวนวันนี้ 3 ข้อ</h3><p class="small">${d?"วันนี้ทบทวนแล้ว เก่งมาก พรุ่งนี้มาใหม่นะ":"ดึงเรื่องที่เพิ่งเรียนกลับมาจากความจำ 3 ข้อ (ข้อละ +5 XP และโบนัส +5) การนึกเองแบบนี้ช่วยให้จำได้นานกว่าการอ่านซ้ำมาก"}</p>${d?"":`<button class="btn" id="recall-go">ทบทวน 3 ข้อ</button>`}</section>` }
+  if(id==="mistakes") return `<section class="card"><h3>🔁 ข้อที่เคยพลาด</h3><p class="small">${pool.length?`มีค้างอยู่ ${pool.length} ข้อ ครั้งนี้ทำ ${Math.min(5,pool.length)} ข้อ จะเจอเป็นข้อคู่แฝดหรือต้องพิมพ์คำตอบเอง`:"ยังไม่มีข้อค้าง"}</p>${pool.length?`<button class="btn" id="review-go">ทบทวน</button>`:""}</section>`;
+  if(id==="week"){ const q=p.quests; return `<section class="card"><h3>📜 ภารกิจประจำสัปดาห์ ${p.questDoneThisWeek?"✅":""}</h3>
+    ${q.q.map(x=>`<div class="quest"><span>${x.have>=x.need?"✅":"⬜"} ${x.label}</span><span class="small muted">${Math.min(x.have,x.need)}/${x.need}</span></div>`).join("")}
+    <p class="small muted">ครบทั้ง 3 ข้อ ได้<b>ของหายาก ✨ 1 ชิ้น</b> และดาวเวทพิเศษ ⭐${QUEST_BONUS} เริ่มใหม่ทุกวันจันทร์${(()=>{const nx=RARE[questWeeks(list).length]; return nx?` · ชิ้นต่อไป: ${nx.e} ${esc(nx.n)}`:""})()}</p></section>` }
+  if(id==="guest"){ const g=activeGuest(); if(!g) return ""; const pr=guestProgress(g,list);
+    return `<section class="card" style="border:2px dashed var(--beak)"><div class="row" style="gap:12px;align-items:center"><span style="font-size:2.6rem" class="float">${g.item.e}</span>
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px"><h3 style="margin:0">🎁 แขกพิเศษ: ${esc(g.item.n)}</h3>
+      ${pr.done?`<span class="small"><b>ได้แล้ว! ไปใช้ที่บ้านคู่หูได้เลย 🎉</b></span>`:`<span class="small">${esc(g.text)} · ทำแล้ว ${pr.n}/${g.task.n}</span>
+      <span class="small muted">อยู่ถึง ${new Date(g.to+"T12:00:00").toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"short"})} ถ้าไม่ทัน ไม่เป็นไร แขกจะกลับมาอีก</span>`}</div></div></section>` }
+  if(id==="world"){ const m=activeMission(); if(!m) return ""; const d=missionDone(m), st=mState(m.id);
+    return `<section class="card usebox"><span class="eyebrow">🌏 ภารกิจโลกจริงประจำเดือน${d?" · ทำแล้ว ✓":""}</span><h2>${esc(m.title)}</h2>
+      <p class="small">${esc(m.hook||m.why)}</p><p class="small muted">${esc(m.mins)} · ถึง ${new Date(m.to+"T00:00:00").toLocaleDateString("th-TH",{day:"numeric",month:"short"})} · ได้ ${m.xp||100} XP${m.record&&!d?` · บันทึกแล้ว ${(st.rows||[]).length} แถว`:""}</p>
+      <button class="btn ${d?"ghost":""}" id="go-mission">${d?"ดูภารกิจ":"เปิดภารกิจ"}</button></section>` }
+  if(id==="goal") return goalHtml(list);
+  if(id==="teach") return teachHtml(list);
+  return "" }
 function buddyHero(list,p,plan){ const b=getBuddy(); if(!b) return "";
   const lines=buddyNote?[buddyNote]:buddyLines(list,p,plan), tip=buddyTap?buddyLast.tips[buddyTap%buddyLast.tips.length]:null;
   const t=isoDay(todayKey()), L=LETTERS.find(l=>l.date<=t), unread=L&&!lettersRead().includes(L.id);
@@ -1629,8 +1745,8 @@ function pickImg(key,done){ const inp=document.createElement("input"); inp.type=
 const LETTERS=((CONTENT.letters&&CONTENT.letters.letters)||[]).slice().sort((a,b)=>a.date<b.date?1:-1);
 function lettersRead(){ try{ return JSON.parse(localStorage.getItem("fieldnote.lettersread")||"[]") }catch(e){ return [] } }
 let letterOpen=false;
-function letterHtml(){ const t=isoDay(todayKey()), ls=LETTERS.filter(l=>l.date<=t); if(!ls.length||!getBuddy()) return "";
-  const read=lettersRead(), L=ls[0], unread=!read.includes(L.id);
+function letterHtml(force){ const t=isoDay(todayKey()), ls=LETTERS.filter(l=>l.date<=t); if(!ls.length||!getBuddy()) return "";
+  const read=lettersRead(), L=ls[0], unread=!read.includes(L.id); if(force&&unread) letterOpen=true;
   if(!unread&&!letterOpen) return `<details class="small muted" style="padding:0 4px"><summary>💌 จดหมายจาก ${esc(bname())} (${ls.length} ฉบับ)</summary>${ls.map(l=>`<div class="logi" style="margin-top:6px"><span class="small muted">${new Date(l.date+"T00:00:00").toLocaleDateString("th-TH",{day:"numeric",month:"short"})}</span><span class="small" style="white-space:pre-wrap">${esc(l.text)}</span></div>`).join("")}</details>`;
   return `<section class="card usebox"><span class="eyebrow">💌 จดหมายจาก ${esc(bname())}</span>
     ${letterOpen?`<p style="white-space:pre-wrap">${esc(L.text)}</p><p class="small muted">— ${esc(bname())}</p><button class="btn ghost small" id="lclose">อ่านแล้ว</button>`

@@ -13,7 +13,7 @@ for(const f of files){
   let s; try{ s=J("content/sets/"+f) }catch(e){ warn(`${f}: not valid JSON (${e.message})`); continue }
   const where=`${f} (${s.id})`;
   if(setIds.has(s.id)) warn(`${where}: duplicate set id`); setIds.add(s.id);
-  if(!["lesson","probe","mixed","passage"].includes(s.kind)) warn(`${where}: kind must be "lesson", "probe", "mixed" or "passage"`);
+  if(!["lesson","probe","mixed","passage","sweep"].includes(s.kind)) warn(`${where}: kind must be "lesson", "probe", "mixed" or "passage"`);
   if(s.kind==="passage"&&!(s.passage&&s.passage.title&&Array.isArray(s.passage.paras)&&s.passage.paras.length)) warn(`${where}: passage needs passage.title and passage.paras`);
   if(s.kind==="mixed"){
     const sp=new Set((s.practice||[]).map(q=>q.spell));
@@ -21,7 +21,7 @@ for(const f of files){
     if(sp.size<4) warn(`${where}: a mixed set needs questions from at least 4 spells (has ${sp.size})`);
     if((s.practice||[]).length<10) warn(`${where}: a mixed set needs 10-15 questions`);
     if(s.challenge) warn(`${where}: a mixed set has no challenge`);
-  } else if(!spells.has(s.spell)) warn(`${where}: unknown spell "${s.spell}"`);
+  } else if(s.kind!=="sweep"&&!spells.has(s.spell)) warn(`${where}: unknown spell "${s.spell}"`);
   for(const k of ["subject","topic","grade","mins"]) if(!s[k]) warn(`${where}: missing ${k}`);
   if(s.kind==="lesson"&&(!s.concept||!(s.concept.points||[]).length)) warn(`${where}: lesson needs concept.points`);
   if(!Array.isArray(s.practice)||s.practice.length<6) warn(`${where}: practice needs at least 6 questions`);
@@ -43,9 +43,9 @@ for(const f of files){
       if(f.kind==="dot"&&!(typeof f.min==="number"&&typeof f.max==="number"&&f.counts)) warn(`${w}: dot fig needs min, max, counts`);
       if((f.kind==="hist"||f.kind==="bar")&&!(Array.isArray(f.values)&&f.values.length)) warn(`${w}: ${f.kind} fig needs values`);
       if((f.kind==="stem"||f.kind==="table")&&!Array.isArray(f.rows)) warn(`${w}: ${f.kind} fig needs rows`); }
-    const h=(s.hints||{})[q.id]; if(!Array.isArray(h)||!h.length) warn(`${w}: needs at least one hint`);
+    const h=(s.hints||{})[q.id]; if(s.kind!=="sweep"&&(!Array.isArray(h)||!h.length)) warn(`${w}: needs at least one hint`);
   }
-  if(lv[1]<2||lv[2]<2||lv[3]<1) warn(`${where}: mix should have ≥2 level-1, ≥2 level-2, ≥1 level-3 (has ${JSON.stringify(lv)})`);
+  if(s.kind!=="sweep"&&(lv[1]<2||lv[2]<2||lv[3]<1)) warn(`${where}: mix should have ≥2 level-1, ≥2 level-2, ≥1 level-3 (has ${JSON.stringify(lv)})`);
 }
 /* lessons and mixed sets written from 2026-11-05 on: every question has a context tag, lessons have a real-life "use" line */
 for(const f of files){ let s; try{ s=J("content/sets/"+f) }catch(e){ continue } if(!(s.added>="2026-11-05")) continue;
@@ -56,6 +56,8 @@ for(const f of files){ let s; try{ s=J("content/sets/"+f) }catch(e){ continue } 
   for(const q of qs) if(q.optErr&&!(Array.isArray(q.optErr)&&q.opts&&q.optErr.length===q.opts.length&&q.optErr[q.a]==null&&q.optErr.every((e,i)=>i===q.a||typeof e==="string"&&e))) warn(`${f} ${q.id}: optErr must match opts, null at the answer, a short code for each wrong option`);
   for(const q of qs) if(q.check&&!(Array.isArray(q.check.opts)&&q.check.opts.length>=2&&Number.isInteger(q.check.a)&&q.check.a>=0&&q.check.a<q.check.opts.length)) warn(`${f} ${q.id}: check needs {q?, opts:[2+], a:index, ex}`);
   for(const q of qs) if(q.level===3&&!(q.parts&&Array.isArray(q.parts.given)&&q.parts.given.length&&q.parts.ask)) warn(`${f} ${q.id}: level-3 question needs parts {given:[...], ask, watch?}`);
+  if(s.kind==="lesson"&&s.concept&&s.concept.hook){ const h=s.concept.hook; if(!h.text||!h.reveal) warn(`${f}: concept.hook needs text and reveal (q and opts optional)`) }
+  if(s.kind==="lesson"&&s.concept&&s.concept.more&&s.concept.more.length!==s.concept.points.length) warn(`${f}: concept.more must have one entry per point`);
   if(s.kind==="lesson"&&!(s.concept&&s.concept.use)) warn(`${f}: lesson concept needs a "use" line (where this is used in real life)`);
 }
 /* missions */
@@ -92,7 +94,7 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
   await pg.goto(url);
   /* --since=YYYY-MM-DD plays only sets added on/after that date (content rules above still cover every set) */
   const since=(process.argv.find(x=>x.startsWith("--since="))||"").slice(8);
-  const ids=await pg.evaluate(since=>SETS.filter(s=>!since||(s.added||"")>=since).map(s=>s.id),since);
+  const ids=await pg.evaluate(since=>SETS.filter(s=>s.kind!=="sweep"&&(!since||(s.added||"")>=since)).map(s=>s.id),since);
   let n=0;
   for(const id of ids){
     /* every other set is played with this week's trial features on (confidence buttons + explain box) */
@@ -101,6 +103,8 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     await pg.click("#go");
     let ok=0, total=0;
     for(let i=0;i<40;i++){
+      if(await pg.locator("[data-hk]").count()){ await pg.locator("[data-hk]").first().click(); continue }
+      if(await pg.locator("#cnext").count()){ await pg.click("#cnext"); continue }
       if(await pg.locator("#save").count()){ await pg.click('[data-r="พอดี"]'); await pg.click("#save"); break }
       const afterAns=async()=>{ if(await pg.locator("[data-ck]").count()){ const a=await pg.evaluate(()=>S.steps[S.i].q.check.a); await pg.click(`[data-ck="${a}"]`) } await pg.click("#next") };
       if(await pg.locator(".opt:not([disabled]):not(.ckopt)").count()){ const k=await pg.evaluate(()=>S.steps[S.i].q.a); await pg.locator(".opt").nth(k).click();

@@ -78,5 +78,10 @@
   "sci-solution-4",
   "sci-solution-5"
  ],
- "lessonQueueNote": "School order (her school's term-2 workbook): statistics first (she missed a week), science midterm = solutions + separation. The content run updates this queue."
+ "lessonQueueNote": "School order (her school's term-2 workbook): statistics first (she missed a week), science midterm = solutions + separation. The content run updates this queue.",
+ "sweepFrom": "2026-11-09",
+ "dailyMinutes": {
+  "school": "45–60",
+  "holiday": "75–90"
+ }
 }
