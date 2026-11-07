@@ -120,6 +120,20 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .islandwrap{margin:6px -6px;border-radius:18px;overflow:hidden}
 .island{display:block;width:100%;height:auto;max-height:78vh}
 .mnode{cursor:pointer}
+.dash{display:flex;flex-direction:column;gap:14px}
+.alerts{display:flex;flex-direction:column;gap:6px}
+.alert{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:10px;font-size:.92rem;line-height:1.45;border-left:5px solid}
+.alert.red{background:color-mix(in srgb,#e2574c 10%,var(--card));border-color:#e2574c}
+.alert.amber{background:color-mix(in srgb,#f0a04b 12%,var(--card));border-color:#f0a04b}
+.alert.green{background:color-mix(in srgb,#2e8b57 10%,var(--card));border-color:#2e8b57}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media(min-width:560px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{display:flex;flex-direction:column;gap:2px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.kpi b{font-size:1.5rem;font-family:var(--display)}
+.kpi span{font-size:.85rem}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:.8rem}.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.spstrip{display:flex;flex-wrap:wrap;gap:6px}
+.spchip{font-size:.78rem;border:1.5px solid;border-radius:999px;padding:2px 8px;display:inline-flex;gap:5px;align-items:center}.spchip i{width:8px;height:8px;border-radius:50%;display:inline-block}
 .factbox{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 10%,var(--card)),var(--card));border:1.5px solid color-mix(in srgb,var(--accent) 35%,var(--line))}
 .factrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .fcard{font:inherit;color:var(--ink);text-align:center;background:#fffdf7;border:1.5px solid var(--line);border-radius:14px;padding:10px 6px;min-height:118px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;position:relative;box-shadow:0 2px 0 rgba(0,0,0,.06)}
@@ -496,7 +510,7 @@ async function importCode(raw, asTest){
 }
 
 /* ---------- updates: GitHub Pages lets the browser keep an old copy for a while, so check for a newer build ---------- */
-const BUILD="2026-11-07 18:23";
+const BUILD="2026-11-07 18:24";
 async function checkUpdate(){ if(!/^https?:/.test(location.protocol)||typeof db!=="undefined"&&db) return;
   try{ const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text(); const m=t.match(/const BUILD="(\d{4}-\d\d-\d\d \d\d:\d\d)"/);
     if(m&&m[1]!==BUILD&&!m[1].includes("@@")&&!document.getElementById("updbar")){ const d=document.createElement("button"); d.id="updbar"; d.className="btn";
@@ -2916,6 +2930,62 @@ let showExamples = true, analysisText = "", fbList = [];
 let lastImport="";   /* new data re-renders the page, so the import result is kept here and drawn again */
 /* thinking time (question shown → answer) and explanation time (answer → next question), last 14 days.
    fast/slow is relative to her own median time for that level, so it adapts as she gets quicker */
+/* ---------- parent dashboard: what needs attention first, then this fortnight in charts ---------- */
+const DAY_GROUPS=[["lesson","บทเรียน/ด่าน","#2f6f8f",["set","probe","mixed","passage"]],["review","ทบทวน","#7fb6d6",["review","recall"]],["sweep","ย้อนคาถาเก่า","#f0a04b",["sweep"]],["vocab","คำศัพท์","#8fc98a",["vocab"]],["other","อื่นๆ","#c9a6ff",["lab","mission","teach"]]];
+function parentDash(list){
+  if(!list.length) return "";
+  const p=progressOf(list), t=todayKey(), days=Array.from({length:14},(_,i)=>t-(13-i)*DAY);
+  const byDay=days.map(d=>{ const recs=list.filter(a=>dayKey(a.endedAt)===d), info=dayInfo(d,p.modes);
+    const g=DAY_GROUPS.map(([k,,,types])=>Math.round(recs.filter(a=>types.includes(a.type)).reduce((s,a)=>s+Math.min(a.durationSec||0,5400),0)/60));
+    return {d,g,tot:g.reduce((a,b)=>a+b,0),met:p.met.has(d),target:info.kind==="school"?[45,60]:[75,90],school:info.kind==="school"} });
+  const last7=byDay.slice(7), prev7=byDay.slice(0,7), active7=last7.filter(x=>x.tot>0);
+  const avgMin=active7.length?Math.round(active7.reduce((s,x)=>s+x.tot,0)/active7.length):0;
+  const itemsIn=(from,to)=>list.filter(a=>isLesson(a)&&dayKey(a.endedAt)>=from&&dayKey(a.endedAt)<=to).flatMap(a=>a.items||[]).filter(x=>!x.skipped);
+  const pc=xs=>xs.length?Math.round(xs.filter(x=>x.correct).length/xs.length*100):null;
+  const it7=itemsIn(t-6*DAY,t), itp=itemsIn(t-13*DAY,t-7*DAY), acc7=pc(it7), accp=pc(itp), l3=pc(it7.filter(x=>x.level===3));
+  const metWeek=last7.filter(x=>x.met).length;
+  /* alerts */
+  const A=[];
+  const lastRec=list.filter(a=>a.type!=="mood").map(a=>dayKey(a.endedAt)).sort((a,b)=>b-a)[0]||0;
+  if(t-lastRec>=2*DAY) A.push(["red","📥",`ยังไม่ได้รับผลฝึก ${Math.round((t-lastRec)/DAY)} วันแล้ว ถ้าลูกฝึกแล้ว ให้ลูกส่งไฟล์มา`]);
+  const tired=list.filter(a=>a.type==="mood"&&t-dayKey(a.endedAt)<3*DAY&&a.mood==="tired").length; if(tired>=2) A.push(["red","😪",`ลูกบอกว่าเหนื่อย ${tired} ครั้งใน 3 วัน ลองถามดูว่าเป็นอย่างไรบ้าง ระบบจะลดความหนักลง`]);
+  const pendG=GUESTS.filter(g=>g.status!=="approved"&&!fbList.some(f=>f.kind==="guest"&&f.guestId===g.id)).length, pendM=MISSIONS.filter(m=>m.status!=="approved"&&!fbList.some(f=>f.kind==="mission"&&f.missionId===m.id)).length;
+  const pendGoal=list.filter(a=>a.type==="goal"&&a.reward&&!fbList.some(f=>f.kind==="goal"&&f.goalId===a.setId)).length;
+  if(pendG+pendM+pendGoal) A.push(["amber","✍️",`รอพ่อตัดสินใจ: ${[pendG?`แขกพิเศษ ${pendG}`:"",pendM?`ภารกิจโลกจริง ${pendM}`:"",pendGoal?`รางวัลเป้าหมายเดือน ${pendGoal}`:""].filter(Boolean).join(" · ")} (เลื่อนลงไปกดอนุมัติได้)`]);
+  const schoolLow=last7.filter(x=>x.school&&x.tot>0&&x.tot<x.target[0]).length; if(schoolLow>=3) A.push(["amber","⏱️",`วันเรียน ${schoolLow} วันใน 7 วันใช้เวลาต่ำกว่าเป้า 45 นาที (เฉลี่ย ${avgMin} นาที) ระบบอัปเดตทุกเย็นจะเพิ่มเนื้อหา`]);
+  const ex=it7.filter(x=>x.correct&&x.exSec!=null), skip=ex.filter(x=>x.exSec<3).length; if(ex.length>=8&&skip/ex.length>=0.5) A.push(["amber","👀",`ข้อที่ตอบถูก ลูกข้ามเฉลย ${skip}/${ex.length} ข้อ ถ้าตอบถูกแบบเดา จะไม่รู้ตัว ชวนลูกอ่านเฉลยข้อที่ไม่มั่นใจ`]);
+  const lucky=it7.filter(x=>x.checkOk===false).length; if(lucky>=2) A.push(["amber","🎯",`ตอบถูกแต่เหตุผลผิด ${lucky} ข้อในสัปดาห์นี้ (ระบบส่งกลับไปทวนแล้ว)`]);
+  const sw={}; list.filter(a=>a.type==="sweep").forEach(a=>(a.items||[]).forEach(x=>{ const sp=QBANK[x.qid]?.q.spell; if(!sp) return; (sw[sp]??=[0,0]); sw[sp][0]++; if(x.correct) sw[sp][1]++ }));
+  const weak=Object.entries(sw).filter(([k,[n,c]])=>n>=2&&c/n<0.5).map(([k])=>SPELLS.find(x=>x.id===k)?.topic||k); if(weak.length) A.push(["amber","🧠",`เรื่อง ม.1–2 ที่ลืมไปมาก: ${weak.slice(0,4).join(", ")}`]);
+  const ss=spellStats(list), faded=Object.entries(ss).filter(([k,v])=>v.faded).length; if(faded) A.push(["amber","💧",`คาถาที่เริ่มจาง ${faded} เรื่อง (ระบบจะหยิบมาทวนในชุดอุ่นเครื่อง)`]);
+  const pool=reviewPool(list).length; if(pool>10) A.push(["amber","🔁",`ข้อที่เคยพลาดค้าง ${pool} ข้อ ชวนลูกกด "ข้อที่เคยพลาด" สักรอบ`]);
+  if(p.streak>=5) A.push(["green","🔥",`จุดไฟติดต่อกัน ${p.streak} วัน`]);
+  if(acc7!=null&&accp!=null&&acc7-accp>=8) A.push(["green","📈",`ตอบถูกเพิ่มจาก ${accp}% เป็น ${acc7}% เทียบกับสัปดาห์ก่อน`]);
+  if(l3!=null&&it7.filter(x=>x.level===3).length>=4&&l3>=70) A.push(["green","🏅",`ข้อระดับ 3 (แนวข้อสอบ) ถูก ${l3}%`]);
+  const lab=list.filter(a=>a.type==="lab"); if(lab.length>=3){ const ok=lab.slice(-5).filter(a=>a.gridOk).length; A.push([ok>=3?"green":"amber","🧬",`ห้องวิจัยพันธุกรรม: ตาราง Punnett ถูก ${ok}/${Math.min(5,lab.length)} ครั้งล่าสุด`]) }
+  const order={red:0,amber:1,green:2}; A.sort((a,b)=>order[a[0]]-order[b[0]]);
+  /* chart */
+  const W=360,H=150,bw=W/14, maxV=Math.max(100,...byDay.map(x=>x.tot)), y=v=>H-v/maxV*H;
+  const bars=byDay.map((x,i)=>{ let acc=0; const segs=x.g.map((m,k)=>{ if(!m) return ""; const y0=y(acc+m), h=m/maxV*H; acc+=m; return `<rect x="${i*bw+4}" y="${y0.toFixed(1)}" width="${bw-8}" height="${h.toFixed(1)}" fill="${DAY_GROUPS[k][2]}"/>` }).join("");
+    const band=`<rect x="${i*bw+1}" y="${y(x.target[1]).toFixed(1)}" width="${bw-2}" height="${((x.target[1]-x.target[0])/maxV*H).toFixed(1)}" fill="#2f6f8f" opacity=".08"/>`;
+    const lab2=new Date(x.d).toLocaleDateString("th-TH",{weekday:"narrow"});
+    return `${band}${segs}<text x="${i*bw+bw/2}" y="${H+12}" text-anchor="middle" font-size="9" fill="currentColor" opacity=".7">${lab2}</text>${x.met?`<text x="${i*bw+bw/2}" y="${Math.max(9,y(x.tot)-3)}" text-anchor="middle" font-size="9">✓</text>`:""}${x.tot?`<text x="${i*bw+bw/2}" y="${H+23}" text-anchor="middle" font-size="8" fill="currentColor" opacity=".55">${x.tot}</text>`:""}` }).join("");
+  const chart=`<svg viewBox="0 0 ${W} ${H+28}" style="width:100%;height:auto;color:var(--ink)" role="img" aria-label="นาทีที่ฝึกต่อวัน 14 วัน">${bars}<line x1="0" y1="${H}" x2="${W}" y2="${H}" stroke="currentColor" opacity=".25"/></svg>`;
+  /* spells strip */
+  const strip=SPELLS.filter(sp=>ss[sp.id]||sw[sp.id]).map(sp=>{ const v=ss[sp.id], r=sw[sp.id], col=v?.faded?"#e2a23c":v?.tier>=2?"#2e8b57":v?.tier>=1?"#8fc98a":r&&r[1]/r[0]<0.5?"#e2574c":"#cfd8dc";
+    return `<span class="spchip" style="border-color:${col}" title="${esc(sp.topic)}"><i style="background:${col}"></i>${esc(sp.topic.split(" ")[0])}</span>` }).join("");
+  const kpi=(big,lbl,sub,col)=>`<div class="kpi"><b style="color:${col||"inherit"}">${big}</b><span>${lbl}</span>${sub?`<span class="small muted">${sub}</span>`:""}</div>`;
+  return `<div class="dash">
+    <div class="alerts">${A.length?A.map(([lv,ic,tx])=>`<div class="alert ${lv}"><span>${ic}</span><span>${tx}</span></div>`).join(""):`<div class="alert green"><span>✅</span><span>ไม่มีเรื่องที่ต้องดูเป็นพิเศษ</span></div>`}</div>
+    <div class="kpis">${kpi(`${metWeek}/7`,"วันที่ภารกิจครบ (7 วัน)","",metWeek>=5?"var(--good)":metWeek>=3?"var(--beak)":"var(--warn)")}
+      ${kpi(`${avgMin}`,"นาที/วัน เฉลี่ย","เป้า 45–60 วันเรียน",avgMin>=45?"var(--good)":"var(--beak)")}
+      ${kpi(acc7==null?"–":acc7+"%","ตอบถูก 7 วัน",accp==null?"":`สัปดาห์ก่อน ${accp}% ${acc7>accp?"▲":acc7<accp?"▼":""}`)}
+      ${kpi(l3==null?"–":l3+"%","ข้อระดับ 3","แนวข้อสอบ")}</div>
+    <div><span class="eyebrow">นาทีที่ฝึกแต่ละวัน (14 วัน) · แถบจางคือช่วงเป้า · ✓ ภารกิจครบ</span>${chart}
+      <div class="legend">${DAY_GROUPS.map(([k,n,c])=>`<span><i style="background:${c}"></i>${n}</span>`).join("")}</div></div>
+    ${strip?`<div><span class="eyebrow">สถานะเรื่องที่ฝึกแล้ว · เขียวเข้ม=ชำนาญ เขียว=ฝึกหัด ส้ม=เริ่มจาง แดง=ย้อนคาถาเก่าแล้วลืม</span><div class="spstrip">${strip}</div></div>`:""}
+  </div>` }
+
 /* old-topic sweep results by spell, plus her daily check-ins and which concept parts needed another explanation */
 function sweepCard(list){
   const sw=list.filter(a=>a.type==="sweep"), moods=list.filter(a=>a.type==="mood").slice(-7), help=list.filter(a=>a.conceptHelp&&a.conceptHelp.length).slice(-5);
@@ -2966,6 +3036,8 @@ function renderParent(){
       ${hasEx?`<label class="small row" style="gap:6px"><input type="checkbox" id="ex" ${showExamples?"checked":""}> แสดงข้อมูลตัวอย่างและทดสอบ</label>`:""}</div>
     ${db&&nTest?`<div class="row"><button class="btn ghost" id="deltest">ลบข้อมูลทดสอบ (${nTest} รายการ)</button><span class="small" id="delmsg"></span></div>`:""}
     ${empty?`<p class="muted">ยังไม่มีการฝึก เมื่อลูกทำชุดแรกเสร็จ หรือนำเข้ารหัสจากเครื่องลูก สรุปจะขึ้นที่นี่</p>`:`
+    ${parentDash(realAttempts())}
+    <details class="small"><summary>ตัวเลขสะสมทั้งหมดตั้งแต่เริ่ม</summary>
     <div class="stats">
       <div class="stat"><b>${all.length}</b><span>ครั้งที่ฝึก</span></div>
       <div class="stat"><b>${mins}</b><span>นาทีรวม</span></div>
@@ -2973,7 +3045,7 @@ function renderParent(){
       <div class="stat"><b>🔥 ${prog.streak}</b><span>วันติดต่อกัน</span></div>
       <div class="stat"><b>🧊 ${prog.freeze}</b><span>น้ำแข็งในมือ</span></div>
       <div class="stat"><b>${prog.goalDays}</b><span>วันที่ถึงเป้า</span></div>
-    </div>
+    </div></details>
     <p class="note">เวลาคือช่วงที่เปิดหน้าเว็บ ใช้ดูแนวโน้ม ไม่ใช่เวลาที่ตั้งใจจริงทั้งหมด</p>`}
   </section>
   ${db?`<section class="card"><h3>นำเข้าผลจากเครื่องลูก</h3>
