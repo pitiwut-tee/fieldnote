@@ -121,6 +121,11 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .island{display:block;width:100%;height:auto;max-height:78vh}
 .mnode{cursor:pointer}
 .dash{display:flex;flex-direction:column;gap:14px}
+.rrows{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.rrow{display:flex;gap:8px;align-items:center}
+.rbar{flex:1;height:10px;border-radius:5px;background:var(--soft);position:relative;overflow:visible}
+.rbar i{display:block;height:100%;border-radius:5px}
+.rbar b{position:absolute;top:-3px;width:2px;height:16px;background:var(--good)}
 .pgroup{border:1.5px solid var(--line);border-radius:16px;background:var(--card);margin:0}
 .pgroup>summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;flex-direction:column;gap:2px}
 .pgroup>summary::-webkit-details-marker{display:none}
@@ -3084,6 +3089,38 @@ function groupParent(){
   [...$v.querySelectorAll(":scope > details.pgroup")].forEach(d=>{ at.after(d); at=d });
 }
 
+/* ---------- readiness vs the real exam, by district (rough estimate, recomputed for each month-end) ----------
+   coverage  = share of the district's spells practised (tier ≥ 1), weighted by exam importance (stars)
+   level 3   = accuracy on level-3 (exam-style) questions in the district, last 30 days
+   retention = accuracy in the old-topic sweep for the district (falls back to level 3 when no data)
+   readiness = 40% coverage + 40% level 3 + 20% retention;  80+ ≈ ready for first-round level */
+const READY_TARGET=80;
+function readiness(list,upto){ const L=list.filter(a=>new Date(a.endedAt).getTime()<=upto), ss=spellStats(L), out={};
+  const its=L.filter(a=>isLesson(a)&&upto-new Date(a.endedAt).getTime()<30*DAY).flatMap(a=>a.items||[]).filter(x=>!x.skipped);
+  const sw=L.filter(a=>a.type==="sweep").flatMap(a=>a.items||[]);
+  Object.keys(DISTRICTS).filter(k=>k!=="tech").forEach(rk=>{ const sps=SPELLS.filter(s=>s.realm===rk); if(!sps.length) return;
+    const w=sp=>sp.stars||1, tot=sps.reduce((a,sp)=>a+w(sp),0), cov=sps.filter(sp=>(ss[sp.id]?.tier||0)>=1).reduce((a,sp)=>a+w(sp),0)/tot;
+    const ids=new Set(sps.map(s=>s.id)), l3=its.filter(x=>x.level===3&&ids.has(QBANK[x.qid]?.q.spell)), sv=sw.filter(x=>ids.has(QBANK[x.qid]?.q.spell));
+    const p3=l3.length>=3?l3.filter(x=>x.correct).length/l3.length:null, pr=sv.length>=3?sv.filter(x=>x.correct).length/sv.length:null;
+    const val=Math.round(100*(0.4*cov+0.4*(p3??0)+0.2*(pr??p3??0)));
+    out[rk]={val,cov:Math.round(cov*100),p3:p3==null?null:Math.round(p3*100),pr:pr==null?null:Math.round(pr*100),w:tot,n3:l3.length} });
+  const ks=Object.keys(out), W=ks.reduce((a,k)=>a+out[k].w,0); out._all=Math.round(ks.reduce((a,k)=>a+out[k].val*out[k].w,0)/W); return out }
+function readinessCard(list){ if(!list.length) return "";
+  const now=Date.now(), r=readiness(list,now), first=Math.min(...list.map(a=>new Date(a.endedAt).getTime()));
+  const months=[]; { const d=new Date(first); d.setDate(1); d.setMonth(d.getMonth()+1); d.setHours(0,0,0,0); while(d.getTime()<now){ months.push(d.getTime()-1); d.setMonth(d.getMonth()+1) } } months.push(now);
+  const trend=months.map(t=>({t,v:readiness(list,t)._all}));
+  const notYet=Object.entries(r).filter(([k,v])=>k!=="_all"&&v.val===0).map(([k])=>DISTRICTS[k].e+" "+DISTRICTS[k].n);
+  const rows=Object.entries(r).filter(([k,v])=>k!=="_all"&&v.val>0).sort((a,b)=>a[1].val-b[1].val).map(([k,v])=>{ const d=DISTRICTS[k], col=v.val>=READY_TARGET?"var(--good)":v.val>=50?"var(--beak)":"var(--warn)";
+    return `<div class="rrow"><span class="small" style="min-width:8.5em">${d.e} ${d.n}</span><div class="rbar"><i style="width:${v.val}%;background:${col}"></i><b style="left:${READY_TARGET}%"></b></div><span class="small" style="min-width:2.4em;text-align:right">${v.val}</span></div>
+      <p class="small muted" style="margin:-4px 0 4px 0">ฝึกแล้ว ${v.cov}% ของเรื่อง · ข้อระดับ 3 ${v.p3==null?"ยังน้อยไป":v.p3+"%"} · ความจำเรื่องเก่า ${v.pr==null?"ยังไม่มีข้อมูล":v.pr+"%"}</p>` }).join("");
+  const W=300,H=60, xs=i=>trend.length<2?W/2:i*(W/(trend.length-1)), ys=v=>H-v/100*H;
+  const spark=`<svg viewBox="0 0 ${W} ${H+16}" style="width:100%;max-width:360px;height:auto;color:var(--ink)"><line x1="0" x2="${W}" y1="${ys(READY_TARGET)}" y2="${ys(READY_TARGET)}" stroke="var(--good)" stroke-dasharray="4 4"/>
+    ${trend.length>1?`<polyline fill="none" stroke="var(--accent)" stroke-width="2.5" points="${trend.map((p,i)=>`${xs(i)},${ys(p.v)}`).join(" ")}"/>`:""}
+    ${trend.map((p,i)=>`<circle cx="${xs(i)}" cy="${ys(p.v)}" r="3.5" fill="var(--accent)"/><text x="${xs(i)}" y="${H+13}" font-size="9" text-anchor="middle" fill="currentColor" opacity=".7">${new Date(p.t).toLocaleDateString("th-TH",{month:"short"})} ${p.v}</text>`).join("")}</svg>`;
+  return `<div><span class="eyebrow">ความพร้อมเทียบระดับข้อสอบจริง · ตอนนี้ ${r._all}/100 (เส้นเป้า ${READY_TARGET})</span>
+    ${spark}<div class="rrows">${rows}</div>${notYet.length?`<p class="small muted">ยังไม่เริ่ม (${notYet.length} ย่าน): ${notYet.join(" · ")}</p>`:""}
+    <details class="small"><summary>คิดคะแนนนี้อย่างไร</summary><p class="small">แต่ละย่านคิดจาก 3 ส่วน: ฝึกครบกี่เรื่อง (40% ถ่วงตามความสำคัญในข้อสอบ) ความแม่นข้อระดับ 3 ที่เป็นแนวข้อสอบใน 30 วันล่าสุด (40%) และความจำเรื่องเก่าจากย้อนคาถาเก่า (20%) 80 ขึ้นไปถือว่าใกล้ระดับข้อสอบรอบแรก ตัวเลขนี้เป็นค่าประมาณจากการฝึกในแอป ไม่ใช่คะแนนสอบ ผลสอบจำลองจากภายนอกจะช่วยยืนยันว่าตรงแค่ไหน ช่วงแรกตัวเลขจะต่ำเพราะยังฝึกไม่ครบทุกเรื่อง จุดสำคัญคือแนวโน้มรายเดือนที่ควรค่อยๆ ขึ้น</p></details></div>` }
+
 /* ---------- parent dashboard: what needs attention first, then this fortnight in charts ---------- */
 const DAY_GROUPS=[["lesson","บทเรียน/ด่าน","#2f6f8f",["set","probe","mixed","passage"]],["review","ทบทวน","#7fb6d6",["review","recall"]],["sweep","ย้อนคาถาเก่า","#f0a04b",["sweep"]],["vocab","คำศัพท์","#8fc98a",["vocab"]],["other","อื่นๆ","#c9a6ff",["lab","mission","teach"]]];
 function parentDash(list){
@@ -3137,6 +3174,7 @@ function parentDash(list){
       ${kpi(l3==null?"–":l3+"%","ข้อระดับ 3","แนวข้อสอบ")}</div>
     <div><span class="eyebrow">นาทีที่ฝึกแต่ละวัน (14 วัน) · แถบจางคือช่วงเป้า · ✓ ภารกิจครบ</span>${chart}
       <div class="legend">${DAY_GROUPS.map(([k,n,c])=>`<span><i style="background:${c}"></i>${n}</span>`).join("")}</div></div>
+    ${readinessCard(list)}
     ${strip?`<div><span class="eyebrow">สถานะเรื่องที่ฝึกแล้ว · เขียวเข้ม=ชำนาญ เขียว=ฝึกหัด ส้ม=เริ่มจาง แดง=ย้อนคาถาเก่าแล้วลืม</span><div class="spstrip">${strip}</div></div>`:""}
   </div>` }
 
