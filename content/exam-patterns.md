@@ -56,3 +56,17 @@ real exams. Never copy a question, its numbers or its figure; write a new situat
 2. ต้องมีข้อแบบเติมตัวเลข (ไม่มีตัวเลือก) อย่างน้อยครึ่งหนึ่งของข้อระดับ 4
 3. บทอ่าน (passage) ควรมีแบบคณิต: บทความแนวคิดใหม่สั้นๆ + 3 ข้อ
 4. ย่านจำนวน/พีชคณิตต้องมี "ห้องกลเม็ด" (เอกลักษณ์แยกตัวประกอบ, กำลังสองสมบูรณ์, ผลต่างกำลังสอง, ห.ร.ม.-ค.ร.น.) เพราะหลักสูตร ม.2 ในโรงเรียนไม่สอนเชิงนี้
+
+### Cross-check of the prep book's intro against other sources (7 Nov 2026)
+Sources: KruNee summary of the MWIT 2570 announcement annex (dated 14 Jul 2569), the MHESI วมว. 2570 recruitment page
+(applications go through apply.mwit.ac.th), tutor sites. The official announcement PDFs are scanned images and could not be read yet.
+- **Shared first-round exam for MWIT, PCSHS and วมว. (math + science):** high confidence. Ranking uses math + science.
+- **Mathematical-literacy, real-situation style:** fairly high confidence.
+- **Content scope is ม.1–ม.3, not ม.1–ม.2:** the book is out of date here. The 2570 annex lists ม.3 topics (factoring degree > 2,
+  quadratic equations, similarity, box plot, probability, surface area and volume of prisms and cylinders).
+  - Do not drill topics the annex omits: pyramid/cone/sphere volume, trigonometric ratios, Vieta, quadratic-function graphs.
+- **Structure SEEN multiple choice + UNSEEN written/fill-in + passage set:** fairly high confidence. Exact counts are uncertain.
+  - The book's "5 choices" contradicts its own sample sets and tutor reports, which use 4 choices.
+  - Tutor report for a recent year: at most 35 items, 90 points, 90 minutes.
+- **Use for item design:** use the book's sample sets for style and difficulty, the annex for scope, and the science weights in
+  school-plan.md for science.
