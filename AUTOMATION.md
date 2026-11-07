@@ -196,6 +196,15 @@ undermine interest (Deci, Koestner & Ryan 1999) while self-set goals help (Locke
   companions, things to wear and room scenes. Not practice: ignore in learning analysis. In letters you may
   celebrate a hatching or a new form warmly, but never push her to earn or spend, and never tie stars to scores.
 
+## Island, museum, sky, genetics lab (app features; read the records, do not change code)
+
+- `type:"lab"` records: genetics lab clutches (`species`, `p1`, `p2`, `grid`, `gridOk`, `ratio`, `ratioOk`, `babies`).
+  `gridOk`/`ratioOk` show whether she can do a monohybrid Punnett square (ม.3 genetics, s10) before it is taught.
+  Mention progress to the father now and then; if she keeps failing the ratio, a short lesson on probability
+  (ม.3 m23) or a letter tip helps.
+- The museum adds one specimen per spell tier gained and per 8 right sweep answers. Sky events (moon phase, meteor
+  showers, Loy Krathong, dust season) are built in; you can refer to them in letters on those days.
+
 ## Weekly special guest (content/guests.json)
 
 A rare item visits for 3 days with one small learning task. It uses her love of animals to pull her toward the

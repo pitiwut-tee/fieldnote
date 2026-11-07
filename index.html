@@ -120,6 +120,12 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .islandwrap{margin:6px -6px;border-radius:18px;overflow:hidden}
 .island{display:block;width:100%;height:auto;max-height:78vh}
 .mnode{cursor:pointer}
+.labgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.labcard{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;text-align:center}
+.labcard.on{border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--card))}
+.genechip{font-family:var(--mono);font-weight:700;font-size:.9rem;background:var(--soft);border-radius:8px;padding:1px 8px}
+.punnett{border-collapse:collapse;margin:6px 0}.punnett th{font-family:var(--mono);padding:4px 10px;font-size:1.05rem}
+.pcell{font:inherit;font-family:var(--mono);font-weight:700;font-size:1.05rem;width:58px;height:44px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
 .skyov{position:absolute!important;inset:0;width:auto!important;pointer-events:none;z-index:3;transition:background .6s}
 .skyov svg{width:100%;height:100%;display:block}
 .meteor{opacity:0;animation:meteor 5s linear infinite}
@@ -479,7 +485,7 @@ async function importCode(raw, asTest){
 }
 
 /* ---------- updates: GitHub Pages lets the browser keep an old copy for a while, so check for a newer build ---------- */
-const BUILD="2026-11-07 17:55";
+const BUILD="2026-11-07 17:58";
 async function checkUpdate(){ if(!/^https?:/.test(location.protocol)||typeof db!=="undefined"&&db) return;
   try{ const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text(); const m=t.match(/const BUILD="(\d{4}-\d\d-\d\d \d\d:\d\d)"/);
     if(m&&m[1]!==BUILD&&!m[1].includes("@@")&&!document.getElementById("updbar")){ const d=document.createElement("button"); d.id="updbar"; d.className="btn";
@@ -572,6 +578,7 @@ function progressOf(list){
     if(a.type==="daymode") return;
     if(a.type==="mission"||a.type==="teach"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* mission / teaching dad: XP only, not a daily unit */
     if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood") return;
+    if(a.type==="lab"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
     if(a.type==="sweep"){ sweepDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* old-topic sweep: its own daily step, not a lesson unit */
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
     byDay.set(k,(byDay.get(k)||0)+xpOf(a));
@@ -1946,7 +1953,7 @@ unicorn:`<path d="M68 80 C86 82 92 66 84 56 C86 68 78 72 66 72Z" fill="#c9a6ff"/
 const eyes2=(y=40,dx=9,c="#1d1d2b",r=3.6)=>`<ellipse cx="${50-dx}" cy="${y}" rx="${r}" ry="${r*1.2}" fill="${c}"/><ellipse cx="${50+dx}" cy="${y}" rx="${r}" ry="${r*1.2}" fill="${c}"/><circle cx="${48.8-dx}" cy="${y-1.6}" r="1.3" fill="#fff"/><circle cx="${48.8+dx}" cy="${y-1.6}" r="1.3" fill="#fff"/>`;
 const bl=(y,dx=16)=>`<ellipse cx="${50-dx}" cy="${y}" rx="3.6" ry="2.2" fill="#ff8fa3" opacity=".5"/><ellipse cx="${50+dx}" cy="${y}" rx="3.6" ry="2.2" fill="#ff8fa3" opacity=".5"/>`;
 /* coiled chibi snake: base colour, belly, pattern colour, pattern kind */
-function snake(c,belly,pc,kind,extra=""){
+function snake(c,belly,pc,kind,extra="",eye="#1d1d2b"){
   const spots=kind==="blotch"?`<ellipse cx="28" cy="84" rx="6" ry="3.5" fill="${pc}"/><ellipse cx="50" cy="91" rx="7" ry="3.5" fill="${pc}"/><ellipse cx="72" cy="84" rx="6" ry="3.5" fill="${pc}"/><ellipse cx="38" cy="66" rx="5" ry="3" fill="${pc}"/><ellipse cx="62" cy="66" rx="5" ry="3" fill="${pc}"/>`
    :kind==="dots"?`<circle cx="30" cy="84" r="2.2" fill="${pc}"/><circle cx="44" cy="90" r="2.2" fill="${pc}"/><circle cx="58" cy="90" r="2.2" fill="${pc}"/><circle cx="71" cy="84" r="2.2" fill="${pc}"/><circle cx="42" cy="66" r="2" fill="${pc}"/><circle cx="58" cy="66" r="2" fill="${pc}"/>`
    :`<path d="M22 82 q4 -5 8 0 M40 90 q5 -5 10 0 M60 90 q5 -5 10 0 M74 80 q3 -4 6 0" stroke="${pc}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
@@ -1954,7 +1961,7 @@ function snake(c,belly,pc,kind,extra=""){
   <ellipse cx="50" cy="68" rx="24" ry="10" fill="${c}"/><path d="M80 82 q12 -2 10 -12 q-2 6 -12 6Z" fill="${c}"/>${spots}
   <path d="M42 64 C38 54 40 46 46 42 L56 42 C60 48 60 56 56 64Z" fill="${c}"/>
   <ellipse cx="50" cy="36" rx="20" ry="16" fill="${c}"/><ellipse cx="50" cy="44" rx="12" ry="6" fill="${belly}"/>${extra}
-  ${eyes2(34,9,"#1d1d2b",4)}<path d="M48 47 l2 4 l2 -4" stroke="#e2574c" stroke-width="1.4" fill="none" stroke-linecap="round"/>${bl(41,15)}` }
+  ${eyes2(34,9,eye,4)}<path d="M48 47 l2 4 l2 -4" stroke="#e2574c" stroke-width="1.4" fill="none" stroke-linecap="round"/>${bl(41,15)}` }
 /* chibi isopod seen from the front-side: segmented shell */
 function isopod(shell,line,face,patch){
   const segs=[0,1,2,3,4].map(i=>`<path d="M${16+i*1} ${78-i*9} Q50 ${54-i*9} ${84-i*1} ${78-i*9}" fill="none" stroke="${line}" stroke-width="1.6" opacity=".7"/>`).join("");
@@ -2683,7 +2690,7 @@ function renderMap(){
       <div class="islandwrap"><svg class="island" viewBox="0 0 400 600" role="img" aria-label="แผนที่เกาะคาถา">${island}${skyEvent(Date.now())?.k==="krathong"?`<text x="190" y="270" font-size="16">🪷</text><text x="222" y="262" font-size="13">🪷</text>`:""}${museum}${nodes}${walker}</svg>${skyOverlay(Date.now(),"island")}</div>
       <p class="small muted" style="margin:0">${skyCaption(Date.now())}</p>
       <p class="small muted" style="margin:0">แตะสถานที่บนเกาะ แล้ว${bd?esc(bd.name):"คู่หู"}จะพาไปดู</p></section>
-    <div id="mappanel">${sel?mapPanel(sel,ss,list):mapSel==="__museum"?museumPanel(list):`<section class="card"><p class="small">ทุกคาถามี 3 ขั้น 🌱 ฝึกหัด → 🌲 ชำนาญ → 🏯 ปรมาจารย์ คาถาที่ไม่ได้ใช้นานต้นไม้จะเหี่ยว ต้องรดน้ำด้วยการทบทวนสั้นๆ ก็กลับมาเหมือนเดิม</p></section>`}</div>`;
+    <div id="mappanel">${sel?mapPanel(sel,ss,list):mapSel==="__museum"?museumPanel(list):mapSel==="__lab"?labHtml(list):`<section class="card"><p class="small">ทุกคาถามี 3 ขั้น 🌱 ฝึกหัด → 🌲 ชำนาญ → 🏯 ปรมาจารย์ คาถาที่ไม่ได้ใช้นานต้นไม้จะเหี่ยว ต้องรดน้ำด้วยการทบทวนสั้นๆ ก็กลับมาเหมือนเดิม</p></section>`}</div>`;
   document.getElementById("maplist").onclick=()=>{mapList=true;renderMap()};
   $v.querySelectorAll("[data-msp]").forEach(g=>g.onclick=()=>{ const id=g.dataset.msp; mapSel=id; const p=id==="__museum"?{x:342,y:92}:pos[id]; const w=document.getElementById("walker");
     if(w) w.setAttribute("transform",`translate(${(p.x+12).toFixed(1)} ${(p.y-20).toFixed(1)})`);
@@ -2750,10 +2757,77 @@ function museumHtml(list){ const pr=museumProgress(list), b=getBuddy(), cur=b?es
     <p class="small">ได้ของชิ้นใหม่ทุกครั้งที่คาถาขึ้นขั้น 1 ครั้ง และทุก ๆ ${SWEEP_PER_SPECIMEN} ข้อที่ตอบถูกใน "ย้อนคาถาเก่า"${pr.n<SPECIMENS.length?` · อีก ${pr.toNextSweep} ข้อ จะได้ชิ้นต่อไป`:""}</p>
     ${sel?`<div class="feedback usebox"><div class="row" style="gap:12px;align-items:center"><span style="font-size:3rem">${sel.e}</span><div style="flex:1"><b>${esc(sel.n)}</b><p class="small" style="margin:4px 0 0">${cur}: ${esc(sel.t)}</p></div></div></div>`
       :pr.n?`<p class="small muted">แตะของในตู้ แล้ว${cur}จะเล่าเรื่องให้ฟัง</p>`:`<p class="small muted">ยังไม่มีของในตู้ ฝึกให้คาถาขึ้นขั้น หรือทำย้อนคาถาเก่า แล้วจะได้ชิ้นแรก</p>`}
+    <div class="row"><button class="btn" id="golab">🧬 ห้องวิจัยพันธุกรรม${labDoneToday(list)?"":" · วันนี้จับคู่ได้ 1 ครั้ง"}</button></div>
     ${halls}</section>` }
 function bindMuseum(){
+  const gl=document.getElementById("golab"); if(gl) gl.onclick=()=>{ mapSel="__lab"; renderMap(); document.getElementById("mappanel")?.scrollIntoView({block:"start",behavior:"smooth"}) };
+  if(mapSel==="__lab") bindLab();
   $v.querySelectorAll("[data-spec]").forEach(c=>c.onclick=()=>{ museumSel=+c.dataset.spec; renderMap() });
   if(mapSel==="__museum"){ const n=museumProgress(mine()).n; if(n>museumSeen()) setTimeout(()=>{ try{ localStorage.setItem("fieldnote.museumSeen",String(n)) }catch(e){} },4000) } }
+/* ---------- genetics lab: one gene, two alleles (A = makes dark pigment, dominant; a = albino, recessive).
+   Real, welfare-safe morphs only. Free, one clutch a day; XP rewards the prediction (Punnett square + ratio), never luck.
+   Babies hatch by real probability; totals over many clutches show the ratio settling (law of large numbers). ---------- */
+const LAB_SPECIES={
+  corn:{n:"งูคอร์น",clutch:12,normal:"สีส้มแดงขอบดำ",albino:"แอมเมลานิสติก (อัลบิโน) ไม่มีสีดำ ตาแดง",
+    art:{normal:()=>snake("#f08a4b","#fff0dc","#a8321f","blotch"),albino:()=>snake("#ffc2a0","#fffaf0","#ff6b5b","blotch","","#d9412b")}},
+  ball:{n:"งูหลามบอล",clutch:6,normal:"สีน้ำตาลลายทอง",albino:"อัลบิโน สีขาวลายเหลือง ตาแดง",
+    art:{normal:()=>snake("#7a5634","#efe0c2","#d9b77e","blotch"),albino:()=>snake("#fffaf0","#ffffff","#f7d64a","blotch","","#e2574c")}}};
+const LAB_STOCK=[["corn","AA"],["corn","Aa"],["corn","aa"],["ball","AA"],["ball","Aa"],["ball","aa"]].map(([sp,g],i)=>({id:"st"+i,sp,g,stock:true}));
+let labSp="corn", labPick=[], labGrid=["","","",""], labRatio=null, labResult=null;
+function labRecords(list){ return list.filter(a=>a.type==="lab") }
+function labAnimals(list,sp){ const babies=labRecords(list).flatMap(a=>(a.babies||[]).map((g,i)=>({id:a.endedAt+"-"+i,sp:a.species,g,from:a.endedAt}))).filter(x=>x.sp===sp);
+  return [...LAB_STOCK.filter(x=>x.sp===sp),...babies.slice(-6)] }
+function phen(g){ return g.includes("A")?"normal":"albino" }
+function labDoneToday(list){ return labRecords(list).some(a=>dayKey(a.endedAt)===todayKey()) }
+function sortG(a,b){ return [a,b].sort((x,y)=>x===y?0:x==="A"?-1:1).join("") }
+function labCard(x,on){ const S=LAB_SPECIES[x.sp], ph=phen(x.g);
+  return `<button class="labcard ${on?"on":""}" data-lab="${x.id}"><span class="labart"><svg viewBox="0 0 100 100" width="56" height="56">${S.art[ph]()}</svg></span>
+    <span class="small"><b>${ph==="normal"?(x.g==="Aa"?"สีปกติ (แฝงอัลบิโน)":"สีปกติ"):"อัลบิโน"}</b></span><span class="genechip">${x.g}</span>${x.stock?"":`<span class="small muted">ลูกที่เพาะได้</span>`}</button>` }
+function labHtml(list){
+  const S=LAB_SPECIES[labSp], animals=labAnimals(list,labSp), picked=labPick.map(id=>animals.find(a=>a.id===id)).filter(Boolean), done=labDoneToday(list);
+  const recs=labRecords(list), first=!recs.length;
+  const tally={}; recs.forEach(a=>{ const k=[a.p1,a.p2].sort().join(" × "); (tally[k]??=[0,0]); tally[k][0]+=a.babies.length; tally[k][1]+=a.babies.filter(g=>g==="aa").length });
+  let mid="";
+  if(labResult){ const r=labResult, al=r.babies.filter(g=>g==="aa").length, exp=r.expect;
+    mid=`<div class="feedback usebox"><b>🥚 ไข่ฟักแล้ว ${r.babies.length} ตัว: อัลบิโน ${al} ตัว · สีปกติ ${r.babies.length-al} ตัว</b>
+      <div class="row" style="gap:4px;flex-wrap:wrap;margin:6px 0">${r.babies.map(g=>`<svg viewBox="0 0 100 100" width="34" height="34">${S.art[phen(g)]()}</svg>`).join("")}</div>
+      <p class="small">ตาราง Punnett ${r.gridOk?"✅ ถูกทั้ง 4 ช่อง":"❌ ยังไม่ถูก"} · ทำนายสัดส่วนอัลบิโน ${r.ratioOk?"✅ ถูก":"❌"} (ที่ถูกคือ ${exp}) · ได้ +${r.xp} XP</p>
+      ${exp==="0"||exp==="ทั้งหมด"?`<p class="small">${exp==="0"?"พ่อแม่คู่นี้มี A อย่างน้อยหนึ่งตัวส่งให้ลูกทุกตัว ลูกจึงไม่มีทางเป็น aa":"พ่อแม่เป็น aa ทั้งคู่ ส่งได้แต่ a ลูกจึงเป็นอัลบิโนทุกตัว"} ลองจับคู่ Aa × Aa ดูสิ จะเห็นว่าอัลบิโนโผล่มาจากพ่อแม่สีปกติได้</p>`:`<p class="small">ตามทฤษฎี ลูกอัลบิโนควรเป็น ${exp} แต่ไข่ครอกเดียวอาจไม่ตรงเป๊ะ เหมือนโยนเหรียญ 6 ครั้งไม่จำเป็นต้องได้หัว 3 ครั้ง ยิ่งเพาะหลายครอก ผลรวมยิ่งเข้าใกล้ทฤษฎี</p>`}</div>`;
+  } else if(done){ mid=`<p class="small">วันนี้จับคู่ไปแล้ว ไข่ครอกต่อไปพรุ่งนี้นะ ระหว่างนี้ดูสถิติรวมด้านล่างได้</p>` }
+  else if(picked.length===2){ const [p,q]=picked, rows=p.g.split(""), cols=q.g.split("");
+    mid=`<div class="feedback"><b>ทำนายก่อนวางไข่: ตาราง Punnett</b><p class="small">แต่ละช่อง = ยีน 1 ตัวจากพ่อพันธุ์ (แถว) + ยีน 1 ตัวจากแม่พันธุ์ (คอลัมน์) แตะช่องเพื่อเลือก</p>
+      <table class="punnett"><tr><th></th>${cols.map(c=>`<th>${c}</th>`).join("")}</tr>${rows.map((r,i)=>`<tr><th>${r}</th>${cols.map((c,j)=>`<td><button class="pcell" data-pc="${i*2+j}">${labGrid[i*2+j]||"?"}</button></td>`).join("")}</tr>`).join("")}</table>
+      <p class="small"><b>ลูกจะเป็นอัลบิโน (aa) ประมาณเท่าไร</b></p>
+      <div class="why">${["0","1/4","1/2","3/4","ทั้งหมด"].map(x=>`<button data-ratio="${x}" aria-pressed="${labRatio===x}">${x}</button>`).join("")}</div>
+      <div class="row"><button class="btn" id="labgo" ${labGrid.every(Boolean)&&labRatio?"":"disabled"}>จับคู่และรอไข่ฟัก 🥚</button></div></div>` }
+  else mid=`<p class="small"><b>เลือกสัตว์ 2 ตัว</b> มาจับคู่ (เลือกแล้ว ${picked.length}/2)</p>`;
+  return `<section class="card"><span class="eyebrow">🧬 ห้องวิจัยพันธุกรรม · พิพิธภัณฑ์</span>
+    <div class="row" style="gap:6px">${Object.entries(LAB_SPECIES).map(([k,v])=>`<button class="btn ${labSp===k?"":"ghost"} small" data-labsp="${k}">${v.n}</button>`).join("")}<button class="btn ghost small" id="labback" style="border:0">← พิพิธภัณฑ์</button></div>
+    ${first?`<div class="feedback"><p class="small"><b>ยีนสีเป็นคู่</b> สัตว์ทุกตัวมียีนสี 2 ตัว ได้จากพ่อ 1 ตัว แม่ 1 ตัว <b>A</b> = ยีนสร้างสีดำ (ลักษณะเด่น) <b>a</b> = ยีนอัลบิโน (ลักษณะด้อย) ตัวที่มี A อย่างน้อย 1 ตัวจะสีปกติ ต้องเป็น <b>aa</b> เท่านั้นถึงจะเป็นอัลบิโน</p></div>`:""}
+    <details class="small"><summary>🐍 เรื่องจริงจากนักเพาะ (อ่านก่อนเริ่ม)</summary><p class="small">นักเพาะงูใช้ตาราง Punnett แบบนี้จริงๆ ผู้เพาะที่รับผิดชอบเลือกเฉพาะมอร์ฟที่สัตว์แข็งแรงดี อย่างอัลบิโนในห้องนี้ และเลี่ยงมอร์ฟที่มากับปัญหาสุขภาพ เช่น งูหลามบอลมอร์ฟ spider ที่มักมีอาการหัวส่ายจากระบบประสาท ในชีวิตจริงยังไม่ควรจับคู่สัตว์ที่เป็นพี่น้องกัน และสัตว์ไม่ใช่ของสะสม ในห้องนี้ลูกที่ได้จะอยู่ในห้องวิจัย ขายไม่ได้</p></details>
+    <p class="small muted">${S.n}: สีปกติ = ${S.normal} · อัลบิโน = ${S.albino} · ไข่ครอกละ ${S.clutch} ฟอง · จับคู่ได้วันละ 1 ครั้ง ฟรี ได้ XP เมื่อทำนายถูก</p>
+    <div class="labgrid">${animals.map(x=>labCard(x,labPick.includes(x.id))).join("")}</div>
+    ${mid}
+    ${Object.keys(tally).length?`<div><span class="eyebrow">สถิติรวมทุกครอก</span>${Object.entries(tally).map(([k,[n,al]])=>`<p class="small">${k}: อัลบิโน ${al}/${n} = ${Math.round(al/n*100)}%</p>`).join("")}</div>`:""}
+  </section>` }
+function bindLab(){
+  const list=mine();
+  $v.querySelectorAll("[data-labsp]").forEach(b=>b.onclick=()=>{ labSp=b.dataset.labsp; labPick=[]; labGrid=["","","",""]; labRatio=null; labResult=null; renderMap() });
+  const bk=document.getElementById("labback"); if(bk) bk.onclick=()=>{ mapSel="__museum"; labResult=null; renderMap() };
+  $v.querySelectorAll("[data-lab]").forEach(b=>b.onclick=()=>{ if(labResult) labResult=null; const id=b.dataset.lab;
+    labPick=labPick.includes(id)?labPick.filter(x=>x!==id):[...labPick,id].slice(-2); labGrid=["","","",""]; labRatio=null; renderMap() });
+  $v.querySelectorAll("[data-pc]").forEach(b=>b.onclick=()=>{ const k=+b.dataset.pc, opts=["AA","Aa","aa"]; labGrid[k]=opts[(opts.indexOf(labGrid[k])+1)%3]; renderMap() });
+  $v.querySelectorAll("[data-ratio]").forEach(b=>b.onclick=()=>{ labRatio=b.dataset.ratio; renderMap() });
+  const go=document.getElementById("labgo"); if(go) go.onclick=async()=>{ go.disabled=true;
+    const animals=labAnimals(list,labSp), [p,q]=labPick.map(id=>animals.find(a=>a.id===id)), rows=p.g.split(""), cols=q.g.split("");
+    const truth=[0,1,2,3].map(k=>sortG(rows[k>>1],cols[k&1])), gridOk=truth.every((g,k)=>g===labGrid[k]);
+    const nAl=truth.filter(g=>g==="aa").length, exp=["0","1/4","1/2","3/4","ทั้งหมด"][nAl], ratioOk=labRatio===exp;
+    const babies=Array.from({length:LAB_SPECIES[labSp].clutch},()=>sortG(rows[Math.random()<.5?0:1],cols[Math.random()<.5?0:1]));
+    const xp=(gridOk?15:0)+(ratioOk?10:0)+5, now=new Date().toISOString();
+    await saveAttempt({type:"lab",setId:"lab",species:labSp,p1:p.g,p2:q.g,grid:[...labGrid],gridOk,ratio:labRatio,ratioOk,babies,topic:"ห้องวิจัยพันธุกรรม: "+LAB_SPECIES[labSp].n,startedAt:now,endedAt:now,durationSec:0,correct:(gridOk?1:0)+(ratioOk?1:0),total:2,xp,items:[]});
+    labResult={babies,gridOk,ratioOk,expect:exp,xp}; labPick=[]; labGrid=["","","",""]; labRatio=null; renderMap();
+    setTimeout(()=>document.querySelector("#mappanel .usebox")?.scrollIntoView({block:"center",behavior:"smooth"}),50) };
+}
 function museumPanel(list){ return typeof museumHtml==="function"?museumHtml(list):`<section class="card"><h2>🏛️ พิพิธภัณฑ์</h2><p class="small muted">กำลังสร้าง เร็วๆ นี้</p></section>` }
 function bindMapPanel(){
   $v.querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>{introSet=SETS.find(s=>s.id===b.dataset.set);view="intro";render()});
