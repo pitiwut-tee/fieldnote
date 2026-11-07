@@ -47,6 +47,12 @@ for(const f of files){
   }
   if(s.kind!=="sweep"&&(lv[1]<2||lv[2]<2||lv[3]<1)) warn(`${where}: mix should have ≥2 level-1, ≥2 level-2, ≥1 level-3 (has ${JSON.stringify(lv)})`);
 }
+/* math sets written from 2026-11-08 on: at least half of level-2/3 questions answerable as a typed number (exam fill-in part) */
+{ const R=/^\s*([−-]?[\d,]*\.?\d+(?:\s*\/\s*\d+)?)\s*(.*)$/;
+  const numable=q=>q.num||Array.isArray(q.opts)&&q.opts.every(o=>R.test(String(o)))&&new Set(q.opts.map(o=>String(o).match(R)[2].trim())).size===1;
+  for(const f of files){ let s; try{ s=J("content/sets/"+f) }catch(e){ continue } if(!(s.added>="2026-11-08")||s.subject!=="คณิตศาสตร์"||s.kind==="passage") continue;
+    const qs=[...(s.practice||[]),...(s.challenge?[s.challenge]:[])].filter(q=>q.level>=2), n=qs.filter(numable).length;
+    if(qs.length&&n<Math.ceil(qs.length/2)) warn(`${f}: at least half of level-2/3 math questions should be answerable as a number (has ${n}/${qs.length})`); } }
 /* lessons and mixed sets written from 2026-11-05 on: every question has a context tag, lessons have a real-life "use" line */
 for(const f of files){ let s; try{ s=J("content/sets/"+f) }catch(e){ continue } if(!(s.added>="2026-11-05")) continue;
   const qs=[...(s.warm||[]),...(s.practice||[]),...(s.challenge?[s.challenge]:[])];

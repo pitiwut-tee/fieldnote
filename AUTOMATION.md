@@ -399,8 +399,28 @@ the last run, a mission draft waiting for approval). If no new results were impo
 and that the content followed the calendar only.
 
 ## Exam patterns
-Read `content/exam-patterns.md` before writing level-3 questions, probes and mixed sets: it summarises the real
-O-NET ม.3 papers (style, length, figures, numeric-entry items). Match the style, never copy questions.
+Read `content/exam-patterns.md` before writing level-3 questions, probes and mixed sets. It summarises three sources:
+- the official วมว. 2570 announcement (scope ม.1–3, math and science weighted equally, round-2 subjects);
+- the real O-NET ม.3 papers;
+- the วมว.-style prep book (SEEN choices, UNSEEN fill-in or written, passage).
+
+Match the style, never copy questions. The official announcement overrides the other sources on scope.
+
+### Fill-in answers (UNSEEN part of the first round)
+About half of the real first-round math paper has no options. The app answers these questions by typing, through `fillize` in `startSet`:
+- every level-3 question in lessons, probes and challenges;
+- level-2 questions in mixed sets.
+
+This only happens when all options are numbers with the same unit. Typed answers may be integers, decimals or fractions (`2/3`).
+
+When writing new math sets:
+- **At least half of the level-2 and level-3 math questions must be answerable as a number.** Either give all options as plain
+  numbers with one unit (e.g. "12 ซม."), or write `num:true, answer, tol, unit` with no options.
+- Distractors still matter: when options are shown (level 1–2 and reviews), they come from real mistakes.
+- Use `"fill": false` only when typing would test spelling of the format rather than the idea.
+- Item records carry `fill:true` for a typed exam-style answer and `typed` for a wrong typed value. Read `typed` like `optErr`
+  to find the slip (e.g. forgot to take the square root, wrong unit, off by one class width).
+- Science stays mostly multiple choice. Use numeric answers where the idea is a calculation (concentration, density, speed, work).
 
 ## School material
 The father keeps her school's material (science outlines, photos of her math workbook) and later the IPST

@@ -265,7 +265,7 @@ table.mt input{font:inherit;width:100%;min-width:5.5em;padding:6px;border-radius
 .stemtab td.l,.stemtab th.l{text-align:right}
 .numpad{display:grid;grid-template-columns:repeat(3,minmax(64px,88px));gap:8px;margin-top:4px}
 .numpad button{font:inherit;font-family:var(--mono);font-size:1.35rem;padding:12px 0;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
-.numpad button[data-np="⌫"]{grid-column:span 3}
+.numpad button[data-np="⌫"]{grid-column:span 2}
 .num input{font:inherit;font-family:var(--mono);padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);width:10ch}
 .btn{font:inherit;font-family:var(--display);border:0;text-decoration:none;display:inline-block;border-radius:12px;padding:11px 18px;background:var(--accent);color:var(--accent-ink);cursor:pointer;width:fit-content}
 .btn.ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
@@ -558,13 +558,29 @@ Object.entries(VARIANTS).forEach(([orig,vs])=>{ const o=QBANK[orig]; if(!o) retu
   vs.forEach(v=>{ QBANK[v.id]={q:{topic:o.q.topic,level:o.q.level,spell:o.q.spell,ctx:o.q.ctx,...v,of:orig},set:o.set} }) });
 /* a question coming back (review, retry, spaced): use an unseen twin if there is one; otherwise make her produce the
    answer: type it when every option is a number, or think first with the options hidden */
-const NUMOPT=/^\s*([−-]?[\d,]*\.?\d+)\s*(.*)$/;
+const NUMOPT=/^\s*([−-]?[\d,]*\.?\d+(?:\s*\/\s*\d+)?)\s*(.*)$/;
+/* a typed answer: "12", "-3.5", "1,200", "2/3", "-7/4" */
+function parseAns(raw){ const t=String(raw).replace(/,/g,"").replace(/−/g,"-").replace(/\s+/g,"");
+  const f=t.match(/^(-?\d*\.?\d+)\/(\d*\.?\d+)$/); if(f){ const d=parseFloat(f[2]); return d?parseFloat(f[1])/d:NaN }
+  return /^-?\d*\.?\d+$/.test(t)?parseFloat(t):NaN }
+/* turn a question whose options are all numbers with the same unit into a typed answer (null if it can't) */
+function numify(q){
+  if(q.num||!q.opts) return null;
+  const m=q.opts.map(o=>String(o).match(NUMOPT)); if(m.some(x=>!x)) return null;
+  const unit=m[0][2].trim(); if(m.some(x=>x[2].trim()!==unit)) return null;
+  const ans=parseAns(m[q.a][1]); if(!isFinite(ans)) return null;
+  return {...q,num:true,answer:ans,answerText:m[q.a][1].trim(),tol:Math.max(0.01,Math.abs(ans)*0.005),unit};
+}
 function recallize(q){
   if(q.num||!q.opts) return q;
-  const m=q.opts.map(o=>String(o).match(NUMOPT)); if(m.some(x=>!x)) return {...q,cover:true};
-  const unit=m[0][2].trim(); if(m.some(x=>x[2].trim()!==unit)) return {...q,cover:true};
-  const ans=parseFloat(m[q.a][1].replace(/,/g,"").replace("−","-")); if(!isFinite(ans)) return {...q,cover:true};
-  return {...q,num:true,answer:ans,tol:Math.max(0.01,Math.abs(ans)*0.005),unit,recall:true};
+  const n=numify(q); return n?{...n,recall:true}:{...q,cover:true};
+}
+/* exam style (first round has a written/fill-in part): level-3 questions, and level 2 in exam-style mixed sets, are answered
+   by typing the number instead of choosing, whenever the options allow it. A question can opt out with "fill": false. */
+function fillize(q,mixed){
+  if(CAL.fillIn===false||q.fill===false||q.num) return q;
+  if(!(q.fill===true||q.level>=3||mixed&&q.level>=2)) return q;
+  const n=numify(q); return n?{...n,fill:true}:q;
 }
 function comeback(q,list){
   const seen=new Set(list.filter(isLesson).flatMap(a=>(a.items||[]).map(x=>x.qid)));
@@ -796,16 +812,16 @@ function startSet(set, conceptFirst, perms, dueIds){
     ...set.practice.map(q=>({kind:"q",phase:"ตอบจากบทความ",q,passage:true})),
     {kind:"rate",phase:"ปิดท้าย"}
   ]:mixed?[
-    ...set.practice.map(q=>({kind:"q",phase:"ชุดผสมแบบข้อสอบ",q})),
+    ...set.practice.map(q=>({kind:"q",phase:"ชุดผสมแบบข้อสอบ",q:fillize(q,true)})),
     {kind:"rate",phase:"ปิดท้าย"}
   ]:probe?[
-    ...set.practice.map(q=>({kind:"q",phase:"ด่านสำรวจ",q})),
+    ...set.practice.map(q=>({kind:"q",phase:"ด่านสำรวจ",q:fillize(q)})),
     ...(set.concept&&set.concept.points&&set.concept.points.length?[{kind:"concept",phase:"สรุปหลังผ่านด่าน"}]:[]),
     {kind:"rate",phase:"ปิดท้าย"}
   ]:[
     ...(conceptFirst?[card,...warm]:[...warm,card]),
-    ...set.practice.map(q=>({kind:"q",phase:"ฝึกทำ",q})),
-    ...(set.challenge?[{kind:"q",phase:"ข้อท้าทาย (ไม่บังคับ)",q:set.challenge,optional:true}]:[]),
+    ...set.practice.map(q=>({kind:"q",phase:"ฝึกทำ",q:fillize(q)})),
+    ...(set.challenge?[{kind:"q",phase:"ข้อท้าทาย (ไม่บังคับ)",q:fillize(set.challenge),optional:true}]:[]),
     {kind:"rate",phase:"ปิดท้าย"}
   ]).map((st,k)=>st.q?{...st,q:shuffleQ(st.q,perms&&perms[k])}:st);   // the right answer is not always the first choice
   const trial=trialsToday(); markExplain(steps, trial);
@@ -1378,7 +1394,7 @@ function renderStep(){
     const coarse=matchMedia("(pointer: coarse)").matches;
     body = `<div class="num"><input id="numin" inputmode="${coarse?"none":"decimal"}" aria-label="คำตอบ" ${ans?"disabled":""} value="${ans&&!ans.dontknow?esc(ans.raw):esc(S.numDraft||"")}"><span class="muted" style="align-self:center">${q.unit}</span>
       ${ans||staged?"":`<button class="btn" id="check">ตรวจคำตอบ</button>`}</div>
-      ${ans?"":`<div class="numpad" role="group" aria-label="แป้นตัวเลข">${["7","8","9","4","5","6","1","2","3","−","0",".","⌫"].map(k=>`<button type="button" data-np="${k}" ${k==="⌫"?'aria-label="ลบ"':""}>${k}</button>`).join("")}</div>`}${panel}`;
+      ${ans?"":`<div class="numpad" role="group" aria-label="แป้นตัวเลข">${["7","8","9","4","5","6","1","2","3","−","0",".","/","⌫"].map(k=>`<button type="button" data-np="${k}" ${k==="⌫"?'aria-label="ลบ"':""}>${k}</button>`).join("")}</div>`}${panel}`;
   } else {
     body = `<div class="opts">${q.opts.map((o,k)=>{
       let c=""; if(ans){ if(k===q.a) c="right"; else if(k===ans.choice) c="wrong"; } else if(staged&&S.pick===k) c="picked";
@@ -1402,7 +1418,7 @@ function renderStep(){
     const confNote = ans.dontknow||!ans.conf?"":ans.correct&&ans.conf==="unsure"?`<p class="small">ถูกแล้ว แต่ยังไม่ชัวร์ ระบบจะเอาข้อนี้มาให้ทวนอีกรอบ จะได้มั่นใจขึ้น</p>`
       :!ans.correct&&ans.conf==="sure"?`<p class="small"><b>มั่นใจแต่พลาด</b> ข้อแบบนี้ถ้าเข้าใจตอนนี้ จะจำได้แม่นที่สุด อ่านเฉลยช้าๆ นะ</p>`:"";
     const own = st.explain&&(ans.ownWhy||ans.ownWhyPad)?`<div class="feedback"><span class="small"><b>เหตุผลของเธอ:</b> ${ans.ownWhy?esc(ans.ownWhy):"(เขียนในกระดาษทด)"}</span><span class="small muted">ลองเทียบกับเฉลยด้านล่าง ตรงกันไหม ต่างกันตรงไหน</span></div>`:"";
-    fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answer} ${q.unit}`:""}</b>${ckNote}${confNote}<p>${gloss(q.ex)}</p>
+    fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answerText||q.answer} ${q.unit}`:""}</b>${ckNote}${confNote}<p>${gloss(q.ex)}</p>
       ${q.en?"":`<div>${readBtn("ex","🔊 ฟังเฉลย")}</div>`}
       ${ans.correct||ans.dontknow?"":`<span class="small muted">พลาดเพราะอะไร เลือกได้หลายข้อ (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
       <div class="why">${Object.entries(ERR).filter(([k])=>k!=="dontknow").map(([k,v])=>`<button data-why="${k}" aria-pressed="${(S.why||[]).includes(k)}">${v}</button>`).join("")}</div>`}
@@ -1427,6 +1443,7 @@ function renderStep(){
     ${!ans?`<button class="btn ghost" id="dontknow">🤔 ยังคิดไม่ออก ดูเฉลย</button>`:""}
     ${st.optional&&!ans?`<button class="btn ghost" id="skip">ข้ามข้อนี้</button>`:""}</div>
     ${!ans&&q.recall?`<p class="small muted">🧠 ข้อนี้เคยเจอแล้ว รอบนี้ไม่มีตัวเลือก พิมพ์คำตอบเองเลย</p>`:""}
+    ${!ans&&q.num&&!q.recall?`<p class="small muted">✍️ ข้อเติมคำตอบแบบข้อสอบจริง ไม่มีตัวเลือกให้เดา ตอบเป็นเศษส่วนได้ เช่น 2/3</p>`:""}
     ${!ans?askHtml("question"):""}
   </section>${padHtml()}`;
   bindGloss(); padSetup();
@@ -1445,7 +1462,7 @@ function renderStep(){
     if(q.num){
       const ni=document.getElementById("numin"); ni.oninput=()=>{S.numDraft=ni.value};
       $v.querySelectorAll("[data-np]").forEach(b=>b.onclick=()=>{ const k=b.dataset.np; ni.value=k==="⌫"?ni.value.slice(0,-1):ni.value+(k==="−"?"-":k); S.numDraft=ni.value });
-      const go=conf=>{const raw=ni.value.trim().replace(/,/g,"");const v=parseFloat(raw);if(raw===""||isNaN(v)){ni.focus();return}
+      const go=conf=>{const raw=ni.value.trim();const v=parseAns(raw);if(raw===""||isNaN(v)){ni.focus();return}
         answer({raw, correct:Math.abs(v-q.answer)<=q.tol, ...extra(conf)});};
       const ck=document.getElementById("check"); if(ck) ck.onclick=()=>go();
       ni.onkeydown=e=>{if(e.key==="Enter"&&!staged)go()};
@@ -1455,7 +1472,7 @@ function renderStep(){
       $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer({choice:+b.dataset.k,correct:+b.dataset.k===q.a}));
     }
     if(staged){
-      const send=conf=>{ if(q.num){ const raw=document.getElementById("numin").value.trim().replace(/,/g,"");const v=parseFloat(raw);if(raw===""||isNaN(v)){document.getElementById("numin").focus();return}
+      const send=conf=>{ if(q.num){ const raw=document.getElementById("numin").value.trim();const v=parseAns(raw);if(raw===""||isNaN(v)){document.getElementById("numin").focus();return}
           answer({raw,correct:Math.abs(v-q.answer)<=q.tol,...extra(conf)}) }
         else if(S.pick!=null) answer({choice:S.pick,correct:S.pick===q.a,...extra(conf)}) };
       const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
@@ -1474,7 +1491,7 @@ function renderStep(){
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
     const nx=document.getElementById("next"); if(nx) nx.onclick=()=>{
       S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
-        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0}:{}),...(q.check&&S.checkPick!=null?{checkOk:S.checkPick===q.check.a}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),len:q.q.length});
+        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0}:{}),...(q.check&&S.checkPick!=null?{checkOk:S.checkPick===q.check.a}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),len:q.q.length});
       advance();
     };
   }
@@ -2445,7 +2462,7 @@ function renderNotes(){
     <div class="feedback" id="gloss-box" hidden></div>
     <details><summary>ดูโจทย์และเฉลย (${qs.length} ข้อ)${wrong.size?` · ข้อที่พลาดอยู่บนสุด`:""}</summary>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">${qs.map(q=>`<div class="logi">${wrong.has(q.id)?`<span class="small" style="color:var(--bad)">ข้อนี้เคยพลาด</span>`:""}
-        <span class="small">${gloss(q.q)}</span>${figHtml(q.fig)}<span class="small"><b>คำตอบ:</b> ${esc(q.num?q.answer+" "+q.unit:q.opts[q.a])}</span><span class="small muted">${gloss(q.ex)}</span></div>`).join("")}</div></details>
+        <span class="small">${gloss(q.q)}</span>${figHtml(q.fig)}<span class="small"><b>คำตอบ:</b> ${esc(q.num?(q.answerText||q.answer)+" "+q.unit:q.opts[q.a])}</span><span class="small muted">${gloss(q.ex)}</span></div>`).join("")}</div></details>
     <button class="btn ghost" id="nback" style="border:0;padding-left:0">← กลับ</button></section>`;
   bindGloss();
   const nb=$v.querySelector('[data-read="notes"]'); if(nb) nb.onclick=()=>readAloud("notes",[c.title,...c.points,...(c.use?["เอาไปใช้ที่ไหน: "+c.use]:[])]);
