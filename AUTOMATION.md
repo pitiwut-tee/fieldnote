@@ -1,4 +1,9 @@
-# Twice-weekly content run (Wed and Sun evening)
+# Daily content run (every evening)
+
+Runs every evening since 2026-11-08 (it used to be Wed/Sun). Most evenings are **small**: import nothing new, check
+stock, answer her questions, maybe write a letter. Only write new sets when the stock for the next 3 days is short.
+Keep each run as light as the day needs: the father is watching how much usage this costs. End your message with
+one line `ขนาดงานรอบนี้: เล็ก / กลาง / ใหญ่` (small = no new sets, medium = 1–2 sets, large = 3+ sets or sweep bank).
 
 You are preparing the next days of practice for a Thai ม.2 student (girls' school in Bangkok, good grades) who is
 aiming for the shared first-round science-school exam (วมว. > จุฬาภรณ์, run by MWIT) in mid-November 2570.
@@ -262,17 +267,26 @@ things a normal family has. **Her father must approve every mission before she s
 
 ## 3. Decide what to write
 
-Plan from tomorrow until the day after the next run + 3 days (about 7 days), using `content/calendar.json`
-(holidays, `schoolOff`, `schoolBreaks`) and weekends. What each day uses:
+Keep about 3–4 days ready ahead (runs are daily now), using `content/calendar.json` (holidays, `schoolOff`,
+`schoolBreaks`) and weekends. Daily time the father set (2026-11-07): **school day 45–60 min, holiday 75–90 min**.
+Check it against real durations (`durationSec`) every few days and tell him if days run short or long. What each day uses:
 
-- School day: 1 lesson (topics in `calendar.currentSpells` first). Fridays may be a repair set (automatic).
-- Holiday (full level): 1 lesson + slot 3 + slot 4. Slot 3 = the weekly mixed set on the first holiday of the
-  week, the weekly passage on the next holiday, otherwise a probe. Slot 4 = a probe when slot 3 was a mixed
-  set or passage, otherwise an extra lesson. When the probe list is used up the app falls back to lessons.
+- School day: 1 lesson (topics in `calendar.currentSpells` first, in `calendar.lessonQueue` order) + vocabulary +
+  **old-topic sweep 5 questions** (`ย้อนคาถาเก่า`). Fridays may be a repair set instead of the lesson (automatic).
+- Holiday (full level): 1 lesson + slot 3 + vocabulary + **sweep 10 questions**. Slot 3 = the weekly mixed set on
+  the first holiday of the week, the weekly passage on the next holiday, otherwise a probe. A second lesson is
+  offered after the mission is done but is not required.
+- **Sweep bank** (`kind:"sweep"`, files `content/sets/03x-sweep-N.json`, shape of `030-sweep-1.json`): questions
+  from ม.1–2 topics she has already learned (spells whose grade is ม.1/ม.2 and school status done/maybe/part, never
+  `currentSpells`, never ม.3). Level 1–2, quick (under ~1.5 min each), every one with `optErr`, `ctx`, a near-peer
+  `ex`. The app shows each question once, one per spell per day, the spell checked longest ago first. Keep **at
+  least 50 unseen** sweep questions spread over at least 15 spells; when below, add a new sweep file (counts as one
+  set). Use sweep results (items in `type:"sweep"` records) to see what she has forgotten: a spell under 60% after
+  ≥4 sweep questions goes into `school-plan.md` "to review Jan–Mar" and may get a probe sooner.
 - Keep ready (unused = no non-test attempt has its `setId`): lessons for the planned days, at least 1 mixed set
   (2 from 2027-09-01, and set `calendar.mixedPerWeek` to 2 then), at least 1 passage, at least 2 probes.
 
-**At most 6 new sets per run** (mixed sets and passages count). If that is not enough to cover every planned day,
+**At most 3 new sets per run** (daily runs; a sweep file counts as one) (mixed sets and passages count). If that is not enough to cover every planned day,
 cover school days and slot 3 first; the app reuses older lessons for the rest, and say so to the father.
 
 Probe order (skip ones that already exist in `content/sets`): m3 อัตราส่วน, m17 พีทาโกรัส, m16 ความเท่ากันทุกประการ,
@@ -283,6 +297,21 @@ s19 บรรยากาศ, s3 การแยกสาร, s22 ตัวแ�
 Read `content/school-plan.md` every run: it holds the science weighting estimate, the usual topic order, and
 known gaps. Follow its balance when choosing non-current topics. If it ever contains the school's own outline,
 use that for `currentSpells` and update `calendar.json` when the school moves to a new topic.
+
+## Lessons: why first, then one idea at a time
+
+The father noticed she follows formulas without knowing what a topic is for ("มัธยฐานใช้ตอนไหน"). Every new lesson:
+- `concept.hook`: `{text, q?, opts?, reveal}` — a short real situation where the old tool fails or the answer is
+  surprising, a question, 2–3 guesses (no right/wrong, not scored), and `reveal` that explains why this topic
+  exists. The app shows it before anything else. For central tendency, the hook must answer when to use the
+  median (e.g. salaries with one huge outlier).
+- `concept.points`: one idea per point (the app shows them one per screen with "เข้าใจแล้ว / ขออธิบายอีกแบบ").
+  Keep each point to 1–2 sentences; formulas come after the idea.
+- `concept.more`: one alternative explanation per point (same length as `points`): an analogy or a tiny worked
+  example, not a repeat. Records keep `conceptHelp` (which points she asked to have explained again) and
+  `hookPick`. If she asked for help on the same kind of point twice, rewrite that point in the next lesson.
+- Daily check-in: `type:"mood"` records (`ready` / `ok` / `tired`). Two "tired" in three days → lighter content
+  (more level 1–2, shorter sets) and tell the father.
 
 ## 4. Write the content (all of it before verifying)
 

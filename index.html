@@ -457,7 +457,7 @@ async function importCode(raw, asTest){
 }
 
 /* ---------- updates: GitHub Pages lets the browser keep an old copy for a while, so check for a newer build ---------- */
-const BUILD="2026-11-07 16:32";
+const BUILD="2026-11-07 16:38";
 async function checkUpdate(){ if(!/^https?:/.test(location.protocol)||typeof db!=="undefined"&&db) return;
   try{ const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text(); const m=t.match(/const BUILD="(\d{4}-\d\d-\d\d \d\d:\d\d)"/);
     if(m&&m[1]!==BUILD&&!m[1].includes("@@")&&!document.getElementById("updbar")){ const d=document.createElement("button"); d.id="updbar"; d.className="btn";
@@ -1963,6 +1963,17 @@ lion:quad({body:"#f6c35a",belly:"#fff1c9",feet:"#d69a34",
   horn:`<path d="M40 18 L44 10 L50 16 L56 10 L60 18Z" fill="#f5d34c" stroke="#d9a520" stroke-width=".8"/>`}),
 naga:snake("#2fa37a","#f6f1c9","#f5c84c","dots",`<path d="M28 32 C22 20 30 10 40 16 C42 8 58 8 60 16 C70 10 78 20 72 32 C66 26 34 26 28 32Z" fill="#1f7a5a"/><path d="M38 20 L42 6 L46 16 L50 4 L54 16 L58 6 L62 20Z" fill="#f5c84c" stroke="#d9a520" stroke-width=".8"/><circle cx="50" cy="14" r="2" fill="#e2574c"/>`),
 });
+/* things worn round the neck, drawn as real collars/scarves (an emoji scarf looks stuck on, not worn) */
+const arc='M14 40 Q50 72 86 40';
+Object.assign(PET_ART,{
+neck_scarf:`<path d="${arc}" stroke="#e2574c" stroke-width="15" fill="none" stroke-linecap="round"/><path d="${arc}" stroke="#ffd2cc" stroke-width="3" fill="none" stroke-dasharray="4 9"/>
+  <path d="M60 52 L66 90 L78 88 L70 50Z" fill="#e2574c"/><path d="M66 90 l2 6 M70 89.5 l1.5 6 M74 89 l1.5 6" stroke="#c43d33" stroke-width="2"/><path d="M63 62 l9 -1.5 M64.5 72 l9 -1.5" stroke="#ffd2cc" stroke-width="3"/>`,
+neck_bell:`<path d="${arc}" stroke="#d9412b" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M42 58 Q50 50 58 58 L60 70 L40 70Z" fill="#f5c84c" stroke="#c99a1e" stroke-width="1.5"/><circle cx="50" cy="72" r="3" fill="#c99a1e"/><path d="M44 60 q2 -3 5 -3" stroke="#fff6c9" stroke-width="2" fill="none"/>`,
+neck_ribbon:`<path d="${arc}" stroke="#7fb6e6" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M50 58 L34 48 L34 68Z M50 58 L66 48 L66 68Z" fill="#4f8fd6"/><circle cx="50" cy="58" r="5" fill="#3a74b8"/>`,
+neck_beads:`<path d="${arc}" stroke="#8a6440" stroke-width="1.2" fill="none"/>${[0,1,2,3,4,5,6,7,8,9,10].map(i=>{const t=i/10,x=(1-t)*(1-t)*14+2*(1-t)*t*50+t*t*86,y=(1-t)*(1-t)*40+2*(1-t)*t*72+t*t*40;return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.6" fill="${["#ff8fa3","#ffd45c","#8fd3ff","#b8f2a2","#c9a6ff"][i%5]}" stroke="#fff" stroke-width=".8"/>`}).join("")}`,
+neck_gem:`<path d="${arc}" stroke="#d9a520" stroke-width="2" fill="none"/><path d="M50 58 L58 66 L50 80 L42 66Z" fill="#8fe3ff" stroke="#3aa9d6" stroke-width="1.5"/><path d="M42 66 h16 M50 58 v22" stroke="#3aa9d6" stroke-width=".8"/>`,
+neck_medal:`<path d="M30 36 L48 66 M70 36 L52 66" stroke="#4f8fd6" stroke-width="8" stroke-linecap="round"/><path d="M30 36 L48 66" stroke="#e2574c" stroke-width="3" /><circle cx="50" cy="72" r="11" fill="#f5c84c" stroke="#c99a1e" stroke-width="2"/><path d="M50 65 l2 5 5 .5 -4 3.5 1.5 5 -4.5 -3 -4.5 3 1.5 -5 -4 -3.5 5 -.5Z" fill="#fff6c9"/>`
+});
 /* knowledge cards: real science behind each companion, unlocked as it grows (baby, young, adult) */
 const PET_FACTS={"dragon": ["มังกรในนิทานได้แรงบันดาลใจจากสัตว์จริงหลายชนิด เช่น ตะกวดและจระเข้", "มังกรโคโมโดเป็นกิ้งก่าที่ใหญ่ที่สุดในโลก ยาวได้ราว 3 เมตร อาศัยอยู่บนเกาะในอินโดนีเซีย", "กิ้งก่าเป็นสัตว์เลือดเย็น ต้องอาบแดดให้ร่างกายอุ่นก่อน จึงจะเคลื่อนไหวได้คล่อง"], "owl": ["นกฮูกกลอกตาในเบ้าไม่ได้ จึงต้องหมุนคอแทน หมุนได้ราว 270 องศา", "ขอบขนปีกนกฮูกหยักนุ่ม ช่วยลดเสียงลม จึงบินได้เงียบมาก", "นกฮูกกลืนเหยื่อทั้งตัว แล้วสำรอกส่วนที่ย่อยไม่ได้ เช่น กระดูกและขน ออกมาเป็นก้อน"], "fox": ["จิ้งจอกได้ยินเสียงเบามาก ได้ยินแม้เสียงหนูขุดดินอยู่ใต้หิมะ", "จิ้งจอกแดงกระโดดตะครุบเหยื่อใต้หิมะ งานวิจัยพบว่ามันมักกระโดดไปทางทิศตะวันออกเฉียงเหนือ อาจใช้สนามแม่เหล็กโลกช่วยกะระยะ", "หางฟูของจิ้งจอกช่วยทรงตัวตอนวิ่ง และใช้พันตัวให้อุ่นตอนนอน"], "cat": ["หลังจอตาของแมวมีชั้นสะท้อนแสง ตาจึงวาวในที่มืด และมองเห็นในแสงน้อยได้ดีกว่าคน", "หนวดแมวรับรู้แรงลมและสิ่งรอบตัวได้ ช่วยกะว่าช่องแคบพอให้ตัวผ่านไหม", "แมวรับรสหวานไม่ได้ เพราะยีนรับรสหวานของแมวไม่ทำงาน"], "bunny": ["ฟันกระต่ายงอกยาวขึ้นตลอดชีวิต จึงต้องกัดแทะหญ้าให้ฟันสึกอยู่เสมอ", "ตากระต่ายอยู่ด้านข้างหัว มองเห็นได้เกือบรอบตัว ช่วยระวังภัย", "หูยาวของกระต่ายมีเส้นเลือดเยอะ ช่วยระบายความร้อนออกจากร่างกาย"], "wolf": ["หมาป่าอยู่กันเป็นฝูง ส่วนใหญ่คือครอบครัวเดียวกัน คือพ่อแม่กับลูกๆ", "หมาป่าหอนเพื่อสื่อสารกับฝูงที่อยู่ไกล เสียงหอนไปได้ไกลหลายกิโลเมตร", "สุนัขบ้านมีบรรพบุรุษเป็นหมาป่าสีเทา ที่คนเริ่มเลี้ยงเมื่อกว่า 15,000 ปีก่อน"], "tiger": ["ลายของเสือแต่ละตัวไม่ซ้ำกัน เหมือนลายนิ้วมือของคน", "เสือว่ายน้ำเก่งและชอบแช่น้ำคลายร้อน ต่างจากแมวบ้านส่วนใหญ่", "ถ้าโกนขนเสือออก ผิวหนังข้างใต้ก็ยังมีลายอยู่"], "peacock": ["นกยูงตัวผู้เท่านั้นที่มีขนหางยาวสวย ใช้รำแพนอวดตัวเมีย", "สีเขียวฟ้าแวววาวของขนนกยูงไม่ได้มาจากสารสี แต่เกิดจากโครงสร้างเล็กๆ ในขนที่สะท้อนแสง", "นกยูงของไทยคือนกยูงเขียว เป็นสัตว์ป่าคุ้มครองที่ต้องช่วยกันดูแล"], "swan": ["หงส์ตัวใหญ่แต่บินได้ โดยต้องวิ่งบนผิวน้ำก่อนขึ้นบิน", "ลูกหงส์ขาวมีขนสีเทา แล้วค่อยๆ เปลี่ยนเป็นสีขาวเมื่อโต", "หงส์ใช้คอยาวก้มลงไปกินพืชใต้น้ำ โดยไม่ต้องดำน้ำทั้งตัว"], "dino": ["นกเป็นลูกหลานของไดโนเสาร์ นักวิทยาศาสตร์จึงนับว่านกคือไดโนเสาร์ที่ยังมีชีวิตอยู่", "ที่ภาคอีสานของไทยพบฟอสซิลไดโนเสาร์หลายชนิด เช่น ภูเวียงโกซอรัส สิรินธรเน", "ฟอสซิลเกิดจากซากที่ถูกตะกอนทับถมเป็นเวลานานมาก จนแร่ธาตุเข้าไปแทนที่และกลายเป็นหิน"], "dolphin": ["โลมาเป็นสัตว์เลี้ยงลูกด้วยนม หายใจด้วยปอดผ่านรูบนหัว", "โลมาส่งเสียงแล้วฟังเสียงสะท้อนเพื่อหาตำแหน่งเหยื่อ เหมือนค้างคาว", "ในทะเลสาบสงขลามีโลมาอิรวดีอาศัยอยู่ เหลืออยู่น้อยมากจนใกล้สูญพันธุ์"], "bubble": ["หมึกยักษ์มีหัวใจ 3 ดวง และมีเลือดสีฟ้า เพราะใช้ทองแดงขนออกซิเจน", "หมึกยักษ์เปลี่ยนสีผิวได้ในพริบตาเพื่อพรางตัว", "แมงกะพรุนไม่มีสมองและไม่มีหัวใจ ตัวของมันเป็นน้ำราว 95%"], "butterfly": ["ผีเสื้อเปลี่ยนรูปร่างครบ 4 ระยะ คือ ไข่ หนอน ดักแด้ และตัวเต็มวัย", "ผีเสื้อรับรสด้วยเท้า เมื่อเกาะใบไม้ก็รู้ว่าใบนั้นเหมาะจะวางไข่ไหม", "ผีเสื้อช่วยถ่ายเรณูให้ดอกไม้ เพราะตอนดูดน้ำหวาน ละอองเรณูจะติดตัวไปด้วย"], "turtle": ["กระดองเต่าเชื่อมกับกระดูกสันหลังและซี่โครง เต่าจึงถอดกระดองออกไม่ได้", "เพศของลูกเต่าทะเลขึ้นกับอุณหภูมิของทรายที่ฝังไข่ ทรายอุ่นจะได้ตัวเมียมากขึ้น", "เต่าทะเลมักกินถุงพลาสติก เพราะคิดว่าเป็นแมงกะพรุน"], "panda": ["แพนด้ากินไผ่วันละหลายสิบกิโลกรัม เพราะไผ่ให้พลังงานน้อย", "แพนด้ามีกระดูกข้อมือที่ยื่นออกมาเหมือนนิ้วที่หก ช่วยจับลำไผ่", "ลูกแพนด้าแรกเกิดตัวเล็กมาก หนักเพียงราว 100–200 กรัม"], "penguin": ["เพนกวินบินไม่ได้ แต่ใช้ปีกว่ายน้ำได้เร็วมาก", "เพนกวินจักรพรรดิตัวผู้กกไข่ไว้บนเท้าตลอดหน้าหนาวของแอนตาร์กติกา", "เพนกวินแทบทุกชนิดอยู่ซีกโลกใต้ ที่ขั้วโลกเหนือไม่มีเพนกวินเลย"], "deer": ["เขากวางผลัดทุกปีแล้วงอกใหม่ ต่างจากเขาวัวที่อยู่ไปตลอดชีวิต", "ระหว่างที่เขากวางกำลังงอก จะมีหนังนุ่มที่มีเส้นเลือดหุ้มอยู่", "กวางเป็นสัตว์เคี้ยวเอื้อง กลืนอาหารลงกระเพาะแล้วสำรอกกลับมาเคี้ยวอีกรอบ"], "otter": ["นากทะเลจับมือกันตอนนอน จะได้ไม่ลอยแยกจากกัน", "นากทะเลมีขนแน่นที่สุดในบรรดาสัตว์ทั้งหมด ใช้ขนกันหนาวแทนชั้นไขมัน", "นากทะเลใช้หินทุบเปลือกหอย เป็นสัตว์ที่รู้จักใช้เครื่องมือ"], "unicorn": ["ในอดีตมีคนขายเขาของวาฬนาร์วาล โดยอ้างว่าเป็นเขายูนิคอร์น", "เขาของวาฬนาร์วาลจริงๆ คือฟันที่งอกยาวออกมา ยาวได้ถึงราว 3 เมตร", "ยูนิคอร์นเป็นสัตว์ในตำนาน นักวิทยาศาสตร์ตัดสินว่าอะไรมีจริงจากหลักฐาน ไม่ใช่จากเรื่องเล่า"], "whale": ["วาฬสีน้ำเงินเป็นสัตว์ที่ใหญ่ที่สุดเท่าที่เคยมีบนโลก ยาวได้ราว 30 เมตร", "วาฬบาลีนไม่มีฟัน แต่ใช้แผงบาลีนกรองกุ้งเคยตัวเล็กๆ กิน", "ในอ่าวไทยมีวาฬบรูด้า ที่ชอบอ้าปากรอให้ฝูงปลาว่ายเข้ามาเอง"], "hedgehog": ["หนามของเม่นแคระคือขนที่แข็งเป็นพิเศษ ทำจากเคราติน สารเดียวกับเล็บของคน", "เม่นแคระม้วนตัวเป็นลูกบอลหนามเมื่อตกใจ", "เม่นแคระหากินกลางคืน และกินแมลงเป็นอาหารหลัก"], "ballpython": ["งูหลามบอลชอบม้วนตัวเป็นลูกบอลเมื่อตกใจ จึงได้ชื่อนี้", "งูรับกลิ่นด้วยลิ้น แลบลิ้นเก็บกลิ่นแล้วส่งไปให้อวัยวะรับกลิ่นที่เพดานปาก", "งูหลามบอลมีแอ่งรับความร้อนที่ริมปาก รู้ได้ว่าสัตว์เลือดอุ่นอยู่ตรงไหนแม้ในที่มืด"], "banana": ["งูสีกล้วยหอม (banana) เป็นมอร์ฟสีของงูหลามบอล ที่ผู้เลี้ยงผสมพันธุ์ต่อกันจนได้สีใหม่", "สีที่ส่งต่อจากพ่อแม่ไปสู่ลูกเป็นเรื่องพันธุศาสตร์ ที่เราจะได้เรียนตอน ม.3", "งูลอกคราบออกทั้งตัวเป็นชิ้นเดียว เพราะผิวชั้นนอกไม่ขยายตามตัวที่โตขึ้น"], "corn": ["งูคอร์นได้ชื่อเพราะลายท้องคล้ายเมล็ดข้าวโพด และมักพบใกล้ยุ้งข้าวโพดที่มีหนูชุม", "งูคอร์นไม่มีพิษ มันจับเหยื่อด้วยการรัด", "งูไม่มีใบหูด้านนอก แต่รับแรงสั่นสะเทือนผ่านกระดูกขากรรไกรได้"], "greentree": ["งูหลามเขียวตอนเด็กมีสีเหลืองหรือสีแดง แล้วค่อยๆ เปลี่ยนเป็นสีเขียวเมื่อโต", "งูหลามเขียวพันกิ่งไม้เป็นวง แล้ววางหัวพักไว้ตรงกลาง", "สีเขียวช่วยพรางตัวในพุ่มไม้ ทั้งจากเหยื่อและจากผู้ล่า"], "duck": ["ไอโซพอดไม่ใช่แมลง แต่เป็นญาติของกุ้งและปู (ครัสเตเชียน) ที่ขึ้นมาอยู่บนบก", "ไอโซพอดหายใจด้วยอวัยวะคล้ายเหงือกใต้ท้อง จึงต้องอยู่ในที่ชื้นเสมอ", "ไอโซพอดหน้าเป็ด (Rubber Ducky) ถูกพบครั้งแรกในถ้ำที่ประเทศไทย"], "cow": ["ไอโซพอดลายวัวนม (Dairy Cow) เป็นมอร์ฟสีขาวดำของ Porcellio laevis", "ไอโซพอดเป็นผู้ย่อยสลาย กินใบไม้และไม้ผุ แล้วคืนธาตุอาหารให้ดิน", "ไอโซพอดตัวเมียมีถุงใต้ท้องไว้อุ้มไข่และลูกที่เพิ่งฟัก"], "orangeiso": ["ไอโซพอดสีส้มนี้คือตัวกะปิ (Armadillidium) ที่ม้วนตัวกลมได้เหมือนลูกบอล", "ไอโซพอดลอกคราบทีละครึ่งตัว ลอกครึ่งหลังก่อน แล้วค่อยลอกครึ่งหน้า", "ไอโซพอดกินคราบเก่าของตัวเอง เพื่อเอาแคลเซียมกลับมาใช้สร้างเปลือกใหม่"], "potion": ["Magic Potion เป็นมอร์ฟของตัวกะปิ Armadillidium vulgare ที่มีแต้มหลายสี", "เปลือกไอโซพอดมีแคลเซียมคาร์บอเนต สารเดียวกับเปลือกไข่และหินปูน", "คนเลี้ยงไอโซพอดจะทำมุมชื้นและมุมแห้งไว้ในตู้ ให้มันเลือกเองว่าจะอยู่ตรงไหน"], "kilen": ["กิเลนเป็นสัตว์หิมพานต์ หัวคล้ายมังกร ตัวมีเกล็ด และมีกีบเหมือนกวางหรือม้า", "ในความเชื่อจีน กิเลนเป็นสัตว์มงคลที่เดินเบามากจนไม่เหยียบหญ้าให้ช้ำ", "ตัวนิ่มหรือตัวลิ่นมีเกล็ดจริงๆ ทำจากเคราติน และถูกล่าจนใกล้สูญพันธุ์"], "lion": ["ราชสีห์เป็นสัตว์หิมพานต์ ที่ได้แรงบันดาลใจมาจากสิงโต", "สิงโตเป็นแมวป่าชนิดเดียวที่อยู่กันเป็นฝูง", "แผงคอของสิงโตตัวผู้ช่วยป้องกันคอเวลาต่อสู้ และบอกว่าตัวนั้นแข็งแรงแค่ไหน"], "naga": ["พญานาคเป็นสัตว์ในตำนานที่ผูกพันกับน้ำและฝน ในความเชื่อของไทยและลาว", "งูจงอางแผ่แม่เบี้ยได้ และเป็นงูพิษที่ยาวที่สุดในโลก ยาวได้ราว 5 เมตร", "งูจงอางกินงูชนิดอื่นเป็นอาหารหลัก และตัวเมียทำรังจากใบไม้เพื่อวางไข่"]};
 function glyph(t){ return typeof t==="string"&&t.startsWith("svg:")?`<svg class="pg" viewBox="0 0 100 100" width="1em" height="1em" aria-hidden="true" style="display:inline-block;vertical-align:-.15em">${PET_ART[t.slice(4)]||""}</svg>`:t }
@@ -2013,8 +2024,8 @@ const WEAR=[
   {id:"acc:bow",e:"🎀",n:"โบว์",cost:200,slot:"head"},{id:"acc:flower",e:"🌸",n:"ดอกไม้ทัดหู",cost:150,slot:"head"},{id:"acc:cap",e:"🧢",n:"หมวกแก๊ป",cost:200,slot:"head"},
   {id:"wear:sunhat",e:"👒",n:"หมวกปีกกว้าง",cost:250,slot:"head"},{id:"wear:star",e:"🌟",n:"ดาวบนหัว",cost:300,slot:"head"},{id:"acc:wizard",e:"🎩",n:"หมวกนักมายากล",cost:350,slot:"head"},
   {id:"wear:leaf",e:"🍃",n:"ใบไม้วิเศษ",cost:150,slot:"head"},{id:"acc:crown",e:"👑",n:"มงกุฎ",cost:900,slot:"head"},{id:"acc:teacher",e:"🎓",n:"หมวกครู",special:"เล่าให้พ่อฟังครั้งแรก",slot:"head"},
-  {id:"wear:scarf",e:"🧣",n:"ผ้าพันคอ",cost:200,slot:"neck"},{id:"wear:bell",e:"🔔",n:"กระดิ่ง",cost:150,slot:"neck"},{id:"wear:ribbon",e:"🎗️",n:"ริบบิ้น",cost:150,slot:"neck"},
-  {id:"wear:beads",e:"📿",n:"สร้อยลูกปัด",cost:250,slot:"neck"},{id:"wear:gem",e:"💎",n:"จี้คริสตัล",cost:600,slot:"neck"},{id:"wear:medal",e:"🏅",n:"เหรียญนักสู้",special:"จุดไฟติดต่อกันครบ 7 วัน",slot:"neck"},
+  {id:"wear:scarf",e:glyph("svg:neck_scarf"),n:"ผ้าพันคอ",cost:200,slot:"neck",big:1},{id:"wear:bell",e:glyph("svg:neck_bell"),n:"ปลอกคอกระดิ่ง",cost:150,slot:"neck",big:1},{id:"wear:ribbon",e:glyph("svg:neck_ribbon"),n:"โบว์ไท",cost:150,slot:"neck",big:1},
+  {id:"wear:beads",e:glyph("svg:neck_beads"),n:"สร้อยลูกปัด",cost:250,slot:"neck",big:1},{id:"wear:gem",e:glyph("svg:neck_gem"),n:"จี้คริสตัล",cost:600,slot:"neck",big:1},{id:"wear:medal",e:glyph("svg:neck_medal"),n:"เหรียญนักสู้",special:"จุดไฟติดต่อกันครบ 7 วัน",slot:"neck",big:1},
   {id:"wear:wand",e:"🪄",n:"ไม้กายสิทธิ์",cost:400,slot:"side"},{id:"wear:balloon",e:"🎈",n:"ลูกโป่ง",cost:150,slot:"side"},{id:"wear:book",e:"📖",n:"หนังสือเวท",cost:250,slot:"side"},
   {id:"wear:orb",e:"🔮",n:"ลูกแก้วพยากรณ์",cost:500,slot:"side"},{id:"wear:lolli",e:"🍭",n:"อมยิ้ม",cost:120,slot:"side"},{id:"wear:umbrella",e:"🌂",n:"ร่มน้อย",cost:200,slot:"side"},
   {id:"wear:kite",e:"🪁",n:"ว่าว",cost:250,slot:"side"},{id:"wear:brush",e:"🖌️",n:"พู่กันนักวาด",cost:200,slot:"side"},
@@ -2046,9 +2057,9 @@ const PROPS=[["plant","🪴","กระถางต้นไม้",150],["candl
   ["rock","🪨","ก้อนหิน",100],["log","🪵","ขอนไม้ผุ",150],["moss","🌿","กอมอส",120],["leaflitter","🍂","กองใบไม้แห้ง",100],["sprout","🌱","ต้นกล้า",100],["cactus","🌵","กระบองเพชร",150],
   ["terrarium","svg:tank","ตู้เลี้ยงไอโซพอด",400],["shroom2","🍄‍🟫","เห็ดป่า",120],["shell2","🐚","เปลือกหอย",120]]
   .map(([k,e,n,cost])=>({id:"prop:"+k,e:e.startsWith("svg:")?glyph(e):e,n,cost,slot:"prop"}));
-WEAR.forEach(w=>{ if(w.slot!=="fx") w.slot="wear" });
+WEAR.forEach(w=>{ if(w.slot!=="fx"){ w.anchor=w.slot; w.slot="wear" } });
 const SHOP=[...WEAR,...PROPS,...RARE,...GUEST_ITEMS,...Object.entries(SCENES).filter(([k,s])=>s.cost>0).map(([id,s])=>({id,n:s.n,cost:s.cost,slot:"bg"}))];
-const WEAR_HOME={head:[50,6],neck:[50,66],side:[86,62]};   /* where items bought in the old slot system start */
+const WEAR_HOME={head:[50,6],neck:[50,64],side:[86,62]};   /* where items bought in the old slot system start */
 function ls(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v) }catch(e){ return d } }
 function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)) }catch(e){} }
 function wallet(list){ const earned=list.filter(a=>a.type!=="shop").reduce((s,a)=>s+Math.max(0,xpOf(a)),0)+QUEST_BONUS*questWeeks(list).length, spent=list.filter(a=>a.type==="shop").reduce((s,a)=>s+(a.cost||0),0); return {earned,spent,stars:earned-spent} }
@@ -2105,7 +2116,7 @@ function petFace(kind,size,dressed,list){
     ${fx?[0,1,2,3].map(i=>`<span class="fxp" style="left:${[8,78,18,70][i]}%;top:${[18,10,70,62][i]}%;animation-delay:${i*0.6}s;font-size:${Math.round(size*0.16)}px">${fx.e}</span>`).join(""):""}
     ${art?`<img src="${art}" alt="" class="bface" style="width:${sz}px;height:${sz}px">`
       :`<span class="bface ${st===0?"egg":""}" style="font-size:${Math.round(sz*0.72)}px;width:${sz}px;height:${sz}px;${st===0?`filter:hue-rotate(${(K.k.length*47)%360}deg) saturate(1.4)`:""}" aria-hidden="true">${petLook(kind,st)}</span>`}
-    ${st>0?worn.map((x,i)=>`<span class="w-it" data-wi="${i}" style="left:${x.x}%;top:${x.y}%;font-size:${Math.round(sz*0.32*(x.s||1))}px">${it(x.id).e}</span>`).join(""):""}</span>` }
+    ${st>0?worn.map((x,i)=>`<span class="w-it" data-wi="${i}" style="left:${x.x}%;top:${x.y}%;font-size:${Math.round(sz*(it(x.id).big?0.6:0.32)*(x.s||1))}px">${it(x.id).e}</span>`).join(""):""}</span>` }
 /* ---------- petting: hearts, a soft sound, and a bond that only ever grows (never decays, no guilt) ---------- */
 const BOND_STEP=30, PAT_DAY=10;
 function bondState(){ return ls("fieldnote.bond",{}) }
@@ -2163,11 +2174,13 @@ function renderDen(){
     </div>
     <div class="row" style="justify-content:space-between"><span><b>${esc(b.name)}</b> · ${P.n} · ${GROW[st][1]}</span>
       <span class="row" style="gap:6px"><button class="btn ${denArrange?"":"ghost"} small" id="arrange">${denArrange?"✓ จัดเสร็จแล้ว":"✋ จัดวางของ"}</button><button class="btn ghost small" id="prename">✏️ เปลี่ยนชื่อ</button>${st>0?`<button class="btn ghost small" id="part">🎨 ${buddyArt(b.kind)?"เปลี่ยนรูป":"วาดรูปให้"}</button>`:""}</span></div>
+    ${denArrange?`<div class="feedback"><span class="small"><b>โหมดจัดวาง:</b> ลากของบนตัว${esc(b.name)}หรือในห้องไปวางตรงไหนก็ได้ แตะของเพื่อเลือก แล้วปรับขนาดหรือเก็บออก</span>
+      ${denSel?(()=>{const o=denSel.t==="p"?R.props[denSel.i]:(R.wear[b.kind]||[])[denSel.i]; return o?`<div class="row" style="gap:10px;align-items:center"><label class="small" for="szr">ขนาด</label>
+        <input type="range" id="szr" min="40" max="250" step="5" value="${Math.round((o.s||1)*100)}" style="flex:1;min-width:140px;accent-color:var(--accent)">
+        <button class="btn ghost small" data-rm="1">เก็บออก</button></div>`:""})():`<p class="small"><b>แตะของชิ้นที่อยากปรับ</b> แล้วจะมีแถบปรับขนาดขึ้นมา</p>`}</div>`:""}
     <div id="bondbox">${bondHtml(b.kind,b.name,list)}</div>
     ${factsHtml(b.kind,b.name,st)}
     <label class="small row" style="gap:6px"><input type="checkbox" id="psound" ${petSoundOn()?"checked":""}> เสียงคู่หูเวลาลูบ</label>
-    ${denArrange?`<div class="feedback"><span class="small"><b>โหมดจัดวาง:</b> ลากของบนตัว${esc(b.name)}หรือในห้องไปวางตรงไหนก็ได้ แตะของเพื่อเลือก แล้วปรับขนาดหรือเก็บออก</span>
-      ${denSel?`<div class="row"><button class="btn ghost small" data-sz="0.8">เล็กลง</button><button class="btn ghost small" data-sz="1.25">ใหญ่ขึ้น</button><button class="btn ghost small" data-rm="1">เก็บออก</button></div>`:""}</div>`:""}
     ${next?`<div class="growbox"><span class="nextshape" aria-hidden="true">${petLook(b.kind,st+1)}</span>
       <div style="flex:1;display:flex;flex-direction:column;gap:4px"><span class="small"><b>${st===0?`อีก ${next[0]-g} พลัง ไข่จะฟัก`:`อีก ${next[0]-g} พลังจะเข้าสู่${next[1]}`}</b>${st===3?" (มีออร่าเรืองแสง)":""}</span>
       <div class="progress"><i style="width:${Math.round((g-GROW[st][0])/(next[0]-GROW[st][0])*100)}%;background:var(--beak)"></i></div>
@@ -2216,12 +2229,14 @@ function renderDen(){
   $v.querySelectorAll("[data-equip]").forEach(x=>x.onclick=()=>{ const s=SHOP.find(z=>z.id===x.dataset.equip), r=room();
     if(s.slot==="bg") r.bg=r.bg===s.id?null:s.id; else if(s.slot==="fx") r.fx[b.kind]=r.fx[b.kind]===s.id?null:s.id;
     else if(s.slot==="wear"&&(r.wear[b.kind]||[]).some(w=>w.id===s.id)) r.wear[b.kind]=r.wear[b.kind].filter(w=>w.id!==s.id);
-    else { placeItem(r,s,b.kind); denMsg=s.slot==="prop"?`วาง${s.n}แล้ว กด ✋ จัดวางของ เพื่อย้ายที่`:`${b.name}ใส่${s.n}แล้ว กด ✋ จัดวางของ เพื่อย้ายตำแหน่ง` }
+    else { placeItem(r,s,b.kind); denArrange=true; denSel=s.slot==="prop"?{t:"p",i:r.props.length-1}:{t:"w",i:r.wear[b.kind].length-1};
+      lsSet("fieldnote.room",r); denMsg=s.slot==="prop"?`วาง${s.n}แล้ว ลากไปวางตรงไหนก็ได้ ปรับขนาดด้วยแถบเลื่อน`:`${b.name}ใส่${s.n}แล้ว ลากปรับตำแหน่งได้ ปรับขนาดด้วยแถบเลื่อน`; reRender(); return }
     lsSet("fieldnote.room",r); denSel=null; reRender() });
   $v.querySelectorAll("[data-wish]").forEach(x=>x.onclick=()=>{ lsSet("fieldnote.wish",x.dataset.wish); denMsg="ตั้งเป็นของที่อยากได้แล้ว ดูความคืบหน้าได้ที่หน้าแรก"; reRender() });
   on("arrange",()=>{ denArrange=!denArrange; denSel=null; reRender() });
-  $v.querySelectorAll("[data-sz]").forEach(x=>x.onclick=()=>{ const r=room(), o2=denSel.t==="p"?r.props[denSel.i]:(r.wear[b.kind]||[])[denSel.i]; if(!o2) return;
-    o2.s=Math.max(0.5,Math.min(2.5,(o2.s||1)*+x.dataset.sz)); lsSet("fieldnote.room",r); reRender() });
+  { const sr=document.getElementById("szr"); if(sr&&denSel){ const el=denSel.t==="p"?$v.querySelector(`#props [data-pi="${denSel.i}"]`):$v.querySelector(`#petpat [data-wi="${denSel.i}"]`), base=el?parseFloat(el.style.fontSize)/((denSel.t==="p"?room().props[denSel.i]:room().wear[b.kind][denSel.i]).s||1):0;
+    sr.oninput=()=>{ if(el) el.style.fontSize=Math.round(base*sr.value/100)+"px" };
+    sr.onchange=()=>{ const r=room(), o2=denSel.t==="p"?r.props[denSel.i]:(r.wear[b.kind]||[])[denSel.i]; if(!o2) return; o2.s=sr.value/100; lsSet("fieldnote.room",r) } } }
   $v.querySelectorAll("[data-rm]").forEach(x=>x.onclick=()=>{ const r=room(); if(denSel.t==="p") r.props.splice(denSel.i,1); else (r.wear[b.kind]||[]).splice(denSel.i,1);
     lsSet("fieldnote.room",r); denSel=null; reRender() });
   if(denArrange) bindArrange(b.kind, reRender);
@@ -2243,7 +2258,8 @@ function placeItem(r,s,kind){
   if(s.slot==="bg") r.bg=s.id;
   else if(s.slot==="prop"){ const n=r.props.length; r.props.push({id:s.id,x:[14,86,30,70,50,22,78][n%7],y:[82,82,86,86,90,70,70][n%7],s:1}) }
   else if(s.slot==="fx") r.fx[kind]=s.id;
-  else { r.wear[kind]=r.wear[kind]||[]; const n=r.wear[kind].length; r.wear[kind].push({id:s.id,x:[50,50,86,14,70,30][n%6],y:[6,66,62,62,30,30][n%6],s:1}) } }
+  else { r.wear[kind]=r.wear[kind]||[]; const a=WEAR_HOME[s.anchor]||[50,30], dup=r.wear[kind].filter(w=>(SHOP.find(z=>z.id===w.id)||{}).anchor===s.anchor).length;
+    r.wear[kind].push({id:s.id,x:a[0]+(s.anchor==="neck"?0:dup*8),y:a[1]+(s.anchor==="neck"?dup*4:0),s:1}) } }
 /* drag worn things around the companion, and room things around the scene; positions are % of the box they sit in */
 function bindArrange(kind, reRender){
   const grab=(el,t,i,box)=>{ el.onpointerdown=e=>{ e.preventDefault(); e.stopPropagation(); denSel={t,i}; $v.querySelectorAll(".sel").forEach(z=>z.classList.remove("sel")); el.classList.add("sel");
@@ -2627,6 +2643,18 @@ let showExamples = true, analysisText = "", fbList = [];
 let lastImport="";   /* new data re-renders the page, so the import result is kept here and drawn again */
 /* thinking time (question shown → answer) and explanation time (answer → next question), last 14 days.
    fast/slow is relative to her own median time for that level, so it adapts as she gets quicker */
+/* old-topic sweep results by spell, plus her daily check-ins and which concept parts needed another explanation */
+function sweepCard(list){
+  const sw=list.filter(a=>a.type==="sweep"), moods=list.filter(a=>a.type==="mood").slice(-7), help=list.filter(a=>a.conceptHelp&&a.conceptHelp.length).slice(-5);
+  if(!sw.length&&!moods.length&&!help.length) return "";
+  const by={}; sw.forEach(a=>(a.items||[]).forEach(x=>{ const sp=QBANK[x.qid]?.q.spell; if(!sp||x.skipped) return; (by[sp]??=[0,0]); by[sp][0]++; if(x.correct) by[sp][1]++ }));
+  const rows=Object.entries(by).sort((a,b)=>a[1][1]/a[1][0]-b[1][1]/b[1][0]);
+  return `<section class="card"><h3>ย้อนคาถาเก่า ม.1–2 และสัญญาณจากลูก</h3>
+    ${rows.length?`<p class="small muted">ข้อคละเรื่องที่เคยเรียน วันละ 5–10 ข้อ เรียงจากเรื่องที่ลืมมากที่สุด เรื่องที่ตอบผิดจะกลับมาในชุดทบทวน และช่วง ม.ค.–มี.ค. จะทวนเรื่องเหล่านี้ก่อน</p>
+      <div class="stats" style="grid-template-columns:repeat(2,1fr)">${rows.map(([sp,[n,c]])=>`<div class="stat" style="border-left:4px solid ${c/n>=0.8?"var(--good)":c/n>=0.5?"var(--beak)":"var(--warn)"};padding-left:8px"><span class="small" style="font-weight:600">${esc(SPELLS.find(x=>x.id===sp)?.topic||sp)}</span><span class="small muted">ถูก ${c}/${n}</span></div>`).join("")}</div>`:""}
+    ${moods.length?`<p class="small"><b>ลูกบอกว่าพร้อมแค่ไหน:</b> ${moods.map(m=>`${new Date(m.endedAt).toLocaleDateString("th-TH",{weekday:"short"})} ${(MOODS.find(x=>x[0]===m.mood)||[])[1]||""}`).join(" · ")}</p>`:""}
+    ${help.length?`<p class="small"><b>ตอนอ่านการ์ดสรุป ลูกกด "ขออธิบายอีกแบบ" ที่:</b> ${help.map(a=>{const st=SETS.find(x=>x.id===a.setId); return st?`${esc(st.topic)} (ส่วนที่ ${a.conceptHelp.map(i=>i+1).join(", ")})`:""}).filter(Boolean).join(" · ")}</p>`:""}
+  </section>` }
 function timeCard(all){
   const since=Date.now()-14*86400000, its=all.filter(a=>new Date(a.endedAt)>=since&&a.type!=="review").flatMap(a=>a.items||[]).filter(x=>!x.skipped&&x.timeSec>0);
   if(its.length<6) return "";
@@ -2795,10 +2823,11 @@ function renderParent(){
     <p class="note">ส่งรายการนี้ให้ Claude ในแชตได้ ผมจะเขียนโจทย์ให้ชัดขึ้น</p></section>`:""}
   ${(()=>{const dm=pool.filter(a=>a.type==="daymode"); return dm.length?`<section class="card"><h3>เปลี่ยนประเภทวันหรือลดระดับ</h3>
     ${dm.slice(0,10).map(k=>`<div class="logi"><span class="small muted">${esc(k.day)}</span><span>${k.kind==="school"?"แจ้งว่าไปโรงเรียน":k.level&&k.level!=="full"?`วันหยุด ลดเป็นระดับ${LEVELS[k.level].label}`:"แจ้งว่าวันหยุด/หยุดเรียน"}${k.reason?` · ${esc(k.reason)}`:""}</span></div>`).join("")}
-    <p class="note">วันหยุดปกติเป็นระดับเต็ม ราว 90 นาที ถ้าลดระดับบ่อย อาจถึงเวลาคุยกันเรื่องปริมาณ</p></section>`:""})()}
+    <p class="note">วันหยุดปกติเป็นระดับเต็ม ราว 75–90 นาที (วันเรียน 45–60 นาที) ถ้าลดระดับบ่อย อาจถึงเวลาคุยกันเรื่องปริมาณ</p></section>`:""})()}
   <section class="card"><h3>วันที่ขอพัก</h3>
     ${skips.length?skips.slice(0,7).map(k=>`<div class="logi"><span class="small muted">${new Date(k.endedAt).toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})}</span><span>${esc(k.reason||"-")}${k.memo?` · “${esc(k.memo)}”`:""}</span></div>`).join(""):`<p class="muted small">ยังไม่มีวันที่ขอพัก</p>`}
   </section>
+  ${sweepCard(attempts.filter(a=>!a.test))}
   ${timeCard(all)}
   <section class="card"><h3>ข้อที่ควรนั่งคุยกัน</h3>
     ${talk.length?talk.map(x=>`<div class="logi"><span class="chip l${x.level}">${esc(x.topic)}</span><span class="small">${esc(x.prompt||x.qid)}</span></div>`).join(""):`<p class="muted small">ยังไม่มีข้อที่ต้องคุย</p>`}
