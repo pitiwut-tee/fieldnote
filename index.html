@@ -270,6 +270,9 @@ table.mt input{font:inherit;width:100%;min-width:5.5em;padding:6px;border-radius
 .tile.doneT{opacity:.7}
 .tile .progress{height:6px;margin-top:auto}
 .tile .dotnew{position:absolute;top:8px;right:8px;width:10px;height:10px;border-radius:50%;background:#e2574c}
+.tile.todo{border:2px solid var(--beak);background:color-mix(in srgb,var(--beak) 9%,var(--card))}
+.tile .badge2{position:absolute;top:8px;right:8px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#e2574c;color:#fff;font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.tile .rew{font-size:.78rem;font-weight:600;color:var(--beak)}
 .tpanel{animation:fadein .2s ease-out}
 @keyframes fadein{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .mcheck{flex:none;width:30px;height:30px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-family:var(--display)}
@@ -457,7 +460,7 @@ async function importCode(raw, asTest){
 }
 
 /* ---------- updates: GitHub Pages lets the browser keep an old copy for a while, so check for a newer build ---------- */
-const BUILD="2026-11-07 16:38";
+const BUILD="2026-11-07 17:30";
 async function checkUpdate(){ if(!/^https?:/.test(location.protocol)||typeof db!=="undefined"&&db) return;
   try{ const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text(); const m=t.match(/const BUILD="(\d{4}-\d\d-\d\d \d\d:\d\d)"/);
     if(m&&m[1]!==BUILD&&!m[1].includes("@@")&&!document.getElementById("updbar")){ const d=document.createElement("button"); d.id="updbar"; d.className="btn";
@@ -1669,16 +1672,19 @@ function buddyStrip(list,p,plan){ const b=getBuddy(); if(!b) return "";
     ${wishItem(list)?`<div style="margin-top:10px">${wishHtml(list)}</div>`:""}</section>` }
 function homeTiles(list,p,pool){
   const T=[], q=p.quests, qd=q.q.filter(x=>x.have>=x.need).length;
-  const src=recallSource(list); if(src){ const d=recallDoneToday(list); T.push({id:"recall",i:"🧠",t:"ทบทวนวันนี้",s:d?"ทำแล้ววันนี้ ✓":"3 ข้อ · +20 XP",done:d}) }
-  T.push({id:"mistakes",i:"🔁",t:"ข้อที่เคยพลาด",s:pool.length?`ค้าง ${pool.length} ข้อ`:"ไม่มีข้อค้าง 👍",done:!pool.length});
-  T.push({id:"week",i:"📜",t:"ภารกิจสัปดาห์",s:p.questDoneThisWeek?"ครบแล้ว ได้ของหายาก ✨":`${qd}/3 ข้อ`,pr:qd/3,done:p.questDoneThisWeek});
-  const g=activeGuest(); if(g){ const pr=guestProgress(g,list); T.push({id:"guest",i:g.item.e,t:"แขกพิเศษ",s:pr.done?"ได้แล้ว 🎉":`${pr.n}/${g.task.n} · ${esc(g.item.n)}`,pr:pr.n/g.task.n,dot:!pr.done,done:pr.done}) }
-  const m=activeMission(); if(m){ const d=missionDone(m); T.push({id:"world",i:"🌏",t:"ภารกิจโลกจริง",s:d?"ทำแล้ว ✓":esc(m.title),done:d}) }
-  const gl=goalOf(list); T.push({id:"goal",i:"🎯",t:"เป้าหมายเดือนนี้",s:gl?"ดูความคืบหน้า":"ยังไม่ได้ตั้ง",dot:!gl});
-  const wk=weekStart(todayKey()), told=list.some(a=>a.type==="teach"&&dayKey(a.endedAt)>=wk); T.push({id:"teach",i:"💬",t:"เล่าให้พ่อฟัง",s:told?"สัปดาห์นี้แล้ว ✓":"สัปดาห์ละครั้ง",done:told});
+  /* todo = something she can do now (bold border + red badge), done = faded; rew = what she gets */
+  const src=recallSource(list); if(src){ const d=recallDoneToday(list); T.push({id:"recall",i:"🧠",t:"ทบทวนวันนี้",s:d?"ทำแล้ววันนี้ ✓":"3 ข้อจากเรื่องที่เพิ่งเรียน",rew:d?"":"+20 XP",badge:d?"":"3",todo:!d,done:d}) }
+  const firstTeach=!list.some(a=>a.type==="teach");
+  T.push({id:"mistakes",i:"🔁",t:"ข้อที่เคยพลาด",s:pool.length?`ค้าง ${pool.length} ข้อ ทำทีละ 5`:"ไม่มีข้อค้าง 👍",rew:pool.length?"ข้อละ +10 XP":"",badge:pool.length?String(pool.length):"",todo:!!pool.length,done:!pool.length});
+  T.push({id:"week",i:"📜",t:"ภารกิจสัปดาห์",s:p.questDoneThisWeek?"ครบแล้ว ได้ของหายาก ✨":`${qd}/3 ข้อ`,rew:p.questDoneThisWeek?"":`ของหายาก ✨ + ⭐${QUEST_BONUS}`,pr:qd/3,done:p.questDoneThisWeek});
+  const g=activeGuest(); if(g){ const pr=guestProgress(g,list); T.push({id:"guest",i:g.item.e,t:"แขกพิเศษ",s:pr.done?"ได้แล้ว 🎉":`${pr.n}/${g.task.n} · ${esc(g.item.n)}`,rew:pr.done?"":`ได้${esc(g.item.n)}`,pr:pr.n/g.task.n,todo:!pr.done,badge:pr.done?"":"!",done:pr.done}) }
+  const m=activeMission(); if(m){ const d=missionDone(m); T.push({id:"world",i:"🌏",t:"ภารกิจโลกจริง",s:d?"ทำแล้ว ✓":esc(m.title),rew:d?"":`+${m.xp||100} XP`,todo:!d,done:d}) }
+  const gl=goalOf(list); T.push({id:"goal",i:"🎯",t:"เป้าหมายเดือนนี้",s:gl?"ดูความคืบหน้า":"ยังไม่ได้ตั้ง",rew:gl?"":"รางวัลจริงที่เลือกเอง",todo:!gl,badge:gl?"":"!"});
+  const wk=weekStart(todayKey()), told=list.some(a=>a.type==="teach"&&dayKey(a.endedAt)>=wk); T.push({id:"teach",i:"💬",t:"เล่าให้พ่อฟัง",s:told?"สัปดาห์นี้แล้ว ✓":"สัปดาห์ละครั้ง ราว 3 นาที",rew:told?"":`+50 XP${firstTeach?" · หมวกครู 🎓":""}`,todo:!told,badge:told?"":"!",done:told});
   const panel=homeOpen?tilePanel(homeOpen,list,p,pool):"";
-  const grid=`<div class="tiles">${T.map(x=>`<button class="tile ${x.done?"doneT":""}" data-tile="${x.id}" aria-expanded="${homeOpen===x.id}"><span class="ti">${x.i}</span><b>${x.t}</b><span class="small muted">${x.s}</span>${x.pr!=null&&!x.done?`<div class="progress"><i style="width:${Math.round(x.pr*100)}%;background:var(--beak)"></i></div>`:""}${x.dot?`<span class="dotnew"></span>`:""}</button>`).join("")}</div>`;
-  return `<span class="eyebrow">เพิ่มเติม · แตะเพื่อเปิด</span>${homeOpen&&["fire","letter"].includes(homeOpen)?`<div class="tpanel" id="tpanel">${panel}</div>`:""}${grid}${homeOpen&&!["fire","letter"].includes(homeOpen)?`<div class="tpanel" id="tpanel">${panel}</div>`:""}` }
+  const grid=`<div class="tiles">${T.map(x=>`<button class="tile ${x.done?"doneT":x.todo?"todo":""}" data-tile="${x.id}" aria-expanded="${homeOpen===x.id}"><span class="ti">${x.i}</span><b>${x.t}</b><span class="small muted">${x.s}</span>${x.rew?`<span class="rew">🎁 ${x.rew}</span>`:""}${x.pr!=null&&!x.done?`<div class="progress"><i style="width:${Math.round(x.pr*100)}%;background:var(--beak)"></i></div>`:""}${x.badge?`<span class="badge2">${x.badge}</span>`:""}</button>`).join("")}</div>`;
+  const nTodo=T.filter(x=>x.todo).length;
+  return `<span class="eyebrow">เพิ่มเติม · แตะเพื่อเปิด${nTodo?` · มี ${nTodo} อย่างที่ทำได้ตอนนี้`:""}</span>${homeOpen&&["fire","letter"].includes(homeOpen)?`<div class="tpanel" id="tpanel">${panel}</div>`:""}${grid}${homeOpen&&!["fire","letter"].includes(homeOpen)?`<div class="tpanel" id="tpanel">${panel}</div>`:""}` }
 function tilePanel(id,list,p,pool){
   if(id==="fire"){ const today=todayKey(), days=["จ","อ","พ","พฤ","ศ","ส","อา"], mon=new Date(weekStart(today)), skippedToday=p.skipDays.has(today);
     const dots=days.map((d,k)=>{const t=new Date(mon);t.setDate(mon.getDate()+k);const tk=t.getTime();
