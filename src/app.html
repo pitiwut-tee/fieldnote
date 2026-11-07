@@ -117,6 +117,14 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .arrange .hero-pet,.arrange .hero-pet *{animation:none!important}
 .arrange .sel{outline:3px solid var(--beak)!important;background:rgba(255,255,255,.35)}
 .wishbar{display:flex;gap:10px;align-items:center}
+.islandwrap{margin:6px -6px;border-radius:18px;overflow:hidden}
+.island{display:block;width:100%;height:auto;max-height:78vh}
+.mnode{cursor:pointer}
+.mnode.fog{opacity:.75}
+.mnode.thirst text{filter:saturate(.4)}
+.mnode .pulse{animation:pulse 1.6s ease-in-out infinite;transform-origin:center}
+@keyframes pulse{0%,100%{opacity:.9}50%{opacity:.25}}
+.mnode.sel circle{filter:drop-shadow(0 0 4px rgba(47,111,143,.6))}
 .fxp{position:absolute;z-index:3;line-height:1;pointer-events:none;animation:fxfloat 2.4s ease-in-out infinite}
 @keyframes fxfloat{0%,100%{transform:translateY(0);opacity:.95}50%{transform:translateY(-8px);opacity:.55}}
 .aura{position:absolute;inset:-6%;border-radius:50%;background:radial-gradient(circle,rgba(255,236,150,.85) 0%,rgba(255,200,90,.35) 45%,transparent 70%);animation:auraglow 2.6s ease-in-out infinite;z-index:0}
@@ -2604,13 +2612,93 @@ async function finishVocab(){
 }
 
 /* ---------- spell map ---------- */
+/* ---------- spell island: each school of magic is a district, each spell a place that grows with its tier ---------- */
+const DISTRICTS={sky:{x:200,y:92,n:"เนินดวงดาว",e:"🔭"},num:{x:104,y:178,n:"ป่าตัวเลข",e:"🌳"},alg:{x:298,y:176,n:"หอคัมภีร์อักษรลับ",e:"📜"},
+  mat:{x:200,y:262,n:"ทะเลสาบแปรธาตุ",e:"🧪"},dat:{x:90,y:318,n:"ลานพยากรณ์",e:"📊"},geo:{x:306,y:312,n:"ภูเขารูปทรง",e:"⛰️"},
+  lab:{x:200,y:372,n:"ศาลานักสังเกต",e:"🔎"},life:{x:110,y:448,n:"สวนชีวิต",e:"🌱"},pow:{x:292,y:448,n:"ทุ่งกังหันพลัง",e:"⚡"},tech:{x:200,y:526,n:"ท่าเรือกลไก (วมว. รอบสอง)",e:"⚙️"}};
+let mapSel=null, mapList=false;
+function spellPos(){ const pos={}; Object.keys(DISTRICTS).forEach(rk=>{ const d=DISTRICTS[rk], sps=SPELLS.filter(s=>s.realm===rk), n=sps.length;
+    sps.forEach((sp,i)=>{ const r=n>6?44:n>3?38:32, a=(i/n)*Math.PI*2-Math.PI/2+(n===2?Math.PI/2:0);
+      pos[sp.id]={x:d.x+r*Math.cos(a)*(rk==="tech"?1.6:1.15),y:d.y+r*Math.sin(a)*(rk==="tech"?0.5:0.8)} }) }); return pos }
+function spellLook(sp,info,ss){ const sets=SETS.filter(s=>s.spell===sp.id), tier=info?.tier||0;
+  if(!sets.length&&!info) return {e:"☁️",cls:"fog",label:"ยังไม่ค้นพบ"};
+  if(info?.faded) return {e:["🌱","🌳","🌲","🏯"][tier]||"🌳",cls:"thirst",label:"ต้องรดน้ำ (ทบทวน)"};
+  return {e:["🌱","🌳","🌲","🏯"][tier],cls:"t"+tier,label:TIER[tier]} }
 function renderMap(){
+  if(mapList) return renderMapList();
+  const list=mine(), ss=spellStats(list), pos=spellPos(), bd=getBuddy();
+  const got=SPELLS.filter(s=>(ss[s.id]?.tier||0)>=1).length, cnt=[1,2,3].map(t=>SPELLS.filter(s=>(ss[s.id]?.tier||0)===t).length);
+  const due=new Set((()=>{try{return dueQuestions(list,20).map(q=>q.spell)}catch(e){return []}})());
+  const cur=new Set(CAL.currentSpells||[]);
+  const sel=mapSel&&SPELLS.find(x=>x.id===mapSel), at=sel?pos[sel.id]:{x:200,y:300};
+  const island=`<defs><radialGradient id="isl" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#9fd88a"/><stop offset="1" stop-color="#6fbf6a"/></radialGradient>
+      <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd3f0"/><stop offset="1" stop-color="#4fa3d1"/></linearGradient></defs>
+    <rect width="400" height="600" fill="url(#sea)"/>
+    ${[60,150,250,350,450,540].map((y,i)=>`<path d="M${i%2?10:330} ${y} q10 -6 20 0 t20 0" stroke="#e8f7ff" stroke-width="2" fill="none" opacity=".7"/>`).join("")}
+    <path d="M200 22 C300 24 382 90 384 200 C388 300 360 360 372 440 C384 530 300 584 200 580 C100 584 18 530 26 440 C34 360 10 300 16 200 C20 90 100 20 200 22Z" fill="#f2dfae"/>
+    <path d="M200 36 C292 38 366 98 368 200 C372 296 346 362 356 440 C366 518 292 566 200 562 C108 566 34 518 44 440 C52 362 28 296 32 200 C36 98 108 34 200 36Z" fill="url(#isl)"/>
+    <ellipse cx="200" cy="262" rx="64" ry="34" fill="#7cc6e8" opacity=".85"/><ellipse cx="200" cy="258" rx="50" ry="22" fill="#a6dcf2" opacity=".7"/>
+    <path d="M262 352 L306 262 L350 352Z" fill="#a9b8a0" opacity=".55"/><path d="M290 318 L306 286 L322 318Z" fill="#fff" opacity=".55"/>
+    ${[[70,150],[132,206],[80,210],[140,150]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="13" fill="#4f9e5a" opacity=".45"/>`).join("")}
+    <path d="M150 512 h100 v22 h-100Z" fill="#b08a5a" opacity=".5"/>
+    <path d="M200 92 C190 150 120 150 104 178 M200 92 C210 150 280 150 298 176 M104 178 C120 230 170 240 200 262 M298 176 C280 230 230 240 200 262 M200 262 C150 290 110 300 90 318 M200 262 C250 290 290 300 306 312 M200 262 L200 372 M90 318 C100 380 110 420 110 448 M306 312 C300 380 292 420 292 448 M110 448 C150 470 180 470 200 372 M292 448 C250 470 220 470 200 372 M200 372 L200 526"
+      stroke="#e9d6a4" stroke-width="7" fill="none" stroke-linecap="round" opacity=".85"/>
+    <ellipse cx="104" cy="178" rx="62" ry="44" fill="#4f9e5a" opacity=".28"/><ellipse cx="298" cy="176" rx="64" ry="46" fill="#c9a6ff" opacity=".18"/>
+    <ellipse cx="90" cy="318" rx="52" ry="34" fill="#ffd45c" opacity=".2"/><ellipse cx="110" cy="448" rx="60" ry="42" fill="#8fd17a" opacity=".35"/>
+    <ellipse cx="292" cy="448" rx="60" ry="42" fill="#ffe08a" opacity=".25"/><ellipse cx="200" cy="92" rx="56" ry="36" fill="#cfe3ff" opacity=".35"/><ellipse cx="200" cy="372" rx="44" ry="30" fill="#fff4d6" opacity=".35"/>
+    ${[[58,140],[150,140],[56,214],[150,214],[100,236],[40,180]].map(([x,y])=>`<text x="${x}" y="${y}" font-size="13" opacity=".8">🌳</text>`).join("")}
+    ${[[62,478],[150,480],[70,420],[160,420]].map(([x,y])=>`<text x="${x}" y="${y}" font-size="11" opacity=".8">🌾</text>`).join("")}
+    ${[[250,480],[336,480],[340,416]].map(([x,y])=>`<g transform="translate(${x} ${y})" opacity=".75"><rect x="-1.5" y="-2" width="3" height="16" fill="#fff"/><path d="M0 -2 l10 -6 M0 -2 l-10 -6 M0 -2 l0 12" stroke="#fff" stroke-width="2.5" transform="rotate(${x%40})"/></g>`).join("")}
+    <g transform="translate(150 74)" opacity=".8"><path d="M-10 6 a10 10 0 0 1 20 0Z" fill="#fff"/><rect x="-10" y="6" width="20" height="8" fill="#e8eef5"/></g>
+    ${Object.entries(DISTRICTS).map(([k,d])=>`<g transform="translate(${d.x} ${d.y})"><rect x="-6" y="-2" width="12" height="16" rx="2" fill="#b08a5a"/>
+      <text y="-6" text-anchor="middle" font-size="9.5" font-weight="700" fill="#24412a" stroke="#f4fbe9" stroke-width="3" paint-order="stroke">${d.e} ${d.n.replace(" (วมว. รอบสอง)","")}</text></g>`).join("")}`;
+  const nodes=SPELLS.map(sp=>{ const p=pos[sp.id], info=ss[sp.id], L=spellLook(sp,info,ss), isSel=sel&&sel.id===sp.id;
+    return `<g class="mnode ${L.cls} ${isSel?"sel":""}" data-msp="${sp.id}" transform="translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})" role="button" aria-label="${esc(sp.name)} ${esc(L.label)}">
+      ${cur.has(sp.id)?`<circle r="17" class="pulse" fill="none" stroke="#f08a3c" stroke-width="2.5"/>`:""}
+      ${L.cls==="fog"?`<circle r="11" fill="#000" opacity="0"/><text y="5" text-anchor="middle" font-size="14" opacity=".8">☁️</text>`
+        :`<circle r="13" fill="#fffaf0" stroke="${isSel?"#2f6f8f":L.cls==="thirst"?"#e2a23c":"#ffffff"}" stroke-width="${isSel?3:2}"/><text y="5" text-anchor="middle" font-size="15">${L.e}</text>`}
+      ${due.has(sp.id)||L.cls==="thirst"?`<text x="11" y="-8" font-size="10">💧</text>`:""}</g>` }).join("");
+  const museum=`<g class="mnode" data-msp="__museum" transform="translate(342 92)"><circle r="15" fill="#fffaf0" stroke="#fff" stroke-width="2"/><text y="6" text-anchor="middle" font-size="17">🏛️</text>
+    <text y="27" text-anchor="middle" font-size="9.5" font-weight="700" fill="#24412a" stroke="#f4fbe9" stroke-width="3" paint-order="stroke">พิพิธภัณฑ์</text></g>`;
+  const walker=bd?`<g id="walker" style="transition:transform .9s ease-in-out" transform="translate(${(at.x+12).toFixed(1)} ${(at.y-20).toFixed(1)})"><circle r="12" fill="#fff" opacity=".9"/>
+    <foreignObject x="-11" y="-12" width="22" height="22"><div xmlns="http://www.w3.org/1999/xhtml" style="font-size:18px;line-height:22px;text-align:center">${petLook(bd.kind,growStage(growth(bd.kind,list)))}</div></foreignObject></g>`:"";
+  $v.innerHTML=`<section class="card"><div class="todayhead"><span class="eyebrow">เกาะคาถา · เก็บแล้ว ${got}/${SPELLS.length}</span><button class="btn ghost small" id="maplist">ดูแบบรายการ</button></div>
+      <p class="small" style="margin:0">🌱 ฝึกหัด ${cnt[0]} · 🌲 ชำนาญ ${cnt[1]} · 🏯 ปรมาจารย์ ${cnt[2]} · ☁️ ยังไม่ค้นพบ · 💧 ถึงรอบทวน · ⭕ กำลังเรียนที่โรงเรียน</p>
+      <div class="islandwrap"><svg class="island" viewBox="0 0 400 600" role="img" aria-label="แผนที่เกาะคาถา">${island}${museum}${nodes}${walker}</svg></div>
+      <p class="small muted" style="margin:0">แตะสถานที่บนเกาะ แล้ว${bd?esc(bd.name):"คู่หู"}จะพาไปดู</p></section>
+    <div id="mappanel">${sel?mapPanel(sel,ss,list):mapSel==="__museum"?museumPanel(list):`<section class="card"><p class="small">ทุกคาถามี 3 ขั้น 🌱 ฝึกหัด → 🌲 ชำนาญ → 🏯 ปรมาจารย์ คาถาที่ไม่ได้ใช้นานต้นไม้จะเหี่ยว ต้องรดน้ำด้วยการทบทวนสั้นๆ ก็กลับมาเหมือนเดิม</p></section>`}</div>`;
+  document.getElementById("maplist").onclick=()=>{mapList=true;renderMap()};
+  $v.querySelectorAll("[data-msp]").forEach(g=>g.onclick=()=>{ const id=g.dataset.msp; mapSel=id; const p=id==="__museum"?{x:342,y:92}:pos[id]; const w=document.getElementById("walker");
+    if(w) w.setAttribute("transform",`translate(${(p.x+12).toFixed(1)} ${(p.y-20).toFixed(1)})`);
+    setTimeout(()=>{ renderMap(); document.getElementById("mappanel")?.scrollIntoView({block:"nearest",behavior:"smooth"}) }, w?650:0) });
+  bindMapPanel();
+}
+function mapPanel(sp,ss,list){ const sets=SETS.filter(s=>s.spell===sp.id), info=ss[sp.id], tier=info?.tier||0, art=tier>=1?getArt(sp.id):null, d=DISTRICTS[sp.realm];
+  const stars=sp.stars?` <span class="small" style="color:var(--beak)">${"★".repeat(sp.stars)}</span>`:"";
+  const school=sp.school==="not"?`<span class="chip">ยังไม่ได้เรียนที่โรงเรียน</span>`:(CAL.currentSpells||[]).includes(sp.id)?`<span class="chip l2">กำลังเรียนอยู่</span>`:"";
+  if(!sets.length&&!info) return `<section class="card"><span class="eyebrow">${d.e} ${d.n}</span><h2>☁️ ${esc(sp.name)}${stars}</h2><p class="small">${esc(sp.topic)} · ${sp.grade}</p><p class="small muted">ที่นี่ยังมีหมอกบังอยู่ บทเรียนเรื่องนี้กำลังมา</p>${school}</section>`;
+  const pips=[1,2,3].map(t=>`<i class="${tier>=t?"on"+t:""}"></i>`).join("");
+  return `<section class="card" id="sp-${sp.id}"><span class="eyebrow">${d.e} ${d.n}</span>
+    ${art?`<img class="spellart" src="${art}" alt="การ์ดคาถา ${esc(sp.name)}">`:""}
+    <h2>${spellLook(sp,info,ss).e} ${esc(sp.name)}${stars}</h2><span class="small muted">${esc(sp.topic)} · ${sp.grade}</span>
+    <span class="row" style="gap:8px"><span class="pips" aria-label="${TIER[tier]}">${pips}</span><span class="small">${TIER[tier]}</span>${school}</span>
+    ${info?.faded?`<span class="small" style="color:var(--warn)">ต้นไม้เริ่มเหี่ยว ทบทวนสั้นๆ เพื่อรดน้ำ</span>`:`<span class="small muted">${sets.length?nextStep(sp,info):"บทเรียนกำลังมา"}</span>`}
+    <span class="row" style="gap:6px">${sets.filter(s=>list.some(a=>a.setId===s.id)).slice(0,1).map(s=>`<button class="btn ghost small" data-notes="${s.id}">📖 อ่านสรุป</button>`).join("")}${sets.map(s=>`<button class="btn small" data-set="${s.id}">${s.kind==="probe"?"ด่านสำรวจ":"ฝึก"}${sets.length>1&&s.kind!=="probe"?" "+(sets.filter(x=>x.kind!=="probe").indexOf(s)+1):""}</button>`).join("")}
+    ${tier>=1&&store!=="db"?`<button class="btn ghost small" data-art="${sp.id}">🎨 ${art?"เปลี่ยนรูป":"ใส่รูปที่วาดเอง"}</button>`:""}</span><p class="small" id="artmsg" aria-live="polite"></p></section>` }
+function museumPanel(list){ return typeof museumHtml==="function"?museumHtml(list):`<section class="card"><h2>🏛️ พิพิธภัณฑ์</h2><p class="small muted">กำลังสร้าง เร็วๆ นี้</p></section>` }
+function bindMapPanel(){
+  $v.querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>{introSet=SETS.find(s=>s.id===b.dataset.set);view="intro";render()});
+  $v.querySelectorAll("[data-notes]").forEach(b=>b.onclick=()=>{notesSet=SETS.find(x=>x.id===b.dataset.notes);view="notes";render();window.scrollTo({top:0})});
+  $v.querySelectorAll("[data-art]").forEach(b=>b.onclick=()=>pickArt(b.dataset.art,ok=>{ if(ok) renderMap(); else document.getElementById("artmsg").textContent="เก็บรูปไม่ได้ เครื่องอาจเต็ม ลองรูปที่เล็กลง" }));
+  if(typeof bindMuseum==="function") bindMuseum();
+}
+function renderMapList(){
   const ss=spellStats(mine());
   const realmOrder=Object.keys(REALMS).sort((a,b)=>(SPELLS.some(s=>s.realm===b&&CAL.currentSpells.includes(s.id))?1:0)-(SPELLS.some(s=>s.realm===a&&CAL.currentSpells.includes(s.id))?1:0));
   const got=SPELLS.filter(s=>(ss[s.id]?.tier||0)>=1).length;
   const cnt=[1,2,3].map(t=>SPELLS.filter(s=>(ss[s.id]?.tier||0)===t).length);
   const bd=getBuddy(), bg=bd?growStage(growth(bd.kind,mine())):0;
-  $v.innerHTML=`${bd?`<section class="card"><div class="buddy">${buddyFace(bd,64)}<div class="bubble"><b>${esc(bd.name)} · ${GROW[bg][1]}</b><span>ทุกคาถาที่ฝึกได้ดาวเวท เอาไปซื้ออาหารวิเศษให้เราโตได้ที่บ้านคู่หูนะ</span>
+  $v.innerHTML=`<div class="row"><button class="btn ghost small" id="mapisland">🏝️ กลับไปดูแบบเกาะ</button></div>${bd?`<section class="card"><div class="buddy">${buddyFace(bd,64)}<div class="bubble"><b>${esc(bd.name)} · ${GROW[bg][1]}</b><span>ทุกคาถาที่ฝึกได้ดาวเวท เอาไปซื้ออาหารวิเศษให้เราโตได้ที่บ้านคู่หูนะ</span>
     <span class="row" style="gap:6px;margin-top:4px"><a class="btn ghost small" href="#den">🏡 ไปบ้านคู่หู</a></span></div></div></section>`:""}
   <section class="card"><span class="eyebrow">แผนที่คาถา</span>
     <h2>เก็บคาถาได้ ${got} จาก ${SPELLS.length}</h2>
@@ -2638,7 +2726,8 @@ function renderMap(){
     </div></details>`}).join("")}`;
   $v.querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>{introSet=SETS.find(s=>s.id===b.dataset.set);view="intro";render()});
   $v.querySelectorAll("[data-notes]").forEach(b=>b.onclick=()=>{notesSet=SETS.find(x=>x.id===b.dataset.notes);view="notes";render();window.scrollTo({top:0})});
-  $v.querySelectorAll("[data-art]").forEach(b=>b.onclick=()=>pickArt(b.dataset.art,ok=>{ if(ok){artTarget=b.dataset.art;renderMap();document.getElementById("sp-"+b.dataset.art)?.scrollIntoView({block:"center"})} else document.getElementById("artmsg").textContent="เก็บรูปไม่ได้ เครื่องอาจเต็ม ลองรูปที่เล็กลง" }));
+  $v.querySelectorAll("[data-art]").forEach(b=>b.onclick=()=>pickArt(b.dataset.art,ok=>{ if(ok){artTarget=b.dataset.art;renderMapList();document.getElementById("sp-"+b.dataset.art)?.scrollIntoView({block:"center"})} else document.getElementById("artmsg").textContent="เก็บรูปไม่ได้ เครื่องอาจเต็ม ลองรูปที่เล็กลง" }));
+  document.getElementById("mapisland").onclick=()=>{mapList=false;renderMap()};
   if(artTarget){ const el=document.getElementById("sp-"+artTarget); if(el) setTimeout(()=>el.scrollIntoView({block:"center"}),50) }
 }
 
