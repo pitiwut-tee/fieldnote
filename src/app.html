@@ -121,6 +121,15 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .island{display:block;width:100%;height:auto;max-height:78vh}
 .mnode{cursor:pointer}
 .dash{display:flex;flex-direction:column;gap:14px}
+.pgroup{border:1.5px solid var(--line);border-radius:16px;background:var(--card);margin:0}
+.pgroup>summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.pgroup>summary::-webkit-details-marker{display:none}
+.pgroup>summary .pgt{font-weight:700;font-size:1.05rem}
+.pgroup>summary::after{content:"แตะเพื่อเปิด ▾";font-size:.78rem;color:var(--accent);font-weight:600}
+.pgroup[open]>summary::after{content:"ปิด ▴"}
+.pgroup[open]{padding-bottom:8px}
+.pgroup>section.card{margin:8px;box-shadow:none}
+.pgbadge{background:#e2574c;color:#fff;border-radius:999px;font-size:.75rem;padding:1px 8px;margin-left:6px;vertical-align:2px}
 .alerts{display:flex;flex-direction:column;gap:6px}
 .alert{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:10px;font-size:.92rem;line-height:1.45;border-left:5px solid}
 .alert.red{background:color-mix(in srgb,#e2574c 10%,var(--card));border-color:#e2574c}
@@ -136,11 +145,11 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .spchip{font-size:.78rem;border:1.5px solid;border-radius:999px;padding:2px 8px;display:inline-flex;gap:5px;align-items:center}.spchip i{width:8px;height:8px;border-radius:50%;display:inline-block}
 .factbox{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 10%,var(--card)),var(--card));border:1.5px solid color-mix(in srgb,var(--accent) 35%,var(--line))}
 .factrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.fcard{font:inherit;color:var(--ink);text-align:center;background:#fffdf7;border:1.5px solid var(--line);border-radius:14px;padding:10px 6px;min-height:118px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;position:relative;box-shadow:0 2px 0 rgba(0,0,0,.06)}
+.fcard{font:inherit;color:var(--ink);text-align:center;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:10px 6px;min-height:118px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;position:relative;box-shadow:0 2px 0 rgba(0,0,0,.06)}
 .fcard .fnum{font-size:.72rem;font-weight:700;color:var(--accent)}
 .fcard .fpet{font-size:2rem;line-height:1.1}
 .fcard.open{border:2px solid var(--accent)}
-.factbox .ftext{font-size:.98rem;line-height:1.65;background:#fffdf7;border-radius:12px;padding:10px 12px;border:1px solid var(--line)}
+.factbox .ftext{font-size:.98rem;line-height:1.65;color:var(--ink);background:var(--card);border-radius:12px;padding:10px 12px;border:1px solid var(--line)}
 .fcard.locked{opacity:.55;cursor:default;background:var(--soft)}
 .fcard.newf{border:2px solid var(--beak);animation:glowf 1.8s ease-in-out infinite}
 .fcard.newf::after{content:"ใหม่";position:absolute;top:-7px;right:-4px;background:#e2574c;color:#fff;font-size:.65rem;padding:1px 6px;border-radius:8px}
@@ -157,7 +166,7 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 @keyframes meteor{0%{opacity:0;transform:translate(0,0)}3%{opacity:1}12%{opacity:0;transform:translate(-60px,40px)}100%{opacity:0}}
 .islandwrap{position:relative}
 .cases{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:8px;margin:6px 0 12px}
-.case{font:inherit;color:var(--ink);background:linear-gradient(#fdfbf6,#efe6d6);border:1px solid var(--line);border-radius:12px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;text-align:center;position:relative}
+.case{font:inherit;color:var(--ink);background:linear-gradient(var(--card),var(--soft));border:1px solid var(--line);border-radius:12px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;text-align:center;position:relative}
 .case .ce{font-size:1.9rem;line-height:1.2}
 .case.locked{opacity:.45;cursor:default}
 .case.on{border:2px solid var(--accent)}
@@ -2930,6 +2939,31 @@ let showExamples = true, analysisText = "", fbList = [];
 let lastImport="";   /* new data re-renders the page, so the import result is kept here and drawn again */
 /* thinking time (question shown → answer) and explanation time (answer → next question), last 14 days.
    fast/slow is relative to her own median time for that level, so it adapts as she gets quicker */
+/* parent page below the dashboard: sections grouped into 4 folders that open on tap (state kept across re-renders) */
+const PGROUPS=[["act","✍️ รอพ่อตัดสินใจ และข้อความจากลูก","อนุมัติแขกพิเศษ ภารกิจ รางวัล และอ่านสิ่งที่ลูกเขียนมา",["แขกพิเศษ","ภารกิจโลกจริง","คู่หู เป้าหมาย","ลูกขอให้ช่วย","ข้อความที่ลูกเขียน"]],
+  ["talk","💬 ชวนลูกคุย","คำถามชวนคุยและข้อที่ควรนั่งคุยกัน",["คำถามชวนคุย","ข้อที่ควรนั่งคุยกัน"]],
+  ["learn","📊 ผลการเรียนละเอียด","ความแม่น ข้อผิด เวลา การอ่าน คำศัพท์ ย้อนคาถาเก่า",["ความแม่น","แผนที่หัวข้อ","ข้อที่ผิด","คำศัพท์","ของใหม่ที่ทดลอง","การอ่าน","ย้อนคาถาเก่า","เวลาคิด"]],
+  ["tools","🗂️ บันทึกและเครื่องมือ","บันทึกการฝึกทุกครั้ง ปรับประเภทวัน วันพัก ให้ Claude วิเคราะห์",["บันทึกการฝึก","ให้ Claude วิเคราะห์","เปลี่ยนประเภทวัน","วันที่ขอพัก"]]];
+let pgOpen=null;
+function groupParent(){
+  const secs=[...$v.children].filter(e=>e.tagName==="SECTION"), groups={};
+  secs.forEach(sec=>{ const h=(sec.querySelector("h2,h3")||{}).textContent||""; if(/ภาพรวม|นำเข้าผล/.test(h)) return;
+    const g=PGROUPS.find(([,,,keys])=>keys.some(k=>h.includes(k)))||PGROUPS[3]; (groups[g[0]]??=[]).push(sec) });
+  const pend=document.querySelectorAll("[data-gsok],[data-mok],[data-gok]").length;
+  if(pgOpen===null) pgOpen=new Set(pend?["act"]:[]);
+  let anchor=null;
+  PGROUPS.forEach(([id,title,hint])=>{ const list=groups[id]; if(!list||!list.length) return;
+    const d=document.createElement("details"); d.className="pgroup"; d.open=pgOpen.has(id);
+    const extra=id==="act"&&pend?` <span class="pgbadge">รอ ${pend}</span>`:"";
+    d.innerHTML=`<summary><span class="pgt">${title}${extra}</span><span class="small muted">${hint} · ${list.length} หัวข้อ</span></summary>`;
+    d.ontoggle=()=>{ d.open?pgOpen.add(id):pgOpen.delete(id) };
+    list.forEach(sec=>d.appendChild(sec)); if(anchor) anchor.after(d); else $v.appendChild(d); anchor=d });
+  /* order: dashboard, import, then the folders in PGROUPS order */
+  const first=$v.querySelector("section"), imp=[...$v.children].find(e=>e.tagName==="SECTION"&&/นำเข้าผล/.test((e.querySelector("h3")||{}).textContent||""));
+  let at=first; if(imp&&first&&first!==imp){ first.after(imp); at=imp }
+  [...$v.querySelectorAll(":scope > details.pgroup")].forEach(d=>{ at.after(d); at=d });
+}
+
 /* ---------- parent dashboard: what needs attention first, then this fortnight in charts ---------- */
 const DAY_GROUPS=[["lesson","บทเรียน/ด่าน","#2f6f8f",["set","probe","mixed","passage"]],["review","ทบทวน","#7fb6d6",["review","recall"]],["sweep","ย้อนคาถาเก่า","#f0a04b",["sweep"]],["vocab","คำศัพท์","#8fc98a",["vocab"]],["other","อื่นๆ","#c9a6ff",["lab","mission","teach"]]];
 function parentDash(list){
@@ -3191,6 +3225,7 @@ function renderParent(){
     <button class="btn" id="ask" hidden>วิเคราะห์ตอนนี้</button>
     <p class="analysis" id="out">${esc(analysisText)}</p>
   </section>`}`;
+  groupParent();
   const ex=document.getElementById("ex"); if(ex) ex.onchange=()=>{showExamples=ex.checked;renderParent()};
   const dt=document.getElementById("deltest"); if(dt) dt.onclick=async()=>{
     if(dt.dataset.armed!=="1"){dt.dataset.armed="1";dt.textContent="กดอีกครั้งเพื่อยืนยันการลบ";return}
