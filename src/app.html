@@ -69,8 +69,9 @@ details.ask[open]{display:flex}
 .padbar button{font:inherit;font-size:.85rem;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
 .padbar button[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,var(--card))}
 .pad,.pad *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-#pad-canvas{flex:1;width:100%;touch-action:none;background-image:linear-gradient(var(--line) 1px,transparent 1px);background-size:100% 32px}
+#pad-canvas{flex:1;width:100%;touch-action:none}
 body.padopen .wrap{padding-bottom:calc(48vh + 70px)}
+.pad.big{height:78vh}body.padopen.padbig .wrap{padding-bottom:calc(78vh + 70px)}body.padopen.padbig .padfab{bottom:calc(78vh + 10px)}
 body.padopen .padfab{bottom:calc(48vh + 10px)}
 .flamebox{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:96px;padding:8px 12px;border-radius:14px;background:color-mix(in srgb,var(--beak) 16%,var(--card))}
 .flamebox.out{filter:grayscale(1);opacity:.6}
@@ -98,6 +99,8 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
   .pad{left:auto;top:0;bottom:0;right:0;width:50vw;height:auto;border-top:0;border-left:2px solid var(--line);box-shadow:-4px 0 16px rgba(0,0,0,.12)}
   body.padopen .wrap{padding-bottom:48px;margin-left:0;margin-right:50vw;max-width:none;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:20px}
   body.padopen .padfab{top:calc(6px + env(safe-area-inset-top,0px));bottom:auto;right:14px;padding:7px 14px}
+  .pad .padbar{padding-top:52px}
+  .pad.big{height:auto;width:66vw}body.padopen.padbig .wrap{margin-right:66vw;padding-bottom:48px}body.padopen.padbig .padfab{bottom:auto}
 }
 .opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 12%,var(--card))}
 .opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--card))}
@@ -115,6 +118,15 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .arrange .w-it,.arrange .prop-it{pointer-events:auto;cursor:grab;touch-action:none;outline:2px dashed rgba(255,255,255,.85);outline-offset:2px;border-radius:6px}
 .arrange .props{pointer-events:auto}
 .arrange .hero-pet,.arrange .hero-pet *{animation:none!important}
+.pg .ec{display:none}.sleeping .pg .ec{display:inline}.sleeping .pg .eo{display:none}
+.scene .hero-pet .bface{align-items:flex-end}.scene .hero-pet .pg{vertical-align:bottom!important}
+.hero-pet.walking .bface{animation:waddle .4s ease-in-out infinite}
+.hero-pet.walking .wing.wl{animation:flapL .25s ease-in-out infinite}.hero-pet.walking .wing.wr{animation:flapR .25s ease-in-out infinite}
+.hero-pet.face-l .bface{transform:scaleX(-1)}
+.hero-pet.sleeping .bface{filter:saturate(.85) brightness(.97)}
+@keyframes waddle{0%,100%{rotate:-4deg;translate:0 0}50%{rotate:4deg;translate:0 -3px}}
+@keyframes flapL{50%{transform:rotate(-38deg)}}@keyframes flapR{50%{transform:rotate(38deg)}}
+@media (prefers-reduced-motion: reduce){.hero-pet.walking .bface,.hero-pet.walking .wing{animation:none}}
 .arrange .sel{outline:3px solid var(--beak)!important;background:rgba(255,255,255,.35)}
 .wishbar{display:flex;gap:10px;align-items:center}
 .islandwrap{margin:6px -6px;border-radius:18px;overflow:hidden}
@@ -126,9 +138,9 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 @keyframes drift{from{transform:translateX(-60px)}to{transform:translateX(60px)}}
 .spin{animation:spin 6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.fall{stroke-dasharray:8 6;animation:fall 1.2s linear infinite}
-@keyframes fall{to{stroke-dashoffset:-28}}
-@media (prefers-reduced-motion: reduce){.drift,.spin,.fall{animation:none}}
+.flow{stroke-dasharray:8 6;animation:flowd 1.2s linear infinite}
+@keyframes flowd{to{stroke-dashoffset:-28}}
+@media (prefers-reduced-motion: reduce){.drift,.spin,.flow{animation:none}}
 .island{display:block;width:100%;height:auto}
 .mnode{cursor:pointer}
 .advteam{display:flex;gap:8px;flex-wrap:wrap}
@@ -158,10 +170,24 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 @keyframes dmgup{0%{opacity:0;margin-top:6px}15%{opacity:1}100%{opacity:0;margin-top:-34px}}
 .alog{display:flex;flex-direction:column;gap:2px;margin:8px 0;min-height:3.6em}
 .apanel,.gauge{display:flex;flex-direction:column;gap:8px}
-.gbar{position:relative;height:22px;border-radius:11px;background:linear-gradient(90deg,#f3c1b8,#f6e3b0 30%,#fff3b0 41%,#ffe36b 50%,#fff3b0 59%,#f6e3b0 70%,#f3c1b8)}
-.gz{position:absolute;left:41%;width:18%;top:0;bottom:0;border-left:2px solid #e0a23c;border-right:2px solid #e0a23c}
+.gbar{position:relative;height:24px;border-radius:12px;background:#f3c1b8;overflow:visible}
+.gz{position:absolute;top:0;bottom:0;background:#ffd84d;border-left:2px solid #e0a23c;border-right:2px solid #e0a23c}
 .gbar i{position:absolute;top:-6px;width:4px;height:34px;margin-left:-2px;background:#1f2d24;border-radius:2px}
 @media (prefers-reduced-motion: reduce){.fighter.t .fart,.lunge,.lungeL,.shake{animation:none}}
+.skills{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.skill{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:8px 10px;border-radius:12px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;cursor:pointer}
+.skill b{font-size:.9rem}.skill span{font-size:.72rem;opacity:.8;line-height:1.25}.skill.on{border-color:#e0a23c;box-shadow:0 0 0 2px #e0a23c;background:color-mix(in srgb,#ffd97a 20%,var(--paper))}
+.skill[disabled]{opacity:.45;cursor:default}
+.fbadge{display:flex;gap:3px;font-size:.72rem;font-weight:700;background:rgba(255,255,255,.75);border-radius:8px;padding:0 4px;color:#1f2d24}
+.fbadge .warn{animation:blink 1s steps(2) infinite}@keyframes blink{50%{opacity:.2}}
+.hpn{font-size:.62rem;color:#1f2d24;opacity:.8}
+.monster{animation:mbob 2.2s ease-in-out infinite;transform-origin:50% 100%}@keyframes mbob{0%,100%{transform:scale(1,1)}50%{transform:scale(1.04,.96)}}
+.fighter.ko .monster{animation:none;filter:grayscale(1)}
+.dmg.skill{color:#6b3fa0;font-size:.85rem}
+.gw{position:absolute;top:0;bottom:0;background:#f8edd0}
+.foerow{display:flex;gap:10px;flex-wrap:wrap}.foecard{display:flex;align-items:center;gap:6px}
+.expbar{display:inline-block;width:60px;height:6px;border-radius:3px;background:var(--soft);vertical-align:middle;margin:0 4px;overflow:hidden}.expbar i{display:block;height:100%;background:#e0a23c}
+@media (prefers-reduced-motion: reduce){.monster,.fbadge .warn{animation:none}}
 .advbar,.xpbar{width:100%;height:12px;border-radius:6px;background:var(--soft);overflow:hidden;display:flex}
 .advbar i,.xpbar i{display:block;height:100%;transition:width .4s}
 @media (prefers-reduced-motion: reduce){.advfoe.hit>span:first-child{animation:none}}
@@ -412,7 +438,7 @@ button.spell{cursor:pointer} button.spell:hover{border-color:var(--accent)}
 </div>
 
 <script>
-const ERR = {concept:"ยังไม่เข้าใจหลัก", forgot:"เข้าใจ แต่จำสูตรหรือวิธีคิดไม่ได้", read:"อ่านโจทย์พลาด", misopt:"อ่านตัวเลือกผิด", unclear:"โจทย์กำกวม อ่านแล้วไม่เข้าใจ", calc:"คิดเลขผิด", guess:"เดา", dontknow:"คิดไม่ออก (กดดูเฉลย)"};
+const ERR = {concept:"ยังไม่เข้าใจหลัก", forgot:"เข้าใจ แต่จำสูตรหรือวิธีคิดไม่ได้", read:"อ่านโจทย์พลาด", misopt:"อ่านตัวเลือกผิด", unclear:"โจทย์กำกวม อ่านแล้วไม่เข้าใจ", calc:"คิดเลขผิด", slip:"คิดถูกแล้ว แต่กดหรือพิมพ์ผิด", guess:"เดา", other:"อื่นๆ (พิมพ์บอกเอง)", dontknow:"คิดไม่ออก (กดดูเฉลย)", notTaught:"ยังไม่ได้เรียนเรื่องนี้"};
 const LV = {1:"ระดับ 1 · พื้นฐาน",2:"ระดับ 2 · ประยุกต์",3:"ระดับ 3 · แนวคิดวิเคราะห์"};
 
 /* ---------- content comes from content/*.json, injected at build time (tools/build.py) ---------- */
@@ -784,7 +810,7 @@ function reviewPool(list){
     /* a right answer only clears a mistake if she had to think: a twin, a typed answer, hidden options, or a fresh set.
        Re-tapping the same remembered option in a review does not count. */
     const thought=a.type!=="review"&&!x.retry||x.of||x.recall||x.cover;
-    if(x.correct===false||(x.correct&&(x.conf==="unsure"||x.checkOk===false))) wrong.set(id,+new Date(a.endedAt)); else if(x.correct&&thought) wrong.delete(id);
+    if(x.notTaught) return; if(x.correct===false||(x.correct&&(x.conf==="unsure"||x.checkOk===false||x.guessed))) wrong.set(id,+new Date(a.endedAt)); else if(x.correct&&thought) wrong.delete(id);
   }));
   return [...wrong.entries()].sort((a,b)=>a[1]-b[1]).map(([qid])=>QBANK[qid].q);
 }
@@ -820,9 +846,9 @@ function spellStats(list){
   list.filter(isLesson).forEach(a=>{
     const d=dayKey(a.endedAt);
     (a.items||[]).forEach(x=>{
-      if(x.skipped) return; const sp=x.spell||QBANK[x.qid]?.q.spell; if(!sp||!x.level) return;
+      if(x.skipped||x.notTaught) return; const sp=x.spell||QBANK[x.qid]?.q.spell; if(!sp||!x.level) return;
       const o=st[sp]??={days:{},last:0}; const dd=o.days[d]??={1:[0,0],2:[0,0],3:[0,0]};
-      dd[x.level][0]++; if(x.correct) dd[x.level][1]++; o.last=Math.max(o.last,d);
+      dd[x.level][0]++; if(x.correct&&!x.guessed) dd[x.level][1]++; o.last=Math.max(o.last,d);
     });
   });
   const out={}, t=todayKey();
@@ -1370,12 +1396,15 @@ function bindAsk(where, extra){
 }
 
 /* ---------- scratch paper for the pencil ---------- */
-const PAD={open:false,strokes:[],hist:[],tool:"pen",penSeen:false};
+const PAD={open:false,strokes:[],hist:[],tool:"pen",penSeen:false,view:{z:1,x:0,y:0},big:false};
 try{ PAD.penSeen=localStorage.getItem("fieldnote.pen")==="1" }catch(e){}
 function padHtml(){
   return `<button class="padfab" id="pad-toggle" type="button">${PAD.open?"✕ ปิดกระดาษทด":"✏️ กระดาษทด"}</button>
-  <div class="pad" id="pad" ${PAD.open?"":"hidden"}>
+  <div class="pad ${PAD.big?"big":""}" id="pad" ${PAD.open?"":"hidden"}>
     <div class="padbar"><button type="button" data-tool="pen" aria-pressed="${PAD.tool==="pen"}">✏️ ปากกา</button><button type="button" data-tool="eraser" aria-pressed="${PAD.tool==="eraser"}">🧽 ยางลบ (ลบทีละเส้น)</button>
+      <button type="button" data-tool="pan" aria-pressed="${PAD.tool==="pan"}">✋ เลื่อน</button>
+      <button type="button" id="pad-zo" aria-label="ซูมออก">🔍−</button><button type="button" id="pad-zi" aria-label="ซูมเข้า">🔍+</button><button type="button" id="pad-fit">⤢ ${Math.round(PAD.view.z*100)}%</button>
+      <button type="button" id="pad-big" aria-pressed="${PAD.big}">${PAD.big?"⬇ ย่อกระดาษ":"⬆ ขยายกระดาษ"}</button>
       <button type="button" id="pad-undo">↶ ย้อน</button><button type="button" id="pad-clear">🗑 ล้าง</button></div>
     <canvas id="pad-canvas"></canvas></div>`;
 }
@@ -1388,10 +1417,29 @@ function padSetup(){
     if(h.type==="add") PAD.strokes=PAD.strokes.filter(x=>x!==h.stroke); else if(h.type==="erase") PAD.strokes.push(...h.strokes); else if(h.type==="clear") PAD.strokes=h.strokes; padDraw() };
   document.getElementById("pad-clear").onclick=()=>{ if(PAD.strokes.length) PAD.hist.push({type:"clear",strokes:PAD.strokes}); PAD.strokes=[]; padDraw() };
   const cv=document.getElementById("pad-canvas"); let cur=null, activeId=null, erased=null;
-  const pt=e=>{const r=cv.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top,e.pressure||0.5]};
+  /* zoom and pan: strokes are kept in paper coordinates; the view (z, x, y) maps paper to screen.
+     Zoom out = more paper. Move with the ✋ tool, or with two fingers (pinch to zoom). */
+  const V=PAD.view, fitLbl=()=>{ const f=document.getElementById("pad-fit"); if(f) f.textContent="⤢ "+Math.round(V.z*100)+"%" };
+  const zoomAt=(nz,cx,cy)=>{ nz=Math.max(0.35,Math.min(3,nz)); V.x=cx-(cx-V.x)*nz/V.z; V.y=cy-(cy-V.y)*nz/V.z; V.z=nz; fitLbl(); padDraw() };
+  document.getElementById("pad-zi").onclick=()=>zoomAt(V.z*1.25,cv.clientWidth/2,cv.clientHeight/2);
+  document.getElementById("pad-zo").onclick=()=>zoomAt(V.z/1.25,cv.clientWidth/2,cv.clientHeight/2);
+  document.getElementById("pad-fit").onclick=()=>{ V.z=1; V.x=0; V.y=0; fitLbl(); padDraw() };
+  document.getElementById("pad-big").onclick=()=>{ PAD.big=!PAD.big; document.body.classList.toggle("padbig",PAD.big); const pd=document.getElementById("pad"); pd.classList.toggle("big",PAD.big);
+    const b=document.getElementById("pad-big"); b.textContent=PAD.big?"⬇ ย่อกระดาษ":"⬆ ขยายกระดาษ"; b.setAttribute("aria-pressed",PAD.big); padDraw(true) };
+  const touches=new Map(); let pinch=null, panning=null;
+  const pt=e=>{const r=cv.getBoundingClientRect();return [(e.clientX-r.left-V.x)/V.z,(e.clientY-r.top-V.y)/V.z,e.pressure||0.5]};
+  const scr=e=>{const r=cv.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top]};
+  cv.addEventListener("pointerdown",e=>{ if(e.pointerType!=="touch") return; touches.set(e.pointerId,scr(e));
+    if(touches.size===2){ const [a,b]=[...touches.values()]; pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),m:[(a[0]+b[0])/2,(a[1]+b[1])/2],z:V.z,x:V.x,y:V.y};
+      if(cur&&cur.touch){ PAD.strokes=PAD.strokes.filter(x=>x!==cur); PAD.hist=PAD.hist.filter(h=>h.stroke!==cur); cur=null; activeId=null; padDraw() } } },true);
+  cv.addEventListener("pointermove",e=>{ if(!touches.has(e.pointerId)) return; touches.set(e.pointerId,scr(e));
+    if(pinch&&touches.size>=2){ const [a,b]=[...touches.values()], d=Math.hypot(a[0]-b[0],a[1]-b[1]), m=[(a[0]+b[0])/2,(a[1]+b[1])/2];
+      const nz=Math.max(0.35,Math.min(3,pinch.z*d/pinch.d)); V.z=nz; V.x=m[0]-(pinch.m[0]-pinch.x)*nz/pinch.z; V.y=m[1]-(pinch.m[1]-pinch.y)*nz/pinch.z; fitLbl(); padDraw() } },true);
+  const tEnd=e=>{ touches.delete(e.pointerId); if(touches.size<2) pinch=null };
+  cv.addEventListener("pointerup",tEnd,true); cv.addEventListener("pointercancel",tEnd,true);
   /* stroke eraser: any stroke passing within 14 px of the eraser is removed whole */
   const near=(s,x,y)=>s.pts.some((p,i)=>{ const q=s.pts[i-1]||p, dx=p[0]-q[0], dy=p[1]-q[1], L=dx*dx+dy*dy, t=L?Math.max(0,Math.min(1,((x-q[0])*dx+(y-q[1])*dy)/L)):0;
-    const cx=q[0]+t*dx-x, cy=q[1]+t*dy-y; return cx*cx+cy*cy<196 });
+    const cx=q[0]+t*dx-x, cy=q[1]+t*dy-y, R=14/PAD.view.z; return cx*cx+cy*cy<R*R });
   const eraseAt=([x,y])=>{ const hit=PAD.strokes.filter(s=>near(s,x,y)); if(hit.length){ PAD.strokes=PAD.strokes.filter(s=>!hit.includes(s)); erased.push(...hit); padDraw() } };
   /* palm rejection: once a pencil has been used on this device, finger/palm touches never draw; a pencil always wins */
   cv.onpointerdown=e=>{
@@ -1399,23 +1447,31 @@ function padSetup(){
       if(cur&&cur.touch){ PAD.strokes=PAD.strokes.filter(x=>x!==cur); PAD.hist=PAD.hist.filter(h=>h.stroke!==cur); cur=null } }
     else if(PAD.penSeen&&e.pointerType==="touch") return;
     if(activeId!==null&&e.pointerType!=="pen") return;
+    if(pinch) return;
     activeId=e.pointerId; try{cv.setPointerCapture(e.pointerId)}catch(err){} e.preventDefault();
+    if(PAD.tool==="pan"){ panning={s:scr(e),x:V.x,y:V.y}; return }
     if(PAD.tool==="eraser"){ erased=[]; eraseAt(pt(e)); return }
     cur={tool:"pen",pts:[pt(e)],touch:e.pointerType==="touch"}; PAD.strokes.push(cur); PAD.hist.push({type:"add",stroke:cur}) };
-  cv.onpointermove=e=>{ if(e.pointerId!==activeId) return; let evs=e.getCoalescedEvents?e.getCoalescedEvents():[]; if(!evs.length) evs=[e];
+  cv.onpointermove=e=>{ if(e.pointerId!==activeId||pinch) return;
+    if(panning){ const c=scr(e); V.x=panning.x+c[0]-panning.s[0]; V.y=panning.y+c[1]-panning.s[1]; padDraw(); return }
+    let evs=e.getCoalescedEvents?e.getCoalescedEvents():[]; if(!evs.length) evs=[e];
     if(erased){ evs.forEach(ev=>eraseAt(pt(ev))); return }
     if(cur){ evs.forEach(ev=>cur.pts.push(pt(ev))); padDraw() } };
-  cv.onpointerup=cv.onpointercancel=e=>{ if(e.pointerId!==activeId) return; if(erased&&erased.length) PAD.hist.push({type:"erase",strokes:erased}); erased=null; cur=null; activeId=null };
+  cv.onpointerup=cv.onpointercancel=e=>{ if(e.pointerId!==activeId) return; if(erased&&erased.length) PAD.hist.push({type:"erase",strokes:erased}); erased=null; cur=null; activeId=null; panning=null };
   /* stop iPad's long-press magnifier / selection and page gestures on the pad */
   ["touchstart","touchmove"].forEach(t=>cv.addEventListener(t,ev=>ev.preventDefault(),{passive:false}));
-  if(PAD.open){ document.body.classList.add("padopen"); padDraw(true) }
+  if(PAD.open){ document.body.classList.add("padopen"); document.body.classList.toggle("padbig",PAD.big); padDraw(true) }
 }
 function padDraw(resize){
   const cv=document.getElementById("pad-canvas"); if(!cv||cv.offsetParent===null) return;
   const dpr=window.devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight;
   if(resize||cv.width!==Math.round(w*dpr)){ cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr) }
   const g=cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,w,h);
-  const ink=getComputedStyle(document.documentElement).getPropertyValue("--ink").trim()||"#16302B";
+  const ink=getComputedStyle(document.documentElement).getPropertyValue("--ink").trim()||"#16302B", V=PAD.view;
+  /* faint dot grid in paper coordinates, so moving and zooming feels like moving real paper */
+  { const step=32*V.z; if(step>=6){ g.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue("--line").trim()||"#ddd"; g.lineWidth=1; const oy=((V.y%step)+step)%step;
+      g.beginPath(); for(let y=oy;y<h;y+=step){ g.moveTo(0,Math.round(y)+0.5); g.lineTo(w,Math.round(y)+0.5) } g.stroke() } }
+  g.setTransform(dpr*V.z,0,0,dpr*V.z,dpr*V.x,dpr*V.y);
   PAD.strokes.forEach(s=>{ g.globalCompositeOperation=s.tool==="eraser"?"destination-out":"source-over"; g.strokeStyle=ink; g.lineCap="round"; g.lineJoin="round";
     if(s.pts.length===1){ const [x,y,p]=s.pts[0]; g.fillStyle=ink; g.beginPath(); g.arc(x,y,0.8+p*1.3,0,7); g.fill() }
     for(let i=1;i<s.pts.length;i++){ const [x0,y0]=s.pts[i-1],[x1,y1,p]=s.pts[i]; g.lineWidth=s.tool==="eraser"?22:1.2+p*2.6; g.beginPath(); g.moveTo(x0,y0); g.lineTo(x1,y1); g.stroke() } });
@@ -1463,10 +1519,11 @@ function renderStep(){
   if(ck&&S.checkPick==null){
     S.checkOrder=S.checkOrder||ck.opts.map((_,i)=>i).sort(()=>Math.random()-.5);
     fb=`<div class="feedback"><b class="ok">✅ ถูกแล้ว!</b><p><b>ก่อนดูเฉลย ขอเช็กเหตุผลนิดนึง:</b> ${esc(ck.q||"เธอได้คำตอบนี้มาด้วยวิธีคิดแบบไหน")}</p>
-      <div class="opts">${S.checkOrder.map(k=>`<button class="opt ckopt" data-ck="${k}">${esc(ck.opts[k])}</button>`).join("")}</div>
+      <div class="opts">${S.checkOrder.map(k=>`<button class="opt ckopt" data-ck="${k}">${esc(ck.opts[k])}</button>`).join("")}<button class="opt ckopt" data-ck="-1">🎲 เดามา / ยังไม่แน่ใจวิธีคิด</button></div>
       <span class="small muted">เลือกเหตุผลที่ใกล้กับที่เธอคิดจริงที่สุด เหตุผลถูกได้ +5 XP</span></div>`;
   } else if(ans){
-    const ckNote = q.check&&S.checkPick!=null?(S.checkPick===q.check.a?`<p class="small"><b>เหตุผลถูกด้วย +5 XP</b> เข้าใจจริง ไม่ได้ฟลุก</p>`
+    const ckNote = q.check&&S.checkPick===-1?`<p class="small"><b>ขอบคุณที่บอกตรงๆ</b> เดาถูกไม่นับว่าเข้าใจ ข้อนี้จะกลับมาให้ทวนอีกรอบ อ่านเฉลยแล้วลองดูว่าวิธีคิดจริงคืออะไร</p>`
+      :q.check&&S.checkPick!=null?(S.checkPick===q.check.a?`<p class="small"><b>เหตุผลถูกด้วย +5 XP</b> เข้าใจจริง ไม่ได้ฟลุก</p>`
       :`<p class="small"><b>คำตอบถูก แต่เหตุผลยังไม่ใช่</b> เหตุผลที่ถูกคือ “${esc(q.check.opts[q.check.a])}” ${esc(q.check.ex||"")} ข้อนี้จะกลับมาให้ทวนอีกรอบนะ</p>`):"";
     const head = ans.dontknow?"ไม่เป็นไร มาดูวิธีคิดกัน (0 XP)":ans.correct?YAY[S.i%YAY.length]:OOPS[S.i%OOPS.length];
     const confNote = ans.dontknow||!ans.conf?"":ans.correct&&ans.conf==="unsure"?`<p class="small">ถูกแล้ว แต่ยังไม่ชัวร์ ระบบจะเอาข้อนี้มาให้ทวนอีกรอบ จะได้มั่นใจขึ้น</p>`
@@ -1475,7 +1532,9 @@ function renderStep(){
     fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answerText||q.answer} ${q.unit}`:""}</b>${ckNote}${confNote}<p>${gloss(q.ex)}</p>
       ${q.en?"":`<div>${readBtn("ex","🔊 ฟังเฉลย")}</div>`}
       ${ans.correct||ans.dontknow?"":`<span class="small muted">พลาดเพราะอะไร เลือกได้หลายข้อ (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
-      <div class="why">${Object.entries(ERR).filter(([k])=>k!=="dontknow").map(([k,v])=>`<button data-why="${k}" aria-pressed="${(S.why||[]).includes(k)}">${v}</button>`).join("")}</div>`}
+      <div class="why">${Object.entries(ERR).filter(([k])=>k!=="dontknow"&&k!=="notTaught").map(([k,v])=>`<button data-why="${k}" aria-pressed="${(S.why||[]).includes(k)}">${v}</button>`).join("")}</div>
+      ${(S.why||[]).includes("other")?`<input id="whyother" class="numin" style="font-size:1rem" maxlength="200" placeholder="พลาดเพราะอะไร พิมพ์สั้นๆ" value="${esc(S.whyOther||"")}">`:""}`}
+      ${ans.correct&&!ans.dontknow&&!(q.check&&S.checkPick!=null)?`<button class="btn ghost small" id="guessed" aria-pressed="${!!S.guessed}">${S.guessed?"✓ บอกแล้วว่าข้อนี้เดา":"🎲 ข้อนี้ถูกเพราะเดา"}</button>`:""}
       ${askHtml("question")}
     </div>
     <button class="btn" id="next">ต่อไป</button>`;
@@ -1494,7 +1553,7 @@ function renderStep(){
     ${S.hints?`<div class="feedback">${q.hints.slice(0,S.hints).map((h,k)=>`<span class="small"><b>คำใบ้ ${k+1}</b> ${esc(h)}</span>`).join("")}</div>`:""}
     ${body}${fb}
     <div class="row">${!ans&&S.hints<q.hints.length?`<button class="btn ghost" id="hint">ขอคำใบ้ (${S.hints}/${q.hints.length})</button>`:""}
-    ${!ans?`<button class="btn ghost" id="dontknow">🤔 ยังคิดไม่ออก ดูเฉลย</button>`:""}
+    ${!ans?`<div class="row" style="gap:8px"><button class="btn ghost" id="dontknow">🤔 ยังคิดไม่ออก ดูเฉลย</button>${["mixed","probe","sweep"].includes(S.set.kind)||S.set.type==="sweep"?`<button class="btn ghost" id="nottaught">📭 ยังไม่ได้เรียนเรื่องนี้</button>`:""}</div>`:""}
     ${st.optional&&!ans?`<button class="btn ghost" id="skip">ข้ามข้อนี้</button>`:""}</div>
     ${!ans&&q.recall?`<p class="small muted">🧠 ข้อนี้เคยเจอแล้ว รอบนี้ไม่มีตัวเลือก พิมพ์คำตอบเองเลย</p>`:""}
     ${!ans&&q.num&&!q.recall?`<p class="small muted">✍️ ข้อเติมคำตอบแบบข้อสอบจริง ไม่มีตัวเลือกให้เดา ตอบเป็นเศษส่วนได้ เช่น 2/3</p>`:""}
@@ -1537,21 +1596,24 @@ function renderStep(){
     }
     const hb=document.getElementById("hint"); if(hb) hb.onclick=()=>{S.hints++;const y=window.scrollY;renderStep();window.scrollTo({top:y})};
     document.getElementById("dontknow").onclick=()=>{S.why=["dontknow"]; answer({choice:-1,raw:"",correct:false,dontknow:true})};
+    { const nt=document.getElementById("nottaught"); if(nt) nt.onclick=()=>{S.why=["notTaught"]; S.notTaught=true; answer({choice:-1,raw:"",correct:false,dontknow:true})} }
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
     const sk=document.getElementById("skip"); if(sk) sk.onclick=()=>{S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,skipped:true,timeSec:0});advance()};
   } else {
+    { const wo=document.getElementById("whyother"); if(wo) wo.oninput=()=>{ S.whyOther=wo.value.slice(0,200) } }
+    { const gb=document.getElementById("guessed"); if(gb) gb.onclick=()=>{ S.guessed=!S.guessed; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) } }
     $v.querySelectorAll("[data-ck]").forEach(b=>b.onclick=()=>{ S.checkPick=+b.dataset.ck; S.checkDone=true; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) });
     $v.querySelectorAll("[data-why]").forEach(b=>b.onclick=()=>{const k=b.dataset.why; S.why=(S.why||[]).includes(k)?S.why.filter(x=>x!==k):[...(S.why||[]),k];const y=window.scrollY;renderStep();window.scrollTo({top:y})});
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
     const nx=document.getElementById("next"); if(nx) nx.onclick=()=>{
       S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
-        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0}:{}),...(q.check&&S.checkPick!=null?{checkOk:S.checkPick===q.check.a}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),len:q.q.length});
+        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(S.whyOther&&(S.why||[]).includes("other")?{whyOther:S.whyOther.trim()}:{}),...(ans.correct&&(S.guessed||S.checkPick===-1)?{guessed:true}:{}),...(S.notTaught?{notTaught:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0}:{}),...(q.check&&S.checkPick!=null&&S.checkPick!==-1?{checkOk:S.checkPick===q.check.a}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),len:q.q.length});
       advance();
     };
   }
 }
 function answer(a){ readStop(); S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
-function advance(){ readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.hints=0; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
+function advance(){ readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.hints=0; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
 
 /* concept card, one idea per screen: (1) why this topic exists — a puzzle to guess first (c.hook) or the "use" line,
    (2) each point alone with "เข้าใจแล้ว" / "ขออธิบายอีกแบบ" (c.more[i], else the next whole alternative),
@@ -2043,8 +2105,9 @@ const SCENES={
    Everything is cosmetic; it never changes practice. Purchases are records (type "shop") so they travel to dad with
    the result code and survive a cleared browser. No hunger, no decay, no guilt. ---------- */
 /* full-body drawings for companions whose emoji is only a head (fox, wolf, panda, unicorn) */
-const eyes=(y=40,dx=9,c="#1d1d2b")=>`<ellipse cx="${50-dx}" cy="${y}" rx="3.6" ry="4.4" fill="${c}"/><ellipse cx="${50+dx}" cy="${y}" rx="3.6" ry="4.4" fill="${c}"/>
- <circle cx="${48.8-dx}" cy="${y-1.6}" r="1.4" fill="#fff"/><circle cx="${48.8+dx}" cy="${y-1.6}" r="1.4" fill="#fff"/>`;
+const shut=(y,dx,c)=>`<g class="ec"><path d="M${50-dx-4} ${y} q4 3.4 8 0" stroke="${c}" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M${50+dx-4} ${y} q4 3.4 8 0" stroke="${c}" stroke-width="1.8" fill="none" stroke-linecap="round"/></g>`;
+const eyes=(y=40,dx=9,c="#1d1d2b")=>shut(y,dx,c)+`<g class="eo"><ellipse cx="${50-dx}" cy="${y}" rx="3.6" ry="4.4" fill="${c}"/><ellipse cx="${50+dx}" cy="${y}" rx="3.6" ry="4.4" fill="${c}"/>
+ <circle cx="${48.8-dx}" cy="${y-1.6}" r="1.4" fill="#fff"/><circle cx="${48.8+dx}" cy="${y-1.6}" r="1.4" fill="#fff"/></g>`;
 const blush=(y=47)=>`<ellipse cx="34" cy="${y}" rx="4" ry="2.4" fill="#ff8fa3" opacity=".55"/><ellipse cx="66" cy="${y}" rx="4" ry="2.4" fill="#ff8fa3" opacity=".55"/>`;
 const smile=(y=50)=>`<path d="M46 ${y} q2 2.6 4 0 q2 2.6 4 0" fill="none" stroke="#3a2a2a" stroke-width="1.4" stroke-linecap="round"/>`;
 const PET_ART={
@@ -2077,7 +2140,7 @@ unicorn:`<path d="M68 80 C86 82 92 66 84 56 C86 68 78 72 66 72Z" fill="#c9a6ff"/
  <path d="M58 22 C70 18 80 28 76 44 C72 34 66 30 60 30Z" fill="#ff9ec7"/><path d="M60 26 C72 26 80 38 74 52 C72 42 66 36 60 34Z" fill="#c9a6ff"/><path d="M42 22 C36 22 32 26 32 30 C38 26 44 26 48 26Z" fill="#8fd3ff"/>
  ${eyes(40,9,"#3b2a5a")}<circle cx="46" cy="52" r="1.1" fill="#c98aa5"/><circle cx="54" cy="52" r="1.1" fill="#c98aa5"/>${smile(55)}${blush(46)}`
 };
-const eyes2=(y=40,dx=9,c="#1d1d2b",r=3.6)=>`<ellipse cx="${50-dx}" cy="${y}" rx="${r}" ry="${r*1.2}" fill="${c}"/><ellipse cx="${50+dx}" cy="${y}" rx="${r}" ry="${r*1.2}" fill="${c}"/><circle cx="${48.8-dx}" cy="${y-1.6}" r="1.3" fill="#fff"/><circle cx="${48.8+dx}" cy="${y-1.6}" r="1.3" fill="#fff"/>`;
+const eyes2=(y=40,dx=9,c="#1d1d2b",r=3.6)=>shut(y,dx,c)+`<g class="eo"><ellipse cx="${50-dx}" cy="${y}" rx="${r}" ry="${r*1.2}" fill="${c}"/><ellipse cx="${50+dx}" cy="${y}" rx="${r}" ry="${r*1.2}" fill="${c}"/><circle cx="${48.8-dx}" cy="${y-1.6}" r="1.3" fill="#fff"/><circle cx="${48.8+dx}" cy="${y-1.6}" r="1.3" fill="#fff"/></g>`;
 const bl=(y,dx=16)=>`<ellipse cx="${50-dx}" cy="${y}" rx="3.6" ry="2.2" fill="#ff8fa3" opacity=".5"/><ellipse cx="${50+dx}" cy="${y}" rx="3.6" ry="2.2" fill="#ff8fa3" opacity=".5"/>`;
 /* coiled chibi snake: base colour, belly, pattern colour, pattern kind */
 function snake(c,belly,pc,kind,extra="",eye="#1d1d2b"){
@@ -2143,10 +2206,23 @@ neck_medal:`<path d="M30 36 L48 66 M70 36 L52 66" stroke="#4f8fd6" stroke-width=
 });
 /* knowledge cards: real science behind each companion, unlocked as it grows (baby, young, adult) */
 const PET_FACTS={"dragon": ["มังกรในนิทานได้แรงบันดาลใจจากสัตว์จริงหลายชนิด เช่น ตะกวดและจระเข้", "มังกรโคโมโดเป็นกิ้งก่าที่ใหญ่ที่สุดในโลก ยาวได้ราว 3 เมตร อาศัยอยู่บนเกาะในอินโดนีเซีย", "กิ้งก่าเป็นสัตว์เลือดเย็น ต้องอาบแดดให้ร่างกายอุ่นก่อน จึงจะเคลื่อนไหวได้คล่อง"], "owl": ["นกฮูกกลอกตาในเบ้าไม่ได้ จึงต้องหมุนคอแทน หมุนได้ราว 270 องศา", "ขอบขนปีกนกฮูกหยักนุ่ม ช่วยลดเสียงลม จึงบินได้เงียบมาก", "นกฮูกกลืนเหยื่อทั้งตัว แล้วสำรอกส่วนที่ย่อยไม่ได้ เช่น กระดูกและขน ออกมาเป็นก้อน"], "fox": ["จิ้งจอกได้ยินเสียงเบามาก ได้ยินแม้เสียงหนูขุดดินอยู่ใต้หิมะ", "จิ้งจอกแดงกระโดดตะครุบเหยื่อใต้หิมะ งานวิจัยพบว่ามันมักกระโดดไปทางทิศตะวันออกเฉียงเหนือ อาจใช้สนามแม่เหล็กโลกช่วยกะระยะ", "หางฟูของจิ้งจอกช่วยทรงตัวตอนวิ่ง และใช้พันตัวให้อุ่นตอนนอน"], "cat": ["หลังจอตาของแมวมีชั้นสะท้อนแสง ตาจึงวาวในที่มืด และมองเห็นในแสงน้อยได้ดีกว่าคน", "หนวดแมวรับรู้แรงลมและสิ่งรอบตัวได้ ช่วยกะว่าช่องแคบพอให้ตัวผ่านไหม", "แมวรับรสหวานไม่ได้ เพราะยีนรับรสหวานของแมวไม่ทำงาน"], "bunny": ["ฟันกระต่ายงอกยาวขึ้นตลอดชีวิต จึงต้องกัดแทะหญ้าให้ฟันสึกอยู่เสมอ", "ตากระต่ายอยู่ด้านข้างหัว มองเห็นได้เกือบรอบตัว ช่วยระวังภัย", "หูยาวของกระต่ายมีเส้นเลือดเยอะ ช่วยระบายความร้อนออกจากร่างกาย"], "wolf": ["หมาป่าอยู่กันเป็นฝูง ส่วนใหญ่คือครอบครัวเดียวกัน คือพ่อแม่กับลูกๆ", "หมาป่าหอนเพื่อสื่อสารกับฝูงที่อยู่ไกล เสียงหอนไปได้ไกลหลายกิโลเมตร", "สุนัขบ้านมีบรรพบุรุษเป็นหมาป่าสีเทา ที่คนเริ่มเลี้ยงเมื่อกว่า 15,000 ปีก่อน"], "tiger": ["ลายของเสือแต่ละตัวไม่ซ้ำกัน เหมือนลายนิ้วมือของคน", "เสือว่ายน้ำเก่งและชอบแช่น้ำคลายร้อน ต่างจากแมวบ้านส่วนใหญ่", "ถ้าโกนขนเสือออก ผิวหนังข้างใต้ก็ยังมีลายอยู่"], "peacock": ["นกยูงตัวผู้เท่านั้นที่มีขนหางยาวสวย ใช้รำแพนอวดตัวเมีย", "สีเขียวฟ้าแวววาวของขนนกยูงไม่ได้มาจากสารสี แต่เกิดจากโครงสร้างเล็กๆ ในขนที่สะท้อนแสง", "นกยูงของไทยคือนกยูงเขียว เป็นสัตว์ป่าคุ้มครองที่ต้องช่วยกันดูแล"], "swan": ["หงส์ตัวใหญ่แต่บินได้ โดยต้องวิ่งบนผิวน้ำก่อนขึ้นบิน", "ลูกหงส์ขาวมีขนสีเทา แล้วค่อยๆ เปลี่ยนเป็นสีขาวเมื่อโต", "หงส์ใช้คอยาวก้มลงไปกินพืชใต้น้ำ โดยไม่ต้องดำน้ำทั้งตัว"], "dino": ["นกเป็นลูกหลานของไดโนเสาร์ นักวิทยาศาสตร์จึงนับว่านกคือไดโนเสาร์ที่ยังมีชีวิตอยู่", "ที่ภาคอีสานของไทยพบฟอสซิลไดโนเสาร์หลายชนิด เช่น ภูเวียงโกซอรัส สิรินธรเน", "ฟอสซิลเกิดจากซากที่ถูกตะกอนทับถมเป็นเวลานานมาก จนแร่ธาตุเข้าไปแทนที่และกลายเป็นหิน"], "dolphin": ["โลมาเป็นสัตว์เลี้ยงลูกด้วยนม หายใจด้วยปอดผ่านรูบนหัว", "โลมาส่งเสียงแล้วฟังเสียงสะท้อนเพื่อหาตำแหน่งเหยื่อ เหมือนค้างคาว", "ในทะเลสาบสงขลามีโลมาอิรวดีอาศัยอยู่ เหลืออยู่น้อยมากจนใกล้สูญพันธุ์"], "bubble": ["หมึกยักษ์มีหัวใจ 3 ดวง และมีเลือดสีฟ้า เพราะใช้ทองแดงขนออกซิเจน", "หมึกยักษ์เปลี่ยนสีผิวได้ในพริบตาเพื่อพรางตัว", "แมงกะพรุนไม่มีสมองและไม่มีหัวใจ ตัวของมันเป็นน้ำราว 95%"], "butterfly": ["ผีเสื้อเปลี่ยนรูปร่างครบ 4 ระยะ คือ ไข่ หนอน ดักแด้ และตัวเต็มวัย", "ผีเสื้อรับรสด้วยเท้า เมื่อเกาะใบไม้ก็รู้ว่าใบนั้นเหมาะจะวางไข่ไหม", "ผีเสื้อช่วยถ่ายเรณูให้ดอกไม้ เพราะตอนดูดน้ำหวาน ละอองเรณูจะติดตัวไปด้วย"], "turtle": ["กระดองเต่าเชื่อมกับกระดูกสันหลังและซี่โครง เต่าจึงถอดกระดองออกไม่ได้", "เพศของลูกเต่าทะเลขึ้นกับอุณหภูมิของทรายที่ฝังไข่ ทรายอุ่นจะได้ตัวเมียมากขึ้น", "เต่าทะเลมักกินถุงพลาสติก เพราะคิดว่าเป็นแมงกะพรุน"], "panda": ["แพนด้ากินไผ่วันละหลายสิบกิโลกรัม เพราะไผ่ให้พลังงานน้อย", "แพนด้ามีกระดูกข้อมือที่ยื่นออกมาเหมือนนิ้วที่หก ช่วยจับลำไผ่", "ลูกแพนด้าแรกเกิดตัวเล็กมาก หนักเพียงราว 100–200 กรัม"], "penguin": ["เพนกวินบินไม่ได้ แต่ใช้ปีกว่ายน้ำได้เร็วมาก", "เพนกวินจักรพรรดิตัวผู้กกไข่ไว้บนเท้าตลอดหน้าหนาวของแอนตาร์กติกา", "เพนกวินแทบทุกชนิดอยู่ซีกโลกใต้ ที่ขั้วโลกเหนือไม่มีเพนกวินเลย"], "deer": ["เขากวางผลัดทุกปีแล้วงอกใหม่ ต่างจากเขาวัวที่อยู่ไปตลอดชีวิต", "ระหว่างที่เขากวางกำลังงอก จะมีหนังนุ่มที่มีเส้นเลือดหุ้มอยู่", "กวางเป็นสัตว์เคี้ยวเอื้อง กลืนอาหารลงกระเพาะแล้วสำรอกกลับมาเคี้ยวอีกรอบ"], "otter": ["นากทะเลจับมือกันตอนนอน จะได้ไม่ลอยแยกจากกัน", "นากทะเลมีขนแน่นที่สุดในบรรดาสัตว์ทั้งหมด ใช้ขนกันหนาวแทนชั้นไขมัน", "นากทะเลใช้หินทุบเปลือกหอย เป็นสัตว์ที่รู้จักใช้เครื่องมือ"], "unicorn": ["ในอดีตมีคนขายเขาของวาฬนาร์วาล โดยอ้างว่าเป็นเขายูนิคอร์น", "เขาของวาฬนาร์วาลจริงๆ คือฟันที่งอกยาวออกมา ยาวได้ถึงราว 3 เมตร", "ยูนิคอร์นเป็นสัตว์ในตำนาน นักวิทยาศาสตร์ตัดสินว่าอะไรมีจริงจากหลักฐาน ไม่ใช่จากเรื่องเล่า"], "whale": ["วาฬสีน้ำเงินเป็นสัตว์ที่ใหญ่ที่สุดเท่าที่เคยมีบนโลก ยาวได้ราว 30 เมตร", "วาฬบาลีนไม่มีฟัน แต่ใช้แผงบาลีนกรองกุ้งเคยตัวเล็กๆ กิน", "ในอ่าวไทยมีวาฬบรูด้า ที่ชอบอ้าปากรอให้ฝูงปลาว่ายเข้ามาเอง"], "hedgehog": ["หนามของเม่นแคระคือขนที่แข็งเป็นพิเศษ ทำจากเคราติน สารเดียวกับเล็บของคน", "เม่นแคระม้วนตัวเป็นลูกบอลหนามเมื่อตกใจ", "เม่นแคระหากินกลางคืน และกินแมลงเป็นอาหารหลัก"], "ballpython": ["งูหลามบอลชอบม้วนตัวเป็นลูกบอลเมื่อตกใจ จึงได้ชื่อนี้", "งูรับกลิ่นด้วยลิ้น แลบลิ้นเก็บกลิ่นแล้วส่งไปให้อวัยวะรับกลิ่นที่เพดานปาก", "งูหลามบอลมีแอ่งรับความร้อนที่ริมปาก รู้ได้ว่าสัตว์เลือดอุ่นอยู่ตรงไหนแม้ในที่มืด"], "banana": ["งูสีกล้วยหอม (banana) เป็นมอร์ฟสีของงูหลามบอล ที่ผู้เลี้ยงผสมพันธุ์ต่อกันจนได้สีใหม่", "สีที่ส่งต่อจากพ่อแม่ไปสู่ลูกเป็นเรื่องพันธุศาสตร์ ที่เราจะได้เรียนตอน ม.3", "งูลอกคราบออกทั้งตัวเป็นชิ้นเดียว เพราะผิวชั้นนอกไม่ขยายตามตัวที่โตขึ้น"], "corn": ["งูคอร์นได้ชื่อเพราะลายท้องคล้ายเมล็ดข้าวโพด และมักพบใกล้ยุ้งข้าวโพดที่มีหนูชุม", "งูคอร์นไม่มีพิษ มันจับเหยื่อด้วยการรัด", "งูไม่มีใบหูด้านนอก แต่รับแรงสั่นสะเทือนผ่านกระดูกขากรรไกรได้"], "greentree": ["งูหลามเขียวตอนเด็กมีสีเหลืองหรือสีแดง แล้วค่อยๆ เปลี่ยนเป็นสีเขียวเมื่อโต", "งูหลามเขียวพันกิ่งไม้เป็นวง แล้ววางหัวพักไว้ตรงกลาง", "สีเขียวช่วยพรางตัวในพุ่มไม้ ทั้งจากเหยื่อและจากผู้ล่า"], "duck": ["ไอโซพอดไม่ใช่แมลง แต่เป็นญาติของกุ้งและปู (ครัสเตเชียน) ที่ขึ้นมาอยู่บนบก", "ไอโซพอดหายใจด้วยอวัยวะคล้ายเหงือกใต้ท้อง จึงต้องอยู่ในที่ชื้นเสมอ", "ไอโซพอดหน้าเป็ด (Rubber Ducky) ถูกพบครั้งแรกในถ้ำที่ประเทศไทย"], "cow": ["ไอโซพอดลายวัวนม (Dairy Cow) เป็นมอร์ฟสีขาวดำของ Porcellio laevis", "ไอโซพอดเป็นผู้ย่อยสลาย กินใบไม้และไม้ผุ แล้วคืนธาตุอาหารให้ดิน", "ไอโซพอดตัวเมียมีถุงใต้ท้องไว้อุ้มไข่และลูกที่เพิ่งฟัก"], "orangeiso": ["ไอโซพอดสีส้มนี้คือตัวกะปิ (Armadillidium) ที่ม้วนตัวกลมได้เหมือนลูกบอล", "ไอโซพอดลอกคราบทีละครึ่งตัว ลอกครึ่งหลังก่อน แล้วค่อยลอกครึ่งหน้า", "ไอโซพอดกินคราบเก่าของตัวเอง เพื่อเอาแคลเซียมกลับมาใช้สร้างเปลือกใหม่"], "potion": ["Magic Potion เป็นมอร์ฟของตัวกะปิ Armadillidium vulgare ที่มีแต้มหลายสี", "เปลือกไอโซพอดมีแคลเซียมคาร์บอเนต สารเดียวกับเปลือกไข่และหินปูน", "คนเลี้ยงไอโซพอดจะทำมุมชื้นและมุมแห้งไว้ในตู้ ให้มันเลือกเองว่าจะอยู่ตรงไหน"], "kilen": ["กิเลนเป็นสัตว์หิมพานต์ หัวคล้ายมังกร ตัวมีเกล็ด และมีกีบเหมือนกวางหรือม้า", "ในความเชื่อจีน กิเลนเป็นสัตว์มงคลที่เดินเบามากจนไม่เหยียบหญ้าให้ช้ำ", "ตัวนิ่มหรือตัวลิ่นมีเกล็ดจริงๆ ทำจากเคราติน และถูกล่าจนใกล้สูญพันธุ์"], "lion": ["ราชสีห์เป็นสัตว์หิมพานต์ ที่ได้แรงบันดาลใจมาจากสิงโต", "สิงโตเป็นแมวป่าชนิดเดียวที่อยู่กันเป็นฝูง", "แผงคอของสิงโตตัวผู้ช่วยป้องกันคอเวลาต่อสู้ และบอกว่าตัวนั้นแข็งแรงแค่ไหน"], "naga": ["พญานาคเป็นสัตว์ในตำนานที่ผูกพันกับน้ำและฝน ในความเชื่อของไทยและลาว", "งูจงอางแผ่แม่เบี้ยได้ และเป็นงูพิษที่ยาวที่สุดในโลก ยาวได้ราว 5 เมตร", "งูจงอางกินงูชนิดอื่นเป็นอาหารหลัก และตัวเมียทำรังจากใบไม้เพื่อวางไข่"]};
+
+/* owl drawn by hand so it can stand on the floor, flap its wings when it walks and close its eyes when it sleeps */
+const owlArt=(young)=>`<g class="wing wl" style="transform-origin:28px 52px"><path d="M28 50 C12 58 12 78 24 86 C30 78 32 64 30 52Z" fill="${young?"#b89a7a":"#8a6440"}"/><path d="M22 66 q4 4 8 2 M20 74 q5 4 9 1" stroke="#6d4c30" stroke-width="1.4" fill="none"/></g>
+ <g class="wing wr" style="transform-origin:72px 52px"><path d="M72 50 C88 58 88 78 76 86 C70 78 68 64 70 52Z" fill="${young?"#b89a7a":"#8a6440"}"/><path d="M78 66 q-4 4 -8 2 M80 74 q-5 4 -9 1" stroke="#6d4c30" stroke-width="1.4" fill="none"/></g>
+ <ellipse cx="50" cy="66" rx="${young?24:22}" ry="${young?24:27}" fill="${young?"#c9ae8f":"#a07850"}"/>
+ <ellipse cx="50" cy="72" rx="14" ry="${young?15:18}" fill="#f3e3c8"/>
+ ${[0,1,2].map(k=>`<path d="M${42+k*6} ${66+k%2*6} q2 2.4 4 0" stroke="#c9a27a" stroke-width="1.3" fill="none"/>`).join("")}
+ <g fill="#e8a23c"><path d="M40 92 l-3 5 h5 l1 -3 l1 3 h5 l-3 -5Z"/><path d="M54 92 l-3 5 h5 l1 -3 l1 3 h5 l-3 -5Z"/></g>
+ ${young?"":`<path d="M30 26 L36 12 L42 26Z M70 26 L64 12 L58 26Z" fill="#8a6440"/>`}
+ <ellipse cx="50" cy="36" rx="${young?23:24}" ry="${young?20:19}" fill="${young?"#c9ae8f":"#a07850"}"/>
+ <circle cx="40" cy="37" r="10" fill="#fff8ec"/><circle cx="60" cy="37" r="10" fill="#fff8ec"/>
+ ${eyes2(37,10,"#1d1d2b",young?4.6:4.2)}
+ <path d="M47 44 L50 50 L53 44Z" fill="#e8a23c"/>${young?bl(45,19):""}`;
 function glyph(t){ return typeof t==="string"&&t.startsWith("svg:")?`<svg class="pg" viewBox="0 0 100 100" width="1em" height="1em" aria-hidden="true" style="display:inline-block;vertical-align:-.15em">${PET_ART[t.slice(4)]||""}</svg>`:t }
 const PETS=[
   {k:"dragon",n:"มังกรน้อย",forms:["🦎","🐉","🐉"],hab:"bg:volcano"},
-  {k:"owl",n:"นกฮูกนักปราชญ์",forms:["🐣","🐥","🦉"],hab:"bg:library"},
+  {k:"owl",n:"นกฮูกนักปราชญ์",forms:["svg:owlet","svg:owlet","svg:owl"],hab:"bg:library"},
   {k:"fox",n:"จิ้งจอกเวท",forms:["svg:fox","svg:fox","svg:fox"],hab:"bg:forest"},
   {k:"cat",n:"แมวดำจอมเวท",forms:["🐈","🐈","🐈‍⬛"],hab:"bg:night"},
   {k:"bunny",n:"กระต่ายจันทรา",forms:["🐇","🐇","🐇"],hab:"bg:meadow"},
@@ -2179,6 +2255,7 @@ const PETS=[
   {k:"naga",n:"พญานาคน้อย",forms:["svg:naga","svg:naga","svg:naga"],hab:"bg:sea",grp:"หิมพานต์"},
   {k:"robot",n:"หุ่นกลไกจิ๋ว",forms:["🤖","🤖","🤖"],retired:true}];
 const ALL_PETS=PETS.map(p=>({...p,e:glyph(p.forms[2])}));
+Object.assign(PET_ART,{owl:owlArt(false),owlet:owlArt(true)});
 const BUDDY_KINDS=["fox","dragon","owl","cat","bunny","wolf","peacock","dolphin"].map(k=>ALL_PETS.find(p=>p.k===k));
 const PET_SPECIAL=ALL_PETS.filter(p=>p.how);
 const formsText=x=>new Set(x.forms).size===1?`🥚 → โตจากตัวเล็กเป็นตัวใหญ่`:`🥚 → ${[...new Set(x.forms)].map(glyph).join(" → ")}`;
@@ -2323,8 +2400,10 @@ function petPat(btn,kind){ if(!btn) return; btn.classList.remove("squish","hop")
 let wanderT=null;
 function startWander(){ clearInterval(wanderT); wanderT=setInterval(()=>{ const hp=document.getElementById("petpat"), sc=document.getElementById("scene");
     if(!hp||!sc||denArrange||document.hidden){ if(!hp) clearInterval(wanderT); return }
-    const room=Math.max(0,(sc.clientWidth-hp.clientWidth)/2-24); hp.style.left=Math.round((Math.random()*2-1)*room)+"px";
-    const z=hp.querySelector(".zz"); if(z) z.remove(); if(Math.random()<0.15){ const s=document.createElement("span"); s.className="zz"; s.textContent="💤"; hp.appendChild(s); setTimeout(()=>s.remove(),5000) } },4200) }
+    if(hp.classList.contains("sleeping")){ if(Math.random()<0.5) return; hp.classList.remove("sleeping"); const z=hp.querySelector(".zz"); if(z) z.remove(); return }
+    if(Math.random()<0.15){ const s=document.createElement("span"); s.className="zz"; s.textContent="💤"; hp.appendChild(s); hp.classList.add("sleeping"); return }
+    const room=Math.max(0,(sc.clientWidth-hp.clientWidth)/2-24), cur=parseFloat(hp.style.left)||0, nx=Math.round((Math.random()*2-1)*room);
+    hp.classList.toggle("face-l",nx<cur); hp.classList.add("walking"); hp.style.left=nx+"px"; setTimeout(()=>hp.classList.remove("walking"),1600) },4200) }
 let denMsg="", denBuy=null, denName="", denTab="food", denCele=null, denArrange=false, denSel=null;
 function wish(){ return ls("fieldnote.wish",null) }
 function wishItem(list){ const w=wish(); if(!w) return null; if(w.startsWith("pet:")){ const P=ALL_PETS.find(x=>x.k===w.slice(4)); return P&&!owns(list).has(w)?{id:w,e:glyph(P.forms[2]),n:P.n,cost:nextPetPrice(list)}:null }
@@ -2813,7 +2892,7 @@ function isleSvg(k,lv){ const I=ISLES[k], [top,side,dark]=ISLE_LOOK[k], {x,y,rx,
     <ellipse cx="${x}" cy="${y+depth*1.35}" rx="${rx*0.55}" ry="${ry*0.25}" fill="#1e3a5f" opacity=".12"/>
     <path d="${cliff}" fill="${dark}"/><path d="M${x-rx} ${y} C${x-rx*0.9} ${y+depth*0.35} ${x-rx*0.3} ${y+depth*0.55} ${x} ${y+depth*0.6} C${x+rx*0.3} ${y+depth*0.55} ${x+rx*0.9} ${y+depth*0.35} ${x+rx} ${y}Z" fill="${side}"/>
     ${[0.25,0.5,0.72].map(f=>`<path d="M${x-rx*0.7+f*rx*0.4} ${y+depth*f*0.9} q ${rx*0.25} 8 ${rx*0.5} 0" stroke="${dark}" stroke-width="2" fill="none" opacity=".5"/>`).join("")}
-    ${k==="mat"?`<path d="M${x+rx*0.5} ${y+ry*0.3} q 4 ${depth*0.7} -2 ${depth*1.2}" stroke="#a6dcf2" stroke-width="7" fill="none" opacity=".85" class="fall"/>`:""}
+    ${k==="mat"?`<path d="M${x+rx*0.5} ${y+ry*0.3} q 4 ${depth*0.7} -2 ${depth*1.2}" stroke="#a6dcf2" stroke-width="7" fill="none" opacity=".85" class="flow"/>`:""}
     <ellipse cx="${x}" cy="${y+5}" rx="${rx*1.01}" ry="${ry}" fill="${side}"/>${Array.from({length:9},(_,i)=>{const a=Math.PI*(0.05+i*0.1);return `<path d="M${x-Math.cos(a)*rx*0.98} ${y+Math.sin(a)*ry*0.9} q3 ${8+(i%3)*4} 6 0" fill="${top}"/>`}).join("")}
     <ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${top}"/><ellipse cx="${x-rx*0.15}" cy="${y-ry*0.2}" rx="${rx*0.7}" ry="${ry*0.5}" fill="#fff" opacity=".14"/>
     ${[[-0.82,-0.15],[0.84,-0.1],[-0.55,-0.6],[0.6,-0.55]].map(([fx,fy],i)=>`<g transform="translate(${x+fx*rx} ${y+fy*ry})"><circle r="${7+i%2*3}" fill="${dark}" opacity=".55"/><circle cx="-4" cy="-3" r="${5+i%2*2}" fill="${side}"/></g>`).join("")}
@@ -2877,7 +2956,7 @@ function renderMap(){
   $v.innerHTML=`<section class="card"><div class="todayhead"><span class="eyebrow">เกาะคาถา · เก็บแล้ว ${got}/${SPELLS.length}</span>
       <span class="row" style="gap:4px"><button class="btn ghost small" id="mzo" aria-label="ซูมออก">−</button><button class="btn ghost small" id="mzi" aria-label="ซูมเข้า">＋</button><button class="btn ghost small" id="maplist">รายการ</button></span></div>
       <p class="small" style="margin:0">🌱 ฝึกหัด ${cnt[0]} · 🌲 ชำนาญ ${cnt[1]} · 🏯 ปรมาจารย์ ${cnt[2]} · ☁️ ยังไม่ค้นพบ · 💧 ถึงรอบทวน · ⭕ กำลังเรียน · ★ อาคารประจำย่านโตตามความเก่ง</p>
-      <div class="islandwrap mapscroll" id="mapscroll"><div style="position:relative;width:${mapZoom*100}%"><svg class="island" viewBox="0 0 800 1200" role="img" aria-label="แผนที่เกาะคาถา">${sky}${bridges}${isles}${marks}${specials}${nodes}${walker}</svg>${skyOverlay(Date.now(),"island")}</div></div>
+      <div class="islandwrap mapscroll" id="mapscroll"><div style="position:relative;width:${mapZoom*100}%"><svg class="island" viewBox="0 0 800 1200" role="img" aria-label="แผนที่เกาะคาถา">${sky}${bridges}${isles}${marks}${specials}${nodes}${walker}</svg></div></div>
       <p class="small muted" style="margin:0">${skyCaption(Date.now())} · แตะสถานที่ แล้ว${bd?esc(bd.name):"คู่หู"}จะพาไปดู${mapZoom>1?" · ลากเพื่อเลื่อนแผนที่":""}</p></section>
     <div id="mappanel">${sel?mapPanel(sel,ss,list):mapSel==="__museum"?museumPanel(list):mapSel==="__lab"?labHtml(list):`<section class="card"><p class="small">ทุกคาถามี 3 ขั้น 🌱 ฝึกหัด → 🌲 ชำนาญ → 🏯 ปรมาจารย์ ยิ่งเก่ง อาคารประจำแต่ละเกาะยิ่งสร้างใหญ่ขึ้น จากซากที่ยังสร้างไม่เสร็จ 🚧 ไปจนถึงปราสาทที่มีธง คาถาที่ไม่ได้ใช้นานต้นไม้จะเหี่ยว ทบทวนสั้นๆ ก็กลับมาเหมือนเดิม</p></section>`}</div>`;
   document.getElementById("maplist").onclick=()=>{mapList=true;renderMap()};
@@ -3219,7 +3298,7 @@ function readiness(list,upto){ const L=list.filter(a=>new Date(a.endedAt).getTim
   Object.keys(DISTRICTS).filter(k=>k!=="tech").forEach(rk=>{ const sps=SPELLS.filter(s=>s.realm===rk); if(!sps.length) return;
     const w=sp=>sp.stars||1, tot=sps.reduce((a,sp)=>a+w(sp),0), cov=sps.filter(sp=>(ss[sp.id]?.tier||0)>=1).reduce((a,sp)=>a+w(sp),0)/tot;
     const ids=new Set(sps.map(s=>s.id)), l3=its.filter(x=>x.level===3&&ids.has(QBANK[x.qid]?.q.spell)), sv=sw.filter(x=>ids.has(QBANK[x.qid]?.q.spell));
-    const p3=l3.length>=3?l3.filter(x=>x.correct).length/l3.length:null, pr=sv.length>=3?sv.filter(x=>x.correct).length/sv.length:null;
+    const p3=l3.length>=3?l3.filter(x=>x.correct&&!x.guessed).length/l3.length:null, pr=sv.length>=3?sv.filter(x=>x.correct).length/sv.length:null;
     const val=Math.round(100*(0.4*cov+0.4*(p3??0)+0.2*(pr??p3??0)));
     out[rk]={val,cov:Math.round(cov*100),p3:p3==null?null:Math.round(p3*100),pr:pr==null?null:Math.round(pr*100),w:tot,n3:l3.length} });
   const ks=Object.keys(out), W=ks.reduce((a,k)=>a+out[k].w,0); out._all=Math.round(ks.reduce((a,k)=>a+out[k].val*out[k].w,0)/W); return out }
@@ -3270,10 +3349,12 @@ let advSel=null, advB=null, advMsg="";
 function advRecs(list){ return list.filter(a=>a.type==="adv") }
 function advTrainLv(list,uid){ return list.filter(a=>(a.type==="shop"&&a.item==="train:"+uid)||(a.type==="adv"&&a.act==="freelevel"&&a.unit===uid)).length }
 function advUnits(list){
-  const pets=ownedPets(list).map(p=>{ const st=growStage(growth(p.k,list)); return {uid:"pet:"+p.k,name:petName(p.k,list),el:PET_ELEM[p.k]||"plant",base:10+st*2,look:petLook(p.k,Math.max(1,st)),pet:true} });
+  const pets=ownedPets(list).map(p=>{ const st=growStage(growth(p.k,list)); return {uid:"pet:"+p.k,name:petName(p.k,list),el:PET_ELEM[p.k]||"plant",el2:ADV_SECOND[p.k],base:10+st*2,look:petLook(p.k,Math.max(1,st)),pet:true} });
   const lab=[]; LAB_ORDER.forEach(sp=>{ const L=LAB_LINES[sp]; labAnimals(list,sp).filter(x=>!x.stock&&x.g&&!/\?/.test(x.g)).forEach(x=>{ const ph=L.ph(x.g);
-    lab.push({uid:"lab:"+x.id,name:(L.names[ph]||L.n),el:LAB_ELEM[ph]||"plant",base:sp==="dragon"?12:9,svg:L.art[ph](),sp}) }) });
-  return [...pets,...lab].map(u=>{ const lv=advTrainLv(list,u.uid); return {...u,lv,power:u.base+3*lv+advGearP(list),skill:lv>=3} }) }
+    lab.push({uid:"lab:"+x.id,name:(L.names[ph]||L.n),el:LAB_ELEM[ph]||"plant",el2:LAB_SECOND[ph]||"water",base:sp==="dragon"?12:10,svg:L.art[ph](),sp}) }) });
+  const seen={}; lab.forEach(u=>{ seen[u.name]=(seen[u.name]||0)+1; if(seen[u.name]>1) u.name+=" #"+seen[u.name] });
+  return [...pets,...lab].map(u=>{ const tl=advTrainLv(list,u.uid), exp=advExp(list,u.uid), el=Math.floor(exp/6), lv=Math.min(20,tl+el);
+    return {...u,el2:u.el2||ADV_SECOND[u.uid.slice(4)]||"water",lv,tl,exp,expIn:exp%6,power:u.base+3*lv+advGearP(list),skill:lv>=3} }) }
 function advGearP(list){ const o=new Set(list.filter(a=>a.type==="shop").map(a=>a.item)); return ADV_GEAR.filter(g=>o.has(g.id)).reduce((s,g)=>s+g.p,0) }
 function advUnitArt(u,size){ return u.svg?`<svg viewBox="0 0 100 100" width="${size}" height="${size}">${u.svg}</svg>`:`<span style="font-size:${Math.round(size*0.8)}px;line-height:1">${u.look}</span>` }
 function advTeam(list){ const us=advUnits(list); let t=ls("fieldnote.advteam",null);
@@ -3300,19 +3381,21 @@ function renderAdv(){
     return `<g class="mnode" data-adv="${st.id}" transform="translate(${st.x} ${st.y})" role="button" aria-label="${esc(st.n)}">
       <circle r="${st.boss?26:21}" fill="${done?"#e6f7ee":can?"#fff7e8":"#e9e9e4"}" stroke="${sel?"#2f6f8f":done?"#3f9b5a":can?"#e08a2c":"#b9b9b0"}" stroke-width="${sel?4:3}"/>
       <text y="${st.boss?9:7}" text-anchor="middle" font-size="${st.boss?26:20}" ${done?'opacity=".35"':!can?'opacity=".45"':""}>${done?"🌿":st.e}</text>
-      ${done?`<text x="15" y="-14" font-size="14">✅</text>`:!can?`<text x="14" y="-12" font-size="13">🔒</text>`:""}</g>` }).join("");
+      ${done?`<text y="${st.boss?44:38}" text-anchor="middle" font-size="12">${"⭐".repeat(advStars(list,st.id))}</text>`:!can?`<text x="14" y="-12" font-size="13">🔒</text>`:""}</g>` }).join("");
   const sel=R.stages.find(s=>s.id===advSel);
   const selHtml=sel?(()=>{ const done=cleared.has(sel.id), can=open(sel), i=R.stages.indexOf(sel);
     const lock=!can?(i>0&&!cleared.has(R.stages[i-1].id)?"ต้องผ่านด่านก่อนหน้าก่อน":`ต้องเก็บคาถาบนเกาะคาถาให้ได้ ${sel.needSpells} อัน (ตอนนี้ ${got}) ด่านนี้ต้องใช้ความรู้จริงช่วยเปิดทาง`):"";
     return `<section class="card"><span class="eyebrow">ด่าน ${i+1}${sel.boss?" · บอส":""}</span><h3 style="margin:0">${sel.e} ${esc(sel.n)}</h3>
-      <p class="small">ศัตรู: ${(ADV_FOES[sel.id]||[]).map(f=>`${f.e} ${esc(f.n)} (พลังชีวิต ${f.hp})`).join(" · ")}</p><p class="small">แพ้ทาง ${ELEM[sel.weak].e} ${ELEM[sel.weak].n} ▲ · ทนทาน ${ELEM[(ADV_FOES[sel.id]||[{}])[0].resist||sel.weak].e} ▼</p>
-      ${done?`<div class="feedback usebox"><b>📘 เรื่องจริงของด่านนี้</b><span class="small">${esc(sel.fact)}</span></div>`:`<p class="small muted">ชนะแล้วจะได้การ์ดเรื่องจริงของปัญหานี้ และสมาชิกที่เก่งที่สุดในทีมได้เลเวลฟรี 1 ขั้น</p>`}
+      <div class="foerow">${(ADV_FOES[sel.id]||[]).map(f=>`<div class="foecard">${advFoeArt(f,f.boss?64:48)}<span class="small"><b>${esc(f.n)}</b><br>แพ้ ${ELEM[f.weak].e} · ทน ${ELEM[f.resist].e}</span></div>`).join("")}</div>
+      ${done?`<p class="small">ดาวที่ได้: ${"⭐".repeat(advStars(list,sel.id))}${"☆".repeat(3-advStars(list,sel.id))} · 3 ดาว = ไม่มีใครหลับ และจบเร็ว</p>`:""}
+      ${done?`<div class="feedback usebox"><b>📘 เรื่องจริงของด่านนี้</b><span class="small">${esc(sel.fact)}</span></div>`:`<p class="small muted">ชนะแล้วจะได้การ์ดเรื่องจริงของปัญหานี้ และทุกตัวในทีมได้ EXP</p>`}
       ${lock?`<p class="small"><b>🔒 ${lock}</b></p>`:`<div class="row"><button class="btn" id="advgo" ${en.left&&team.length?"":"disabled"}>${done?"ลุยอีกรอบ":"ออกผจญภัย"} (ใช้พลัง 1)</button></div>
       ${!en.left?`<p class="small muted">พลังผจญภัยวันนี้หมดแล้ว${progressOf(list).goalToday?"":" ทำภารกิจวันนี้ให้ครบได้พลังเพิ่มอีก 3"} พรุ่งนี้มาใหม่นะ</p>`:""}`}</section>` })():"";
-  const teamHtml=team.length?team.map(u=>`<div class="advunit">${advUnitArt(u,40)}<b class="small">${esc(u.name)}</b><span class="small">${ELEM[u.el].e} พลัง ${u.power} · Lv ${u.lv}${u.skill?" · ⚡":""}</span></div>`).join("")
+  const teamHtml=team.length?team.map(u=>`<div class="advunit">${advUnitArt(u,40)}<b class="small">${esc(u.name)}</b><span class="small">${ELEM[u.el].e}${ELEM[u.el2].e} พลัง ${u.power} · Lv ${u.lv}</span></div>`).join("")
     :`<p class="small">ยังไม่มีสมาชิก ไปรับคู่หูที่บ้านคู่หู หรือฟักไข่ที่หุบเขามังกรก่อนนะ</p>`;
   const roster=units.map(u=>{ const inT=team.some(t=>t.uid===u.uid), cost=advTrainCost(u.lv);
-    return `<div class="advrow"><span>${advUnitArt(u,32)}</span><span class="small" style="flex:1"><b>${esc(u.name)}</b> ${ELEM[u.el].e}${ELEM[u.el].n} · Lv ${u.lv} · พลัง ${u.power}${u.skill?" · ⚡ท่าพิเศษ":u.lv<3?` · ⚡ ที่ Lv 3`:""}</span>
+    return `<div class="advrow"><span>${advUnitArt(u,32)}</span><span class="small" style="flex:1"><b>${esc(u.name)}</b> ${ELEM[u.el].e}${ELEM[u.el].n}${u.lv>=2?` + ${ELEM[u.el2].e}`:""} · Lv ${u.lv} · พลัง ${u.power}
+      <span class="expbar" title="EXP จากการออกผจญภัย"><i style="width:${u.expIn/6*100}%"></i></span><span class="muted">EXP ${u.expIn}/6${advSkillLock(u)?" · "+advSkillLock(u):" · ปลดครบทุกท่าแล้ว"}</span></span>
       <button class="btn ghost small" data-advteam="${u.uid}">${inT?"ออกจากทีม":"เข้าทีม"}</button>
       <button class="btn ghost small" data-advtrain="${u.uid}" ${w.stars>=cost&&u.lv<10?"":"disabled"}>ฝึก ⭐${cost}</button></div>` }).join("");
   const owned=new Set(list.filter(a=>a.type==="shop").map(a=>a.item));
@@ -3324,13 +3407,13 @@ function renderAdv(){
         <rect width="340" height="420" fill="#cfe8c6"/>
         ${[[30,20],[300,60],[40,300],[310,230],[20,170],[300,380],[200,40]].map(([x,y],k)=>`<text x="${x}" y="${y}" font-size="${16+k%3*4}" opacity="${0.35+clean*0.6}">${k%2?"🌳":"🌲"}</text>`).join("")}
         <path d="${path}" stroke="${water}" stroke-width="34" fill="none" stroke-linecap="round"/>
-        <path d="${path}" stroke="#fff" stroke-opacity=".25" stroke-width="3" fill="none" stroke-dasharray="6 14" class="fall"/>
+        <path d="${path}" stroke="#fff" stroke-opacity=".25" stroke-width="3" fill="none" stroke-dasharray="6 14" class="flow"/>
         ${clean>=1?`<text x="210" y="360" font-size="20">🐟</text><text x="60" y="130" font-size="18">🐟</text>`:""}${nodes}</svg></div>
       <p class="small muted">ชนะด่านไหน แม่น้ำช่วงนั้นจะใสขึ้น ${cleared.size}/${R.stages.length} ด่าน · ด่านบอสต้องใช้คาถาที่เก็บจากเกาะคาถา</p>
       ${advMsg?`<p class="small"><b>${esc(advMsg)}</b></p>`:""}</section>
     ${selHtml}
-    <section class="card"><span class="eyebrow">ทีมที่ออกผจญภัย (สูงสุด 3) · ความอึดของทีม ${advStamina(team)}</span><div class="advteam">${teamHtml}</div>
-      <p class="small muted">ธาตุตรงจุดอ่อนของศัตรู ▲ แรงขึ้น 1.5 เท่า ธาตุที่ศัตรูทนทาน ▼ เบาลงครึ่งหนึ่ง ฝึกถึง Lv 3 ปลดท่าพิเศษประจำธาตุ ตอนโจมตีแตะหยุดลูกศรให้ตรงช่องเหลืองจะได้เพอร์เฟกต์</p></section>
+    <section class="card"><span class="eyebrow">ทีมที่ออกผจญภัย (สูงสุด 3)</span><div class="advteam">${teamHtml}</div>
+      <p class="small muted">ธาตุตรงจุดอ่อนของศัตรู ▲ แรง ×1.5 ธาตุที่ศัตรูทนทาน ▼ เบา ×0.5 · เลเวลขึ้นได้ 2 ทาง: ออกผจญภัย (ได้ EXP ทุกตัวที่ไป) หรือฝึกด้วย XP · Lv 2 ปลดธาตุที่ 2 · Lv 3 ท่าพิเศษ · Lv 5 ท่าไม้ตาย</p></section>
     <section class="card"><span class="eyebrow">สมาชิกทั้งหมด · ฝึกด้วย XP</span>${roster||`<p class="small">ยังไม่มีสมาชิก</p>`}
       <p class="small muted">ได้สมาชิกใหม่จากการรับคู่หูที่บ้านคู่หู และลูกที่ฟักจากหุบเขามังกร สายพันธุ์ต่างกันได้ธาตุต่างกัน</p></section>
     <section class="card"><span class="eyebrow">อุปกรณ์ทีม</span>${gear}</section>
@@ -3353,108 +3436,172 @@ function renderAdv(){
    team on the left, pollution on the right, each side takes turns. Each awake team member picks an action and a target;
    a timing bar decides a weak / good / perfect hit; then one enemy strikes back. Element matchups: ▲ ×1.5, ▼ ×0.5.
    From Lv 3 each element has a special move with a cooldown. A member whose stamina runs out falls asleep 💤 (never hurt). */
+/* battle v3 (father + daughter feedback 8 Nov): pollution monsters drawn as monsters; each member has a skill list
+   (choose a skill, not only a target); the timing bar gets harder for stronger skills and stronger enemies;
+   longer fights; every member that fights gains battle EXP (so bred animals level up too); status icons on each
+   fighter; bosses telegraph a big attack one turn ahead; 1–3 stars per stage. */
+const mEyes=(x,y,r,ang)=>`<g><ellipse cx="${x-r*1.25}" cy="${y}" rx="${r}" ry="${r*1.1}" fill="#fff"/><ellipse cx="${x+r*1.25}" cy="${y}" rx="${r}" ry="${r*1.1}" fill="#fff"/>
+  <circle cx="${x-r*1.05}" cy="${y+r*0.25}" r="${r*0.5}" fill="#1b1b1b"/><circle cx="${x+r*1.05}" cy="${y+r*0.25}" r="${r*0.5}" fill="#1b1b1b"/>
+  ${ang?`<path d="M${x-r*2.4} ${y-r*1.4} L${x-r*0.3} ${y-r*0.7} M${x+r*2.4} ${y-r*1.4} L${x+r*0.3} ${y-r*0.7}" stroke="#1b1b1b" stroke-width="${r*0.45}" stroke-linecap="round"/>`:""}</g>`;
+const mMouth=(x,y,w)=>`<path d="M${x-w} ${y} l${w/2} ${w*0.35} l${w/2} ${-w*0.3} l${w/2} ${w*0.3} l${w/2} ${-w*0.35}" stroke="#1b1b1b" stroke-width="2.2" fill="#5a1d1d" stroke-linejoin="round"/>`;
+const MON_ART={
+  bottle:`<path d="M30 92 Q26 60 36 46 L40 30 H60 L64 46 Q74 60 70 92Z" fill="#9fd6ef" stroke="#4f9cc0" stroke-width="2.5"/><rect x="38" y="16" width="24" height="14" rx="3" fill="#2f7fd0"/>
+    <path d="M38 18 l-8 -10 M62 18 l8 -10" stroke="#2f7fd0" stroke-width="5" stroke-linecap="round"/><path d="M33 64 h34" stroke="#ffffff" stroke-width="5" opacity=".6"/>
+    <path d="M30 66 Q14 62 12 50 M70 66 Q86 62 88 50" stroke="#4f9cc0" stroke-width="5" fill="none" stroke-linecap="round"/>${mEyes(50,56,5.5,1)}${mMouth(50,76,9)}`,
+  bag:`<path d="M24 34 Q22 20 34 20 Q38 30 44 30 L56 30 Q62 30 66 20 Q78 20 76 34 Q86 60 78 80 Q72 92 64 84 Q58 94 50 86 Q42 94 36 84 Q28 92 22 80 Q14 60 24 34Z" fill="#f4f1ea" stroke="#b9b2a2" stroke-width="2.5"/>
+    <path d="M30 40 Q50 46 70 40" stroke="#e05a6c" stroke-width="3" fill="none"/>${mEyes(50,56,5,1)}${mMouth(50,72,8)}`,
+  oil:`<path d="M14 84 Q10 54 30 40 Q42 18 60 26 Q86 32 88 62 Q92 84 76 88 Q70 96 62 88 Q50 98 40 88 Q26 96 14 84Z" fill="#1f1f27"/>
+    <path d="M30 46 Q44 34 58 38" stroke="#8a7cff" stroke-width="3" fill="none" opacity=".8"/><path d="M60 40 Q70 42 76 52" stroke="#4fd1c5" stroke-width="3" fill="none" opacity=".7"/>
+    <path d="M24 88 q2 8 -2 10 M70 88 q3 7 0 9" stroke="#1f1f27" stroke-width="4" stroke-linecap="round"/>${mEyes(50,60,6,1).replace(/#1b1b1b/g,"#c0262b")}${mMouth(50,78,10)}`,
+  heat:`<path d="M50 6 Q66 26 72 40 Q90 56 80 78 Q72 96 50 96 Q28 96 20 78 Q10 56 28 40 Q34 26 50 6Z" fill="#ff7a3d"/><path d="M50 30 Q60 44 64 54 Q72 70 62 82 Q56 90 50 90 Q38 90 34 80 Q28 66 38 54 Q44 44 50 30Z" fill="#ffc14d"/>
+    ${mEyes(50,62,5,1)}${mMouth(50,79,8)}`,
+  steam:`<path d="M26 70 Q10 66 16 50 Q12 32 32 32 Q36 16 54 22 Q72 14 78 32 Q94 36 86 54 Q92 72 72 72 Q64 86 46 80 Q30 86 26 70Z" fill="#e9eef3" stroke="#c3ccd6" stroke-width="2"/>
+    ${mEyes(50,50,5,1)}<path d="M42 64 q8 -5 16 0" stroke="#1b1b1b" stroke-width="2.4" fill="none" stroke-linecap="round"/>`,
+  algae:`<path d="M18 90 Q8 60 26 40 Q34 14 56 18 Q84 20 86 50 Q96 76 80 90Z" fill="#3fa34d"/><path d="M26 40 q-12 -6 -14 -20 M40 24 q-4 -12 4 -20 M70 26 q8 -10 18 -8 M84 50 q12 0 14 -10" stroke="#2e7d3a" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <circle cx="34" cy="70" r="4" fill="#7fd36b"/><circle cx="70" cy="76" r="5" fill="#7fd36b"/><circle cx="62" cy="34" r="3" fill="#7fd36b"/>${mEyes(52,54,6,1)}${mMouth(52,74,10)}`,
+  algaeS:`<circle cx="50" cy="60" r="30" fill="#5cbf5a"/><path d="M34 34 q-6 -12 0 -20 M66 34 q6 -12 0 -20" stroke="#3a9b45" stroke-width="5" fill="none" stroke-linecap="round"/>${mEyes(50,58,5,1)}${mMouth(50,74,7)}`,
+  gas:`<circle cx="50" cy="56" r="34" fill="#b58be0" opacity=".85" stroke="#8a5cc2" stroke-width="3"/><ellipse cx="38" cy="40" rx="8" ry="5" fill="#fff" opacity=".6"/>${mEyes(50,56,5.5,1)}${mMouth(50,74,8)}`,
+  mud:`<path d="M8 92 Q4 58 24 44 Q32 22 52 22 Q76 22 82 44 Q98 58 92 92Z" fill="#6b4f36"/><path d="M30 26 L36 6 L46 20 L52 2 L58 20 L68 6 L72 26Z" fill="#e0b13b" stroke="#a87a1a" stroke-width="2"/>
+    <circle cx="52" cy="14" r="3.4" fill="#e2574c"/><circle cx="22" cy="74" r="5" fill="#523b27"/><circle cx="78" cy="80" r="6" fill="#523b27"/><path d="M14 92 q6 -10 12 0 q6 -10 12 0" stroke="#523b27" stroke-width="3" fill="none"/>
+    ${mEyes(50,54,7,1).replace(/#1b1b1b/g,"#f5d742")}${mMouth(50,78,13)}`};
 const ADV_FOES={
-  r1:[{n:"ขวดพลาสติก",e:"🧴",hp:24,atk:4,weak:"wind",resist:"water"},{n:"ขวดพลาสติก",e:"🧴",hp:24,atk:4,weak:"wind",resist:"water"}],
-  r2:[{n:"ก้อนคราบน้ำมัน",e:"🛢️",hp:50,atk:5,weak:"fire",resist:"water"},{n:"ถุงพลาสติก",e:"🛍️",hp:24,atk:3,weak:"wind",resist:"water"}],
-  r3:[{n:"ภูตน้ำร้อน",e:"♨️",hp:70,atk:6,weak:"water",resist:"fire"},{n:"ไอร้อน",e:"💨",hp:26,atk:4,weak:"water",resist:"fire"}],
-  r4:[{n:"สาหร่ายบลูมยักษ์",e:"🟢",hp:90,atk:7,weak:"plant",resist:"light"},{n:"สาหร่ายจิ๋ว",e:"🦠",hp:24,atk:3,weak:"plant",resist:"light"},{n:"สาหร่ายจิ๋ว",e:"🦠",hp:24,atk:3,weak:"plant",resist:"light"}],
-  r5:[{n:"ราชาโคลนไร้ออกซิเจน",e:"🌫️",hp:150,atk:9,weak:"wind",resist:"plant",boss:true},{n:"ฟองก๊าซเน่า",e:"🫧",hp:28,atk:4,weak:"wind",resist:"water"},{n:"ฟองก๊าซเน่า",e:"🫧",hp:28,atk:4,weak:"wind",resist:"water"}]};
-const ADV_SKILL={fire:{n:"ลมหายใจไฟ",d:"พ่นไฟโดนศัตรูทุกตัว 70%",k:"all"},water:{n:"คลื่นฟื้นพลัง",d:"ฟื้นความอึดทั้งทีม 35%",k:"heal"},
-  plant:{n:"รากพันธนาการ",d:"แรง 150% และศัตรูตัวนั้นข้ามตาถัดไป",k:"root"},wind:{n:"ลมกรด",d:"โจมตี 2 ครั้ง ครั้งละ 80%",k:"double"},light:{n:"โล่แสง",d:"ทั้งทีมได้โล่กันแรงโจมตีครั้งถัดไปครึ่งหนึ่ง",k:"shield"}};
+  r1:[{n:"ปีศาจขวดพลาสติก",art:"bottle",hp:70,atk:5,weak:"wind",resist:"water"},{n:"ปีศาจขวดพลาสติก",art:"bottle",hp:70,atk:5,weak:"wind",resist:"water"}],
+  r2:[{n:"อสูรคราบน้ำมัน",art:"oil",hp:125,atk:7,weak:"fire",resist:"water"},{n:"ผีถุงพลาสติก",art:"bag",hp:65,atk:5,weak:"wind",resist:"water"}],
+  r3:[{n:"ภูตน้ำร้อน",art:"heat",hp:150,atk:8,weak:"water",resist:"fire"},{n:"ภูตไอร้อน",art:"steam",hp:80,atk:6,weak:"water",resist:"fire"}],
+  r4:[{n:"อสูรสาหร่ายบลูม",art:"algae",hp:170,atk:9,weak:"plant",resist:"light",big:true},{n:"สาหร่ายจิ๋ว",art:"algaeS",hp:65,atk:5,weak:"plant",resist:"light"},{n:"สาหร่ายจิ๋ว",art:"algaeS",hp:65,atk:5,weak:"plant",resist:"light"}],
+  r5:[{n:"ราชาโคลนไร้ออกซิเจน",art:"mud",hp:260,atk:11,weak:"wind",resist:"plant",boss:true},{n:"ฟองก๊าซเน่า",art:"gas",hp:80,atk:6,weak:"wind",resist:"water"},{n:"ฟองก๊าซเน่า",art:"gas",hp:80,atk:6,weak:"wind",resist:"water"}]};
+const ADV_SECOND={dragon:"wind",owl:"light",fox:"light",cat:"wind",bunny:"plant",wolf:"wind",tiger:"plant",peacock:"wind",swan:"wind",dino:"fire",dolphin:"light",bubble:"wind",
+  butterfly:"plant",turtle:"plant",panda:"water",penguin:"wind",deer:"light",otter:"plant",unicorn:"wind",whale:"light",hedgehog:"fire",ballpython:"water",banana:"plant",corn:"plant",
+  greentree:"water",duck:"water",cow:"water",orangeiso:"water",potion:"light",kilen:"light",lion:"light",naga:"light",robot:"fire"};
+const LAB_SECOND={normal:"water",amel:"fire",pastel:"plant",super:"fire",n:"water",alb:"plant",npie:"light",albpie:"wind",fire:"wind",water:"plant",steam:"water"};
+/* special by main element (from Lv 3), finisher from Lv 5 */
+const ADV_SPECIAL={fire:{n:"ลมหายใจไฟ",d:"พ่นไฟโดนศัตรูทุกตัว 70%",k:"all",p:0.7,cd:2,ic:"🔥"},water:{n:"คลื่นฟื้นพลัง",d:"ทั้งทีมฟื้นความอึด 30%",k:"heal",cd:3,ic:"💚"},
+  plant:{n:"รากพันธนาการ",d:"แรง 130% และศัตรูตัวนั้นขยับไม่ได้ 1 ตา",k:"root",p:1.3,cd:2,ic:"🌿"},wind:{n:"ลมกรด",d:"โจมตีรัว 2 ครั้ง ครั้งละ 75%",k:"double",p:0.75,cd:2,ic:"🌪️"},
+  light:{n:"โล่แสง",d:"ทั้งทีมได้โล่ 🛡️ ลดแรงโจมตีครึ่งหนึ่ง 2 ครั้ง",k:"shield",cd:3,ic:"🛡️"}};
+function advSkills(u){ const S=[{id:"basic",n:"โจมตีธาตุ"+ELEM[u.el].n,el:u.el,p:1,cd:0,k:"hit",tier:0,d:"แรง 100%"}];
+  if(u.lv>=2) S.push({id:"second",n:"โจมตีธาตุ"+ELEM[u.el2].n,el:u.el2,p:0.9,cd:0,k:"hit",tier:0,d:"แรง 90% ใช้เมื่อธาตุหลักไม่ได้เปรียบ"});
+  if(u.lv>=3){ const sp=ADV_SPECIAL[u.el]; S.push({id:"special",...sp,el:u.el,tier:1}) }
+  if(u.lv>=5) S.push({id:"final",n:"ท่าไม้ตาย",el:u.el,p:1.8,cd:3,k:"hit",tier:2,d:"แรง 180% แต่แถบจังหวะยากขึ้น"});
+  return S }
+function advSkillLock(u){ return u.lv<2?"Lv 2 ปลดโจมตีธาตุที่ 2":u.lv<3?"Lv 3 ปลดท่าพิเศษ":u.lv<5?"Lv 5 ปลดท่าไม้ตาย":"" }
+/* battle EXP: every member that fights gains EXP (win 3, rest 1, boss win +3); every 6 EXP = 1 level */
+function advExp(list,uid){ return advRecs(list).filter(a=>a.act==="battle"&&(a.team||[]).includes(uid)).reduce((s,a)=>s+(a.win?3+(a.stage==="r5"?3:0):1),0)+advRecs(list).filter(a=>a.act==="bonusexp"&&a.unit===uid).reduce((s,a)=>s+(a.exp||0),0) }
+function advStars(list,stage){ return Math.max(0,...advRecs(list).filter(a=>a.act==="battle"&&a.win&&a.stage===stage).map(a=>a.stars||1)) }
 const advSleep=ms=>new Promise(r=>setTimeout(r,ms/(advSpeed||1)));
 let advSpeed=1;
 function advMult(el,f){ return el===f.weak?1.5:el===f.resist?0.5:1 }
+function advFoeArt(f,size){ return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" class="monster">${MON_ART[f.art]||""}</svg>` }
 function advStart(st,team){
-  const tm=team.map(u=>({...u,max:30+6*u.lv+(u.pet?8:4),hp:0,cd:0,shield:0,ko:false})); tm.forEach(u=>u.hp=u.max);
-  const foes=(ADV_FOES[st.id]||[{n:st.n,e:st.e,hp:st.hp,atk:st.atk,weak:st.weak}]).map(f=>({...f,max:f.hp,stun:false}));
-  advB={st,team:tm,foes,cur:tm.findIndex(u=>!u.ko),target:0,phase:"pick",act:null,log:[`${st.e} ${st.n} ปรากฏตัว!`],round:1,over:null};
+  const n=team.length, k=0.45+0.18*n;
+  const tm=team.map(u=>({...u,max:40+8*u.lv+(u.pet?6:0),hp:0,cd:{},shield:0,ko:false})); tm.forEach(u=>u.hp=u.max);
+  const foes=(ADV_FOES[st.id]||[]).map(f=>({...f,hp:Math.round(f.hp*k),max:Math.round(f.hp*k),stun:0,charge:0}));
+  advB={st,team:tm,foes,cur:0,target:0,skill:null,phase:"pick",log:[`${st.n}! ศัตรูปรากฏตัว ${foes.length} ตัว`],round:1,over:null,eTurns:0,slept:0};
 }
 function advFighter(u,i,side,B){
-  const pct=Math.max(0,u.hp/u.max*100), active=side==="t"&&B.phase!=="over"&&B.cur===i&&!u.ko, tgt=side==="e"&&B.target===i&&B.phase!=="over";
-  const cur=B.team[B.cur], mk=side==="e"&&cur&&!u.ko?advMult(cur.el,u):1;
+  const pct=Math.max(0,u.hp/u.max*100), active=side==="t"&&B.phase!=="over"&&B.cur===i&&!u.ko, tgt=side==="e"&&B.target===i&&B.phase!=="over"&&!u.ko;
+  const cur=B.team[B.cur], sk=B.skill&&cur?advSkills(cur).find(s=>s.id===B.skill):null, el=sk?sk.el:cur&&cur.el, mk=side==="e"&&el&&!u.ko?advMult(el,u):1;
+  const badges=side==="t"?[u.shield?`<span title="โล่แสง">🛡️×${u.shield}</span>`:"",...Object.entries(u.cd||{}).filter(([,v])=>v>0).map(([k,v])=>`<span title="รอใช้ท่า">⏳${v}</span>`)].join("")
+    :[u.stun?`<span title="ติดราก ขยับไม่ได้">🌿</span>`:"",u.charge?`<span class="warn" title="กำลังชาร์จท่าใหญ่">⚠️</span>`:""].join("");
   return `<div class="fighter ${side} ${u.ko?"ko":""} ${active?"active":""} ${tgt?"tgt":""}" id="f-${side}${i}" ${side==="e"&&!u.ko?`data-tgt="${i}"`:""}>
-    <div class="fart">${side==="t"?advUnitArt(u,u.pet?44:52):`<span style="font-size:${u.boss?54:40}px;line-height:1">${u.e}</span>`}${u.ko?`<span class="zz">${side==="t"?"💤":"🌿"}</span>`:""}${u.shield?`<span class="sh">🛡️</span>`:""}${u.stun?`<span class="sh">🌿</span>`:""}</div>
+    <div class="fart">${side==="t"?advUnitArt(u,u.pet?46:54):advFoeArt(u,u.boss?82:u.big?72:60)}${u.ko?`<span class="zz">${side==="t"?"💤":"🌿"}</span>`:""}</div>
+    ${badges?`<div class="fbadge">${badges}</div>`:""}
     <span class="fn">${esc(u.name||u.n)}${side==="t"?` ${ELEM[u.el].e}`:""}</span>
     <div class="hp"><i style="width:${pct}%;background:${side==="t"?"#3f9b5a":"#e2574c"}"></i></div>
-    ${side==="e"&&!u.ko?`<span class="mk ${mk>1?"up":mk<1?"down":""}">${mk>1?"▲ แรง":mk<1?"▼ เบา":"·"}</span>`:""}</div>` }
+    <span class="hpn">${Math.max(0,Math.round(u.hp))}/${u.max}</span>
+    ${side==="e"&&!u.ko&&cur?`<span class="mk ${mk>1?"up":mk<1?"down":""}">${mk>1?"▲ แรง ×1.5":mk<1?"▼ เบา ×0.5":"ปกติ"}</span>`:""}</div>` }
+function advGaugeSpec(B,sk){ const cur=B.team[B.cur], f=B.foes[B.target]||B.foes.find(x=>!x.ko), stLv=["r1","r2","r3","r4","r5"].indexOf(B.st.id)+1;
+  const diff=Math.max(-3,Math.min(4,stLv*1.2-cur.lv));
+  const zone=Math.max(6,Math.min(22,18-sk.tier*4-(f&&f.boss?4:0)-diff*1.5));
+  const speed=1+sk.tier*0.3+(f&&f.boss?0.3:0)+diff*0.08;
+  return {zone,speed} }
 function renderAdvBattle(list){
   const B=advB, st=B.st, cur=B.team[B.cur];
-  const sk=cur&&cur.skill?ADV_SKILL[cur.el]:null;
-  const panel=B.phase==="over"?"":B.phase==="gauge"?`<div class="gauge"><div class="gbar"><span class="gz"></span><i id="gptr"></i></div>
-      <button class="btn" id="gstop">${B.act==="skill"?"⚡ ปล่อยท่า!":"⚔️ โจมตี!"}</button><span class="small muted">แตะตอนลูกศรอยู่ในช่องสีเหลือง = เพอร์เฟกต์</span></div>`
-    :B.phase==="pick"&&cur?`<div class="apanel"><span class="small"><b>ตาของ ${esc(cur.name)}</b> ${ELEM[cur.el].e}${ELEM[cur.el].n} · แตะศัตรูเพื่อเลือกเป้า</span>
-      <div class="row" style="gap:8px"><button class="btn" id="aatk">⚔️ โจมตี ${ELEM[cur.el].e}</button>
-      ${sk?`<button class="btn ghost" id="askl" ${cur.cd?"disabled":""}>⚡ ${sk.n}${cur.cd?` (อีก ${cur.cd} ตา)`:""}</button>`:`<span class="small muted">⚡ ท่าพิเศษปลดที่ Lv 3</span>`}</div>
-      ${sk?`<span class="small muted">${sk.d}</span>`:""}</div>`:`<div class="apanel"><span class="small muted">…</span></div>`;
+  const skills=cur&&!cur.ko?advSkills(cur):[], sk=skills.find(s=>s.id===B.skill);
+  let panel="";
+  if(B.phase==="pick"&&cur){ panel=`<div class="apanel"><span class="small"><b>ตาของ ${esc(cur.name)}</b> ${ELEM[cur.el].e} · เลือกท่า แล้วแตะศัตรูที่จะโจมตี</span>
+    <div class="skills">${skills.map(s=>{ const wait=(cur.cd||{})[s.id]||0; return `<button class="skill ${B.skill===s.id?"on":""}" data-skill="${s.id}" ${wait?"disabled":""}>
+      <b>${s.ic||ELEM[s.el].e} ${esc(s.n)}</b><span>${esc(s.d)}${s.cd?` · พัก ${s.cd} ตา`:""}${wait?` · อีก ${wait} ตา`:""}</span></button>` }).join("")}</div>
+    ${advSkillLock(cur)?`<span class="small muted">🔒 ${advSkillLock(cur)}</span>`:""}
+    <button class="btn" id="ago" ${sk?"":"disabled"}>${sk?(["heal","shield"].includes(sk.k)?"ใช้ท่านี้":"⚔️ โจมตี "+esc(B.foes[B.target]?.n||"")):"เลือกท่าก่อน"}</button></div>` }
+  else if(B.phase==="gauge"){ const g=advGaugeSpec(B,sk); B.g=g;
+    panel=`<div class="gauge"><div class="gbar"><span class="gw" style="left:${50-g.zone*1.6}%;width:${g.zone*3.2}%"></span><span class="gz" style="left:${50-g.zone/2}%;width:${g.zone}%"></span><i id="gptr"></i></div>
+      <button class="btn" id="gstop">${sk.tier?"⚡ ปล่อยท่า!":"⚔️ ตี!"}</button><span class="small muted">แตะตอนลูกศรอยู่ช่องเหลือง = เพอร์เฟกต์ ×1.25 · ขอบแดง = เบา ×0.6 · ${g.zone<12?"ท่านี้/ศัตรูนี้ ช่องแคบและเร็ว":"ช่องกว้างพอสมควร"}</span></div>` }
+  else if(B.phase==="anim") panel=`<div class="apanel"><span class="small muted">…</span></div>`;
   $v.innerHTML=`<section class="card"><div class="todayhead"><span class="eyebrow">🌍 ${esc(st.n)} · รอบ ${B.round}</span>
       <button class="btn ghost small" id="aspd">ความเร็ว ×${advSpeed}</button></div>
     <div class="arena" id="arena"><div class="aside t">${B.team.map((u,i)=>advFighter(u,i,"t",B)).join("")}</div>
       <div class="aside e">${B.foes.map((f,i)=>advFighter(f,i,"e",B)).join("")}</div></div>
     <div class="alog">${B.log.slice(-3).map(l=>`<span class="small">${esc(l)}</span>`).join("")}</div>
     ${panel}
-    ${B.over==="win"?`<div class="feedback usebox"><b>🎉 กู้สำเร็จ!</b><span class="small">${esc(st.fact)}</span>${B.reward?`<span class="small">${esc(B.reward)}</span>`:""}</div>`
-      :B.over==="rest"?`<div class="feedback"><b>😴 ทีมเหนื่อยหมดแล้ว กลับไปพักก่อน</b><span class="small">ไม่มีใครบาดเจ็บ ลองฝึกทีม ใส่อุปกรณ์ หรือพาสมาชิกธาตุ ${ELEM[st.weak].e} มาด้วย แล้วกลับมาใหม่นะ</span></div>`:""}
-    ${B.over?`<div class="row"><button class="btn" id="advdone">กลับแผนที่</button></div>`:""}</section>`;
+    ${B.over==="win"?`<div class="feedback usebox"><b>🎉 กู้สำเร็จ! ${"⭐".repeat(B.stars||1)}${"☆".repeat(3-(B.stars||1))}</b><span class="small">${esc(st.fact)}</span>${B.reward?`<span class="small">${esc(B.reward)}</span>`:""}
+        <span class="small muted">3 ดาว = ชนะโดยไม่มีใครหลับ และจบภายใน ${B.par} รอบ</span></div>`
+      :B.over==="rest"?`<div class="feedback"><b>😴 ทีมเหนื่อยหมดแล้ว กลับไปพักก่อน</b><span class="small">ไม่มีใครบาดเจ็บ ทุกตัวที่ออกไปได้ EXP +1 ลองฝึกทีม ใส่อุปกรณ์ หรือพาสมาชิกที่มีธาตุ ${ELEM[st.weak].e} มา แล้วกลับมาใหม่นะ</span></div>`:""}
+    ${B.over?`<div class="row"><button class="btn" id="advdone">กลับแผนที่</button></div>`:`<details class="small"><summary>ไอคอนในฉากหมายถึงอะไร</summary><p class="small">▲ ธาตุนี้ตีศัตรูตัวนั้นแรง ×1.5 · ▼ เบา ×0.5 · 🛡️ โล่แสง กันครึ่งหนึ่ง (ตัวเลข = ใช้ได้อีกกี่ครั้ง) · ⏳ ท่านั้นต้องรออีกกี่ตา · 🌿 ศัตรูติดราก ข้ามตาถัดไป · ⚠️ ศัตรูกำลังชาร์จท่าใหญ่ ตาหน้าจะโจมตีทั้งทีม (ใช้โล่หรือเร่งกำจัดก่อน) · 💤 หลับเพราะเหนื่อย ไม่ได้บาดเจ็บ</p></details>`}</section>`;
   const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
   on("aspd",()=>{ advSpeed=advSpeed===1?2:advSpeed===2?3:1; document.getElementById("aspd").textContent="ความเร็ว ×"+advSpeed });
   on("advdone",()=>{ advB=null; renderAdv() });
   $v.querySelectorAll("[data-tgt]").forEach(e=>e.onclick=()=>{ if(B.phase!=="pick") return; B.target=+e.dataset.tgt; renderAdvBattle(list) });
-  on("aatk",()=>{ B.act="atk"; B.phase="gauge"; renderAdvBattle(list) });
-  on("askl",()=>{ B.act="skill"; if(["heal","shield"].includes(ADV_SKILL[cur.el].k)){ advResolve(1) } else { B.phase="gauge"; renderAdvBattle(list) } });
-  if(B.phase==="gauge"){ const ptr=document.getElementById("gptr"), t0=performance.now(); let pos=0, run=true;
-    const step=t=>{ if(!run) return; pos=(Math.sin((t-t0)/(420/Math.max(1,advSpeed*0.8)))+1)/2; ptr.style.left=(pos*100)+"%"; requestAnimationFrame(step) }; requestAnimationFrame(step);
-    on("gstop",()=>{ run=false; const d=Math.abs(pos-0.5); advResolve(d<0.09?1.2:d<0.3?1:0.8) }) }
+  $v.querySelectorAll("[data-skill]").forEach(e=>e.onclick=()=>{ B.skill=e.dataset.skill; renderAdvBattle(list) });
+  on("ago",()=>{ if(!sk) return; if(["heal","shield"].includes(sk.k)) advResolve(1); else { B.phase="gauge"; renderAdvBattle(list) } });
+  if(B.phase==="gauge"){ const ptr=document.getElementById("gptr"), t0=performance.now(), sp=B.g.speed; let pos=0, run=true;
+    const step=t=>{ if(!run) return; pos=(Math.sin((t-t0)/(380/sp))+1)/2; ptr.style.left=(pos*100)+"%"; requestAnimationFrame(step) }; requestAnimationFrame(step);
+    on("gstop",()=>{ run=false; const d=Math.abs(pos-0.5)*100; advResolve(d<=B.g.zone/2?1.25:d<=B.g.zone*1.6?1:0.6) }) }
 }
 function advFloat(id,text,cls){ const ar=document.getElementById("arena"), el=document.getElementById(id); if(!ar||!el) return;
   const a=ar.getBoundingClientRect(), r=el.getBoundingClientRect(), d=document.createElement("div"); d.className="dmg "+(cls||""); d.textContent=text;
-  d.style.left=(r.left-a.left+r.width/2)+"px"; d.style.top=(r.top-a.top+8)+"px"; ar.appendChild(d); setTimeout(()=>d.remove(),1100/(advSpeed||1)) }
+  d.style.left=(r.left-a.left+r.width/2)+"px"; d.style.top=(r.top-a.top+8)+"px"; ar.appendChild(d); setTimeout(()=>d.remove(),1200/(advSpeed||1)) }
 async function advShot(fromId,toId,emo){ const ar=document.getElementById("arena"), f=document.getElementById(fromId), t=document.getElementById(toId); if(!ar||!f||!t) return;
   const a=ar.getBoundingClientRect(), fr=f.getBoundingClientRect(), tr=t.getBoundingClientRect(), p=document.createElement("div"); p.className="proj"; p.textContent=emo;
-  p.style.left=(fr.left-a.left+fr.width/2-14)+"px"; p.style.top=(fr.top-a.top+18)+"px"; p.style.transition=`transform ${320/(advSpeed||1)}ms ease-in`; ar.appendChild(p);
-  await advSleep(20); p.style.transform=`translate(${tr.left-fr.left}px,${tr.top-fr.top}px) scale(1.3)`; await advSleep(330); p.remove() }
+  p.style.left=(fr.left-a.left+fr.width/2-14)+"px"; p.style.top=(fr.top-a.top+18)+"px"; p.style.transition=`transform ${360/(advSpeed||1)}ms ease-in`; ar.appendChild(p);
+  await advSleep(20); p.style.transform=`translate(${tr.left-fr.left}px,${tr.top-fr.top}px) scale(1.4) rotate(20deg)`; await advSleep(370); p.remove() }
 function advAnim(id,cls,ms){ const el=document.getElementById(id); if(!el) return; el.classList.remove(cls); void el.offsetWidth; el.style.animationDuration=(ms/(advSpeed||1))+"ms"; el.classList.add(cls) }
-function advBar(id,u){ const el=document.querySelector(`#${id} .hp i`); if(el) el.style.width=Math.max(0,u.hp/u.max*100)+"%" }
+function advBar(id,u){ const el=document.querySelector(`#${id} .hp i`), n=document.querySelector(`#${id} .hpn`); if(el) el.style.width=Math.max(0,u.hp/u.max*100)+"%"; if(n) n.textContent=Math.max(0,Math.round(u.hp))+"/"+u.max }
 async function advResolve(hitMul){
-  const B=advB, u=B.team[B.cur], sk=B.act==="skill"?ADV_SKILL[u.el]:null; B.phase="anim"; renderAdvBattle(mine());
+  const B=advB, u=B.team[B.cur], sk=advSkills(u).find(s=>s.id===B.skill); B.phase="anim"; renderAdvBattle(mine());
   const alive=()=>B.foes.map((f,i)=>[f,i]).filter(([f])=>!f.ko);
   if(!alive().some(([,i])=>i===B.target)) B.target=alive()[0][1];
-  const tag=hitMul>1?" เพอร์เฟกต์!":hitMul<1?" (เบาไปนิด)":"";
-  advAnim("f-t"+B.cur,"lunge",380);
-  const hit=async(i,pct)=>{ const f=B.foes[i]; const m=advMult(u.el,f), dmg=Math.max(1,Math.round(u.power*pct*m*hitMul*(0.92+Math.random()*0.16)));
-    await advShot("f-t"+B.cur,"f-e"+i,ELEM[u.el].e); f.hp-=dmg; advAnim("f-e"+i,"shake",420); advBar("f-e"+i,f);
-    advFloat("f-e"+i,"-"+dmg+(m>1?" ▲":m<1?" ▼":""),m>1?"big":""); if(f.hp<=0){ f.ko=true; f.hp=0; B.log.push(`${f.e} ${f.n} ถูกกำจัดแล้ว 🌿`) } return dmg };
-  if(!sk){ const d=await hit(B.target,1); if(u.cd) u.cd--; B.log.push(`${u.name} ${ELEM[u.el].e} ทำได้ ${d}${tag}`) }
-  else { u.cd=2;
-    if(sk.k==="all"){ let s=0; for(const [,i] of alive()) s+=await hit(i,0.7); B.log.push(`${u.name} ใช้${sk.n}! รวม ${s}${tag}`) }
-    else if(sk.k==="double"){ let s=0; for(let k=0;k<2;k++){ const al=alive(); if(!al.length) break; const i=al.some(([,j])=>j===B.target)?B.target:al[0][1]; s+=await hit(i,0.8) } B.log.push(`${u.name} ใช้${sk.n}! รวม ${s}${tag}`) }
-    else if(sk.k==="root"){ const i=B.target, d=await hit(i,1.5); if(!B.foes[i].ko) B.foes[i].stun=true; B.log.push(`${u.name} ใช้${sk.n}! ${d}${tag} ศัตรูขยับไม่ได้ 1 ตา`) }
-    else if(sk.k==="heal"){ B.team.forEach((m,i)=>{ if(!m.ko){ const h=Math.round(m.max*0.35); m.hp=Math.min(m.max,m.hp+h); advBar("f-t"+i,m); advFloat("f-t"+i,"+"+h,"heal") } }); B.log.push(`${u.name} ใช้${sk.n} ทั้งทีมสดชื่นขึ้น 💧`); await advSleep(500) }
-    else if(sk.k==="shield"){ B.team.forEach((m,i)=>{ if(!m.ko){ m.shield=1; advFloat("f-t"+i,"🛡️","heal") } }); B.log.push(`${u.name} ใช้${sk.n} ทั้งทีมมีโล่ ✨`); await advSleep(500) } }
+  const tag=hitMul>1?" เพอร์เฟกต์!":hitMul<1?" (เบาไป)":"";
+  if(hitMul>1) advFloat("f-t"+B.cur,"เพอร์เฟกต์!","heal");
+  advAnim("f-t"+B.cur,"lunge",420); if(sk.tier) advFloat("f-t"+B.cur,sk.n,"skill");
+  const hit=async(i,pct)=>{ const f=B.foes[i], m=advMult(sk.el,f), dmg=Math.max(1,Math.round(u.power*pct*m*hitMul*(0.92+Math.random()*0.16)));
+    await advShot("f-t"+B.cur,"f-e"+i,ELEM[sk.el].e); f.hp-=dmg; advAnim("f-e"+i,"shake",420); advBar("f-e"+i,f);
+    advFloat("f-e"+i,"-"+dmg+(m>1?" ▲":m<1?" ▼":""),m>1?"big":""); if(f.hp<=0){ f.ko=true; f.hp=0; f.charge=0; B.log.push(`${f.n} ถูกกำจัดแล้ว 🌿`) } return dmg };
+  if(sk.k==="hit"){ const d=await hit(B.target,sk.p); B.log.push(`${u.name} ใช้${sk.n} ${ELEM[sk.el].e} ได้ ${d}${tag}`) }
+  else if(sk.k==="all"){ let s=0; for(const [,i] of alive()) s+=await hit(i,sk.p); B.log.push(`${u.name} ใช้${sk.n}! โดนทุกตัว รวม ${s}${tag}`) }
+  else if(sk.k==="double"){ let s=0; for(let k=0;k<2;k++){ const al=alive(); if(!al.length) break; const i=al.some(([,j])=>j===B.target)?B.target:al[0][1]; s+=await hit(i,sk.p) } B.log.push(`${u.name} ใช้${sk.n}! รัว 2 ครั้ง รวม ${s}${tag}`) }
+  else if(sk.k==="root"){ const i=B.target, d=await hit(i,sk.p); if(!B.foes[i].ko){ B.foes[i].stun=1; B.foes[i].charge=0; advFloat("f-e"+i,"🌿 ติดราก","skill") } B.log.push(`${u.name} ใช้${sk.n}! ${d}${tag} ศัตรูขยับไม่ได้ 1 ตา`) }
+  else if(sk.k==="heal"){ B.team.forEach((m,i)=>{ if(!m.ko){ const h=Math.round(m.max*0.3); m.hp=Math.min(m.max,m.hp+h); advBar("f-t"+i,m); advFloat("f-t"+i,"+"+h,"heal") } }); B.log.push(`${u.name} ใช้${sk.n} ทั้งทีมสดชื่นขึ้น 💚`); await advSleep(600) }
+  else if(sk.k==="shield"){ B.team.forEach((m,i)=>{ if(!m.ko){ m.shield=2; advFloat("f-t"+i,"🛡️ โล่แสง","heal") } }); B.log.push(`${u.name} ใช้${sk.n} ทั้งทีมมีโล่ 2 ครั้ง ✨`); await advSleep(600) }
+  /* cooldowns: the used skill starts its wait; this member's other waits tick down */
+  u.cd=u.cd||{}; Object.keys(u.cd).forEach(k=>{ if(u.cd[k]>0) u.cd[k]-- }); if(sk.cd) u.cd[sk.id]=sk.cd;
   await advSleep(250);
   if(!alive().length) return advEnd("win");
-  /* enemy turn: the first awake, not-rooted enemy after the last one that acted strikes one awake member */
-  B.eIdx=B.eIdx||0; const order=B.foes.map((_,k)=>(B.eIdx+k)%B.foes.length).filter(k=>!B.foes[k].ko);
-  const ei=order[0]; B.eIdx=(ei+1)%B.foes.length; const f=B.foes[ei];
-  if(f.stun){ f.stun=false; B.log.push(`${f.e} ${f.n} ติดรากพันธนาการ ขยับไม่ได้`); }
-  else { const awake=B.team.map((m,i)=>[m,i]).filter(([m])=>!m.ko), [m,mi]=awake[Math.floor(Math.random()*awake.length)];
-    advAnim("f-e"+ei,"lungeL",380); await advShot("f-e"+ei,"f-t"+mi,f.e);
-    let dmg=Math.max(1,Math.round(f.atk*(0.85+Math.random()*0.3))); if(m.shield){ dmg=Math.round(dmg/2); m.shield=0 }
-    m.hp-=dmg; advAnim("f-t"+mi,"shake",420); advBar("f-t"+mi,m); advFloat("f-t"+mi,"-"+dmg,"");
-    B.log.push(`${f.e} ${f.n} โจมตี ${m.name} ความอึด -${dmg}`);
-    if(m.hp<=0){ m.hp=0; m.ko=true; B.log.push(`${m.name} เหนื่อยจนหลับไป 💤`) } }
-  await advSleep(350);
+  await advFoeTurn();
   if(B.team.every(m=>m.ko)) return advEnd("rest");
-  /* next awake member; a new round when we wrap around */
   let n=B.cur; for(let k=1;k<=B.team.length;k++){ const j=(B.cur+k)%B.team.length; if(!B.team[j].ko){ if(j<=B.cur) B.round++; n=j; break } }
-  B.cur=n; B.phase="pick"; B.act=null; renderAdvBattle(mine());
+  B.cur=n; B.skill=null; B.phase="pick"; renderAdvBattle(mine());
 }
+async function advFoeTurn(){
+  const B=advB; B.eIdx=B.eIdx||0; const order=B.foes.map((_,k)=>(B.eIdx+k)%B.foes.length).filter(k=>!B.foes[k].ko); if(!order.length) return;
+  const ei=order[0]; B.eIdx=(ei+1)%B.foes.length; const f=B.foes[ei]; B.eTurns++;
+  if(f.stun){ f.stun=0; B.log.push(`${f.n} ติดรากพันธนาการ ขยับไม่ได้ 🌿`); advFloat("f-e"+ei,"ขยับไม่ได้","skill"); await advSleep(500); return }
+  const strike=async(mi,mul,label)=>{ const m=B.team[mi]; let dmg=Math.max(1,Math.round(f.atk*mul*(0.85+Math.random()*0.3)));
+    if(m.shield){ dmg=Math.round(dmg/2); m.shield--; advFloat("f-t"+mi,"🛡️","heal") }
+    m.hp-=dmg; advAnim("f-t"+mi,"shake",420); advBar("f-t"+mi,m); advFloat("f-t"+mi,"-"+dmg,"");
+    if(m.hp<=0){ m.hp=0; m.ko=true; B.slept++; B.log.push(`${m.name} เหนื่อยจนหลับไป 💤`) } return dmg };
+  const awake=()=>B.team.map((m,i)=>[m,i]).filter(([m])=>!m.ko);
+  if((f.boss||f.big)&&f.charge){ f.charge=0; advAnim("f-e"+ei,"lungeL",500); advFloat("f-e"+ei,f.boss?"หมอกพิษ!":"สปอร์ระเบิด!","skill"); await advSleep(350);
+    let s=0; for(const [,mi] of awake()){ await advShot("f-e"+ei,"f-t"+mi,f.boss?"☁️":"🦠"); s+=await strike(mi,0.7) } B.log.push(`${f.n} ปล่อยท่าใหญ่ใส่ทั้งทีม รวม ${s}`); await advSleep(300); return }
+  if((f.boss||f.big)&&B.eTurns%3===0){ f.charge=1; advFloat("f-e"+ei,"⚠️ กำลังชาร์จ","skill"); B.log.push(`⚠️ ${f.n} กำลังชาร์จท่าใหญ่ ตาหน้าจะโจมตีทั้งทีม`); await advSleep(600); return }
+  const aw=awake(), [m,mi]=aw.slice().sort((a,b)=>a[0].hp-b[0].hp)[Math.random()<0.5?0:Math.floor(Math.random()*aw.length)];
+  advAnim("f-e"+ei,"lungeL",420); await advShot("f-e"+ei,"f-t"+mi,{bottle:"💧",bag:"🛍️",oil:"🛢️",heat:"🔥",steam:"💨",algae:"🦠",algaeS:"🦠",gas:"🫧",mud:"🟤"}[f.art]||"💥");
+  const d=await strike(mi,1); B.log.push(`${f.n} โจมตี ${m.name} ความอึด -${d}`); await advSleep(350) }
 async function advEnd(res){
-  const B=advB, st=B.st; B.over=res; B.phase="over";
+  const B=advB, st=B.st; B.over=res; B.phase="over"; B.par=6+["r1","r2","r3","r4","r5"].indexOf(st.id)*2;
   const L2=mine(), first=res==="win"&&!advCleared(L2).has(st.id), now=new Date().toISOString();
-  await saveAttempt({type:"adv",act:"battle",setId:"adv-"+st.id,stage:st.id,win:res==="win",turns:B.round,team:B.team.map(x=>x.uid),topic:"ภารกิจกู้โลก: "+st.n,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
-  if(first){ const mvp=B.team.slice().sort((a,b)=>b.power-a.power)[0];
-    await saveAttempt({type:"adv",act:"freelevel",unit:mvp.uid,setId:"adv-free",topic:"เลเวลฟรีจากภารกิจกู้โลก",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
-    B.reward=`ครั้งแรกที่ชนะด่านนี้ ${mvp.name} ได้เลเวลฟรี 1 ขั้น แม่น้ำช่วงนี้ใสขึ้นแล้ว` }
+  B.stars=res!=="win"?0:B.slept===0&&B.round<=B.par?3:B.slept<=1?2:1;
+  await saveAttempt({type:"adv",act:"battle",setId:"adv-"+st.id,stage:st.id,win:res==="win",stars:B.stars,turns:B.round,team:B.team.map(x=>x.uid),topic:"ภารกิจกู้โลก: "+st.n,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
+  if(res==="win") B.reward=`ทุกตัวที่ออกไปได้ EXP +${3+(st.id==="r5"?3:0)} (ครบ 6 EXP เลเวลขึ้น 1)${first?" · ครั้งแรกที่ชนะด่านนี้ แม่น้ำช่วงนี้ใสขึ้นแล้ว":""}`;
   renderAdvBattle(mine()) }
 
 /* parent view: where XP came from in the last 7 days, and the adventure at a glance */
@@ -3494,6 +3641,9 @@ function parentDash(list){
   const schoolLow=last7.filter(x=>x.school&&x.tot>0&&x.tot<x.target[0]).length; if(schoolLow>=3) A.push(["amber","⏱️",`วันเรียน ${schoolLow} วันใน 7 วันใช้เวลาต่ำกว่าเป้า 45 นาที (เฉลี่ย ${avgMin} นาที) ระบบอัปเดตทุกเย็นจะเพิ่มเนื้อหา`]);
   const ex=it7.filter(x=>x.correct&&x.exSec!=null), skip=ex.filter(x=>x.exSec<3).length; if(ex.length>=8&&skip/ex.length>=0.5) A.push(["amber","👀",`ข้อที่ตอบถูก ลูกข้ามเฉลย ${skip}/${ex.length} ข้อ ถ้าตอบถูกแบบเดา จะไม่รู้ตัว ชวนลูกอ่านเฉลยข้อที่ไม่มั่นใจ`]);
   const lucky=it7.filter(x=>x.checkOk===false).length; if(lucky>=2) A.push(["amber","🎯",`ตอบถูกแต่เหตุผลผิด ${lucky} ข้อในสัปดาห์นี้ (ระบบส่งกลับไปทวนแล้ว)`]);
+  { const nt=it7.filter(x=>x.notTaught); if(nt.length){ const tp=[...new Set(nt.map(x=>x.topic).filter(Boolean))].slice(0,3).join(", "); A.push(["amber","📭",`น้องบอกว่ายังไม่ได้เรียน ${nt.length} ข้อ (${esc(tp)}) ไม่นับเป็นผิด ระบบประจำวันจะเช็กกับแผนของโรงเรียน`]) } }
+  { const gs=it7.filter(x=>x.guessed).length; if(gs>=2) A.push(["amber","🎲",`น้องบอกเองว่าตอบถูกเพราะเดา ${gs} ข้อในสัปดาห์นี้ ไม่นับเป็นความชำนาญ และส่งกลับไปทวนแล้ว`]) }
+  { const ot=it7.filter(x=>x.whyOther); if(ot.length) A.push(["green","✍️",`เหตุผลที่น้องพิมพ์เอง: ${ot.slice(-3).map(x=>"“"+esc(x.whyOther)+"”").join(" · ")}`]) }
   const sw={}; list.filter(a=>a.type==="sweep").forEach(a=>(a.items||[]).forEach(x=>{ const sp=QBANK[x.qid]?.q.spell; if(!sp) return; (sw[sp]??=[0,0]); sw[sp][0]++; if(x.correct) sw[sp][1]++ }));
   const weak=Object.entries(sw).filter(([k,[n,c]])=>n>=2&&c/n<0.5).map(([k])=>SPELLS.find(x=>x.id===k)?.topic||k); if(weak.length) A.push(["amber","🧠",`เรื่อง ม.1–2 ที่ลืมไปมาก: ${weak.slice(0,4).join(", ")}`]);
   const ss=spellStats(list), faded=Object.entries(ss).filter(([k,v])=>v.faded).length; if(faded) A.push(["amber","💧",`คาถาที่เริ่มจาง ${faded} เรื่อง (ระบบจะหยิบมาทวนในชุดอุ่นเครื่อง)`]);

@@ -209,6 +209,23 @@ undermine interest (Deci, Koestner & Ryan 1999) while self-set goals help (Locke
 - The museum adds one specimen per spell tier gained and per 8 right sweep answers. Sky events (moon phase, meteor
   showers, Loy Krathong, dust season) are built in; you can refer to them in letters on those days.
 
+## Honest-answer signals on items (from 9 Nov 2026)
+- `errorTypes` may include `slip`, meaning "I thought it right but tapped or typed wrong".
+  - It still counts as wrong.
+  - Do not write a twin for a single slip. Mention it only if slips recur.
+- `errorTypes` may include `other`. Then `whyOther` holds her own words: read them, and add a new reason category to the
+  father's notes if one keeps coming up.
+- `guessed:true`: she said she guessed a right answer, either through the 🎲 button or the reason-check option.
+  - The app does not count it toward mastery and puts it back into review.
+  - Treat it like a mistake for twins, never as blame. Being honest about guessing is what we want.
+- `notTaught:true`: in a mixed set, probe or sweep, she said she has not learned the topic yet.
+  - It is not counted at all.
+  - Check `content/school-plan.md` and her history for that spell.
+    - If she has app attempts on it, she has forgotten it: give it a short review.
+    - If not, it has probably not been taught yet. Keep it out of mixed sets until the plan reaches it, and tell the father which.
+- **Mixed sets:** keep both math and science in every mixed set, about 55/45. The real first round has two separate papers with
+  equal weight, and each paper mixes topics.
+
 ## Adventure map "ภารกิจกู้โลก" and XP rules (app features; read the records, do not change code)
 - **Separate adventure:** never mixed into lessons.
   - Her team (companion pets + animals bred in the dragon valley) fights pollution enemies on a river map.
