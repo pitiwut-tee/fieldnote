@@ -226,7 +226,23 @@ undermine interest (Deci, Koestner & Ryan 1999) while self-set goals help (Locke
 - **Mixed sets:** keep both math and science in every mixed set, about 55/45. The real first round has two separate papers with
   equal weight, and each paper mixes topics.
 
-## สตูดิโอเกมของหนู (content/studio.json, from 9 Nov 2026)
+## How to address her (father, 9 Nov 2026)
+- **Never call her "หนู"** in student-facing text. It feels too childish for her.
+- **Use `{name}` where her name belongs.** The app replaces it with the nickname she typed on her device, or "เธอ" if none.
+  Supported in studio.json texts and letters.
+- **Never write her real name into any file.** The repo is public.
+- Elsewhere, use "เธอ" or no pronoun at all.
+
+## ภูตธาตุ: elements practice (app feature, from 9 Nov 2026)
+- **What it is:** 31 common elements, practised 2–3 minutes a day with spaced repetition.
+  - Question types: symbol↔name, type, use, and placing the element in an empty periodic table.
+  - "ห้องปรุงสาร" adds ionic formula questions once 8 ion-forming elements are known.
+- **Records:** `type:"elem"`, `act:"practice"`, items `{z, mode, correct}`, with `f` set on formula items. Not a lesson; not part of the daily mission.
+- **In the father's notes:** say how many elements are collected and placed, and which ones keep failing.
+  - If formula items keep failing, write one short why-first lesson on ion charges and formulas.
+  - The father recalls she met formula writing in ม.2 term 1, but it was not in the ม.2 term-1 file he gave. Ask him for that worksheet before building a full lesson.
+
+## Game studio (content/studio.json, from 9 Nov 2026)
 - **What it is:** a game-design track the father approved.
   - One short "designer's note" card each day Mon–Sat. Each card has a reflection question; the answer gives 10 XP.
   - A design workshop each **Sunday**, worth 30 XP. The father moved it so he can watch.

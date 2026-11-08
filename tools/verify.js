@@ -97,7 +97,7 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
   const pageErr=[]; pg.on("pageerror",e=>pageErr.push(e.message));
   const url="file://"+path.join(ROOT,"index.html");
   await pg.clock.install({time:new Date(Date.now()+86400000)});
-  await pg.addInitScript(()=>{ try{ localStorage.setItem("fieldnote.studioTeaser2","true"); localStorage.setItem("fieldnote.guestpop",JSON.stringify(["x"])) }catch(e){} });
+  await pg.addInitScript(()=>{ try{ localStorage.setItem("fieldnote.studioTeaser2","true"); localStorage.setItem("fieldnote.callmeAsked","true"); localStorage.setItem("fieldnote.guestpop",JSON.stringify(["x"])) }catch(e){} });
   await pg.goto(url);
   /* --since=YYYY-MM-DD plays only sets added on/after that date (content rules above still cover every set) */
   const since=(process.argv.find(x=>x.startsWith("--since="))||"").slice(8);

@@ -182,6 +182,15 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .gz{position:absolute;top:0;bottom:0;background:#ffd84d;border-left:2px solid #e0a23c;border-right:2px solid #e0a23c}
 .gbar i{position:absolute;top:-6px;width:4px;height:34px;margin-left:-2px;background:#1f2d24;border-radius:2px}
 @media (prefers-reduced-motion: reduce){.fighter.t .fart,.lunge,.lungeL,.shake{animation:none}}
+.elgridwrap{width:100%;max-width:640px}
+.elgrid{display:grid;grid-template-columns:repeat(18,minmax(0,1fr));gap:2px;width:100%}
+.elrow2{margin-top:8px}.actl{position:absolute;left:0;font-size:.6rem;white-space:nowrap;color:var(--muted,#777)}
+.elc{position:relative;width:100%;aspect-ratio:1;min-width:0;font-size:clamp(.5rem,2.4vw,.8rem)!important;border-radius:4px;border:1px solid var(--line);background:var(--paper);font:700 .72rem/1 var(--mono,monospace);color:#1f2d24;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.elc.gap{border:0;background:transparent}.elc.has{border-style:dashed;border-color:#b9b2a2}.elc.on{border:1px solid rgba(0,0,0,.2);cursor:pointer}
+button.elc[data-cell]{cursor:pointer}button.elc[data-cell]:hover{outline:2px solid #e0a23c}
+.elbadge{display:inline-flex;align-items:center;justify-content:center;border-radius:22%;font-weight:800;color:#1f2d24;position:relative;box-shadow:inset 0 -4px 0 rgba(0,0,0,.12);vertical-align:middle}
+.elbadge i{position:absolute;top:5%;left:9%;font-size:.36em;font-style:normal;font-weight:600;opacity:.75}
+.opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 18%,var(--card))}.opt.wrong{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,var(--card))}
 .skills{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .skill{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:8px 10px;border-radius:12px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;cursor:pointer}
 .skill b{font-size:.9rem}.skill span{font-size:.72rem;opacity:.8;line-height:1.25}.skill.on{border-color:#e0a23c;box-shadow:0 0 0 2px #e0a23c;background:color-mix(in srgb,#ffd97a 20%,var(--paper))}
@@ -733,7 +742,7 @@ function progressOf(list){
   list.forEach(a=>{ const k=dayKey(a.endedAt);
     if(a.type==="daymode") return;
     if(a.type==="mission"||a.type==="teach"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* mission / teaching dad: XP only, not a daily unit */
-    if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood"||a.type==="adv"||a.type==="studio") return;
+    if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood"||a.type==="adv"||a.type==="studio"||a.type==="elem") return;
     if(a.type==="lab"||a.type==="labverdict"||a.type==="labquest"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
     if(a.type==="sweep"){ sweepDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* old-topic sweep: its own daily step, not a lesson unit */
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
@@ -986,6 +995,7 @@ function render(){
   if(view==="home") return renderHome();
   if(view==="map") return renderMap();
   if(view==="adv") return renderAdv();
+  if(view==="elem") return renderElem();
   if(view==="den") return renderDen();
   if(view==="intro") return renderIntro();
   if(view==="feedback") return renderFeedback();
@@ -1120,6 +1130,7 @@ function renderHome(){
       ${Object.keys(vocabState()).length?`<button class="btn ghost" id="go-words2">📖 คำศัพท์ที่เรียนแล้ว</button>`:""}</div>
     <p class="small muted">ชุดที่ทำเกินภารกิจ ได้น้ำแข็งกันไฟดับด้วยนะ</p></section>`:""}
   ${homeTiles(list,p,pool)}
+  <p class="small muted" style="text-align:center;margin:0"><button class="btn ghost small" id="callme-edit" style="border:0">👋 ${myName()?`คู่หูเรียกว่า “${esc(myName())}” · แก้`:"ตั้งชื่อเล่นที่อยากให้เรียก"}</button></p>
   ${store!=="db"&&(unsent().a.length||unsent().f.length)?`<section class="card"><h3>มีผลที่ยังไม่ได้ส่งให้พ่อ ${unsent().a.length} ครั้ง</h3>
     <p class="small muted">เครื่องนี้ยังไม่ได้เชื่อมบัญชี ผลจึงเก็บไว้ในเครื่อง ส่งให้พ่อผ่าน LINE ได้ในไม่กี่วินาที</p>
     <button class="btn" id="send-open">ส่งผลให้พ่อ</button></section>`:""}
@@ -1130,8 +1141,9 @@ function renderHome(){
     <button class="btn ghost" id="send-all">ส่งผลทั้งหมดให้พ่ออีกครั้ง</button>
     <p style="margin:12px 0 0">แอปรุ่น ${esc(BUILD)}</p></details>`:""}`;
   bindDayPanel(p); bindBuddySetup(); bindBuddyHero(); bindLetter(); bindGoal(list); bindTeach(); buddyNote="";
-  setTimeout(()=>{ if(!guestPop(mine())&&STUDIO) studioTeaser() },700);
-  $v.querySelectorAll("[data-tile]").forEach(t=>t.onclick=()=>{ if(t.dataset.tile==="studio"){ studioOpen(); return } if(t.dataset.tile==="adv"){ homeOpen=null; advSel=advSel||"r1"; view="adv"; render(); window.scrollTo({top:0}); return } homeOpen=homeOpen===t.dataset.tile?null:t.dataset.tile; renderHome();
+  { const ce=document.getElementById("callme-edit"); if(ce) ce.onclick=()=>askName(true) }
+  setTimeout(()=>{ if(!askName()&&!guestPop(mine())&&STUDIO) studioTeaser() },700);
+  $v.querySelectorAll("[data-tile]").forEach(t=>t.onclick=()=>{ if(t.dataset.tile==="studio"){ studioOpen(); return } if(t.dataset.tile==="elem"){ homeOpen=null; EL=null; view="elem"; render(); window.scrollTo({top:0}); return } if(t.dataset.tile==="adv"){ homeOpen=null; advSel=advSel||"r1"; view="adv"; render(); window.scrollTo({top:0}); return } homeOpen=homeOpen===t.dataset.tile?null:t.dataset.tile; renderHome();
     const tp=document.getElementById("tpanel"); if(tp) tp.scrollIntoView({block:"nearest",behavior:"smooth"}) });
   $v.querySelectorAll("[data-mood]").forEach(m=>m.onclick=async()=>{ const now=new Date().toISOString();
     await saveAttempt({type:"mood",setId:"mood",mood:m.dataset.mood,topic:"ความพร้อมวันนี้: "+MOODS.find(x=>x[0]===m.dataset.mood)[2],startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
@@ -1831,6 +1843,12 @@ function renderDone(){
    Never guilt, never pretends to be a person; grows with the spells she unlocks. ---------- */
 function buddyFace(b,size){ return petFace(b.kind,size,true) }
 function bname(){ return getBuddy()?.name||"คู่หู" }
+/* what the app calls her: she types it once on her own device; it stays in this browser only (the repo is public) */
+function myName(){ return (ls("fieldnote.callme","")||"").trim() }
+function nm(t){ const n=myName(); return String(t||"").replace(/\{name\}/g,n||"เธอ").replace(/ของเธอ(?=[\s,.!?·]|$)/g,n?"ของ"+n:"ของเธอ") }
+function askName(force){ if(!force&&(myName()||ls("fieldnote.callmeAsked",false))) return false; if(view!=="home"||document.getElementById("sheet")) return false; lsSet("fieldnote.callmeAsked",true);
+  const d=sheet({icon:"👋",title:"อยากให้เรียกว่าอะไรดี",html:`<p class="small">ชื่อเล่นที่อยากให้คู่หูและ Claude ใช้เรียกในแอป เก็บไว้ในเครื่องนี้เท่านั้น เปลี่ยนได้ตลอด</p><input id="callme" class="numin" style="font-size:1.1rem" maxlength="20" value="${esc(myName())}" placeholder="ชื่อเล่น">`,
+    actions:[{label:"บันทึก",fn:d=>{ lsSet("fieldnote.callme",d.querySelector("#callme").value.trim().slice(0,20)); closeSheet(); render() }},{label:"ไว้ทีหลัง",ghost:true,fn:closeSheet}]}); return true }
 /* a day-stable pick so the message doesn't change on every re-render */
 function pickDay(arr,salt){ const d=todayKey()/DAY+(salt||0); return arr[Math.abs(Math.floor(Math.sin(d*12.9898)*43758.5453))%arr.length] }
 function buddyLines(list,p,plan){
@@ -1908,6 +1926,7 @@ function homeTiles(list,p,pool){
   const m=activeMission(); if(m){ const d=missionDone(m); T.push({id:"world",i:"🌏",t:"ภารกิจโลกจริง",s:d?"ทำแล้ว ✓":esc(m.title),rew:d?"":`+${m.xp||100} XP`,todo:!d,done:d}) }
   { const er=eggsReady(list).length, can=pairsToday(list)<labPairsPerDay(list); T.push({id:"lab",i:"🐉",t:"หุบเขามังกร",s:er?"ไข่ฟักแล้ว ไปดูกัน!":can?"วันนี้จับคู่ได้":"ไข่กำลังฟัก",rew:can?"ทำนายถูก +25 XP":"",todo:!!er||can,badge:er?"🐣":"",done:!er&&!can}) }
   { const st=studioTile(list); if(st) T.push(st) }
+  T.push(elTile(list));
   { const en=advEnergy(list), n=advUnits(list).length; T.push({id:"adv",i:"🌍",t:"ภารกิจกู้โลก",s:n?`พลังผจญภัย ${en.left}/${en.max}`:"ต้องมีคู่หูก่อน",rew:"",todo:!!(n&&en.left&&p.goalToday),badge:n&&en.left&&p.goalToday?String(en.left):""}) }
   const gl=goalOf(list); T.push({id:"goal",i:"🎯",t:"เป้าหมายเดือนนี้",s:gl?"ดูความคืบหน้า":"ยังไม่ได้ตั้ง",rew:gl?"":"รางวัลจริงที่เลือกเอง",todo:!gl,badge:gl?"":"!"});
   const wk=weekStart(todayKey()), told=list.some(a=>a.type==="teach"&&dayKey(a.endedAt)>=wk); T.push({id:"teach",i:"💬",t:"เล่าให้พ่อฟัง",s:told?"สัปดาห์นี้แล้ว ✓":"สัปดาห์ละครั้ง ราว 3 นาที",rew:told?"":`+50 XP${firstTeach?" · หมวกครู 🎓":""}`,todo:!told,badge:told?"":"!",done:told});
@@ -1989,7 +2008,7 @@ function letterHtml(force){ const t=isoDay(todayKey()), ls=LETTERS.filter(l=>l.d
     ${letterOpen?`<p style="white-space:pre-wrap">${esc(L.text)}</p><p class="small muted">— ${esc(bname())}</p><button class="btn ghost small" id="lclose">อ่านแล้ว</button>`
       :`<p class="small">มีจดหมายฉบับใหม่ถึงเธอ</p><button class="btn" id="lopen">เปิดอ่าน</button>`}</section>` }
 function bindLetter(){ const t=isoDay(todayKey()), L=LETTERS.find(l=>l.date<=t);
-  const o=document.getElementById("lopen"); if(o) o.onclick=()=>{ sheet({icon:"💌",title:`จดหมายจาก ${bname()}`,read:L.text,html:`<p class="factread" style="white-space:pre-wrap">${esc(L.text)}</p><p class="small muted" style="text-align:right">— ${esc(bname())}</p>`,
+  const o=document.getElementById("lopen"); if(o) o.onclick=()=>{ sheet({icon:"💌",title:`จดหมายจาก ${bname()}`,read:nm(L.text),html:`<p class="factread" style="white-space:pre-wrap">${esc(nm(L.text))}</p><p class="small muted" style="text-align:right">— ${esc(bname())}</p>`,
     actions:[{label:"อ่านแล้ว",fn:()=>{ try{ localStorage.setItem("fieldnote.lettersread",JSON.stringify([...new Set([...lettersRead(),L.id])])) }catch(e){} closeSheet(); letterOpen=false; renderHome() }}]}) };
   const c=document.getElementById("lclose"); if(c) c.onclick=()=>{ try{ localStorage.setItem("fieldnote.lettersread",JSON.stringify([...new Set([...lettersRead(),L.id])])) }catch(e){} letterOpen=false; renderHome() } }
 
@@ -3205,7 +3224,7 @@ function hatchSheet(a){ const L=LAB_LINES[a.species], tgt=a.babies.filter(g=>L.p
   sheet({icon:"🐣",title:`ไข่ฟักแล้ว! ${L.n} ${a.babies.length} ตัว`,wide:true,
     read:`ได้${L.names[L.target]} ${tgt} จาก ${a.babies.length} ตัว ทฤษฎีบอกว่า ${a.expect}`,
     html:`<div class="row" style="gap:6px;flex-wrap:wrap;justify-content:center;margin:6px 0">${a.babies.map(g=>`<div style="text-align:center"><svg viewBox="0 0 100 100" width="56" height="56">${L.art[L.ph(g)]()}</svg><br><span class="small">${esc(L.names[L.ph(g)]||"")}</span></div>`).join("")}</div>
-      <p><b>${esc(L.names[L.target])} ${tgt}/${a.babies.length} ตัว</b> · หนูทำนายไว้ ${esc(a.ratio||"-")} · ทฤษฎี ${esc(a.expect)} ${a.ratioOk?"✅ ทำนายถูก":"❌"}${a.gridOk!=null?` · ตารางพันเนตต์ ${a.gridOk?"✅":"❌"}`:""} · +${a.xp} XP</p>
+      <p><b>${esc(L.names[L.target])} ${tgt}/${a.babies.length} ตัว</b> · ทำนายไว้ ${esc(a.ratio||"-")} · ทฤษฎี ${esc(a.expect)} ${a.ratioOk?"✅ ทำนายถูก":"❌"}${a.gridOk!=null?` · ตารางพันเนตต์ ${a.gridOk?"✅":"❌"}`:""} · +${a.xp} XP</p>
       ${known?`<div class="feedback usebox"><b>🔬 ทำไมได้แบบนี้</b><span class="small">พ่อแม่ ${esc(a.p1)} × ${esc(a.p2)} · ลูกแต่ละตัวได้ยีน 1 ตัวจากพ่อและ 1 ตัวจากแม่ แบบสุ่ม แต่ละช่องในตารางมีโอกาสเท่ากัน</span><div class="row" style="gap:10px;justify-content:center">${grids}</div>
         <span class="small">ช่องที่ได้ลักษณะ${esc(L.names[L.target])}คิดเป็น ${esc(a.expect)} ของทั้งหมด ครอกเดียว ${a.babies.length} ตัวจึงอาจไม่ตรงเป๊ะ เหมือนโยนเหรียญ 4 ครั้งก็ไม่จำเป็นต้องได้หัว 2 ครั้ง ยิ่งเพาะหลายครอก ผลรวมยิ่งเข้าใกล้ทฤษฎี</span></div>`
       :`<p class="small">คู่นี้มีงูปริศนาที่ยังไม่รู้ยีน ลองดูว่าลูกที่ออกมาบอกอะไรเกี่ยวกับยีนที่ซ่อนอยู่ แล้วไปตัดสินในภารกิจนักสืบยีน</p>`}`,
@@ -3669,7 +3688,7 @@ function sheet({icon,title,html,read,actions,wide}){
   const f=d.querySelector(".sheetbody textarea,.sheetbody input")||d.querySelector(".sheetx"); try{ f.focus({preventScroll:true}) }catch(e){}
   return d }
 
-/* ---------- สตูดิโอเกมของหนู: a teaser now, one short "designer's note" each day, a design workshop on Sunday ---------- */
+/* ---------- game studio: a teaser now, one short "designer's note" each day, a design workshop on Sunday ---------- */
 const STUDIO=CONTENT.studio||null;
 function studioRecs(list){ return list.filter(a=>a.type==="studio") }
 function studioCards(list){ if(!STUDIO) return []; const t=todayKey(), done=new Set(studioRecs(list).filter(a=>a.act==="card").map(a=>a.card));
@@ -3686,37 +3705,185 @@ function guestPop(list){ const g=activeGuest(); if(!g||view!=="home"||document.g
     <p class="small muted">อยู่ถึง${new Date(g.to+"T12:00:00").toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"short"})} ถ้าไม่ทัน ไม่เป็นไร แขกจะกลับมาอีก</p>`,actions:[{label:"รับภารกิจ",fn:closeSheet}]});
   return true }
 function studioTeaser(){ if(!STUDIO||ls("fieldnote.studioTeaser2",false)||view!=="home"||document.querySelector(".celebrate")) return; lsSet("fieldnote.studioTeaser2",true);
-  sheet({icon:"🎮",title:STUDIO.title,html:`<p>${esc(STUDIO.teaser)}</p>`,read:STUDIO.teaser,actions:[{label:"อ่านเกร็ดใบแรก",fn:()=>studioOpen()},{label:"ไว้ทีหลัง",ghost:true,fn:closeSheet}]}) }
+  sheet({icon:"🎮",title:nm(STUDIO.title),html:`<p>${esc(nm(STUDIO.teaser))}</p>`,read:nm(STUDIO.teaser),actions:[{label:"อ่านเกร็ดใบแรก",fn:()=>studioOpen()},{label:"ไว้ทีหลัง",ghost:true,fn:closeSheet}]}) }
 function studioOpen(){ const list=mine(), cs=studioCards(list), next=cs.find(c=>c.open&&!c.done);
   if(next) return studioCard(next); if(studioWorkshopOpen()&&!studioRecs(list).some(a=>a.act==="workshop")) return studioWorkshop(); studioShelf() }
 function studioShelf(){ const list=mine(), cs=studioCards(list), ws=STUDIO.workshop, wsDone=studioRecs(list).some(a=>a.act==="workshop");
-  const d=sheet({icon:"🎮",title:STUDIO.title,wide:true,html:`<p class="small">${esc(STUDIO.teaser)}</p>
+  const d=sheet({icon:"🎮",title:nm(STUDIO.title),wide:true,html:`<p class="small">${esc(nm(STUDIO.teaser))}</p>
     <div class="studiolist">${cs.map(c=>`<button class="studiocard ${c.done?"done":""}" data-sc="${c.i}" ${c.open?"":"disabled"}><span style="font-size:1.6rem">${c.open?c.icon:"🔒"}</span>
-      <span><b>${esc(c.title)}</b><br><span class="small muted">${c.done?"อ่านและตอบแล้ว ✓":c.open?"แตะเพื่ออ่าน (+10 XP)":"เปิด "+new Date(c.day+"T00:00:00+07:00").toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})}</span></span></button>`).join("")}
+      <span><b>${esc(nm(c.title))}</b><br><span class="small muted">${c.done?"อ่านและตอบแล้ว ✓":c.open?"แตะเพื่ออ่าน (+10 XP)":"เปิด "+new Date(c.day+"T00:00:00+07:00").toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})}</span></span></button>`).join("")}
       ${ws?`<button class="studiocard ws ${wsDone?"done":""}" data-sc="ws" ${studioWorkshopOpen()?"":"disabled"}><span style="font-size:1.6rem">${studioWorkshopOpen()?ws.icon:"🔒"}</span><span><b>${esc(ws.title)}</b><br><span class="small muted">${wsDone?"ส่งแบบแล้ว ✓ รอพ่ออนุมัติแล้ว Claude จะสร้างให้":studioWorkshopOpen()?"เปิดแล้ว!":"เปิด "+new Date(ws.day+"T00:00:00+07:00").toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"short"})}</span></span></button>`:""}</div>`,
     actions:[{label:"ปิด",ghost:true,fn:closeSheet}]});
   d.querySelectorAll("[data-sc]").forEach(b=>b.onclick=()=>{ if(b.dataset.sc==="ws") return studioWorkshop(); studioCard(cs[+b.dataset.sc]) }) }
 function studioCard(c){ const list=mine(), rec=studioRecs(list).find(a=>a.act==="card"&&a.card===c.day), draft=ls("fieldnote.studioDraft."+c.day,"");
-  sheet({icon:c.icon,title:c.title,read:c.body+" "+c.ask,html:`<p>${esc(c.body)}</p><div class="usebox feedback"><b>✍️ ลองคิด</b><span class="small">${esc(c.ask)}</span>
-      ${rec?`<span class="small"><b>คำตอบของหนู:</b> ${esc(rec.answer)}</span>`:`<textarea id="sc-ans" rows="3" maxlength="400" placeholder="พิมพ์สั้นๆ ไม่มีถูกผิด">${esc(draft)}</textarea>`}</div>`,
+  sheet({icon:c.icon,title:nm(c.title),read:nm(c.body)+" "+nm(c.ask),html:`<p>${esc(nm(c.body))}</p><div class="usebox feedback"><b>✍️ ลองคิด</b><span class="small">${esc(nm(c.ask))}</span>
+      ${rec?`<span class="small"><b>คำตอบที่ส่งไป:</b> ${esc(rec.answer)}</span>`:`<textarea id="sc-ans" rows="3" maxlength="400" placeholder="พิมพ์สั้นๆ ไม่มีถูกผิด">${esc(draft)}</textarea>`}</div>`,
     actions:rec?[{label:"ดูทั้งหมด",ghost:true,fn:studioShelf},{label:"ปิด",fn:closeSheet}]:[{label:"ส่งคำตอบ +10 XP",fn:async d=>{ const v=(d.querySelector("#sc-ans").value||"").trim(); if(v.length<2){ d.querySelector("#sc-ans").focus(); return }
-      const now=new Date().toISOString(); await saveAttempt({type:"studio",act:"card",card:c.day,setId:"studio-"+c.day,topic:"สตูดิโอเกม: "+c.title,answer:v.slice(0,400),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:10,items:[]});
+      const now=new Date().toISOString(); await saveAttempt({type:"studio",act:"card",card:c.day,setId:"studio-"+c.day,topic:"สตูดิโอเกม: "+nm(c.title),answer:v.slice(0,400),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:10,items:[]});
       lsSet("fieldnote.studioDraft."+c.day,""); closeSheet(); render();
       sheet({icon:"🌟",title:"เก็บเกร็ดนักออกแบบแล้ว",html:`<p>+10 XP · ${studioCards(mine()).filter(x=>x.done).length}/${STUDIO.cards.length} ใบ</p><p class="small muted">เก็บครบก่อนวันอาทิตย์ จะพร้อมออกแบบเขตใหม่เต็มที่</p>`,actions:[{label:"ดูทั้งหมด",ghost:true,fn:studioShelf},{label:"เยี่ยม!",fn:closeSheet}]}) }},{label:"ไว้ทีหลัง",ghost:true,fn:closeSheet}]});
   const ta=document.getElementById("sc-ans"); if(ta) ta.oninput=()=>lsSet("fieldnote.studioDraft."+c.day,ta.value) }
 function studioWorkshop(){ const W=STUDIO.workshop, list=mine(), rec=studioRecs(list).find(a=>a.act==="workshop"), dr=ls("fieldnote.studioWS",{});
-  const d=sheet({icon:W.icon,title:W.title,wide:true,read:W.intro,html:`<p class="small">${esc(W.intro)}</p>${W.fields.map(f=>`<label class="wsf"><b class="small">${esc(f.label)}</b>
-      ${rec?`<span class="small">${esc((rec.answers||{})[f.id]||"-")}</span>`:`<textarea data-wf="${f.id}" rows="2" maxlength="500" placeholder="${esc(f.ph||"")}">${esc(dr[f.id]||"")}</textarea>`}</label>`).join("")}`,
+  const d=sheet({icon:W.icon,title:nm(W.title),wide:true,read:nm(W.intro),html:`<p class="small">${esc(nm(W.intro))}</p>${W.fields.map(f=>`<label class="wsf"><b class="small">${esc(nm(f.label))}</b>
+      ${rec?`<span class="small">${esc((rec.answers||{})[f.id]||"-")}</span>`:`<textarea data-wf="${f.id}" rows="2" maxlength="500" placeholder="${esc(nm(f.ph||""))}">${esc(dr[f.id]||"")}</textarea>`}</label>`).join("")}`,
     actions:rec?[{label:"ปิด",fn:closeSheet}]:[{label:"ส่งแบบให้พ่อกับ Claude",fn:async d=>{ const ans={}; d.querySelectorAll("[data-wf]").forEach(t=>ans[t.dataset.wf]=t.value.trim().slice(0,500));
       if(Object.values(ans).filter(Boolean).length<3){ alertSoft(d,"เขียนอย่างน้อย 3 ช่องก่อนนะ"); return }
-      const now=new Date().toISOString(); await saveAttempt({type:"studio",act:"workshop",setId:"studio-ws-"+W.day,topic:"สตูดิโอเกม: "+W.title,answers:ans,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:30,items:[]});
+      const now=new Date().toISOString(); await saveAttempt({type:"studio",act:"workshop",setId:"studio-ws-"+W.day,topic:"สตูดิโอเกม: "+nm(W.title),answers:ans,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:30,items:[]});
       lsSet("fieldnote.studioWS",{}); closeSheet(); render();
-      sheet({icon:"🎉",title:"ส่งแบบแล้ว!",html:`<p>+30 XP · พ่อจะดูแบบของหนู แล้ว Claude จะสร้างเขตใหม่ตามแบบ อย่าลืมกดส่งผลให้พ่อด้วยนะ</p>`,actions:[{label:"เยี่ยม!",fn:closeSheet}]}) }},{label:"เก็บไว้ทำต่อ",ghost:true,fn:closeSheet}]});
+      sheet({icon:"🎉",title:"ส่งแบบแล้ว!",html:`<p>+30 XP · พ่อจะดูแบบของ${esc(myName()||"เธอ")} แล้ว Claude จะสร้างเขตใหม่ตามแบบ อย่าลืมกดส่งผลให้พ่อด้วยนะ</p>`,actions:[{label:"เยี่ยม!",fn:closeSheet}]}) }},{label:"เก็บไว้ทำต่อ",ghost:true,fn:closeSheet}]});
   d.querySelectorAll("[data-wf]").forEach(t=>t.oninput=()=>{ const o=ls("fieldnote.studioWS",{}); o[t.dataset.wf]=t.value; lsSet("fieldnote.studioWS",o) }) }
 function alertSoft(root,msg){ let p=root.querySelector(".sheetmsg"); if(!p){ p=document.createElement("p"); p.className="small sheetmsg"; root.querySelector(".sheetbody").appendChild(p) } p.innerHTML=`<b>${esc(msg)}</b>` }
 function studioParent(list){ const r=studioRecs(list).slice().sort((a,b)=>new Date(b.endedAt)-new Date(a.endedAt)); if(!r.length) return "";
   return `<div><span class="eyebrow">🎮 สตูดิโอเกม · คำตอบล่าสุดของน้อง</span>${r.slice(0,3).map(a=>a.act==="workshop"?`<p class="small"><b>แบบเขตใหม่:</b> ${esc(Object.values(a.answers||{}).filter(Boolean).join(" · ").slice(0,300))}</p>`
     :`<p class="small"><b>${esc((a.topic||"").replace("สตูดิโอเกม: ",""))}:</b> “${esc(a.answer)}”</p>`).join("")}</div>` }
+
+/* ---------- ภูตธาตุ: elements as collectible characters (her request, 9 Nov 2026)
+   Not rote: each element is a small character with a real property, practised 2–3 minutes a day with spaced repetition
+   (the same idea as the English words), then placed by her own hand in an empty periodic table that fills with colour.
+   Scope (exam ม.1–3): ~31 common elements, metal / nonmetal / metalloid / radioactive, rough position; bonus: order 1–20,
+   groups, and writing formulas of simple ionic compounds from ion charges ("ห้องปรุงสาร", unlocks later). */
+const EL_TYPES={metal:{n:"โลหะ",c:"#7fb6d6"},nonmetal:{n:"อโลหะ",c:"#9fd88a"},metalloid:{n:"กึ่งโลหะ",c:"#f2c46b"},radio:{n:"กัมมันตรังสี",c:"#e98fb8"}};
+const ELEMENTS=[
+ [1,"H","ไฮโดรเจน","nonmetal",1,1,1,"เบาที่สุดในจักรวาล เป็นเชื้อเพลิงของดวงอาทิตย์","เชื้อเพลิงจรวดและรถพลังงานไฮโดรเจน"],
+ [2,"He","ฮีเลียม","nonmetal",1,18,0,"ก๊าซมีตระกูล ลอยเก่งและแทบไม่ทำปฏิกิริยากับใคร","บรรจุลูกโป่งให้ลอย"],
+ [3,"Li","ลิเทียม","metal",2,1,1,"โลหะที่เบาที่สุด","แบตเตอรี่มือถือและรถยนต์ไฟฟ้า"],
+ [4,"Be","เบริลเลียม","metal",2,2,2,"แข็งแต่เบามาก","กระจกของกล้องโทรทรรศน์อวกาศ"],
+ [5,"B","โบรอน","metalloid",2,13,0,"กึ่งโลหะ มีสมบัติอยู่ระหว่างโลหะกับอโลหะ","แก้วทนความร้อนที่ใช้ในห้องแล็บและเครื่องครัว"],
+ [6,"C","คาร์บอน","nonmetal",2,14,0,"อยู่ในสิ่งมีชีวิตทุกชนิด เป็นได้ทั้งเพชรและไส้ดินสอ","ไส้ดินสอ (แกรไฟต์) และเพชร"],
+ [7,"N","ไนโตรเจน","nonmetal",2,15,-3,"มีมากที่สุดในอากาศ ราว 78%","เติมในถุงขนมให้กรอบ และทำปุ๋ย"],
+ [8,"O","ออกซิเจน","nonmetal",2,16,-2,"ราว 21% ของอากาศ ทุกเซลล์ใช้หายใจ","ถังออกซิเจนในโรงพยาบาล"],
+ [9,"F","ฟลูออรีน","nonmetal",2,17,-1,"ไวต่อปฏิกิริยามากที่สุดในทุกธาตุ","ฟลูออไรด์ในยาสีฟันช่วยให้ฟันแข็งแรง"],
+ [10,"Ne","นีออน","nonmetal",2,18,0,"ก๊าซมีตระกูล เรืองแสงสีส้มแดงเมื่อมีไฟฟ้าผ่าน","ป้ายไฟนีออน"],
+ [11,"Na","โซเดียม","metal",3,1,1,"นิ่มจนใช้มีดตัดได้ โดนน้ำแล้วปะทุรุนแรง","อยู่ในเกลือแกง (NaCl)"],
+ [12,"Mg","แมกนีเซียม","metal",3,2,2,"เผาแล้วให้แสงขาวจ้ามาก อยู่ในคลอโรฟิลล์ของพืช","พลุ และโลหะผสมน้ำหนักเบา"],
+ [13,"Al","อะลูมิเนียม","metal",3,13,3,"เบา ไม่เป็นสนิมง่าย","กระป๋องน้ำอัดลมและฟอยล์ห่ออาหาร"],
+ [14,"Si","ซิลิคอน","metalloid",3,14,0,"กึ่งโลหะ นำไฟฟ้าได้บางสภาวะ","ชิปคอมพิวเตอร์ และเป็นส่วนประกอบของทราย"],
+ [15,"P","ฟอสฟอรัส","nonmetal",3,15,-3,"บางรูปลุกติดไฟเองในอากาศได้","ข้างกล่องไม้ขีดไฟ และปุ๋ย"],
+ [16,"S","กำมะถัน","nonmetal",3,16,-2,"ของแข็งสีเหลือง พบมากรอบภูเขาไฟ","ทำยาง ยาฆ่าเชื้อรา"],
+ [17,"Cl","คลอรีน","nonmetal",3,17,-1,"ก๊าซสีเหลืองแกมเขียว เป็นพิษ แต่ใช้ฆ่าเชื้อโรค","ฆ่าเชื้อในสระว่ายน้ำและน้ำประปา"],
+ [18,"Ar","อาร์กอน","nonmetal",3,18,0,"ก๊าซมีตระกูล ราว 1% ของอากาศ","เติมในหลอดไฟและงานเชื่อมโลหะ"],
+ [19,"K","โพแทสเซียม","metal",4,1,1,"ไวต่อน้ำยิ่งกว่าโซเดียม","มีมากในกล้วย และอยู่ในปุ๋ย"],
+ [20,"Ca","แคลเซียม","metal",4,2,2,"ส่วนประกอบหลักของกระดูกและฟัน","เปลือกหอย หินปูน ชอล์ก"],
+ [26,"Fe","เหล็ก","metal",4,8,0,"โลหะที่ใช้มากที่สุดในโลก อยู่ในเม็ดเลือดแดงด้วย","เหล็กเส้นก่อสร้าง"],
+ [29,"Cu","ทองแดง","metal",4,11,0,"สีส้มแดง นำไฟฟ้าดีมาก","สายไฟฟ้า"],
+ [30,"Zn","สังกะสี","metal",4,12,0,"เคลือบผิวเหล็กเพื่อกันสนิม","แผ่นหลังคาสังกะสี (เหล็กเคลือบสังกะสี)"],
+ [47,"Ag","เงิน","metal",5,11,0,"นำไฟฟ้าดีที่สุดในบรรดาธาตุทั้งหมด","เครื่องประดับ"],
+ [50,"Sn","ดีบุก","metal",5,14,0,"เคยขุดได้มากทางภาคใต้ของไทย","ตะกั่วบัดกรี และเคลือบกระป๋อง"],
+ [53,"I","ไอโอดีน","nonmetal",5,17,-1,"ของแข็งสีม่วงดำ ร่างกายต้องใช้ทำฮอร์โมนไทรอยด์","เกลือเสริมไอโอดีนป้องกันโรคคอพอก"],
+ [78,"Pt","แพลทินัม","metal",6,10,0,"หายากและไม่เป็นสนิม","เครื่องฟอกไอเสียในรถยนต์"],
+ [79,"Au","ทองคำ","metal",6,11,0,"ไม่เป็นสนิม จึงเงางามได้นับพันปี","ทองรูปพรรณ และขั้วต่อในวงจรไฟฟ้า"],
+ [80,"Hg","ปรอท","metal",6,12,0,"โลหะชนิดเดียวที่เป็นของเหลวที่อุณหภูมิห้อง และเป็นพิษ","เทอร์โมมิเตอร์แบบเก่า"],
+ [82,"Pb","ตะกั่ว","metal",6,14,0,"หนัก นิ่ม และเป็นพิษต่อระบบประสาท","แบตเตอรี่รถยนต์"],
+ [92,"U","ยูเรเนียม","radio",9,6,0,"ธาตุกัมมันตรังสี นิวเคลียสไม่เสถียร ปล่อยรังสีออกมา","เชื้อเพลิงโรงไฟฟ้านิวเคลียร์"]
+].map(([z,s,n,t,p,g,q,trait,use])=>({z,s,n,t,p,g,q,trait,use}));
+const EL_BY=Object.fromEntries(ELEMENTS.map(e=>[e.z,e]));
+const EL_GAP=[0,1,2,4,7,14,30];
+let EL=null, elMsg="";
+function elRecs(list){ return list.filter(a=>a.type==="elem").sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt)) }
+/* box per element from all answers: right +1 (max 6), wrong back to 1; due by gap */
+function elState(list){ const st={}; elRecs(list).forEach(a=>(a.items||[]).forEach(x=>{ if(!EL_BY[x.z]) return; const o=st[x.z]??={box:0,last:0,seen:true,placed:false};
+    const d=dayKey(a.endedAt); if(x.mode==="place"&&x.correct) o.placed=true; if(x.mode==="intro") return;
+    if(x.correct){ if(d!==o.lastRight) o.box=Math.min(6,o.box+1); o.lastRight=d } else o.box=Math.min(o.box,1); o.last=d }));
+  return st }
+function elCollected(st){ return ELEMENTS.filter(e=>(st[e.z]?.box||0)>=2) }
+function elFormulaOpen(st){ return ELEMENTS.filter(e=>e.q&&(st[e.z]?.box||0)>=2).length>=8 }
+function elDoneToday(list){ return elRecs(list).some(a=>a.act==="practice"&&dayKey(a.endedAt)===todayKey()) }
+function elTile(list){ const st=elState(list), got=elCollected(st).length, done=elDoneToday(list);
+  return {id:"elem",i:"⚗️",t:"ภูตธาตุ",s:done?`ฝึกแล้ววันนี้ ✓ · สะสม ${got}/${ELEMENTS.length}`:`วันละ 3 นาที · สะสม ${got}/${ELEMENTS.length}`,rew:done?"":"+XP",todo:!done,badge:done?"":"!"} }
+/* build today's queue: due ones first, then up to 3 new; each element gets the mode that fits its box */
+function elQueue(list){ const st=elState(list), t=todayKey(), due=[], fresh=[];
+  ELEMENTS.forEach(e=>{ const o=st[e.z]; if(!o){ fresh.push(e); return } if(o.box>=6) return; if(t-o.last>=EL_GAP[o.box]*DAY) due.push(e) });
+  const learnOrder=[...fresh].sort((a,b)=>a.z-b.z); const newOnes=learnOrder.slice(0,due.length>6?1:3);
+  const q=[]; newOnes.forEach(e=>{ q.push({z:e.z,mode:"intro"}); q.push({z:e.z,mode:"sym2name"}) });
+  const toPlace=ELEMENTS.filter(e=>st[e.z]&&st[e.z].box>=2&&!st[e.z].placed).slice(0,3);
+  due.filter(e=>!toPlace.includes(e)).slice(0,8).forEach(e=>{ const b=st[e.z].box; const m=b<=1?(Math.random()<.5?"sym2name":"name2sym"):b===2?"type":b===3?(Math.random()<.5?"use":"name2sym"):(Math.random()<.5?"use":"sym2name"); q.push({z:e.z,mode:m}) });
+  toPlace.forEach(e=>q.push({z:e.z,mode:"place"}));
+  if(elFormulaOpen(st)){ q.push({mode:"formula"}); q.push({mode:"formula"}) }
+  if(newOnes.length) newOnes.forEach(e=>q.push({z:e.z,mode:"type"}));
+  return q.slice(0,16) }
+function elBadge(e,size){ const c=EL_TYPES[e.t].c; return `<span class="elbadge" style="width:${size}px;height:${size}px;background:${c};font-size:${Math.round(size*0.38)}px"><i>${e.z}</i>${e.s}</span>` }
+function elGrid(st,opts){ opts=opts||{}; const cells=[];
+  const exists=(p,g)=>p===1?(g===1||g===18):p<=3?(g<=2||g>=13):p<=7;
+  for(let p=1;p<=7;p++) for(let g=1;g<=18;g++){ if(!exists(p,g)) { cells.push(`<span class="elc gap"></span>`); continue }
+    const e=ELEMENTS.find(x=>x.p===p&&x.g===g), o=e&&st[e.z], show=e&&(opts.all||o&&o.placed);
+    cells.push(`<button class="elc ${e?"has":""} ${show?"on":""}" ${opts.tap?`data-cell="${p}-${g}"`:e&&show?`data-el="${e.z}"`:"disabled"} style="${show?`background:${EL_TYPES[e.t].c}`:""}">${show?e.s:""}</button>`) }
+  const u=EL_BY[92], ou=st[92], showU=opts.all||ou&&ou.placed;
+  const act=`<div class="elgrid elrow2">${Array.from({length:3},(_,k)=>`<span class="elc gap">${k===0?`<span class="actl">แอกทิไนด์</span>`:""}</span>`).join("")}${Array.from({length:15},(_,k)=>k===3?`<button class="elc has ${showU?"on":""}" ${opts.tap?`data-cell="9-6"`:showU?`data-el="92"`:"disabled"} style="${showU?`background:${EL_TYPES.radio.c}`:""}">${showU?"U":""}</button>`:`<span class="elc"></span>`).join("")}</div>`;
+  return `<div class="elgridwrap"><div class="elgrid">${cells.join("")}</div>${act}</div>
+    <div class="legend">${Object.values(EL_TYPES).map(t=>`<span><i style="background:${t.c}"></i>${t.n}</span>`).join("")}</div>` }
+function elSheet(z){ const e=EL_BY[z];
+  sheet({icon:elBadge(e,84),title:`${e.n} (${e.s})`,read:`${e.n} สัญลักษณ์ ${e.s.split("").join(" ")}. ${e.trait}. ใช้ ${e.use}`,
+    html:`<p class="small" style="text-align:center">เลขอะตอม ${e.z} · ${EL_TYPES[e.t].n}${e.p<=7?` · คาบ ${e.p} หมู่ ${e.g}`:" · กลุ่มแอกทิไนด์"}${e.q?` · ชอบเป็นไอออน ${e.q>0?"+":"−"}${Math.abs(e.q)>1?Math.abs(e.q):""}`:""}</p>
+      <p class="factread">✨ ${esc(e.trait)}</p><p class="factread">🏠 เจอในชีวิตจริง: ${esc(e.use)}</p>`,actions:[{label:"ปิด",fn:closeSheet}]}) }
+function renderElem(){
+  const list=mine(), st=elState(list), got=elCollected(st).length;
+  if(EL) return renderElStep(list,st);
+  const done=elDoneToday(list), fo=elFormulaOpen(st);
+  $v.innerHTML=`<section class="card"><div class="todayhead"><span class="eyebrow">⚗️ ภูตธาตุ · สะสมแล้ว ${got}/${ELEMENTS.length}</span><button class="btn ghost small" id="elback">← กลับ</button></div>
+      <p class="small">ธาตุแต่ละตัวคือภูตที่มีนิสัยตามสมบัติจริง ฝึกวันละ 3 นาที ตัวไหนจำได้แล้วจะได้วางลงช่องของมันในตารางธาตุด้วยมือตัวเอง ตารางจะค่อยๆ เต็มไปด้วยสี${got>=ELEMENTS.length?"":" (ไม่ต้องท่องทั้งตาราง แค่ธาตุสำคัญ "+ELEMENTS.length+" ตัว)"}</p>
+      <div class="row"><button class="btn" id="elgo">${done?"ฝึกอีกรอบ (ไม่ได้ XP เพิ่ม)":"ฝึกวันนี้ · ราว 3 นาที"}</button></div>
+      ${elMsg?`<p class="small"><b>${esc(elMsg)}</b></p>`:""}</section>
+    <section class="card"><span class="eyebrow">ตารางธาตุสะสม · แตะภูตเพื่ออ่านการ์ด</span>${elGrid(st)}
+      <p class="small muted">โลหะอยู่ฝั่งซ้าย อโลหะอยู่ฝั่งขวา กึ่งโลหะอยู่ตามแนวขั้นบันไดตรงกลาง ลองสังเกตดูตอนตารางเริ่มเต็ม</p></section>
+    <section class="card"><span class="eyebrow">🧪 ห้องปรุงสาร (เขียนสูตรสารประกอบ)</span>
+      ${fo?`<p class="small">เปิดแล้ว! ในการฝึกแต่ละวันจะมีโจทย์เขียนสูตรสารประกอบ 2 ข้อ <button class="btn ghost small" id="elhow">ดูวิธีคิด</button></p>`
+        :`<p class="small">ปลดล็อกเมื่อสะสมภูตที่ชอบเป็นไอออนได้ 8 ตัว (ตอนนี้ ${ELEMENTS.filter(e=>e.q&&(st[e.z]?.box||0)>=2).length}/8) แล้วจะได้ฝึกเขียนสูตร เช่น NaCl, MgCl₂, Al₂O₃ จากประจุของไอออน</p>`}</section>`;
+  document.getElementById("elback").onclick=()=>{ elMsg=""; view="home"; location.hash="#home"; render() };
+  document.getElementById("elgo").onclick=()=>{ EL={q:elQueue(list),i:0,items:[],start:Date.now(),xpOn:!done}; if(!EL.q.length){ EL=null; elMsg="วันนี้ไม่มีภูตที่ต้องทบทวน เก่งมาก!"; return renderElem() } renderElem(); window.scrollTo({top:0}) };
+  const h=document.getElementById("elhow"); if(h) h.onclick=elFormulaHow;
+  $v.querySelectorAll("[data-el]").forEach(b=>b.onclick=()=>elSheet(+b.dataset.el));
+}
+function elFormulaHow(){ sheet({icon:"🧪",title:"เขียนสูตรสารประกอบจากประจุ",wide:true,read:"โลหะชอบเสียอิเล็กตรอนเป็นไอออนบวก อโลหะชอบรับอิเล็กตรอนเป็นไอออนลบ สารประกอบต้องมีประจุรวมเป็นศูนย์",
+  html:`<p>โลหะหมู่ 1, 2, 13 ชอบ<b>เสีย</b>อิเล็กตรอน กลายเป็นไอออนบวก +1, +2, +3 ส่วนอโลหะหมู่ 15, 16, 17 ชอบ<b>รับ</b>อิเล็กตรอน กลายเป็นไอออนลบ −3, −2, −1</p>
+    <p>สารประกอบต้องมี<b>ประจุรวมเป็นศูนย์</b> จึงต้องหาจำนวนไอออนที่ทำให้บวกกับลบหักล้างกันพอดี</p>
+    <div class="feedback usebox"><span>Na⁺ กับ Cl⁻ → 1 ต่อ 1 → <b>NaCl</b></span><span>Mg²⁺ กับ Cl⁻ → ต้องใช้ Cl 2 ตัว → <b>MgCl₂</b></span><span>Al³⁺ กับ O²⁻ → 2×(+3) = 3×(−2) → <b>Al₂O₃</b></span></div>
+    <p class="small muted">ทางลัด: สลับตัวเลขประจุไขว้ลงไปเป็นตัวห้อย (Al³⁺ O²⁻ → Al₂O₃) แล้วตัดทอนถ้าหารร่วมได้ (Mg²⁺ O²⁻ → Mg₂O₂ → MgO)</p>`,actions:[{label:"เข้าใจแล้ว",fn:closeSheet}]}) }
+const SUBS="₀₁₂₃₄₅₆₇₈₉";
+function elFormula(m,n){ const g=(a,b)=>b?g(b,a%b):a, a=Math.abs(n.q), b=m.q, k=g(a,b), x=a/k, y=b/k, sub=v=>v>1?String(v).split("").map(d=>SUBS[+d]).join(""):"";
+  return {right:m.s+sub(x)+n.s+sub(y), wrong:[m.s+sub(y)+n.s+sub(x), m.s+n.s, m.s+sub(a)+n.s+sub(b), n.s+sub(y)+m.s+sub(x)]} }
+function elMakeQ(st,item){ const e=item.z?EL_BY[item.z]:null, pool=ELEMENTS.filter(x=>x!==e), pick=(arr,n)=>arr.slice().sort(()=>Math.random()-.5).slice(0,n);
+  if(item.mode==="sym2name") return {e,prompt:`ภูต <b>${e.s}</b> คือธาตุอะไร`,opts:pick([e.n,...pick(pool,3).map(x=>x.n)],4),a:e.n};
+  if(item.mode==="name2sym") return {e,prompt:`พิมพ์สัญลักษณ์ของ <b>${e.n}</b>`,typed:true,a:e.s};
+  if(item.mode==="type") return {e,prompt:`<b>${e.n} (${e.s})</b> เป็นธาตุประเภทไหน`,opts:Object.values(EL_TYPES).map(t=>t.n),a:EL_TYPES[e.t].n};
+  if(item.mode==="use") return {e,prompt:`ภูตตัวไหน: “${esc(e.use)}”`,opts:pick([e.s+" "+e.n,...pick(pool,3).map(x=>x.s+" "+x.n)],4),a:e.s+" "+e.n};
+  if(item.mode==="place") return {e,prompt:`วาง <b>${e.n} (${e.s})</b> ลงในช่องของมัน`,place:true,a:`${e.p}-${e.g}`};
+  if(item.mode==="formula"){ const ms=ELEMENTS.filter(x=>x.q>0&&x.t==="metal"&&(st[x.z]?.box||0)>=2), ns=ELEMENTS.filter(x=>x.q<0&&(st[x.z]?.box||0)>=2); if(!ms.length||!ns.length) return null;
+    const m=pick(ms,1)[0], n=pick(ns,1)[0], f=elFormula(m,n), opts=[...new Set([f.right,...f.wrong])].slice(0,4);
+    return {e:null,prompt:`สารประกอบระหว่าง <b>${m.n} (${m.s}, ไอออน +${m.q})</b> กับ <b>${n.n} (${n.s}, ไอออน −${Math.abs(n.q)})</b> มีสูตรอย่างไร`,opts:pick(opts,opts.length),a:f.right,formula:true,m,n} }
+  return null }
+function renderElStep(list,st){
+  const E=EL; while(E.i<E.q.length&&!E.cur){ const it=E.q[E.i]; if(it.mode==="intro"){ E.cur={intro:true,e:EL_BY[it.z]}; break } const q=elMakeQ(st,it); if(q){ E.cur=q; E.t0=Date.now(); break } E.i++ }
+  if(E.i>=E.q.length) return elFinish();
+  const c=E.cur, prog=`<div class="progress"><i style="width:${Math.round(E.i/E.q.length*100)}%"></i></div>`;
+  if(c.intro){ const e=c.e; $v.innerHTML=`<section class="card">${prog}<span class="eyebrow">ภูตธาตุตัวใหม่!</span>
+      <div style="text-align:center">${elBadge(e,96)}<h2 style="margin:6px 0">${e.n} (${e.s})</h2><p class="small">เลขอะตอม ${e.z} · ${EL_TYPES[e.t].n}</p></div>
+      <p class="factread">✨ ${esc(e.trait)}</p><p class="factread">🏠 ${esc(e.use)}</p>
+      <p class="small muted">ลองพูดออกเสียงชื่อกับสัญลักษณ์ 1 รอบ: “${e.s.split("").join(" ")} — ${e.n}”</p>
+      <div class="row"><button class="btn" id="elnext">รู้จักแล้ว ไปต่อ</button></div></section>`;
+    document.getElementById("elnext").onclick=()=>{ E.items.push({z:e.z,mode:"intro",correct:true}); E.cur=null; E.i++; renderElStep(mine(),st) }; return }
+  const ans=E.ans;
+  const body=c.place?`${elGrid(st,{tap:true,placing:true})}`
+    :c.typed?`<div class="row" style="gap:8px"><input id="elin" class="numin" maxlength="3" autocomplete="off" autocapitalize="off" ${ans?"disabled":""} value="${esc(ans?ans.v:"")}" style="max-width:120px"><button class="btn" id="elsend" ${ans?"hidden":""}>ส่ง</button></div><p class="small muted">ตัวแรกพิมพ์ใหญ่ ตัวที่สองพิมพ์เล็ก เช่น Na</p>`
+    :`<div class="opts">${c.opts.map(o=>`<button class="opt ${ans?(o===c.a?"right":o===ans.v?"wrong":""):""}" data-elo="${esc(o)}" ${ans?"disabled":""}>${esc(o)}</button>`).join("")}</div>`;
+  $v.innerHTML=`<section class="card">${prog}<span class="eyebrow">⚗️ ภูตธาตุ · ${E.i+1}/${E.q.length}</span><p class="prompt">${c.prompt}</p>${body}
+    ${ans?`<div class="feedback"><b class="${ans.ok?"ok":"no"}">${ans.ok?"ถูกต้อง!":"ยังไม่ใช่"}${ans.ok?"":` · คำตอบคือ ${c.place?`คาบ ${c.e.p<=7?c.e.p:"แอกทิไนด์"} หมู่ ${c.e.g}`:esc(c.a)}`}</b>
+      ${c.e?`<span class="small">${elBadge(c.e,28)} ${esc(c.e.n)} (${c.e.s}) · ${EL_TYPES[c.e.t].n} · ${esc(c.e.trait)}</span>`:""}
+      ${c.formula?`<span class="small">${c.m.s} เป็นไอออน +${c.m.q} และ ${c.n.s} เป็นไอออน −${Math.abs(c.n.q)} ประจุรวมต้องเป็นศูนย์ จึงได้ ${c.a}</span><button class="btn ghost small" id="elhow2">ดูวิธีคิด</button>`:""}
+      ${c.place&&!ans.ok?`<span class="small">ใบ้: ${c.e.t==="metal"?"โลหะส่วนใหญ่อยู่ฝั่งซ้ายและตรงกลาง":c.e.t==="nonmetal"?"อโลหะอยู่ฝั่งขวาบน":c.e.t==="metalloid"?"กึ่งโลหะอยู่ตามแนวขั้นบันได":"ธาตุกัมมันตรังสีหนักๆ อยู่แถวล่างแยกออกมา"} · คาบ = แถว หมู่ = คอลัมน์</span>`:""}</div>
+      <div class="row"><button class="btn" id="elnext">ต่อไป</button></div>`:""}</section>`;
+  const give=(v,ok)=>{ E.ans={v,ok}; E.items.push({z:c.e?c.e.z:0,mode:c.formula?"formula":c.place?"place":c.typed?"name2sym":E.q[E.i].mode,correct:ok,timeSec:Math.round((Date.now()-E.t0)/1000),...(c.formula?{f:c.a}:{})}); renderElStep(mine(),st) };
+  $v.querySelectorAll("[data-elo]").forEach(b=>b.onclick=()=>give(b.dataset.elo,b.dataset.elo===c.a));
+  $v.querySelectorAll("[data-cell]").forEach(b=>b.onclick=()=>{ if(E.ans) return; give(b.dataset.cell,b.dataset.cell===c.a) });
+  const s=document.getElementById("elsend"), inp=document.getElementById("elin"); if(s){ const go=()=>{ const v=inp.value.trim(); if(!v) return; give(v,v===c.a) }; s.onclick=go; inp.onkeydown=e=>{ if(e.key==="Enter") go() }; if(!ans) inp.focus() }
+  const h2=document.getElementById("elhow2"); if(h2) h2.onclick=elFormulaHow;
+  const nx=document.getElementById("elnext"); if(nx) nx.onclick=()=>{ E.ans=null; E.cur=null; E.i++; renderElStep(mine(),st); window.scrollTo({top:0}) };
+}
+async function elFinish(){ const E=EL, list=mine(), before=elCollected(elState(list)).length, right=E.items.filter(x=>x.mode!=="intro"&&x.correct).length;
+  const xp=E.xpOn?right*2+10:0, now=new Date();
+  await saveAttempt({type:"elem",act:"practice",setId:"elem",topic:"ภูตธาตุ",items:E.items,startedAt:new Date(E.start).toISOString(),endedAt:now.toISOString(),durationSec:Math.round((now-E.start)/1000),correct:right,total:E.items.filter(x=>x.mode!=="intro").length,xp});
+  EL=null; const after=elCollected(elState(mine())).length;
+  elMsg=`ฝึกเสร็จ! ถูก ${right} ข้อ${xp?` · +${xp} XP`:""}${after>before?` · สะสมภูตใหม่ ${after-before} ตัว เข้าตารางแล้ว`:""}`;
+  renderElem(); if(after>before) setTimeout(()=>sheet({icon:"⚗️",title:`สะสมภูตธาตุได้ ${after}/${ELEMENTS.length}`,html:`<p>ภูตที่จำได้แล้วจะขึ้นสีในตารางธาตุ ลองสังเกตว่าแต่ละสีอยู่โซนไหนของตาราง</p>`,actions:[{label:"ดูตาราง",fn:closeSheet}]}),300) }
 
 function parentDash(list){
   if(!list.length) return "";
@@ -4065,7 +4232,7 @@ async function setupAsk(sum){ const skips=sum.skips||[], conf=sum.conf||[];
   };
 }
 
-function route(){ const h=location.hash.replace("#",""); if(h==="parent"){view="parent"} else if(h==="map"){view="map"} else if(h==="den"){view="den";denMsg=""} else if(!["session","intro","feedback","done","skip","send","vocab","mission","notes","words","adv"].includes(view)){view="home"} else if(view==="done"){view="home"} render() }
+function route(){ const h=location.hash.replace("#",""); if(h==="parent"){view="parent"} else if(h==="map"){view="map"} else if(h==="den"){view="den";denMsg=""} else if(!["session","intro","feedback","done","skip","send","vocab","mission","notes","words","adv","elem"].includes(view)){view="home"} else if(view==="done"){view="home"} render() }
 window.addEventListener("hashchange",route);
 route();
 </script>
