@@ -90,6 +90,14 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .celebrate{position:fixed;inset:0;z-index:50;background:rgba(10,20,18,.55);display:flex;align-items:center;justify-content:center;padding:16px}
 .celecard{position:relative;z-index:2;background:var(--card);border-radius:18px;padding:24px 20px;max-width:360px;width:100%;text-align:center;display:flex;flex-direction:column;gap:10px;animation:pop .35s ease-out}
 .celeicon{font-size:3.4rem;line-height:1}
+.sheetcard{text-align:left;max-height:86vh;overflow:auto;max-width:440px}.sheetcard.wide{max-width:560px}.sheetcard h2,.sheetcard .celeicon{text-align:center}
+.sheetx{position:absolute;top:8px;right:10px;border:0;background:transparent;font-size:1.2rem;color:var(--ink);cursor:pointer;padding:6px}
+.sheetbody p{line-height:1.7}.sheetact{justify-content:center;gap:8px;flex-wrap:wrap}
+.factread{font-size:1.08rem}.factbig{display:inline-block;font-size:4.2rem;line-height:1}
+.sheetbody textarea{width:100%;box-sizing:border-box;font:inherit;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)}
+.studiolist{display:flex;flex-direction:column;gap:8px}.studiocard{display:flex;gap:10px;align-items:center;text-align:left;padding:10px;border-radius:14px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;cursor:pointer}
+.studiocard.done{opacity:.7}.studiocard[disabled]{opacity:.5;cursor:default}.studiocard.ws{border-color:#e0a23c}
+.wsf{display:flex;flex-direction:column;gap:4px;margin:8px 0}
 .celeart{max-height:200px;object-fit:contain;border-radius:12px}
 @keyframes pop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
 .confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
@@ -637,6 +645,9 @@ function recallize(q){
 }
 /* exam style (first round has a written/fill-in part): level-3 questions, and level 2 in exam-style mixed sets, are answered
    by typing the number instead of choosing, whenever the options allow it. A question can opt out with "fill": false. */
+/* mixed sets alternate math and science (they were written subject by subject, so science sat at the end) */
+function mixOrder(qs){ const m=qs.filter(q=>!/^s/.test(q.spell||"")), sc=qs.filter(q=>/^s/.test(q.spell||"")), out=[]; const r=m.length/Math.max(1,sc.length);
+  let i=0,j=0; while(i<m.length||j<sc.length){ if(j>=sc.length||(i<m.length&&i<(j+1)*r)) out.push(m[i++]); else out.push(sc[j++]) } return out }
 function fillize(q,mixed){
   if(CAL.fillIn===false||q.fill===false||q.num) return q;
   if(!(q.fill===true||q.level>=3||mixed&&q.level>=2)) return q;
@@ -722,7 +733,7 @@ function progressOf(list){
   list.forEach(a=>{ const k=dayKey(a.endedAt);
     if(a.type==="daymode") return;
     if(a.type==="mission"||a.type==="teach"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* mission / teaching dad: XP only, not a daily unit */
-    if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood"||a.type==="adv") return;
+    if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood"||a.type==="adv"||a.type==="studio") return;
     if(a.type==="lab"||a.type==="labverdict"||a.type==="labquest"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
     if(a.type==="sweep"){ sweepDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* old-topic sweep: its own daily step, not a lesson unit */
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
@@ -891,7 +902,7 @@ function startSet(set, conceptFirst, perms, dueIds){
     ...set.practice.map(q=>({kind:"q",phase:"ตอบจากบทความ",q,passage:true})),
     {kind:"rate",phase:"ปิดท้าย"}
   ]:mixed?[
-    ...set.practice.map(q=>({kind:"q",phase:"ชุดผสมแบบข้อสอบ",q:fillize(q,true)})),
+    ...mixOrder(set.practice).map(q=>({kind:"q",phase:"ชุดผสมแบบข้อสอบ",q:fillize(q,true)})),
     {kind:"rate",phase:"ปิดท้าย"}
   ]:probe?[
     ...set.practice.map(q=>({kind:"q",phase:"ด่านสำรวจ",q:fillize(q)})),
@@ -1119,7 +1130,8 @@ function renderHome(){
     <button class="btn ghost" id="send-all">ส่งผลทั้งหมดให้พ่ออีกครั้ง</button>
     <p style="margin:12px 0 0">แอปรุ่น ${esc(BUILD)}</p></details>`:""}`;
   bindDayPanel(p); bindBuddySetup(); bindBuddyHero(); bindLetter(); bindGoal(list); bindTeach(); buddyNote="";
-  $v.querySelectorAll("[data-tile]").forEach(t=>t.onclick=()=>{ if(t.dataset.tile==="adv"){ homeOpen=null; advSel=advSel||"r1"; view="adv"; render(); window.scrollTo({top:0}); return } homeOpen=homeOpen===t.dataset.tile?null:t.dataset.tile; renderHome();
+  if(STUDIO&&!document.getElementById("sheet")) setTimeout(studioTeaser,700);
+  $v.querySelectorAll("[data-tile]").forEach(t=>t.onclick=()=>{ if(t.dataset.tile==="studio"){ studioOpen(); return } if(t.dataset.tile==="adv"){ homeOpen=null; advSel=advSel||"r1"; view="adv"; render(); window.scrollTo({top:0}); return } homeOpen=homeOpen===t.dataset.tile?null:t.dataset.tile; renderHome();
     const tp=document.getElementById("tpanel"); if(tp) tp.scrollIntoView({block:"nearest",behavior:"smooth"}) });
   $v.querySelectorAll("[data-mood]").forEach(m=>m.onclick=async()=>{ const now=new Date().toISOString();
     await saveAttempt({type:"mood",setId:"mood",mood:m.dataset.mood,topic:"ความพร้อมวันนี้: "+MOODS.find(x=>x[0]===m.dataset.mood)[2],startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
@@ -1540,7 +1552,7 @@ function renderStep(){
     <button class="btn" id="next">ต่อไป</button>`;
   }
   $v.innerHTML = `<section class="card">${header()}
-    <span class="row" style="gap:6px"><span class="chip l${q.level}">${LV[q.level]}${S.set.kind==="mixed"&&!ans?"":" · "+esc(q.topic)}</span>${q.en?`<span class="chip">English corner</span>`:""}</span>
+    <span class="row" style="gap:6px">${S.set.kind==="mixed"?`<span class="chip">${/^s/.test(q.spell||"")?"🔬 วิทย์":"📐 คณิต"}</span>`:""}<span class="chip l${q.level}">${LV[q.level]}${S.set.kind==="mixed"&&!ans?"":" · "+esc(q.topic)}</span>${q.en?`<span class="chip">English corner</span>`:""}</span>
     ${st.passage?passageDetails():""}
     <p class="prompt">${gloss(q.q)}</p>
     ${figHtml(q.fig)}
@@ -1895,6 +1907,7 @@ function homeTiles(list,p,pool){
   const g=activeGuest(); if(g){ const pr=guestProgress(g,list); T.push({id:"guest",i:g.item.e,t:"แขกพิเศษ",s:pr.done?"ได้แล้ว 🎉":`${pr.n}/${g.task.n} · ${esc(g.item.n)}`,rew:pr.done?"":`ได้${esc(g.item.n)}`,pr:pr.n/g.task.n,todo:!pr.done,badge:pr.done?"":"!",done:pr.done}) }
   const m=activeMission(); if(m){ const d=missionDone(m); T.push({id:"world",i:"🌏",t:"ภารกิจโลกจริง",s:d?"ทำแล้ว ✓":esc(m.title),rew:d?"":`+${m.xp||100} XP`,todo:!d,done:d}) }
   { const er=eggsReady(list).length, can=pairsToday(list)<labPairsPerDay(list); T.push({id:"lab",i:"🐉",t:"หุบเขามังกร",s:er?"ไข่ฟักแล้ว ไปดูกัน!":can?"วันนี้จับคู่ได้":"ไข่กำลังฟัก",rew:can?"ทำนายถูก +25 XP":"",todo:!!er||can,badge:er?"🐣":"",done:!er&&!can}) }
+  { const st=studioTile(list); if(st) T.push(st) }
   { const en=advEnergy(list), n=advUnits(list).length; T.push({id:"adv",i:"🌍",t:"ภารกิจกู้โลก",s:n?`พลังผจญภัย ${en.left}/${en.max}`:"ต้องมีคู่หูก่อน",rew:"",todo:!!(n&&en.left&&p.goalToday),badge:n&&en.left&&p.goalToday?String(en.left):""}) }
   const gl=goalOf(list); T.push({id:"goal",i:"🎯",t:"เป้าหมายเดือนนี้",s:gl?"ดูความคืบหน้า":"ยังไม่ได้ตั้ง",rew:gl?"":"รางวัลจริงที่เลือกเอง",todo:!gl,badge:gl?"":"!"});
   const wk=weekStart(todayKey()), told=list.some(a=>a.type==="teach"&&dayKey(a.endedAt)>=wk); T.push({id:"teach",i:"💬",t:"เล่าให้พ่อฟัง",s:told?"สัปดาห์นี้แล้ว ✓":"สัปดาห์ละครั้ง ราว 3 นาที",rew:told?"":`+50 XP${firstTeach?" · หมวกครู 🎓":""}`,todo:!told,badge:told?"":"!",done:told});
@@ -2382,7 +2395,12 @@ function factsHtml(kind,name,st){ const F=PET_FACTS[kind]; if(!F) return ""; con
   return `<div class="factbox"><div class="todayhead"><b>📘 การ์ดความรู้ของ${esc(name)}</b><span class="small muted">สะสมแล้ว ${got}/${total} ใบ จากคู่หูทุกตัว</span></div>
     <div class="factrow">${F.map((f,i)=>i<n?`<button class="fcard ${seen.has(kind+":"+i)||factOpen===i?"":"newf"} ${factOpen===i?"open":""}" data-fact="${i}"><span class="fnum">ใบที่ ${i+1}</span><span class="fpet">${petLook(kind,3)}</span><span class="small">${factOpen===i?"กำลังอ่าน":"แตะเพื่ออ่าน"}</span></button>`
       :`<div class="fcard locked"><span class="fnum">ใบที่ ${i+1}</span><span class="fpet">🔒</span><span class="small">ปลดล็อกเมื่อ${when[i]}</span></div>`).join("")}</div>
-    ${factOpen!=null&&factOpen<n?`<div class="ftext"><b>ใบที่ ${factOpen+1}:</b> ${esc(F[factOpen])}</div>`:""}</div>` }
+</div>` }
+/* a knowledge card opens as its own card: big picture, the text, read aloud, previous / next */
+function factSheet(kind,i,after){ const F=PET_FACTS[kind]||[], list=mine(), n=Math.min(3,growStage(growth(kind,list))), P=ALL_PETS.find(x=>x.k===kind);
+  try{ localStorage.setItem("fieldnote.factseen",JSON.stringify([...new Set([...factSeen(),kind+":"+i])])) }catch(e){}
+  sheet({icon:`<span class="factbig">${petLook(kind,3)}</span>`,title:`การ์ดความรู้ใบที่ ${i+1} · ${P?P.n:""}`,read:F[i],html:`<p class="factread">${esc(F[i])}</p>`,
+    actions:[...(i>0?[{label:"← ใบก่อน",ghost:true,fn:()=>factSheet(kind,i-1,after)}]:[]),...(i+1<n?[{label:"ใบถัดไป →",fn:()=>factSheet(kind,i+1,after)}]:[{label:"เข้าใจแล้ว",fn:()=>{ closeSheet(); if(after) after() }}])]}) }
 function bondHtml(kind,name,list){ const pts=bondPts(kind,list), lv=Math.floor(pts/BOND_STEP)+1, inLv=pts%BOND_STEP;
   return `<div class="bond"><span class="small"><b>ความผูกพัน ❤️ ระดับ ${lv}</b></span><div class="progress"><i style="width:${Math.round(inLv/BOND_STEP*100)}%;background:#ff6f91"></i></div></div>
     <p class="small muted" style="margin:2px 0 0">ลูบ${esc(name)}ได้ทุกวัน และทุกวันที่ฝึก ความผูกพันจะเพิ่มขึ้น ไม่มีวันลดลง</p>` }
@@ -2494,8 +2512,7 @@ function renderDen(){
     lsSet("fieldnote.room",r); denSel=null; reRender() });
   $v.querySelectorAll("[data-wish]").forEach(x=>x.onclick=()=>{ lsSet("fieldnote.wish",x.dataset.wish); denMsg="ตั้งเป็นของที่อยากได้แล้ว ดูความคืบหน้าได้ที่หน้าแรก"; reRender() });
   on("arrange",()=>{ denArrange=!denArrange; denSel=null; reRender() });
-  $v.querySelectorAll("[data-fact]").forEach(c=>c.onclick=()=>{ const i=+c.dataset.fact; factOpen=factOpen===i?null:i;
-    try{ localStorage.setItem("fieldnote.factseen",JSON.stringify([...new Set([...factSeen(),b.kind+":"+i])])) }catch(e){} reRender() });
+  $v.querySelectorAll("[data-fact]").forEach(c=>c.onclick=()=>factSheet(b.kind,+c.dataset.fact,reRender));
   { const sr=document.getElementById("szr"); if(sr&&denSel){ const el=denSel.t==="p"?$v.querySelector(`#props [data-pi="${denSel.i}"]`):$v.querySelector(`#petpat [data-wi="${denSel.i}"]`), base=el?parseFloat(el.style.fontSize)/((denSel.t==="p"?room().props[denSel.i]:room().wear[b.kind][denSel.i]).s||1):0;
     sr.oninput=()=>{ if(el) el.style.fontSize=Math.round(base*sr.value/100)+"px" };
     sr.onchange=()=>{ const r=room(), o2=denSel.t==="p"?r.props[denSel.i]:(r.wear[b.kind]||[])[denSel.i]; if(!o2) return; o2.s=sr.value/100; lsSet("fieldnote.room",r) } } }
@@ -3601,6 +3618,7 @@ async function advEnd(res){
   const L2=mine(), first=res==="win"&&!advCleared(L2).has(st.id), now=new Date().toISOString();
   B.stars=res!=="win"?0:B.slept===0&&B.round<=B.par?3:B.slept<=1?2:1;
   await saveAttempt({type:"adv",act:"battle",setId:"adv-"+st.id,stage:st.id,win:res==="win",stars:B.stars,turns:B.round,team:B.team.map(x=>x.uid),topic:"ภารกิจกู้โลก: "+st.n,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
+  if(res==="win") setTimeout(()=>sheet({icon:"📘",title:"เรื่องจริงของด่านนี้",read:st.fact,html:`<p class="factread">${esc(st.fact)}</p><p class="small muted">${"⭐".repeat(B.stars)}${"☆".repeat(3-B.stars)} · ชนะแล้วแม่น้ำช่วงนี้ใสขึ้น</p>`,actions:[{label:"เก็บความรู้นี้ไว้",fn:closeSheet}]}),900/(advSpeed||1));
   if(res==="win") B.reward=`ทุกตัวที่ออกไปได้ EXP +${3+(st.id==="r5"?3:0)} (ครบ 6 EXP เลเวลขึ้น 1)${first?" · ครั้งแรกที่ชนะด่านนี้ แม่น้ำช่วงนี้ใสขึ้นแล้ว":""}`;
   renderAdvBattle(mine()) }
 
@@ -3617,6 +3635,65 @@ function xpSourceCard(list){
     <div class="xpbar">${[["new","#2f6f8f","บทเรียนใหม่"],["review","#7fb6d6","ทบทวน/ศัพท์"],["replay","#f0a04b","ทำชุดเดิมซ้ำ"],["other","#c9a6ff","อื่นๆ"]].map(([k,c])=>g[k]?`<i style="width:${pc(g[k])}%;background:${c}"></i>`:"").join("")}</div>
     <p class="small muted" style="margin:4px 0 0">บทเรียนใหม่ ${g.new} · ทบทวน/ศัพท์ ${g.review} · ทำชุดเดิมซ้ำ ${g.replay} · อื่นๆ ${g.other}${cut?` · ถูกหักตามกติกากันปั๊ม ${cut}`:""} · ใช้ไป ${spent}
     ${adv.length?` · ภารกิจกู้โลก ${adv.length} ครั้ง ชนะ ${wins}`:""}</p></div>` }
+
+/* ---------- pop-up sheet (father, 8 Nov): knowledge and important moments open in their own card, so they are not lost
+   in a long page. One sheet at a time; closes with ✕, the backdrop, or Esc; can read itself aloud in Thai. */
+function sayTh(text){ try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.lang="th-TH"; const v=thVoice(); if(v){ u.voice=v; u.lang=v.lang } u.rate=0.95; speechSynthesis.speak(u) }catch(e){} }
+function closeSheet(){ const s=document.getElementById("sheet"); if(s){ s.remove(); try{ speechSynthesis.cancel() }catch(e){} document.removeEventListener("keydown",sheetKey) } }
+function sheetKey(e){ if(e.key==="Escape") closeSheet() }
+function sheet({icon,title,html,read,actions,wide}){
+  closeSheet(); const d=document.createElement("div"); d.id="sheet"; d.className="celebrate"; d.setAttribute("role","dialog"); d.setAttribute("aria-modal","true"); d.setAttribute("aria-label",title||"");
+  d.innerHTML=`<div class="celecard sheetcard ${wide?"wide":""}"><button class="sheetx" type="button" aria-label="ปิด">✕</button>
+    ${icon?`<div class="celeicon">${icon}</div>`:""}${title?`<h2>${esc(title)}</h2>`:""}<div class="sheetbody">${html||""}</div>
+    <div class="row sheetact">${read?`<button class="btn ghost small" data-sh="read">🔊 อ่านให้ฟัง</button>`:""}${(actions||[]).map((a,i)=>`<button class="btn ${a.ghost?"ghost":""}" data-sh="${i}" ${a.disabled?"disabled":""}>${a.label}</button>`).join("")}</div></div>`;
+  document.body.appendChild(d); document.addEventListener("keydown",sheetKey);
+  d.addEventListener("click",e=>{ if(e.target===d||e.target.closest(".sheetx")) return closeSheet(); const b=e.target.closest("[data-sh]"); if(!b) return;
+    if(b.dataset.sh==="read") return sayTh(read); const a=(actions||[])[+b.dataset.sh]; if(a&&a.fn) a.fn(d) });
+  const f=d.querySelector(".sheetbody textarea,.sheetbody input")||d.querySelector(".sheetx"); try{ f.focus({preventScroll:true}) }catch(e){}
+  return d }
+
+/* ---------- สตูดิโอเกมของหนู: a teaser now, one short "designer's note" each weekday, a design workshop on Saturday ---------- */
+const STUDIO=CONTENT.studio||null;
+function studioRecs(list){ return list.filter(a=>a.type==="studio") }
+function studioCards(list){ if(!STUDIO) return []; const t=todayKey(), done=new Set(studioRecs(list).filter(a=>a.act==="card").map(a=>a.card));
+  return STUDIO.cards.map((c,i)=>({...c,i,open:dayKey(c.day+"T00:00:00+07:00")<=t,done:done.has(c.day)})) }
+function studioWorkshopOpen(){ return STUDIO&&STUDIO.workshop&&dayKey(STUDIO.workshop.day+"T00:00:00+07:00")<=todayKey() }
+function studioTile(list){ if(!STUDIO) return null; const cs=studioCards(list), due=cs.filter(c=>c.open&&!c.done).length, ws=studioWorkshopOpen(), wsDone=studioRecs(list).some(a=>a.act==="workshop");
+  if(wsDone&&!due) return {id:"studio",i:"🎮",t:"สตูดิโอเกม",s:"ส่งแบบแล้ว รอดูของจริง",rew:"",todo:false};
+  const d=new Date(STUDIO.opens+"T00:00:00+07:00");
+  return {id:"studio",i:"🎮",t:"สตูดิโอเกม",s:ws?"เวิร์กช็อปเปิดแล้ว!":due?`เกร็ดนักออกแบบ ${due} ใบรออ่าน`:`เปิด${d.toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"short"})}`,rew:"+10 ต่อใบ",todo:!!(due||ws&&!wsDone),badge:due?String(due):ws&&!wsDone?"!":""} }
+function studioTeaser(){ if(!STUDIO||ls("fieldnote.studioTeaser",false)||view!=="home"||document.querySelector(".celebrate")) return; lsSet("fieldnote.studioTeaser",true);
+  sheet({icon:"🎮",title:STUDIO.title,html:`<p>${esc(STUDIO.teaser)}</p>`,read:STUDIO.teaser,actions:[{label:"อ่านเกร็ดใบแรก",fn:()=>studioOpen()},{label:"ไว้ทีหลัง",ghost:true,fn:closeSheet}]}) }
+function studioOpen(){ const list=mine(), cs=studioCards(list), next=cs.find(c=>c.open&&!c.done);
+  if(next) return studioCard(next); if(studioWorkshopOpen()&&!studioRecs(list).some(a=>a.act==="workshop")) return studioWorkshop(); studioShelf() }
+function studioShelf(){ const list=mine(), cs=studioCards(list), ws=STUDIO.workshop, wsDone=studioRecs(list).some(a=>a.act==="workshop");
+  const d=sheet({icon:"🎮",title:STUDIO.title,wide:true,html:`<p class="small">${esc(STUDIO.teaser)}</p>
+    <div class="studiolist">${cs.map(c=>`<button class="studiocard ${c.done?"done":""}" data-sc="${c.i}" ${c.open?"":"disabled"}><span style="font-size:1.6rem">${c.open?c.icon:"🔒"}</span>
+      <span><b>${esc(c.title)}</b><br><span class="small muted">${c.done?"อ่านและตอบแล้ว ✓":c.open?"แตะเพื่ออ่าน (+10 XP)":"เปิด "+new Date(c.day+"T00:00:00+07:00").toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})}</span></span></button>`).join("")}
+      ${ws?`<button class="studiocard ws ${wsDone?"done":""}" data-sc="ws" ${studioWorkshopOpen()?"":"disabled"}><span style="font-size:1.6rem">${studioWorkshopOpen()?ws.icon:"🔒"}</span><span><b>${esc(ws.title)}</b><br><span class="small muted">${wsDone?"ส่งแบบแล้ว ✓ รอพ่ออนุมัติแล้ว Claude จะสร้างให้":studioWorkshopOpen()?"เปิดแล้ว!":"เปิด "+new Date(ws.day+"T00:00:00+07:00").toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"short"})}</span></span></button>`:""}</div>`,
+    actions:[{label:"ปิด",ghost:true,fn:closeSheet}]});
+  d.querySelectorAll("[data-sc]").forEach(b=>b.onclick=()=>{ if(b.dataset.sc==="ws") return studioWorkshop(); studioCard(cs[+b.dataset.sc]) }) }
+function studioCard(c){ const list=mine(), rec=studioRecs(list).find(a=>a.act==="card"&&a.card===c.day), draft=ls("fieldnote.studioDraft."+c.day,"");
+  sheet({icon:c.icon,title:c.title,read:c.body+" "+c.ask,html:`<p>${esc(c.body)}</p><div class="usebox feedback"><b>✍️ ลองคิด</b><span class="small">${esc(c.ask)}</span>
+      ${rec?`<span class="small"><b>คำตอบของหนู:</b> ${esc(rec.answer)}</span>`:`<textarea id="sc-ans" rows="3" maxlength="400" placeholder="พิมพ์สั้นๆ ไม่มีถูกผิด">${esc(draft)}</textarea>`}</div>`,
+    actions:rec?[{label:"ดูทั้งหมด",ghost:true,fn:studioShelf},{label:"ปิด",fn:closeSheet}]:[{label:"ส่งคำตอบ +10 XP",fn:async d=>{ const v=(d.querySelector("#sc-ans").value||"").trim(); if(v.length<2){ d.querySelector("#sc-ans").focus(); return }
+      const now=new Date().toISOString(); await saveAttempt({type:"studio",act:"card",card:c.day,setId:"studio-"+c.day,topic:"สตูดิโอเกม: "+c.title,answer:v.slice(0,400),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:10,items:[]});
+      lsSet("fieldnote.studioDraft."+c.day,""); closeSheet(); render();
+      sheet({icon:"🌟",title:"เก็บเกร็ดนักออกแบบแล้ว",html:`<p>+10 XP · ${studioCards(mine()).filter(x=>x.done).length}/${STUDIO.cards.length} ใบ</p><p class="small muted">เก็บครบก่อนวันเสาร์ จะพร้อมออกแบบเขตใหม่เต็มที่</p>`,actions:[{label:"ดูทั้งหมด",ghost:true,fn:studioShelf},{label:"เยี่ยม!",fn:closeSheet}]}) }},{label:"ไว้ทีหลัง",ghost:true,fn:closeSheet}]});
+  const ta=document.getElementById("sc-ans"); if(ta) ta.oninput=()=>lsSet("fieldnote.studioDraft."+c.day,ta.value) }
+function studioWorkshop(){ const W=STUDIO.workshop, list=mine(), rec=studioRecs(list).find(a=>a.act==="workshop"), dr=ls("fieldnote.studioWS",{});
+  const d=sheet({icon:W.icon,title:W.title,wide:true,read:W.intro,html:`<p class="small">${esc(W.intro)}</p>${W.fields.map(f=>`<label class="wsf"><b class="small">${esc(f.label)}</b>
+      ${rec?`<span class="small">${esc((rec.answers||{})[f.id]||"-")}</span>`:`<textarea data-wf="${f.id}" rows="2" maxlength="500" placeholder="${esc(f.ph||"")}">${esc(dr[f.id]||"")}</textarea>`}</label>`).join("")}`,
+    actions:rec?[{label:"ปิด",fn:closeSheet}]:[{label:"ส่งแบบให้พ่อกับ Claude",fn:async d=>{ const ans={}; d.querySelectorAll("[data-wf]").forEach(t=>ans[t.dataset.wf]=t.value.trim().slice(0,500));
+      if(Object.values(ans).filter(Boolean).length<3){ alertSoft(d,"เขียนอย่างน้อย 3 ช่องก่อนนะ"); return }
+      const now=new Date().toISOString(); await saveAttempt({type:"studio",act:"workshop",setId:"studio-ws-"+W.day,topic:"สตูดิโอเกม: "+W.title,answers:ans,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:30,items:[]});
+      lsSet("fieldnote.studioWS",{}); closeSheet(); render();
+      sheet({icon:"🎉",title:"ส่งแบบแล้ว!",html:`<p>+30 XP · พ่อจะดูแบบของหนู แล้ว Claude จะสร้างเขตใหม่ตามแบบ อย่าลืมกดส่งผลให้พ่อด้วยนะ</p>`,actions:[{label:"เยี่ยม!",fn:closeSheet}]}) }},{label:"เก็บไว้ทำต่อ",ghost:true,fn:closeSheet}]});
+  d.querySelectorAll("[data-wf]").forEach(t=>t.oninput=()=>{ const o=ls("fieldnote.studioWS",{}); o[t.dataset.wf]=t.value; lsSet("fieldnote.studioWS",o) }) }
+function alertSoft(root,msg){ let p=root.querySelector(".sheetmsg"); if(!p){ p=document.createElement("p"); p.className="small sheetmsg"; root.querySelector(".sheetbody").appendChild(p) } p.innerHTML=`<b>${esc(msg)}</b>` }
+function studioParent(list){ const r=studioRecs(list).slice().sort((a,b)=>new Date(b.endedAt)-new Date(a.endedAt)); if(!r.length) return "";
+  return `<div><span class="eyebrow">🎮 สตูดิโอเกม · คำตอบล่าสุดของน้อง</span>${r.slice(0,3).map(a=>a.act==="workshop"?`<p class="small"><b>แบบเขตใหม่:</b> ${esc(Object.values(a.answers||{}).filter(Boolean).join(" · ").slice(0,300))}</p>`
+    :`<p class="small"><b>${esc((a.topic||"").replace("สตูดิโอเกม: ",""))}:</b> “${esc(a.answer)}”</p>`).join("")}</div>` }
 
 function parentDash(list){
   if(!list.length) return "";
@@ -3674,6 +3751,7 @@ function parentDash(list){
       <div class="legend">${DAY_GROUPS.map(([k,n,c])=>`<span><i style="background:${c}"></i>${n}</span>`).join("")}</div></div>
     ${readinessCard(list)}
     ${xpSourceCard(list)}
+    ${studioParent(list)}
     ${strip?`<div><span class="eyebrow">สถานะเรื่องที่ฝึกแล้ว · เขียวเข้ม=ชำนาญ เขียว=ฝึกหัด ส้ม=เริ่มจาง แดง=ย้อนคาถาเก่าแล้วลืม</span><div class="spstrip">${strip}</div></div>`:""}
   </div>` }
 
