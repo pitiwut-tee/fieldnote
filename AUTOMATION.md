@@ -228,8 +228,8 @@ undermine interest (Deci, Koestner & Ryan 1999) while self-set goals help (Locke
 
 ## สตูดิโอเกมของหนู (content/studio.json, from 9 Nov 2026)
 - **What it is:** a game-design track the father approved.
-  - One short "designer's note" card each weekday. Each card has a reflection question; the answer gives 10 XP.
-  - A design workshop each Saturday, worth 30 XP.
+  - One short "designer's note" card each day Mon–Sat. Each card has a reflection question; the answer gives 10 XP.
+  - A design workshop each **Sunday**, worth 30 XP. The father moved it so he can watch.
 - **Records:**
   - `type:"studio"`, `act:"card"` with `card` (date) and `answer`.
   - `act:"workshop"` with `answers` (field id → text).
@@ -237,7 +237,7 @@ undermine interest (Deci, Koestner & Ryan 1999) while self-set goals help (Locke
 - **Each run:** read new studio answers.
   - Quote the best one (short) in the father's notes.
   - If a workshop design arrived, summarise it for the father as a proposal. Do not build it until he approves.
-- **Before Monday of each week:** add that week's 5 cards and the Saturday workshop to `studio.json`.
+- **Before Monday of each week:** add that week's 6 cards (Mon–Sat; Saturday's card prepares for the workshop) and the Sunday workshop to `studio.json`.
   - Topics, building on what she wrote: core loop, motivation, balance with averages, science-true weaknesses, playtesting, ethics (no gacha, no guilt), flowcharts, if/then rules, debugging, simple probability.
   - Each card: ≤ 120 Thai words plus one open question. Link to her lessons where honest (statistics, probability, the design-and-technology and computing parts of the round-2 exam).
   - Counts toward the 3-new-sets limit as one item.
