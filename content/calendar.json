@@ -72,13 +72,14 @@
   "sci-solution-2",
   "math-stats-3",
   "sci-separation-1",
+  "math-ratio-1",
   "math-stats-5",
   "sci-solution-3",
   "math-stats-1",
   "sci-solution-4",
   "sci-solution-5"
  ],
- "lessonQueueNote": "School order (her school's term-2 workbook): statistics first (she missed a week), science midterm = solutions + separation. The content run updates this queue.",
+ "lessonQueueNote": "School order (her school's term-2 workbook): statistics first (she missed a week), science midterm = solutions + separation. The content run updates this queue. (2026-11-08 run: math-ratio-1 added after sci-separation-1 because ratio questions were missed twice in the mixed set.)",
  "sweepFrom": "2026-11-09",
  "dailyMinutes": {
   "school": "45–60",
