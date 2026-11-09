@@ -771,7 +771,7 @@ function progressOf(list){
   list.forEach(a=>{ const k=dayKey(a.endedAt);
     if(a.type==="daymode") return;
     if(a.type==="mission"||a.type==="teach"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* mission / teaching dad: XP only, not a daily unit */
-    if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood"||a.type==="adv"||a.type==="studio"||a.type==="elem"||a.type==="save"||a.type==="card"||a.type==="wish") return;
+    if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood"||a.type==="adv"||a.type==="studio"||a.type==="elem"||a.type==="save"||a.type==="card"||a.type==="wish"||a.type==="chem") return;
     if(a.type==="lab"||a.type==="labverdict"||a.type==="labquest"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
     if(a.type==="sweep"){ sweepDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* old-topic sweep: its own daily step, not a lesson unit */
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
@@ -3960,6 +3960,9 @@ function studioRewrite(qi){ const W=STUDIO.rewrite, list=mine(), qs=rewriteToday
       closeSheet(); render(); sheet({icon:"📗",title:"เขียนคู่มือแล้ว!",html:`<p>${dn?"ส่งเพิ่มแล้ว (XP ได้วันละครั้ง)":"+10 XP"} · พ่อจะได้อ่านคู่มือของเธอด้วย</p>`,actions:[{label:"เยี่ยม!",fn:closeSheet}]}) }},{label:"ไว้ทีหลัง",ghost:true,fn:closeSheet}]});
   d.querySelectorAll("[data-rq]").forEach(b=>b.onclick=()=>studioRewrite(+b.dataset.rq)) }
 function alertSoft(root,msg){ let p=root.querySelector(".sheetmsg"); if(!p){ p=document.createElement("p"); p.className="small sheetmsg"; root.querySelector(".sheetbody").appendChild(p) } p.innerHTML=`<b>${esc(msg)}</b>` }
+function chemParent(list){ const r=chemRecs(list); if(!r.length) return ""; const b=fxBest(list), wrong={};
+  r.slice(-6).forEach(a=>(a.items||[]).filter(x=>!x.correct).forEach(x=>{ wrong[a.level]=(wrong[a.level]||0)+1 }));
+  return `<div><span class="eyebrow">🧪 ห้องปรุงสาร (เขียนสูตรและเรียกชื่อสาร)</span><p class="small">${FX_LEVELS.map(l=>b[l.L]!=null?`ด่าน ${l.L} ${esc(l.t)}: ดีที่สุด ${b[l.L]}/8${wrong[l.L]?` (พลาดล่าสุด ${wrong[l.L]} ข้อ)`:""}`:"").filter(Boolean).join(" · ")}</p></div>` }
 function wishParent(list){ const P=wishProgress(list), got=wishRecs(list).filter(r=>r.act==="claim").slice(-3);
   if(!P&&!got.length) return ""; const opts=P?Object.keys(WISH_GOALS).filter(g=>!P.st.goals.includes(g)):[];
   return `<div><span class="eyebrow">🎁 ภารกิจอยากได้ (ระบบเลือกเป้าหมายจากจุดที่น้องยังต้องฝึก พ่อเปลี่ยนได้)</span>
@@ -4031,7 +4034,7 @@ function elQueue(list){ const st=elState(list), t=todayKey(), due=[], fresh=[];
   const toPlace=ELEMENTS.filter(e=>st[e.z]&&!st[e.z].placed).slice(0,3);
   due.filter(e=>!toPlace.includes(e)).slice(0,8).forEach(e=>{ const b=st[e.z].box; const m=b<=1?(Math.random()<.5?"sym2name":"name2sym"):b===2?"type":b===3?(Math.random()<.5?"use":"name2sym"):(Math.random()<.5?"use":"sym2name"); q.push({z:e.z,mode:m}) });
   toPlace.forEach(e=>q.push({z:e.z,mode:"place"}));
-  if(elFormulaOpen(st)){ q.push({mode:"formula"}); q.push({mode:"formula"}) }
+  { const b=fxBest(list), lv=fxTried(list).filter(L=>(b[L]||0)>=6); if(lv.length){ q.push({mode:"fx",L:fxOne(lv)}); q.push({mode:"fx",L:fxOne(lv)}) } else if(elFormulaOpen(st)){ q.push({mode:"fx",L:1}) } }
   if(newOnes.length) newOnes.forEach(e=>q.push({z:e.z,mode:"type"}));
   return q.slice(0,16) }
 function elBadge(e,size){ const c=EL_TYPES[e.t].c; return `<span class="elbadge" style="width:${size}px;height:${size}px;background:${c};font-size:${Math.round(size*0.38)}px"><i>${e.z}</i>${e.s}</span>` }
@@ -4059,12 +4062,10 @@ function renderElem(){
     <section class="card"><span class="eyebrow">ตารางธาตุสะสม · วางแล้ว ${Object.values(st).filter(o=>o.placed).length} · จำได้แล้ว ${got} · แตะภูตเพื่ออ่านการ์ด</span>${elGrid(st)}
       <p class="small muted">ภูตตัวใหม่จะได้วางลงตารางตั้งแต่วันแรก สีจางแปลว่ายังใหม่ พอจำได้แล้ว (ตอบถูกข้ามวัน) สีจะเข้มขึ้น${got?"":" · ยังว่างอยู่? กด “ฝึกวันนี้” แล้ววางภูต 3 ตัวแรกได้เลย"}</p>
       <p class="small muted">โลหะอยู่ฝั่งซ้าย อโลหะอยู่ฝั่งขวา กึ่งโลหะอยู่ตามแนวขั้นบันไดตรงกลาง ลองสังเกตดูตอนตารางเริ่มเต็ม</p></section>
-    <section class="card"><span class="eyebrow">🧪 ห้องปรุงสาร (เขียนสูตรสารประกอบ)</span>
-      ${fo?`<p class="small">เปิดแล้ว! ในการฝึกแต่ละวันจะมีโจทย์เขียนสูตรสารประกอบ 2 ข้อ <button class="btn ghost small" id="elhow">ดูวิธีคิด</button></p>`
-        :`<p class="small">ปลดล็อกเมื่อสะสมภูตที่ชอบเป็นไอออนได้ 8 ตัว (ตอนนี้ ${ELEMENTS.filter(e=>e.q&&(st[e.z]?.box||0)>=2).length}/8) แล้วจะได้ฝึกเขียนสูตร เช่น NaCl, MgCl₂, Al₂O₃ จากประจุของไอออน</p>`}</section>`;
+    ${fxRoomHtml(list)}`;
   document.getElementById("elback").onclick=()=>{ elMsg=""; view="home"; location.hash="#home"; render() };
   document.getElementById("elgo").onclick=()=>{ EL={q:elQueue(list),i:0,items:[],start:Date.now(),xpOn:!done}; if(!EL.q.length){ EL=null; elMsg="วันนี้ไม่มีภูตที่ต้องทบทวน เก่งมาก!"; return renderElem() } renderElem(); window.scrollTo({top:0}) };
-  const h=document.getElementById("elhow"); if(h) h.onclick=elFormulaHow;
+  $v.querySelectorAll("[data-fx]").forEach(b=>b.onclick=()=>{ const L=+b.dataset.fx; fxHow(L,()=>fxStart(L)) });
   $v.querySelectorAll("[data-el]").forEach(b=>b.onclick=()=>elSheet(+b.dataset.el));
 }
 function elFormulaHow(){ sheet({icon:"🧪",title:"เขียนสูตรสารประกอบจากประจุ",wide:true,read:"โลหะชอบเสียอิเล็กตรอนเป็นไอออนบวก อโลหะชอบรับอิเล็กตรอนเป็นไอออนลบ สารประกอบต้องมีประจุรวมเป็นศูนย์",
@@ -4081,6 +4082,7 @@ function elMakeQ(st,item){ const e=item.z?EL_BY[item.z]:null, pool=ELEMENTS.filt
   if(item.mode==="type") return {e,prompt:`<b>${e.n} (${e.s})</b> เป็นธาตุประเภทไหน`,opts:Object.values(EL_TYPES).map(t=>t.n),a:EL_TYPES[e.t].n};
   if(item.mode==="use") return {e,prompt:`ภูตตัวไหน: “${esc(e.use)}”`,opts:pick([e.s+" "+e.n,...pick(pool,3).map(x=>x.s+" "+x.n)],4),a:e.s+" "+e.n};
   if(item.mode==="place") return {e,prompt:`วาง <b>${e.n} (${e.s})</b> ลงในช่องของมัน`+((st[e.z]?.box||0)<2?`<br><span class="small muted">ใบ้: เลขอะตอม ${e.z} · ${e.p<=7?`แถวที่ ${e.p} (คาบ) คอลัมน์ที่ ${e.g} (หมู่)`:"แถวแอกทิไนด์ด้านล่าง"}</span>`:""),place:true,a:`${e.p}-${e.g}`};
+  if(item.mode==="fx"){ const q=fxQ(item.L); return {e:null,...q} }
   if(item.mode==="formula"){ const ms=ELEMENTS.filter(x=>x.q>0&&x.t==="metal"&&(st[x.z]?.box||0)>=2), ns=ELEMENTS.filter(x=>x.q<0&&(st[x.z]?.box||0)>=2); if(!ms.length||!ns.length) return null;
     const m=pick(ms,1)[0], n=pick(ns,1)[0], f=elFormula(m,n), opts=[...new Set([f.right,...f.wrong])].slice(0,4);
     return {e:null,prompt:`สารประกอบระหว่าง <b>${m.n} (${m.s}, ไอออน +${m.q})</b> กับ <b>${n.n} (${n.s}, ไอออน −${Math.abs(n.q)})</b> มีสูตรอย่างไร`,opts:pick(opts,opts.length),a:f.right,formula:true,m,n} }
@@ -4099,20 +4101,136 @@ function renderElStep(list,st){
   const body=c.place?`${elGrid(st,{tap:true,placing:true})}`
     :c.typed?`<div class="row" style="gap:8px"><input id="elin" class="numin" maxlength="3" autocomplete="off" autocapitalize="off" ${ans?"disabled":""} value="${esc(ans?ans.v:"")}" style="max-width:120px"><button class="btn" id="elsend" ${ans?"hidden":""}>ส่ง</button></div><p class="small muted">ตัวแรกพิมพ์ใหญ่ ตัวที่สองพิมพ์เล็ก เช่น Na</p>`
     :`<div class="opts">${c.opts.map(o=>`<button class="opt ${ans?(o===c.a?"right":o===ans.v?"wrong":""):""}" data-elo="${esc(o)}" ${ans?"disabled":""}>${esc(o)}</button>`).join("")}</div>`;
-  $v.innerHTML=`<section class="card">${prog}<span class="eyebrow">⚗️ ภูตธาตุ · ${E.i+1}/${E.q.length}</span><p class="prompt">${c.prompt}</p>${body}
+  $v.innerHTML=`<section class="card">${prog}<span class="eyebrow">${E.fx?`🧪 ห้องปรุงสาร ด่าน ${E.fx}`:"⚗️ ภูตธาตุ"} · ${E.i+1}/${E.q.length}</span><p class="prompt">${c.prompt}</p>${body}
     ${ans?`<div class="feedback"><b class="${ans.ok?"ok":"no"}">${ans.ok?"ถูกต้อง!":"ยังไม่ใช่"}${ans.ok?"":` · คำตอบคือ ${c.place?`คาบ ${c.e.p<=7?c.e.p:"แอกทิไนด์"} หมู่ ${c.e.g}`:esc(c.a)}`}</b>
       ${c.e?`<span class="small">${elBadge(c.e,28)} ${esc(c.e.n)} (${c.e.s}) · ${EL_TYPES[c.e.t].n} · ${esc(c.e.trait)}</span>`:""}
+      ${c.fx?`<span class="small">${esc(c.why)}</span><button class="btn ghost small" id="fxhow2">ดูวิธีคิดด่าน ${c.fx}</button>`:""}
       ${c.formula?`<span class="small">${c.m.s} เป็นไอออน +${c.m.q} และ ${c.n.s} เป็นไอออน −${Math.abs(c.n.q)} ประจุรวมต้องเป็นศูนย์ จึงได้ ${c.a}</span><button class="btn ghost small" id="elhow2">ดูวิธีคิด</button>`:""}
       ${c.place&&!ans.ok?`<span class="small">ใบ้: ${c.e.t==="metal"?"โลหะส่วนใหญ่อยู่ฝั่งซ้ายและตรงกลาง":c.e.t==="nonmetal"?"อโลหะอยู่ฝั่งขวาบน":c.e.t==="metalloid"?"กึ่งโลหะอยู่ตามแนวขั้นบันได":"ธาตุกัมมันตรังสีหนักๆ อยู่แถวล่างแยกออกมา"} · คาบ = แถว หมู่ = คอลัมน์</span>`:""}</div>
       <div class="row"><button class="btn" id="elnext">ต่อไป</button></div>`:""}</section>`;
-  const give=(v,ok)=>{ E.ans={v,ok}; E.items.push({z:c.e?c.e.z:0,mode:c.formula?"formula":c.place?"place":c.typed?"name2sym":E.q[E.i].mode,correct:ok,timeSec:Math.round((Date.now()-E.t0)/1000),...(c.formula?{f:c.a}:{})}); renderElStep(mine(),st) };
+  const give=(v,ok)=>{ E.ans={v,ok}; E.items.push({z:c.e?c.e.z:0,mode:c.fx?"fx":c.formula?"formula":c.place?"place":c.typed?"name2sym":E.q[E.i].mode,correct:ok,timeSec:Math.round((Date.now()-E.t0)/1000),...(c.formula||c.fx?{f:c.a}:{}),...(c.fx?{fx:c.fx}:{})}); renderElStep(mine(),st) };
   $v.querySelectorAll("[data-elo]").forEach(b=>b.onclick=()=>give(b.dataset.elo,b.dataset.elo===c.a));
   $v.querySelectorAll("[data-cell]").forEach(b=>b.onclick=()=>{ if(E.ans) return; give(b.dataset.cell,b.dataset.cell===c.a) });
   const s=document.getElementById("elsend"), inp=document.getElementById("elin"); if(s){ const go=()=>{ const v=inp.value.trim(); if(!v) return; give(v,v===c.a) }; s.onclick=go; inp.onkeydown=e=>{ if(e.key==="Enter") go() }; if(!ans) inp.focus() }
   const h2=document.getElementById("elhow2"); if(h2) h2.onclick=elFormulaHow;
+  const h3=document.getElementById("fxhow2"); if(h3) h3.onclick=()=>fxHow(c.fx);
   const nx=document.getElementById("elnext"); if(nx) nx.onclick=()=>{ E.ans=null; E.cur=null; E.i++; renderElStep(mine(),st); window.scrollTo({top:0}) };
 }
-async function elFinish(){ const E=EL, list=mine(), before=elCollected(elState(list)).length, right=E.items.filter(x=>x.mode!=="intro"&&x.correct).length;
+/* ---------- ห้องปรุงสาร: writing and naming formulas, in six levels (father, 10 Nov; follows the order of her ม.ต้น chemistry
+   course: simple ions → naming → polyatomic ions and ammonium → transition metals with Roman numerals → covalent prefixes →
+   hydrates and mixed review). Questions are generated from ion data written here, not taken from the course book.
+   A level opens when the one before has a session with at least 6 of 8 right. Records: type "chem", level, items. */
+const FX_CAT=[
+  {s:"Li",q:1,n:"ลิเทียม"},{s:"Na",q:1,n:"โซเดียม"},{s:"K",q:1,n:"โพแทสเซียม"},{s:"Ag",q:1,n:"ซิลเวอร์"},
+  {s:"Mg",q:2,n:"แมกนีเซียม"},{s:"Ca",q:2,n:"แคลเซียม"},{s:"Ba",q:2,n:"แบเรียม"},{s:"Zn",q:2,n:"ซิงค์"},{s:"Al",q:3,n:"อะลูมิเนียม"}];
+const FX_AN=[
+  {s:"F",q:-1,n:"ฟลูออไรด์"},{s:"Cl",q:-1,n:"คลอไรด์"},{s:"Br",q:-1,n:"โบรไมด์"},{s:"I",q:-1,n:"ไอโอไดด์"},
+  {s:"O",q:-2,n:"ออกไซด์"},{s:"S",q:-2,n:"ซัลไฟด์"},{s:"N",q:-3,n:"ไนไตรด์"}];
+const FX_POLY=[
+  {s:"OH",q:-1,n:"ไฮดรอกไซด์",poly:true},{s:"NO₃",q:-1,n:"ไนเตรต",poly:true,ite:"NO₂",iten:"ไนไตรต์",ide:"ไนไตรด์"},
+  {s:"NO₂",q:-1,n:"ไนไตรต์",poly:true,ide:"ไนไตรด์"},{s:"SO₄",q:-2,n:"ซัลเฟต",poly:true,ite:"SO₃",iten:"ซัลไฟต์",ide:"ซัลไฟด์"},
+  {s:"SO₃",q:-2,n:"ซัลไฟต์",poly:true,ide:"ซัลไฟด์"},{s:"CO₃",q:-2,n:"คาร์บอเนต",poly:true,ide:"คาร์ไบด์"},{s:"PO₄",q:-3,n:"ฟอสเฟต",poly:true,ide:"ฟอสไฟด์"},
+  {s:"ClO₃",q:-1,n:"คลอเรต",poly:true,ite:"ClO₂",iten:"คลอไรต์",ide:"คลอไรด์"},{s:"ClO",q:-1,n:"ไฮโปคลอไรต์",poly:true},{s:"ClO₄",q:-1,n:"เปอร์คลอเรต",poly:true},
+  {s:"HCO₃",q:-1,n:"ไฮโดรเจนคาร์บอเนต",poly:true},{s:"HSO₄",q:-1,n:"ไฮโดรเจนซัลเฟต",poly:true},{s:"MnO₄",q:-1,n:"เปอร์แมงกาเนต",poly:true}];
+const FX_NH4={s:"NH₄",q:1,n:"แอมโมเนียม",poly:true};
+const FX_TM=[
+  {s:"Fe",q:2,n:"ไอร์ออน(II)",base:"ไอร์ออน"},{s:"Fe",q:3,n:"ไอร์ออน(III)",base:"ไอร์ออน"},{s:"Cu",q:1,n:"คอปเปอร์(I)",base:"คอปเปอร์"},
+  {s:"Cu",q:2,n:"คอปเปอร์(II)",base:"คอปเปอร์"},{s:"Pb",q:2,n:"เลด(II)",base:"เลด"},{s:"Sn",q:2,n:"ทิน(II)",base:"ทิน"},
+  {s:"Sn",q:4,n:"ทิน(IV)",base:"ทิน"},{s:"Cr",q:3,n:"โครเมียม(III)",base:"โครเมียม"},{s:"Mn",q:2,n:"แมงกานีส(II)",base:"แมงกานีส"}];
+const ROMAN=["","I","II","III","IV","V","VI","VII"];
+const FX_PRE=["","มอนอ","ได","ไตร","เตตระ","เพนตะ","เฮกซะ","เฮปตะ","ออกตะ","โนนะ","เดคะ"];
+/* real molecules only: [first, n1, second-stem, n2] */
+const FX_COV=[["C",1,"O",1],["C",1,"O",2],["N",2,"O",5],["S",1,"O",3],["S",1,"O",2],["C",1,"Cl",4],["P",1,"Cl",5],["P",1,"Cl",3],
+  ["S",1,"F",6],["N",2,"O",4],["N",1,"O",2],["N",2,"O",1],["P",2,"O",5],["C",1,"S",2],["Cl",2,"O",7],["Si",1,"Cl",4]];
+const FX_EN={C:"คาร์บอน",N:"ไนโตรเจน",S:"ซัลเฟอร์",P:"ฟอสฟอรัส",Cl:"คลอรีน",Si:"ซิลิคอน"}, FX_EN2={O:"ออกไซด์",Cl:"คลอไรด์",F:"ฟลูออไรด์",S:"ซัลไฟด์"};
+const FX_HYD=[["คอปเปอร์(II)ซัลเฟต","CuSO₄",5],["โซเดียมคาร์บอเนต","Na₂CO₃",10],["แมกนีเซียมซัลเฟต","MgSO₄",7],["แคลเซียมซัลเฟต","CaSO₄",2],["โคบอลต์(II)คลอไรด์","CoCl₂",6]];
+const FX_LEVELS=[
+  {L:1,i:"⚡",t:"ไขว้ประจุ",d:"ไอออนบวก + ไอออนลบ เช่น NaCl, MgCl₂, Al₂O₃"},
+  {L:2,i:"🏷️",t:"เรียกชื่อสารไอออนิก",d:"ชื่อโลหะ + ชื่ออโลหะลงท้าย -ไอด์ และกลับกัน"},
+  {L:3,i:"🧩",t:"กลุ่มไอออนและแอมโมเนียม",d:"NO₃⁻ SO₄²⁻ CO₃²⁻ PO₄³⁻ OH⁻ NH₄⁺ ใส่วงเล็บเมื่อมีหลายกลุ่ม"},
+  {L:4,i:"🔢",t:"โลหะที่มีหลายประจุ",d:"Fe²⁺/Fe³⁺, Cu⁺/Cu²⁺ ใช้เลขโรมันบอกประจุ"},
+  {L:5,i:"🤝",t:"สารโคเวเลนต์",d:"อโลหะกับอโลหะ ใช้คำนำหน้า มอนอ ได ไตร เตตระ..."},
+  {L:6,i:"💧",t:"น้ำผลึกและรวมทุกแบบ",d:"CuSO₄·5H₂O และโจทย์ผสมทุกด่าน"}];
+const fxSub=v=>v>1?String(v).split("").map(d=>SUBS[+d]).join(""):"";
+const fxSup=q=>{ const a=Math.abs(q), S="⁰¹²³⁴⁵⁶⁷⁸⁹"; return (a>1?S[a]:"")+(q>0?"⁺":"⁻") };
+function fxGcd(a,b){ return b?fxGcd(b,a%b):a }
+function fxCount(c,a){ const A=Math.abs(a.q), k=fxGcd(A,c.q); return [A/k,c.q/k] }
+function fxPart(ion,n){ return ion.poly&&n>1?`(${ion.s})${fxSub(n)}`:ion.s+fxSub(n) }
+function fxFormula(c,a){ const [x,y]=fxCount(c,a); return fxPart(c,x)+fxPart(a,y) }
+function fxName(c,a){ return c.n+a.n }
+/* plausible wrong formulas, each one a real mistake pattern */
+function fxWrongF(c,a){ const [x,y]=fxCount(c,a), A=Math.abs(a.q), w=[fxPart(c,y)+fxPart(a,x), c.s+a.s, fxPart(c,A)+fxPart(a,c.q)];
+  if(a.poly&&y>1) w.push(c.s+fxSub(x)+a.s+fxSub(y)); if(c.poly&&x>1) w.push(c.s+fxSub(x)+fxPart(a,y));
+  if(a.ite) w.push(fxPart(c,x)+fxPart({...a,s:a.ite},y)); w.push(fxPart(c,1)+fxPart(a,2)); w.push(fxPart(c,2)+fxPart(a,1)); return w }
+const fxPick=(arr,n)=>arr.slice().sort(()=>Math.random()-.5).slice(0,n);
+const fxOne=arr=>arr[Math.floor(Math.random()*arr.length)];
+function fxOpts(right,wrong){ const o=[right,...[...new Set(wrong)].filter(w=>w!==right&&w!=="NaN")]; return fxPick([right,...fxPick(o.slice(1),3)],4) }
+function fxCovName(r){ const [a,n1,b,n2]=r, p2=FX_PRE[n2], stem=FX_EN2[b]; let second=(p2+stem); if(p2.endsWith("อ")&&stem.startsWith("ออ")) second=p2.slice(0,-1)+stem.slice(1);
+  return (n1>1?FX_PRE[n1]:"")+FX_EN[a]+second }
+function fxCovF(r){ return r[0]+fxSub(r[1])+r[2]+fxSub(r[3]) }
+function fxQ(L){
+  const pair=(cs,as)=>{ for(let t=0;t<20;t++){ const c=fxOne(cs), a=fxOne(as); if(c.s!==a.s) return [c,a] } return [cs[0],as[0]] };
+  if(L===6) return fxQ(Math.random()<.35?7:fxOne([1,2,3,4,5]));
+  if(L===1){ const [c,a]=pair(FX_CAT,FX_AN), r=fxFormula(c,a);
+    return {fx:1,prompt:`ไอออน <b>${c.s}${fxSup(c.q)}</b> กับ <b>${a.s}${fxSup(a.q)}</b> รวมกันเป็นสารประกอบสูตรอะไร`,opts:fxOpts(r,fxWrongF(c,a)),a:r,why:`${c.s}${fxSup(c.q)} กับ ${a.s}${fxSup(a.q)} ต้องหักล้างประจุให้รวมเป็นศูนย์ จึงได้ ${r}`} }
+  if(L===2){ const [c,a]=pair(FX_CAT,FX_AN), r=fxFormula(c,a), nm=fxName(c,a);
+    if(Math.random()<.5){ const other=fxOne(FX_AN.filter(x=>x!==a)); return {fx:2,prompt:`<b>${r}</b> มีชื่อว่าอะไร`,opts:fxOpts(nm,[c.n+other.n,a.n+c.n,c.n+(a.s==="O"?"ออกซิเจน":a.s==="Cl"?"คลอรีน":a.s==="S"?"ซัลเฟอร์":a.s==="N"?"ไนโตรเจน":a.s==="F"?"ฟลูออรีน":a.s==="Br"?"โบรมีน":"ไอโอดีน")]),a:nm,why:`อ่านชื่อโลหะก่อน แล้วตามด้วยชื่ออโลหะที่เปลี่ยนท้ายเป็น -ไอด์: ${nm} ไม่ต้องบอกจำนวนอะตอม เพราะประจุกำหนดสัดส่วนไว้แล้ว`} }
+    return {fx:2,prompt:`<b>${nm}</b> เขียนสูตรอย่างไร`,opts:fxOpts(r,fxWrongF(c,a)),a:r,why:`${c.n} เป็น ${c.s}${fxSup(c.q)} และ ${a.n} เป็น ${a.s}${fxSup(a.q)} ประจุรวมต้องเป็นศูนย์ จึงได้ ${r}`} }
+  if(L===3){ const roll=Math.random();
+    if(roll<.2){ const a=fxOne(FX_POLY.filter(x=>x.ite)); return {fx:3,prompt:`<b>${a.n} (${a.s}${fxSup(a.q)})</b> ถ้าออกซิเจนน้อยลง 1 อะตอม จะเป็นไอออนชื่ออะไร สูตรอะไร`,opts:fxOpts(`${a.iten} ${a.ite}${fxSup(a.q)}`,[`${a.iten} ${a.s}${fxSup(a.q)}`,`${a.n.replace("เต","ไต")} ${a.ite}${fxSup(a.q-1)}`,`เปอร์${a.n} ${a.ite}${fxSup(a.q)}`]),a:`${a.iten} ${a.ite}${fxSup(a.q)}`,why:`ตระกูลเดียวกัน: ลงท้าย -เต (-ate) มีออกซิเจนมากกว่าตัวที่ลงท้าย -ไต (-ite) 1 อะตอม ประจุเท่ากัน ${a.s}${fxSup(a.q)} → ${a.ite}${fxSup(a.q)}`} }
+    const c=roll<.45?FX_NH4:fxOne(FX_CAT), a=c===FX_NH4?fxOne([...FX_POLY.filter(x=>x.s!=="OH"),...FX_AN.filter(x=>["Cl","Br","I","F","S"].includes(x.s))]):fxOne(FX_POLY), r=fxFormula(c,a), nm=fxName(c,a);
+    if(Math.random()<.3) return {fx:3,prompt:`<b>${r}</b> มีชื่อว่าอะไร`,opts:fxOpts(nm,[c.n+(a.iten||fxOne(FX_POLY).n),c.n+(a.ide||"ออกไซด์"),c.n+fxOne(FX_POLY.filter(x=>x!==a)).n]),a:nm,why:`${a.s} เป็นกลุ่มไอออนชื่อ ${a.n} อ่านชื่อไอออนบวกก่อนแล้วตามด้วยชื่อกลุ่มไอออนตรงๆ ไม่ต้องเปลี่ยนท้าย: ${nm}`};
+    return {fx:3,prompt:`<b>${nm}</b> เขียนสูตรอย่างไร`,opts:fxOpts(r,fxWrongF(c,a)),a:r,why:`${c.n} = ${c.s}${fxSup(c.q)} · ${a.n} = ${a.s}${fxSup(a.q)} ประจุรวมเป็นศูนย์ได้ ${r}${/\(/.test(r)?" กลุ่มไอออนที่มีมากกว่า 1 กลุ่มต้องใส่วงเล็บก่อนเขียนตัวห้อย":""}`} }
+  if(L===4){ const c=fxOne(FX_TM), a=fxOne([...FX_AN.filter(x=>["Cl","O","S","Br"].includes(x.s)),...FX_POLY.filter(x=>["SO₄","NO₃","OH","CO₃"].includes(x.s))]), r=fxFormula(c,a), nm=fxName(c,a);
+    const sib=FX_TM.find(x=>x.s===c.s&&x.q!==c.q);
+    if(Math.random()<.55){ const wrong=[c.base+`(${ROMAN[fxCount(c,a)[0]]||"I"})`+a.n,c.base+a.n,...(sib?[sib.n+a.n]:[])];
+      return {fx:4,prompt:`<b>${r}</b> มีชื่อว่าอะไร`,opts:fxOpts(nm,wrong),a:nm,why:`${a.s} มีประจุ ${a.q} ต่อตัว มี ${fxCount(c,a)[1]} ตัว รวม ${a.q*fxCount(c,a)[1]} โลหะ ${fxCount(c,a)[0]} อะตอมจึงต้องรวม +${-a.q*fxCount(c,a)[1]} แต่ละอะตอมเป็น ${c.s}${fxSup(c.q)} → ${nm} เลขโรมันบอกประจุของโลหะ ไม่ใช่จำนวนอะตอม`} }
+    return {fx:4,prompt:`<b>${nm}</b> เขียนสูตรอย่างไร`,opts:fxOpts(r,[...fxWrongF(c,a),...(sib?[fxFormula(sib,a)]:[])]),a:r,why:`เลขโรมัน (${ROMAN[c.q]}) บอกว่า ${c.s} มีประจุ +${c.q} จับกับ ${a.s}${fxSup(a.q)} ให้ประจุรวมเป็นศูนย์ ได้ ${r}`} }
+  if(L===5){ const r=fxOne(FX_COV), f=fxCovF(r), nm=fxCovName(r), sw=[r[0],r[3],r[2],r[1]];
+    if(Math.random()<.5) return {fx:5,prompt:`<b>${f}</b> มีชื่อว่าอะไร`,opts:fxOpts(nm,[fxCovName(sw),fxCovName([r[0],r[1],r[2],r[3]+1]),FX_EN[r[0]]+FX_EN2[r[2]]]),a:nm,why:`สารโคเวเลนต์ (อโลหะกับอโลหะ) ต้องบอกจำนวนอะตอมด้วยคำนำหน้า: ${r[1]>1?FX_PRE[r[1]]+" = "+r[1]+" ":""}${FX_PRE[r[3]]} = ${r[3]} → ${nm} (ธาตุตัวแรกถ้ามีอะตอมเดียวไม่ต้องใส่ มอนอ)`};
+    return {fx:5,prompt:`<b>${nm}</b> เขียนสูตรอย่างไร`,opts:fxOpts(f,[fxCovF(sw),r[0]+r[2],fxCovF([r[0],r[1]+1,r[2],r[3]]),fxCovF([r[0],r[1],r[2],r[3]+1])]),a:f,why:`อ่านคำนำหน้าเป็นตัวเลข: ${nm} → ${r[0]} ${r[1]} อะตอม ${r[2]} ${r[3]} อะตอม = ${f} สารโคเวเลนต์ไม่ใช้การไขว้ประจุ`} }
+  /* 7 = hydrate */
+  const h=fxOne(FX_HYD), nm=h[0]+FX_PRE[h[2]]+"ไฮเดรต", f=`${h[1]}·${h[2]}H₂O`;
+  if(Math.random()<.5) return {fx:6,prompt:`<b>${f}</b> มีชื่อว่าอะไร`,opts:fxOpts(nm,[h[0]+FX_PRE[h[2]===2?3:2]+"ไฮเดรต",h[0]+"ไฮดรอกไซด์",h[0]+"กับน้ำ "+h[2]+" กรัม"]),a:nm,why:`·${h[2]}H₂O คือน้ำผลึก ${h[2]} โมเลกุลต่อสาร 1 หน่วย อ่านด้วยคำนำหน้า ${FX_PRE[h[2]]} ตามด้วย "ไฮเดรต" → ${nm}`};
+  return {fx:6,prompt:`<b>${nm}</b> เขียนสูตรอย่างไร`,opts:fxOpts(f,[`${h[1]}${fxSub(h[2])}H₂O`,`${h[1]}·H₂O`,`${h[1]}·${h[2]+1}H₂O`,`${h[1]}(OH)${fxSub(h[2])}`]),a:f,why:`ไฮเดรตเขียนสูตรสารก่อน แล้วจุดกลาง ตามด้วยจำนวนโมเลกุลน้ำ: ${f}`} }
+function chemRecs(list){ return list.filter(a=>a.type==="chem") }
+function fxBest(list){ const b={}; chemRecs(list).forEach(a=>{ b[a.level]=Math.max(b[a.level]||0,a.correct||0) }); return b }
+function fxOpen(list){ const b=fxBest(list), o=[1]; for(let L=2;L<=6;L++) if((b[L-1]||0)>=6) o.push(L); return o }
+function fxTried(list){ return [...new Set(chemRecs(list).map(a=>a.level))] }
+const FX_HOW={
+ 1:`<p>โลหะหมู่ 1, 2, 13 ชอบ<b>เสีย</b>อิเล็กตรอน เป็นไอออนบวก +1, +2, +3 อโลหะหมู่ 15, 16, 17 ชอบ<b>รับ</b>อิเล็กตรอน เป็นไอออนลบ −3, −2, −1 (ตัวเลขหมู่บอกประจุได้ ไม่ต้องท่องทีละธาตุ)</p>
+   <p>สารประกอบต้องมี<b>ประจุรวมเป็นศูนย์</b>: เอาตัวเลขประจุไขว้ลงไปเป็นตัวห้อย แล้วตัดทอนถ้าหารร่วมได้</p>
+   <div class="feedback usebox"><span>Al³⁺ + O²⁻ → ไขว้ → <b>Al₂O₃</b> (2×(+3) = +6, 3×(−2) = −6 รวม 0)</span><span>Mg²⁺ + O²⁻ → Mg₂O₂ → ตัดทอน → <b>MgO</b></span></div>`,
+ 2:`<p>สารไอออนิก (โลหะ + อโลหะ) อ่าน<b>ชื่อโลหะก่อน</b> แล้วตามด้วย<b>ชื่ออโลหะที่เปลี่ยนท้ายเป็น -ไอด์</b> ไม่ต้องบอกจำนวนอะตอม เพราะประจุกำหนดสัดส่วนให้แล้ว</p>
+   <div class="feedback usebox"><span>Cl → คลอไรด์ · O → ออกไซด์ · S → ซัลไฟด์ · N → ไนไตรด์ · Br → โบรไมด์ · I → ไอโอไดด์ · F → ฟลูออไรด์</span><span>CaCl₂ → แคลเซียมคลอไรด์ (ไม่ใช่ "แคลเซียมไดคลอไรด์")</span></div>`,
+ 3:`<p>กลุ่มไอออนคือหลายอะตอมที่ติดกันเป็นก้อนเดียวและมีประจุร่วมกัน ใช้เหมือนไอออนตัวเดียว ถ้าต้องใช้มากกว่า 1 กลุ่ม<b>ต้องใส่วงเล็บ</b>ก่อนเขียนตัวห้อย</p>
+   <div class="feedback usebox"><span>ตัวหลักที่เจอบ่อย: ไนเตรต NO₃⁻ · ซัลเฟต SO₄²⁻ · คาร์บอเนต CO₃²⁻ · ฟอสเฟต PO₄³⁻ · ไฮดรอกไซด์ OH⁻ · แอมโมเนียม NH₄⁺ (กลุ่มไอออน<b>บวก</b>ตัวเดียวที่ต้องรู้)</span>
+   <span>จำเป็นตระกูล ไม่ต้องท่องทีละตัว: ลงท้าย -เต (-ate) → ลด O 1 ตัว ได้ -ไต (-ite) ประจุเท่าเดิม เช่น ซัลเฟต SO₄²⁻ → ซัลไฟต์ SO₃²⁻ · คลอเรต ClO₃⁻ → คลอไรต์ ClO₂⁻ · เพิ่ม O อีกตัวใส่ "เปอร์" (ClO₄⁻) ลดอีกตัวใส่ "ไฮโป" (ClO⁻)</span>
+   <span>Ca²⁺ + NO₃⁻ → <b>Ca(NO₃)₂</b> ไม่ใช่ CaNO₃₂ · NH₄⁺ + SO₄²⁻ → <b>(NH₄)₂SO₄</b></span></div>`,
+ 4:`<p>โลหะแทรนซิชันหลายตัวมีได้มากกว่า 1 ประจุ ชื่อจึงต้องบอกประจุด้วย<b>เลขโรมันในวงเล็บ</b> เลขนี้คือประจุของโลหะ 1 อะตอม ไม่ใช่จำนวนอะตอม</p>
+   <div class="feedback usebox"><span>จากชื่อเป็นสูตร: ไอร์ออน(III)คลอไรด์ → Fe³⁺ + Cl⁻ → <b>FeCl₃</b></span>
+   <span>จากสูตรเป็นชื่อ: Fe₂O₃ → O²⁻ 3 ตัวรวม −6 → Fe 2 อะตอมต้องรวม +6 → ตัวละ +3 → <b>ไอร์ออน(III)ออกไซด์</b></span><span>I = 1, II = 2, III = 3, IV = 4</span></div>`,
+ 5:`<p>อโลหะกับอโลหะ (สารโคเวเลนต์) ไม่มีไอออน จึงไขว้ประจุไม่ได้ และสัดส่วนไม่ตายตัว (CO กับ CO₂ เป็นคนละสาร) ชื่อจึงต้อง<b>บอกจำนวนอะตอมด้วยคำนำหน้า</b></p>
+   <div class="feedback usebox"><span>1 มอนอ · 2 ได · 3 ไตร · 4 เตตระ · 5 เพนตะ · 6 เฮกซะ · 7 เฮปตะ · 8 ออกตะ · 9 โนนะ · 10 เดคะ</span>
+   <span>N₂O₅ → <b>ไดไนโตรเจนเพนตะออกไซด์</b> · CO → <b>คาร์บอนมอนอกไซด์</b> (ธาตุตัวแรกมีอะตอมเดียวไม่ต้องใส่มอนอ และ มอนอ+ออกไซด์ ย่อเป็น มอนอกไซด์)</span></div>`,
+ 6:`<p>ผลึกบางชนิดมีโมเลกุลน้ำแทรกอยู่ เรียกว่า<b>น้ำผลึก</b> เขียนสูตรสารก่อน ใส่จุดกลาง แล้วตามด้วยจำนวนโมเลกุลน้ำ อ่านชื่อด้วยคำนำหน้า + "ไฮเดรต"</p>
+   <div class="feedback usebox"><span>CuSO₄·5H₂O → <b>คอปเปอร์(II)ซัลเฟตเพนตะไฮเดรต</b> (ผลึกสีฟ้า ถ้าเผาไล่น้ำออกจะเป็นผงสีขาว)</span><span>ด่านนี้มีโจทย์จากทุกด่านปนกัน ต้องดูก่อนว่าเป็นโลหะกับอโลหะ (ไขว้ประจุ) หรืออโลหะกับอโลหะ (ใช้คำนำหน้า)</span></div>`};
+function fxHow(L,after){ const lv=FX_LEVELS[L-1]; sheet({icon:lv.i,title:`ด่าน ${L}: ${lv.t}`,wide:true,html:FX_HOW[L],read:lv.t+". "+FX_HOW[L].replace(/<[^>]+>/g," "),
+  actions:[...(after?[{label:"เริ่มฝึก 8 ข้อ",fn:()=>{ closeSheet(); after() }}]:[]),{label:after?"ไว้ก่อน":"เข้าใจแล้ว",ghost:!!after,fn:closeSheet}]}) }
+function fxStart(L){ const list=mine(), done=chemRecs(list).some(a=>dayKey(a.endedAt)===todayKey());
+  EL={q:Array.from({length:8},()=>({mode:"fx",L})),i:0,items:[],start:Date.now(),xpOn:!done,fx:L}; renderElem(); window.scrollTo({top:0}) }
+function fxRoomHtml(list){ const b=fxBest(list), open=fxOpen(list), tried=fxTried(list);
+  return `<section class="card"><span class="eyebrow">🧪 ห้องปรุงสาร · เขียนสูตรและเรียกชื่อสาร</span>
+    <p class="small">6 ด่าน เรียงจากง่ายไปยาก ทำได้ 6 ใน 8 ข้อจะเปิดด่านถัดไป แต่ละด่านมีวิธีคิดสั้นๆ ให้อ่านก่อน ด่านที่ผ่านแล้วจะมาโผล่ในการฝึกประจำวันด้วย</p>
+    <div class="studiolist">${FX_LEVELS.map(lv=>{ const op=open.includes(lv.L); return `<button class="studiocard ${(b[lv.L]||0)>=6?"done":""}" data-fx="${lv.L}" ${op?"":"disabled"}><span style="font-size:1.5rem">${op?lv.i:"🔒"}</span>
+      <span><b>ด่าน ${lv.L}: ${lv.t}</b><br><span class="small muted">${esc(lv.d)}${tried.includes(lv.L)?` · ดีที่สุด ${b[lv.L]||0}/8`:""}</span></span></button>` }).join("")}</div></section>` }
+
+async function fxFinish(){ const E=EL, list=mine(), before=fxOpen(list), right=E.items.filter(x=>x.correct).length, xp=E.xpOn?right*2+5:0, now=new Date();
+  await saveAttempt({type:"chem",level:E.fx,setId:"chem-"+E.fx,topic:"ห้องปรุงสาร ด่าน "+E.fx+": "+FX_LEVELS[E.fx-1].t,items:E.items,startedAt:new Date(E.start).toISOString(),endedAt:now.toISOString(),durationSec:Math.round((now-E.start)/1000),correct:right,total:E.items.length,xp});
+  EL=null; const after=fxOpen(mine()), nw=after.filter(L=>!before.includes(L));
+  elMsg=`ห้องปรุงสาร ด่าน ${E.fx}: ถูก ${right}/8${xp?` · +${xp} XP`:""}${right<6&&!nw.length&&!before.includes(E.fx+1)?" · ได้ 6 ข้อขึ้นไปจะเปิดด่านถัดไป":""}`;
+  renderElem(); if(nw.length) setTimeout(()=>sheet({icon:FX_LEVELS[nw[0]-1].i,title:`เปิดด่าน ${nw[0]}: ${FX_LEVELS[nw[0]-1].t}`,html:`<p>${esc(FX_LEVELS[nw[0]-1].d)}</p><p class="small muted">ด่าน ${E.fx} จะมาโผล่ในการฝึกประจำวันของภูตธาตุด้วย จะได้ไม่ลืม</p>`,actions:[{label:"อ่านวิธีคิดด่านใหม่",fn:()=>fxHow(nw[0],()=>fxStart(nw[0]))},{label:"ไว้ทีหลัง",ghost:true,fn:closeSheet}]}),300) }
+async function elFinish(){ if(EL&&EL.fx) return fxFinish(); const E=EL, list=mine(), before=elCollected(elState(list)).length, right=E.items.filter(x=>x.mode!=="intro"&&x.correct).length;
   const xp=E.xpOn?right*2+10:0, now=new Date();
   await saveAttempt({type:"elem",act:"practice",setId:"elem",topic:"ภูตธาตุ",items:E.items,startedAt:new Date(E.start).toISOString(),endedAt:now.toISOString(),durationSec:Math.round((now-E.start)/1000),correct:right,total:E.items.filter(x=>x.mode!=="intro").length,xp});
   EL=null; const after=elCollected(elState(mine())).length;
@@ -4177,7 +4295,7 @@ function parentDash(list){
       <div class="legend">${DAY_GROUPS.map(([k,n,c])=>`<span><i style="background:${c}"></i>${n}</span>`).join("")}</div></div>
     ${readinessCard(list)}
     ${xpSourceCard(list)}
-    ${wishParent(list)}${studioParent(list)}
+    ${wishParent(list)}${chemParent(list)}${studioParent(list)}
     ${strip?`<div><span class="eyebrow">สถานะเรื่องที่ฝึกแล้ว · เขียวเข้ม=ชำนาญ เขียว=ฝึกหัด ส้ม=เริ่มจาง แดง=ย้อนคาถาเก่าแล้วลืม</span><div class="spstrip">${strip}</div></div>`:""}
   </div>` }
 
