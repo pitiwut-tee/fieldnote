@@ -771,7 +771,7 @@ function progressOf(list){
   list.forEach(a=>{ const k=dayKey(a.endedAt);
     if(a.type==="daymode") return;
     if(a.type==="mission"||a.type==="teach"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* mission / teaching dad: XP only, not a daily unit */
-    if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood"||a.type==="adv"||a.type==="studio"||a.type==="elem"||a.type==="save"||a.type==="card") return;
+    if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood"||a.type==="adv"||a.type==="studio"||a.type==="elem"||a.type==="save"||a.type==="card"||a.type==="wish") return;
     if(a.type==="lab"||a.type==="labverdict"||a.type==="labquest"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
     if(a.type==="sweep"){ sweepDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* old-topic sweep: its own daily step, not a lesson unit */
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
@@ -1199,6 +1199,8 @@ function renderHome(){
   bindDayPanel(p); bindBuddySetup(); bindBuddyHero(); bindLetter(); bindGoal(list); bindTeach(); buddyNote="";
   { const ce=document.getElementById("callme-edit"); if(ce) ce.onclick=()=>askName(true) }
   setTimeout(()=>{ if(!askName()&&!guestPop(mine())&&STUDIO) studioTeaser() },700);
+  $v.querySelectorAll("[data-wishclaim]").forEach(x=>x.onclick=()=>{ x.disabled=true; wishClaim(render) });
+  wishMigrate();
   $v.querySelectorAll("[data-tile]").forEach(t=>t.onclick=()=>{ if(t.dataset.tile==="studio"){ studioOpen(); return } if(t.dataset.tile==="elem"){ homeOpen=null; EL=null; view="elem"; render(); window.scrollTo({top:0}); return } if(t.dataset.tile==="adv"){ homeOpen=null; advSel=advSel||"r1"; view="adv"; render(); window.scrollTo({top:0}); return } homeOpen=homeOpen===t.dataset.tile?null:t.dataset.tile; renderHome();
     const tp=document.getElementById("tpanel"); if(tp) tp.scrollIntoView({block:"nearest",behavior:"smooth"}) });
   $v.querySelectorAll("[data-mood]").forEach(m=>m.onclick=async()=>{ const now=new Date().toISOString();
@@ -1690,7 +1692,7 @@ function renderStep(){
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
     const exn=document.getElementById("exnext"); if(exn) exn.onclick=()=>{ S.exStep=(S.exStep||1)+1; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) };
     const nx=document.getElementById("next"); if(nx) nx.onclick=()=>{
-      S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,...(S.hints&&S.hints>=(q.hints||[]).length+1?{hintStep:true}:{}),...(S.hintKnown&&S.hintKnown.length?{hintKnown:S.hintKnown}:{}),...(exStepped(q,ans)?{exSteps:Math.min(S.exStep||1,exSteps(q.ex).length)}:{}),struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
+      S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,...(S.hints&&S.hints>=(q.hints||[]).length+1?{hintStep:true}:{}),...(S.hintKnown&&S.hintKnown.length?{hintKnown:S.hintKnown}:{}),...(exStepped(q,ans)?{exSteps:Math.min(S.exStep||1,exSteps(q.ex).length),exTotal:exSteps(q.ex).length}:{}),struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
         ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(S.whyOther&&(S.why||[]).includes("other")?{whyOther:S.whyOther.trim()}:{}),...(ans.correct&&(S.guessed||S.checkPick===-1)?{guessed:true}:{}),...(S.notTaught?{notTaught:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0}:{}),...(q.check&&S.checkPick!=null&&S.checkPick!==-1?{checkOk:S.checkPick===q.check.a}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),len:q.q.length});
       advance();
     };
@@ -2404,10 +2406,8 @@ const SHOP=[...WEAR,...PROPS,...RARE,...GUEST_ITEMS,...Object.entries(SCENES).fi
 const WEAR_HOME={head:[50,6],neck:[50,64],side:[86,62]};   /* where items bought in the old slot system start */
 function ls(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v) }catch(e){ return d } }
 function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)) }catch(e){} }
-/* stars put in the wish jar (type "save", +deposit / −withdraw) are kept apart: buying other things cannot use them */
-function jarOf(list){ return Math.max(0,list.filter(a=>a.type==="save").reduce((s,a)=>s+(a.amount||0),0)) }
-function wallet(list){ const earned=list.filter(a=>a.type!=="shop"&&a.type!=="save").reduce((s,a)=>s+Math.max(0,xpOf(a)),0)+QUEST_BONUS*questWeeks(list).length, spent=list.filter(a=>a.type==="shop").reduce((s,a)=>s+(a.cost||0),0), jar=jarOf(list); return {earned,spent,jar,stars:earned-spent-jar} }
-async function jarMove(amount,note){ const now=new Date().toISOString(); await saveAttempt({type:"save",setId:"jar",amount,topic:note||"กระปุกออมดาว",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]}) }
+/* the wish jar (type "save") was replaced on 9 Nov by the wish quest; old "save" records are ignored, so any stars put in the jar are back in the wallet */
+function wallet(list){ const earned=list.filter(a=>a.type!=="shop"&&a.type!=="save"&&a.type!=="wish").reduce((s,a)=>s+Math.max(0,xpOf(a)),0)+QUEST_BONUS*questWeeks(list).length, spent=list.filter(a=>a.type==="shop").reduce((s,a)=>s+(a.cost||0),0); return {earned,spent,stars:earned-spent} }
 let _specKey=null,_specVal=null;
 function earnedSpecials(list){ const key=list.length+"|"+(list[0]&&list[0].endedAt)+"|"+todayKey(); if(key===_specKey) return _specVal; _specKey=key; _specVal=earnedSpecials0(list); return _specVal }
 function earnedSpecials0(list){ const out=new Set(), p=progressOf(list), ss=spellStats(list);
@@ -2530,23 +2530,61 @@ function startWander(){ clearInterval(wanderT); wanderT=setInterval(()=>{ const 
     const room=Math.max(0,(sc.clientWidth-hp.clientWidth)/2-24), cur=parseFloat(hp.style.left)||0, nx=Math.round((Math.random()*2-1)*room);
     hp.classList.toggle("face-l",nx<cur); hp.classList.add("walking"); hp.style.left=nx+"px"; setTimeout(()=>hp.classList.remove("walking"),1600) },4200) }
 let denMsg="", denBuy=null, denName="", denTab="food", denCele=null, denArrange=false, denSel=null;
-function wish(){ return ls("fieldnote.wish",null) }
-function wishItem(list){ const w=wish(); if(!w) return null; if(w.startsWith("pet:")){ const P=ALL_PETS.find(x=>x.k===w.slice(4)); return P&&!owns(list).has(w)?{id:w,e:glyph(P.forms[2]),n:P.n,cost:nextPetPrice(list)}:null }
+/* ---------- ภารกิจ "อยากได้" (father, 9 Nov) ----------
+   Pressing "อยากได้" starts a quest for that one item. Two parts: stars earned AFTER pressing (= the item's price; the wallet
+   is untouched, buying other things never lowers the bar) and 1–3 behaviour goals picked from what she most needs to practise.
+   When both are done the companion brings the item free. Changing the wish restarts the count. Goals are about effort and
+   habits, never accuracy, speed or unbroken streaks. Stored as records (type "wish") so the parent page sees them and can swap a goal. */
+const WISH_GOALS={
+  exread:{t:"อ่านเฉลยทีละขั้นจนครบ",n:8,u:"ข้อ",why:"ข้อที่พลาดหรือไม่รู้ อ่านเฉลยให้ถึงขั้นสุดท้าย"},
+  rewrite:{t:"เขียนคู่มือผู้เล่น",n:2,u:"ครั้ง",why:"ที่สตูดิโอเกม เขียนวิธีคิดของข้อที่พลาดด้วยคำของตัวเอง"},
+  days:{t:"ฝึกภารกิจ",n:4,u:"วัน",why:"วันไหนก็ได้ ไม่ต้องติดกัน"},
+  recall:{t:"ตอบคำถามทวนเกร็ดประจำวันถูก",n:3,u:"ใบ",why:"ที่บ้านคู่หู ก่อนเปิดเกร็ดใบใหม่"},
+  review:{t:"ทำรอบทวนคาถา",n:3,u:"รอบ",why:"ภารกิจทวนคาถาที่ถึงกำหนด"}};
+function wishCount(g,L){ if(g==="exread") return L.reduce((n,a)=>n+(a.items||[]).filter(x=>x.exSteps&&x.exTotal&&x.exSteps>=x.exTotal).length,0);
+  if(g==="rewrite") return L.filter(a=>a.type==="studio"&&a.act==="rewrite").length;
+  if(g==="days") return new Set(L.filter(a=>isLesson(a)).map(a=>dayKey(a.endedAt))).size;
+  if(g==="recall") return L.filter(a=>a.type==="card"&&a.correct).length;
+  if(g==="review") return L.filter(a=>a.type==="review").length; return 0 }
+function wishPick(list,cost){ const since=Date.now()-14*864e5, L=list.filter(a=>new Date(a.endedAt).getTime()>=since), it=L.flatMap(a=>a.items||[]);
+  const stepped=it.filter(x=>x.exTotal), skipped=stepped.filter(x=>x.exSteps<x.exTotal).length, dk=it.filter(x=>x.dontKnow||x.correct===false).length;
+  const need={exread:2+(stepped.length?skipped/stepped.length*2:0)+Math.min(1,dk/20), rewrite:L.some(a=>a.type==="studio"&&a.act==="rewrite")?0.8:1.6,
+    days:new Set(L.filter(a=>isLesson(a)&&new Date(a.endedAt).getTime()>=Date.now()-7*864e5).map(a=>dayKey(a.endedAt))).size<4?1.8:0.6,
+    recall:1+L.filter(a=>a.type==="card"&&!a.correct).length*0.4, review:1.1};
+  const k=cost<100?1:cost<250?2:3; return Object.keys(need).sort((a,b)=>need[b]-need[a]).slice(0,k) }
+function wishRecs(list){ return list.filter(a=>a.type==="wish").slice().sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt)) }
+function wishState(list){ let w=null; for(const r of wishRecs(list)){ if(r.act==="set") w={item:r.item,since:r.endedAt,goals:r.goals||[]}; else if(w&&r.act==="goals"&&r.item===w.item) w.goals=r.goals||w.goals; else if(r.act==="claim"||r.act==="cancel") w=null } return w }
+function wish(){ return (wishState(mine())||{}).item||null }
+/* a wish chosen before 9 Nov lived in localStorage: turn it into a quest that starts now, once */
+let _wishMig=false; async function wishMigrate(){ if(_wishMig) return; _wishMig=true; const old=ls("fieldnote.wish",null); if(typeof old!=="string") return;
+  lsSet("fieldnote.wish",null); const list=mine(); if(!wishRecs(list).length&&wishInfo(old,list)){ await wishSet(old,list); render() } }
+async function wishSet(item,list){ const now=new Date().toISOString(), it=wishInfo(item,list); if(!it) return;
+  await saveAttempt({type:"wish",act:"set",item,goals:wishPick(list,it.cost),setId:"wish",topic:"อยากได้: "+it.n,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]}) }
+function wishInfo(w,list){ if(!w) return null; if(w.startsWith("pet:")){ const P=ALL_PETS.find(x=>x.k===w.slice(4)); return P&&!owns(list).has(w)?{id:w,e:glyph(P.forms[2]),n:P.n,cost:nextPetPrice(list)}:null }
   const s=SHOP.find(x=>x.id===w); return s&&!owns(list).has(w)&&s.cost?{id:w,e:s.e||"🏞️",n:s.n,cost:s.cost}:null }
-function wishHtml(list,controls){ const w=wishItem(list); if(!w) return ""; const W=wallet(list), jar=W.jar, left=Math.max(0,w.cost-jar), free=W.stars;
-  return `<div class="wishbar"><span style="font-size:1.8rem">${w.e}</span><div style="flex:1;display:flex;flex-direction:column;gap:4px">
-    <span class="small"><b>ของที่อยากได้: ${esc(w.n)}</b> · 🫙 ออมไว้ ⭐${jar}/${w.cost}${left?` · ขาดอีก ⭐${left}`:" · ครบแล้ว ไปซื้อได้เลย!"}</span>
-    <div class="progress"><i style="width:${Math.min(100,Math.round(jar/w.cost*100))}%;background:var(--beak)"></i></div>
-    ${controls?`<span class="row" style="gap:6px">${[20,50].map(n=>`<button class="btn ghost small" data-jar="${n}" ${free>=n&&left>0?"":"disabled"}>หยอด ⭐${n}</button>`).join("")}
-      <button class="btn ghost small" data-jar="${Math.min(left,Math.max(0,free))}" ${left>0&&free>0?"":"disabled"}>หยอดเท่าที่ขาด/ที่มี</button>${jar?`<button class="btn ghost small" data-jar="-${jar}">แคะกระปุก</button>`:""}</span>
-      <span class="small muted">ดาวในกระปุกจะไม่ถูกใช้ซื้อของอื่น ซื้อของที่อยากได้เมื่อไรจะใช้ดาวในกระปุกก่อน</span>`:""}</div></div>` }
+function wishItem(list){ const st=wishState(list); return st?wishInfo(st.item,list):null }
+function wishProgress(list){ const st=wishState(list), it=wishItem(list); if(!st||!it) return null; const t0=new Date(st.since).getTime(), L=list.filter(a=>new Date(a.endedAt).getTime()>=t0&&a.type!=="wish");
+  const stars=L.filter(a=>a.type!=="shop"&&a.type!=="save").reduce((n,a)=>n+Math.max(0,xpOf(a)),0);
+  const goals=st.goals.filter(g=>WISH_GOALS[g]).map(g=>({g,...WISH_GOALS[g],have:Math.min(WISH_GOALS[g].n,wishCount(g,L))}));
+  return {st,it,stars:Math.min(stars,it.cost),goals,done:stars>=it.cost&&goals.every(x=>x.have>=x.n)} }
+function wishHtml(list,controls){ const P=wishProgress(list); if(!P) return ""; const {it,stars,goals,done}=P;
+  return `<div class="wishbar"><span style="font-size:1.8rem">${it.e}</span><div style="flex:1;display:flex;flex-direction:column;gap:4px">
+    <span class="small"><b>ภารกิจอยากได้: ${esc(it.n)}</b>${done?" · ครบแล้ว!":""}</span>
+    <span class="small">⭐ ดาวที่ได้หลังเลือก ${stars}/${it.cost}</span><div class="progress"><i style="width:${Math.round(stars/it.cost*100)}%;background:var(--beak)"></i></div>
+    ${goals.map(x=>`<span class="small">${x.have>=x.n?"✅":"⬜"} ${esc(x.t)} ${x.have}/${x.n} ${x.u}${controls&&x.have<x.n?` <span class="muted">· ${esc(x.why)}</span>`:""}</span>`).join("")}
+    ${done?`<button class="btn small" data-wishclaim="1" type="button">🎁 รับ${esc(it.n)}</button>`:controls?`<span class="small muted">ได้ของฟรีเมื่อครบทุกข้อ ไม่ต้องจ่ายดาว และซื้อของอื่นระหว่างนี้ได้ ความคืบหน้าไม่ลด · เปลี่ยนเป้าหมายเมื่อไร จะเริ่มนับใหม่</span>`:""}</div></div>` }
+async function wishClaim(after){ const list=mine(), P=wishProgress(list); if(!P||!P.done) return; const now=new Date().toISOString(), item=P.it.id, isPet=item.startsWith("pet:");
+  await saveAttempt({type:"shop",setId:"shop",item,cost:0,wish:true,...(isPet?{name:P.it.n}:{}),topic:"ภารกิจอยากได้",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
+  await saveAttempt({type:"wish",act:"claim",item,goals:P.st.goals,setId:"wish",topic:"ได้รับ: "+P.it.n,startedAt:now,endedAt:new Date(Date.now()+1).toISOString(),durationSec:0,correct:0,total:0,xp:0,items:[]});
+  if(!isPet){ const s=SHOP.find(z=>z.id===item), b=getBuddy(), r=room(); if(s&&b){ placeItem(r,s,b.kind); lsSet("fieldnote.room",r) } }
+  const b=getBuddy(); sheet({icon:"🎁",title:`${b?b.name:"คู่หู"}นำ${P.it.n}มาให้!`,html:`<p>${P.it.e} ได้มาเพราะ${esc(myName()||"เธอ")}ทำสิ่งเหล่านี้ครบ:</p><ul>${[`<li>เก็บดาวได้ ⭐${P.it.cost} จากการฝึก</li>`,...P.goals.map(x=>`<li>${esc(x.t)} ${x.n} ${x.u}</li>`)].join("")}</ul><p class="small muted">${isPet?"ไข่มาถึงบ้านแล้ว ตั้งชื่อใหม่ได้ที่บ้านคู่หู":"ของอยู่ในบ้านคู่หูแล้ว"} เลือกของที่อยากได้ชิ้นต่อไปได้เลย</p>`,actions:[{label:"เยี่ยม!",fn:()=>{ closeSheet(); if(after) after() }}]}) }
 function renderDen(){
   const list=mine(), w=wallet(list), o=owns(list), pets=ownedPets(list), b=getBuddy(), R=room();
   if(!b){ $v.innerHTML=`<section class="card"><h2>บ้านคู่หู</h2><p>ไปเลือกคู่หูตัวแรกที่หน้า "ฝึกวันนี้" ก่อนนะ</p><a class="btn" href="#home">ไปเลือกคู่หู</a></section>`; return }
   const g=growth(b.kind,list), st=growStage(g), next=GROW[st+1], price=nextPetPrice(list), P=ALL_PETS.find(x=>x.k===b.kind);
   const scene=SCENES[R.bg]||SCENES["bg:home"], mine1=R.wear[b.kind]||{};
   const buyBtn=(item,cost,label)=>denBuy===item?`<button class="btn small" data-confirm="${item}">ยืนยัน ใช้ ⭐${cost}</button><button class="btn ghost small" data-cancel="1">ไม่เอาแล้ว</button>`
-    :`<button class="btn ghost small" data-buy="${item}" ${w.stars+(wish()===item?w.jar:0)<cost?"disabled":""}>${label||`⭐${cost}`}</button>`;
+    :`<button class="btn ghost small" data-buy="${item}" ${w.stars<cost?"disabled":""}>${label||`⭐${cost}`}</button>`;
   const tabs=[["food","🍪 อาหารวิเศษ"],["pets","🐾 สัตว์คู่หู"],["wear","🎀 ของแต่งตัว"],["fx","✨ เอฟเฟกต์"],["prop","🪴 ของในห้อง"],["bg","🏞️ ฉาก"]];
   if(!tabs.some(t=>t[0]===denTab)) denTab="wear";
   const worn=R.wear[b.kind]||[], wishBtn=id=>wish()===id?`<span class="small muted">⭐ เป้าหมายอยู่</span>`:`<button class="btn ghost small" data-wish="${id}" style="border:0">☆ อยากได้</button>`;
@@ -2606,13 +2644,13 @@ function renderDen(){
   $v.querySelectorAll("[data-cancel]").forEach(x=>x.onclick=()=>{denBuy=null;reRender()});
   const nn=document.getElementById("newname"); if(nn) nn.oninput=()=>{denName=nn.value};
   $v.querySelectorAll("[data-confirm]").forEach(x=>x.onclick=async()=>{ const item=x.dataset.confirm, isPet=item.startsWith("pet:"), cost=isPet?price:SHOP.find(s=>s.id===item).cost;
-    { const W=wallet(mine()), useJar=wish()===item?Math.min(W.jar,cost):0; if(W.stars+useJar<cost) return; if(useJar) await jarMove(-useJar,"ใช้ดาวในกระปุกซื้อของที่อยากได้") }
+    if(wallet(mine()).stars<cost) return;
     const kind=item.slice(4), name=isPet?((document.getElementById("newname")?.value||"").trim().slice(0,20)||ALL_PETS.find(p=>p.k===kind).n):null;
     x.disabled=true; const now=new Date().toISOString();
     await saveAttempt({type:"shop",setId:"shop",item,cost,...(name?{name}:{}),topic:"บ้านคู่หู",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
     const s=SHOP.find(z=>z.id===item), r=room();
     if(!isPet){ placeItem(r,s,b.kind); lsSet("fieldnote.room",r) }
-    if(wish()===item) lsSet("fieldnote.wish",null);
+    if(wish()===item){ const t=new Date().toISOString(); await saveAttempt({type:"wish",act:"cancel",item,setId:"wish",topic:"ซื้อเองแล้ว",startedAt:t,endedAt:new Date(Date.now()+1).toISOString(),durationSec:0,correct:0,total:0,xp:0,items:[]}) }
     if(isPet){ denCele={icon:"🥚",title:`ไข่ของ ${name} มาถึงบ้านแล้ว!`,text:`ให้ ${name} มาอยู่หน้าแรก แล้วให้อาหารวิเศษ ไข่จะฟักเมื่อมีพลังโต ${GROW[1][0]}`} }
     denMsg=isPet?"":`ได้ ${s.n} แล้ว`; denBuy=null; reRender() });
   $v.querySelectorAll("[data-equip]").forEach(x=>x.onclick=()=>{ const s=SHOP.find(z=>z.id===x.dataset.equip), r=room();
@@ -2621,8 +2659,8 @@ function renderDen(){
     else { placeItem(r,s,b.kind); denArrange=true; denSel=s.slot==="prop"?{t:"p",i:r.props.length-1}:{t:"w",i:r.wear[b.kind].length-1};
       lsSet("fieldnote.room",r); denMsg=s.slot==="prop"?`วาง${s.n}แล้ว ลากไปวางตรงไหนก็ได้ ปรับขนาดด้วยแถบเลื่อน`:`${b.name}ใส่${s.n}แล้ว ลากปรับตำแหน่งได้ ปรับขนาดด้วยแถบเลื่อน`; reRender(); return }
     lsSet("fieldnote.room",r); denSel=null; reRender() });
-  $v.querySelectorAll("[data-jar]").forEach(x=>x.onclick=async()=>{ const n=+x.dataset.jar; if(!n) return; x.disabled=true; if(n>0&&wallet(mine()).stars<n) return; await jarMove(n,n>0?"หยอดกระปุกออมดาว":"แคะกระปุกออมดาว"); denMsg=n>0?`หยอดกระปุก ⭐${n} แล้ว`:"แคะกระปุกแล้ว ดาวกลับมาใช้ได้"; reRender() });
-  $v.querySelectorAll("[data-wish]").forEach(x=>x.onclick=()=>{ lsSet("fieldnote.wish",x.dataset.wish); denMsg="ตั้งเป็นของที่อยากได้แล้ว ดูความคืบหน้าได้ที่หน้าแรก"; reRender() });
+  $v.querySelectorAll("[data-wishclaim]").forEach(x=>x.onclick=()=>{ x.disabled=true; wishClaim(reRender) });
+  $v.querySelectorAll("[data-wish]").forEach(x=>x.onclick=async()=>{ const had=wish(); x.disabled=true; await wishSet(x.dataset.wish,mine()); denMsg=had?"เปลี่ยนของที่อยากได้แล้ว ภารกิจเริ่มนับใหม่":"เริ่มภารกิจอยากได้แล้ว ทำครบทุกข้อ คู่หูจะนำของมาให้ฟรี"; reRender() });
   on("arrange",()=>{ denArrange=!denArrange; denSel=null; reRender() });
   $v.querySelectorAll("[data-fact]").forEach(c=>c.onclick=()=>factSheet(b.kind,+c.dataset.fact,reRender));
   $v.querySelectorAll("[data-dc]").forEach(c=>c.onclick=()=>dcOpen(reRender));
@@ -3922,6 +3960,12 @@ function studioRewrite(qi){ const W=STUDIO.rewrite, list=mine(), qs=rewriteToday
       closeSheet(); render(); sheet({icon:"📗",title:"เขียนคู่มือแล้ว!",html:`<p>${dn?"ส่งเพิ่มแล้ว (XP ได้วันละครั้ง)":"+10 XP"} · พ่อจะได้อ่านคู่มือของเธอด้วย</p>`,actions:[{label:"เยี่ยม!",fn:closeSheet}]}) }},{label:"ไว้ทีหลัง",ghost:true,fn:closeSheet}]});
   d.querySelectorAll("[data-rq]").forEach(b=>b.onclick=()=>studioRewrite(+b.dataset.rq)) }
 function alertSoft(root,msg){ let p=root.querySelector(".sheetmsg"); if(!p){ p=document.createElement("p"); p.className="small sheetmsg"; root.querySelector(".sheetbody").appendChild(p) } p.innerHTML=`<b>${esc(msg)}</b>` }
+function wishParent(list){ const P=wishProgress(list), got=wishRecs(list).filter(r=>r.act==="claim").slice(-3);
+  if(!P&&!got.length) return ""; const opts=P?Object.keys(WISH_GOALS).filter(g=>!P.st.goals.includes(g)):[];
+  return `<div><span class="eyebrow">🎁 ภารกิจอยากได้ (ระบบเลือกเป้าหมายจากจุดที่น้องยังต้องฝึก พ่อเปลี่ยนได้)</span>
+    ${P?`<p class="small"><b>${esc(P.it.n)}</b> · ⭐ ${P.stars}/${P.it.cost} ${P.goals.map(x=>`· ${x.have>=x.n?"✅":"⬜"} ${esc(x.t)} ${x.have}/${x.n}`).join(" ")}</p>
+      ${opts.length?`<p class="small">${P.st.goals.map((g,i)=>`<label>เปลี่ยน “${esc(WISH_GOALS[g].t)}” เป็น <select data-wg="${i}"><option value="">-</option>${opts.map(o=>`<option value="${o}">${esc(WISH_GOALS[o].t)}</option>`).join("")}</select></label>`).join("<br>")}</p>`:""}`:""}
+    ${got.length?`<p class="small muted">ได้รับแล้ว: ${got.map(r=>esc((r.topic||"").replace("ได้รับ: ",""))).join(", ")}</p>`:""}</div>` }
 function studioParent(list){ const r=studioRecs(list).slice().sort((a,b)=>new Date(b.endedAt)-new Date(a.endedAt)); if(!r.length) return "";
   return `<div><span class="eyebrow">🎮 สตูดิโอเกม · คำตอบล่าสุดของน้อง</span>${r.slice(0,5).map(a=>a.act==="lab"?`<p class="small"><b>ห้องทดลอง ${esc(a.lab)}</b> (ชนะ ${a.result?.win}% · ${a.result?.mean} ตา): “${esc(a.answer)}”</p>`:a.act==="rewrite"?`<p class="small"><b>คู่มือผู้เล่น (${esc(a.qid)}):</b> “${esc(a.answer)}”</p>`:a.act==="workshop"?`<p class="small"><b>แบบเขตใหม่:</b> ${esc(Object.values(a.answers||{}).filter(Boolean).join(" · ").slice(0,300))}</p>`
     :`<p class="small"><b>${esc((a.topic||"").replace("สตูดิโอเกม: ",""))}:</b> “${esc(a.answer)}”</p>`).join("")}</div>` }
@@ -4133,7 +4177,7 @@ function parentDash(list){
       <div class="legend">${DAY_GROUPS.map(([k,n,c])=>`<span><i style="background:${c}"></i>${n}</span>`).join("")}</div></div>
     ${readinessCard(list)}
     ${xpSourceCard(list)}
-    ${studioParent(list)}
+    ${wishParent(list)}${studioParent(list)}
     ${strip?`<div><span class="eyebrow">สถานะเรื่องที่ฝึกแล้ว · เขียวเข้ม=ชำนาญ เขียว=ฝึกหัด ส้ม=เริ่มจาง แดง=ย้อนคาถาเก่าแล้วลืม</span><div class="spstrip">${strip}</div></div>`:""}
   </div>` }
 
@@ -4372,6 +4416,8 @@ function renderParent(){
   const mdec=async(id,decision)=>{ const m=document.getElementById("mmsg-"+id), note=($v.querySelector(`[data-mnote="${id}"]`)?.value||"").trim();
     if(decision==="change"&&!note){ m.textContent="พิมพ์สิ่งที่อยากให้ปรับก่อน"; return }
     m.textContent="กำลังบันทึก…"; try{ await db.collection("feedback").add({kind:"mission",missionId:id,decision,note,at:new Date().toISOString()}); m.textContent=decision==="approve"?"อนุมัติแล้ว":"ส่งแล้ว" }catch(e){ m.textContent="บันทึกไม่สำเร็จ ลองใหม่" } };
+  $v.querySelectorAll("[data-wg]").forEach(sel=>sel.onchange=async()=>{ const P=wishProgress(mine()); if(!P||!sel.value) return; const g=[...P.st.goals]; g[+sel.dataset.wg]=sel.value; const now=new Date().toISOString();
+    await saveAttempt({type:"wish",act:"goals",item:P.st.item,goals:g,by:"parent",setId:"wish",topic:"พ่อเปลี่ยนเป้าหมาย",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]}); render() });
   $v.querySelectorAll("[data-mok]").forEach(b=>b.onclick=()=>mdec(b.dataset.mok,"approve"));
   const gsdec=async(id,decision)=>{ const m=document.getElementById("gsmsg-"+id), note=($v.querySelector(`[data-gsnote="${id}"]`)?.value||"").trim();
     if(decision==="change"&&!note){ m.textContent="พิมพ์สิ่งที่อยากให้ปรับก่อน"; return }
