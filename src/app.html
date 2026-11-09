@@ -151,6 +151,7 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 @media (prefers-reduced-motion: reduce){.drift,.spin,.flow{animation:none}}
 .island{display:block;width:100%;height:auto}
 .mnode{cursor:pointer}
+.examp{border-left:4px solid var(--beak)}
 .advteam{display:flex;gap:8px;flex-wrap:wrap}
 .advunit{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;border:1.5px solid var(--line);border-radius:14px;background:var(--paper);min-width:92px;text-align:center}
 .advrow{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
@@ -753,9 +754,11 @@ function progressOf(list){
   const probesLeft=d=>probeCount-Object.values(firstProbe).filter(x=>x<d).length>0;
   const today=todayKey();
   const noVocabToday=(()=>{try{const v=vocabToday();return !v.due.length&&!v.fresh.length}catch(e){return false}})();
-  const need=d=>{ const info=dayInfo(d,modes); if(info.level==="school") return {units:1,probe:false,info}; const L=LEVELS[info.level]; return {units:L.units,probe:L.probe&&probesLeft(d),info} };
+  const need=d=>{ const info=dayInfo(d,modes); const ex=examAt(d); if(ex&&ex.phase==="during") return {units:0,probe:false,info,exam:true};
+    if(ex&&ex.phase==="prep") return {units:1,probe:false,info};
+    if(info.level==="school") return {units:1,probe:false,info}; const L=LEVELS[info.level]; return {units:L.units,probe:L.probe&&probesLeft(d),info} };
   const sweepFrom=CAL.sweepFrom?new Date(CAL.sweepFrom+"T00:00:00").getTime():Infinity, noSweepToday=(()=>{try{return !sweepQuestions(list,1).length}catch(e){return true}})();
-  const sweepOk=d=>d<sweepFrom||sweepDays.has(d)||(d===today&&noSweepToday);
+  const sweepOk=d=>d<sweepFrom||examAt(d)||sweepDays.has(d)||(d===today&&noSweepToday);
   const isMet=d=>{ const n=need(d); return (vocabDays.has(d)||(d===today&&noVocabToday))&&(units.get(d)||0)>=n.units&&(!n.probe||(probes.get(d)||0)>=1)&&sweepOk(d) };
   const keys=[...byDay.keys(),...skipDays,...[...leaveDays].filter(d=>d<=today)];
   let streak=0, best=0, freeze=0, goalDays=0; const frozen=new Set(), earned=[], questDone=new Set();
@@ -807,6 +810,27 @@ function pickPassage(list){
   if(list.filter(a=>a.type==="passage"&&dayKey(a.endedAt)>=wk).length>=(CAL.passagePerWeek||1)) return null;
   return SETS.find(s=>s.kind==="passage"&&!done.has(s.id))||null;
 }
+/* ---------- school exams (calendar.schoolExams): a week of review before, a light load during ---------- */
+function examAt(dk){ const ds=isoDay(dk); for(const x of CAL.schoolExams||[]){ const pre=isoDay(new Date(x.from+"T12:00:00").getTime()-(CAL.examPrepDays||7)*DAY);
+    if(ds>=x.from&&ds<=x.to) return {x,phase:"during"}; if(ds>=pre&&ds<x.from) return {x,phase:"prep",days:Math.round((new Date(x.from+"T12:00:00")-new Date(ds+"T12:00:00"))/DAY)} } return null }
+function examNext(){ const t=isoDay(todayKey()); return (CAL.schoolExams||[]).find(x=>x.to>=t)||null }
+function examFmt(x){ const f=new Date(x.from+"T12:00:00"), t=new Date(x.to+"T12:00:00"); return f.getDate()+"–"+t.toLocaleDateString("th-TH",{day:"numeric",month:"short"})+(x.estimated?" (ประมาณ)":"") }
+function examBanner(){ const x=examNext(); if(!x) return ""; const ex=examAt(todayKey()), d=Math.round((new Date(x.from+"T12:00:00")-new Date(isoDay(todayKey())+"T12:00:00"))/DAY);
+  if(ex&&ex.phase==="during") return `<div class="daypanel examp"><p class="small"><b>✏️ ช่วง${x.name}</b> สู้ๆ นะ! ภารกิจช่วงนี้เหลือแค่คำศัพท์ ที่เหลือทำได้ถ้าอยากทำ พักผ่อนให้พอ</p></div>`;
+  if(ex&&ex.phase==="prep") return `<div class="daypanel examp"><p class="small"><b>📅 อีก ${d} วัน${x.name}</b> ${examFmt(x)} · สัปดาห์นี้ชุดฝึกเปลี่ยนเป็น <b>ทบทวนเรื่องที่จะสอบ</b> ไม่มีเรื่องใหม่</p></div>`;
+  if(d<=21) return `<div class="daypanel examp"><p class="small">📅 อีก ${d} วัน${x.name} ${examFmt(x)} · 7 วันก่อนสอบ ชุดฝึกจะเปลี่ยนเป็นโหมดทบทวนให้เอง</p></div>`;
+  return "" }
+function startExamReview(x,n){ const list=mine(), ss=new Set(x.spells||[]), seen={};
+  list.filter(isLesson).forEach(a=>(a.items||[]).forEach(i=>{ const o=seen[i.qid]??={n:0,wrong:0}; o.n++; if(!i.correct||i.guessed) o.wrong++ }));
+  const pool=Object.values(QBANK).map(o=>o.q).filter(q=>ss.has(q.spell)&&!q.of&&q.level>=2&&q.opts);
+  const score=q=>{ const o=seen[q.id]; return (o?o.wrong*3-o.n:2)+Math.random() };
+  const qs=pool.sort((a,b)=>score(b)-score(a)).slice(0,n||10); if(!qs.length) return startReview(8,"ทบทวนก่อน"+x.name);
+  for(let i=qs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qs[i],qs[j]]=[qs[j],qs[i]]}
+  const t="ทบทวนก่อน"+x.name, steps=[...qs.map(q=>({kind:"q",phase:t,q:shuffleQ(comeback(q,list))})),{kind:"finish",phase:"เสร็จ"}];
+  const trial=trialsToday(); markExplain(steps, trial);
+  S = {mode:"review", set:{id:"exam-review",subject:"ทบทวน",topic:t}, steps, trial, trialVote:{},
+       active:true, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
+  view="session"; render(); window.scrollTo({top:0}) }
 function planToday(list, p){
   const wd=new Date().getDay(), school=p.info.kind==="school";
   const repair=school&&wd===5&&reviewPool(list).length+dueQuestions(list,3).length>=4;
@@ -819,6 +843,8 @@ function planToday(list, p){
   /* when a weekly special (mixed set or passage) takes slot 3, the probe moves to slot 4 so older topics still get checked */
   const lessonX=()=>pickLesson(list,false,[...(lesson?[lesson.id]:[]),...doneToday]);
   const extra=p.info.level==="full"?(special?(pickProbe(list)||lessonX()):lessonX()):null;
+  const ex=examAt(todayKey());
+  if(ex&&ex.phase==="prep") return {repair:false,lesson:null,exam:ex.x,probe:null,mixed:null,passage:null,extra:null};
   return {repair,lesson,probe,mixed,passage,extra};
 }
 function recommend(list){ return pickLesson(list,true) }
@@ -1027,6 +1053,7 @@ function flameHtml(p){
 function missionList(p){
   const lv=p.info.level, probeLeft=p.need.probe, u=p.unitsToday, nonProbe=u-p.probesToday;
   const m=[{key:"lesson",done:nonProbe>=1||(!probeLeft&&u>=1)},{key:"vocab",done:p.vocabToday||p.noVocabToday}];
+  const ex=examAt(todayKey()); if(ex&&ex.phase==="during") return m.slice(1); if(ex) return m;
   if(lv==="full"||lv==="mid") m.push({key:"probe",done:probeLeft?p.probesToday>=1:u>=2});
   if(p.sweepNeeded||p.sweepToday) m.push({key:"sweep",done:p.sweepToday});
   return m;
@@ -1085,7 +1112,7 @@ function renderHome(){
   const doneNP=doneToday.filter(a=>!["probe","mixed","passage"].includes(a.type)), doneProbe=doneToday.find(a=>a.type==="mixed"||a.type==="passage")||doneToday.find(a=>a.type==="probe");
   const tr=trialsToday();
   const doneTitle=a=>`<h2>${esc(a.topic)}</h2><p class="small muted">ทำแล้ว ✓</p>`;
-  const lessonTitle=md.lesson&&(doneNP[0]||doneToday[0])?doneTitle(doneNP[0]||doneToday[0]):plan.repair?`<h2>ชุดซ่อมจุดอ่อน</h2><p class="small muted">8 ข้อจากที่เคยพลาด ตัวเลือกสลับที่ใหม่</p>`
+  const lessonTitle=md.lesson&&(doneNP[0]||doneToday[0])?doneTitle(doneNP[0]||doneToday[0]):plan.exam?`<h2>ทบทวนก่อน${plan.exam.name}</h2><p class="small muted">10 ข้อจากเรื่องที่จะสอบ เน้นข้อที่เคยพลาด</p>`:plan.repair?`<h2>ชุดซ่อมจุดอ่อน</h2><p class="small muted">8 ข้อจากที่เคยพลาด ตัวเลือกสลับที่ใหม่</p>`
     :plan.lesson?`<span class="row" style="gap:6px"><span class="chip">${plan.lesson.subject} · ${plan.lesson.grade}</span>${plan.lesson.current?`<span class="chip l2">เรียนอยู่ตอนนี้</span>`:""}</span><h2>${esc(plan.lesson.topic)}</h2>`:"";
   const quests=p.quests;
   const notesBtn=a=>SETS.some(x=>x.id===a.setId)?`<button class="btn ghost" data-notes="${a.setId}">📖 อ่านสรุปและเฉลยอีกครั้ง</button>`:"";
@@ -1104,10 +1131,11 @@ function renderHome(){
     <div class="todayhead"><span class="eyebrow">ภารกิจวันนี้ · ${md?Object.values(md).filter(Boolean).length:0}/${ms.length}</span></div>
     <div class="progress" style="height:8px"><i style="width:${Math.round(ms.filter(x=>x.done).length/ms.length*100)}%;background:var(--beak)"></i></div>
     ${dayPanel(p)}
+    ${examBanner()}
     ${tr.length?`<div class="daypanel trialbox"><p class="small"><b>🧪 ทดลองของใหม่วันนี้:</b> ${tr.map(k=>TRIAL_NAMES[k]).join(" และ ")} · ลองสัปดาห์นี้แล้วบอกหน่อยว่าชอบไหม</p></div>`:""}
-    ${mission(1,"lesson",plan.repair?"ชุดซ่อมจุดอ่อน (วันศุกร์) · ราว 20 นาที":"ชุดฝึก"+(md.lesson?" · ทำแล้ว":" · ราว 30 นาที"),lessonTitle,
+    ${mission(1,"lesson",(examAt(todayKey())||{}).phase==="during"?"ไม่บังคับช่วงสอบ":plan.exam?"โหมดเตรียมสอบ · ราว 25 นาที":plan.repair?"ชุดซ่อมจุดอ่อน (วันศุกร์) · ราว 20 นาที":"ชุดฝึก"+(md.lesson?" · ทำแล้ว":" · ราว 30 นาที"),lessonTitle,
       md.lesson&&doneLesson?`<div class="row">${notesBtn(doneLesson)}<button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"เลือกชุดอื่น"}</button></div>`
-      :`<div class="row"><button class="btn" id="go-rec">${plan.repair?"เริ่มซ่อม":"เริ่มชุดนี้"}</button><button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"อยากทำเรื่องอื่น"}</button></div>`,
+      :`<div class="row"><button class="btn" id="go-rec">${plan.exam?"เริ่มทบทวน":plan.repair?"เริ่มซ่อม":"เริ่มชุดนี้"}</button><button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"อยากทำเรื่องอื่น"}</button></div>`,
       showAll?`<div class="sets">${SETS.map((s,k)=>s===plan.lesson||s.kind==="sweep"?"":setCard(s,k)).join("")}</div>`:"")}
     ${mission(2,"vocab","คำศัพท์อังกฤษ · ราว 10 นาที",`<h2>คำศัพท์วันนี้</h2><p class="small muted">${md.vocab?"ทำแล้ว เก่งมาก":vt.fresh.length||vt.due.length?`คำใหม่ ${vt.fresh.length} คำ · ทบทวน ${vt.due.length} คำ · ฟังเสียง ฝึกสะกด${isWeekend()?" · อ่านภาษาอังกฤษสั้นๆ":""}`:"วันนี้ไม่มีคำค้าง ข้ามได้"}</p>`,
       !p.vocabToday&&(vt.fresh.length||vt.due.length)?`<button class="btn" id="vocab-go">เริ่มคำศัพท์</button>`:Object.keys(vocabState()).length?`<button class="btn ghost" id="go-words">📖 ทบทวนคำศัพท์ที่เรียนแล้ว</button>`:"")}
@@ -1150,7 +1178,7 @@ function renderHome(){
     buddyNote=moodReply(m.dataset.mood); renderHome() });
   { const sg=document.getElementById("sweep-go"); if(sg) sg.onclick=()=>startSweep() }
   const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
-  on("go-rec",()=>{ if(plan.repair) return startReview(8,"ชุดซ่อมจุดอ่อน"); if(plan.lesson){introSet=plan.lesson;view="intro";render()} });
+  on("go-rec",()=>{ if(plan.exam) return startExamReview(plan.exam,10); if(plan.repair) return startReview(8,"ชุดซ่อมจุดอ่อน"); if(plan.lesson){introSet=plan.lesson;view="intro";render()} });
   on("go-probe",()=>{introSet=plan.probe;view="intro";render()});
   on("go-mixed",()=>{introSet=plan.mixed;view="intro";render()});
   on("go-passage",()=>{introSet=plan.passage;view="intro";render()});
@@ -3908,6 +3936,8 @@ function parentDash(list){
   const schoolLow=last7.filter(x=>x.school&&x.tot>0&&x.tot<x.target[0]).length; if(schoolLow>=3) A.push(["amber","⏱️",`วันเรียน ${schoolLow} วันใน 7 วันใช้เวลาต่ำกว่าเป้า 45 นาที (เฉลี่ย ${avgMin} นาที) ระบบอัปเดตทุกเย็นจะเพิ่มเนื้อหา`]);
   const ex=it7.filter(x=>x.correct&&x.exSec!=null), skip=ex.filter(x=>x.exSec<3).length; if(ex.length>=8&&skip/ex.length>=0.5) A.push(["amber","👀",`ข้อที่ตอบถูก ลูกข้ามเฉลย ${skip}/${ex.length} ข้อ ถ้าตอบถูกแบบเดา จะไม่รู้ตัว ชวนลูกอ่านเฉลยข้อที่ไม่มั่นใจ`]);
   const lucky=it7.filter(x=>x.checkOk===false).length; if(lucky>=2) A.push(["amber","🎯",`ตอบถูกแต่เหตุผลผิด ${lucky} ข้อในสัปดาห์นี้ (ระบบส่งกลับไปทวนแล้ว)`]);
+  { const x=examNext(); if(x){ const d=Math.round((new Date(x.from+"T12:00:00")-new Date(isoDay(todayKey())+"T12:00:00"))/DAY);
+      if(d<=30) A.push(["green","📅",`${x.name} ${examFmt(x)} · ${d>0?`อีก ${d} วัน · 7 วันก่อนสอบแอปเปลี่ยนเป็นโหมดทบทวนเรื่องที่จะสอบเอง`:"อยู่ในช่วงสอบ ภารกิจเหลือแค่คำศัพท์"}${x.estimated?" (วันที่ประมาณจากปีก่อน ถ้าโรงเรียนประกาศแล้ว ส่งวันจริงมาได้)":""}`]) } }
   { const nt=it7.filter(x=>x.notTaught); if(nt.length){ const tp=[...new Set(nt.map(x=>x.topic).filter(Boolean))].slice(0,3).join(", "); A.push(["amber","📭",`น้องบอกว่ายังไม่ได้เรียน ${nt.length} ข้อ (${esc(tp)}) ไม่นับเป็นผิด ระบบประจำวันจะเช็กกับแผนของโรงเรียน`]) } }
   { const gs=it7.filter(x=>x.guessed).length; if(gs>=2) A.push(["amber","🎲",`น้องบอกเองว่าตอบถูกเพราะเดา ${gs} ข้อในสัปดาห์นี้ ไม่นับเป็นความชำนาญ และส่งกลับไปทวนแล้ว`]) }
   { const ot=it7.filter(x=>x.whyOther); if(ot.length) A.push(["green","✍️",`เหตุผลที่น้องพิมพ์เอง: ${ot.slice(-3).map(x=>"“"+esc(x.whyOther)+"”").join(" · ")}`]) }

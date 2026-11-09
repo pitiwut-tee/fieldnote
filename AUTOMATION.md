@@ -209,6 +209,15 @@ undermine interest (Deci, Koestner & Ryan 1999) while self-set goals help (Locke
 - The museum adds one specimen per spell tier gained and per 8 right sweep answers. Sky events (moon phase, meteor
   showers, Loy Krathong, dust season) are built in; you can refer to them in letters on those days.
 
+## School exams (calendar.schoolExams)
+- **Dates:** estimated from last year (midterm 14–18 Dec 2026, final 22–26 Feb 2027) and marked `estimated`.
+  When the father sends the real dates, replace them and drop the flag.
+- **Prep week (7 days before):** slot 1 becomes "ทบทวนก่อนสอบ…". It holds 10 questions from the exam spells, weighted to past mistakes.
+  - There are no new lessons, probes or mixed sets.
+  - Do not add new-topic lessons to `lessonQueue` that week. Twin questions for her mistakes on exam spells are the best use of the daily run.
+- **During exam days:** only vocab is required.
+- **Exam spells:** keep the `spells` list in line with `content/school-plan.md`.
+
 ## Honest-answer signals on items (from 9 Nov 2026)
 - `errorTypes` may include `slip`, meaning "I thought it right but tapped or typed wrong".
   - It still counts as wrong.
