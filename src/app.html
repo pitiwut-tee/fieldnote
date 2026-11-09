@@ -187,7 +187,7 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .elgrid{display:grid;grid-template-columns:repeat(18,minmax(0,1fr));gap:2px;width:100%}
 .elrow2{margin-top:8px}.actl{position:absolute;left:0;font-size:.6rem;white-space:nowrap;color:var(--muted,#777)}
 .elc{position:relative;width:100%;aspect-ratio:1;min-width:0;font-size:clamp(.5rem,2.4vw,.8rem)!important;border-radius:4px;border:1px solid var(--line);background:var(--paper);font:700 .72rem/1 var(--mono,monospace);color:#1f2d24;padding:0;display:inline-flex;align-items:center;justify-content:center}
-.elc.gap{border:0;background:transparent}.elc.has{border-style:dashed;border-color:#b9b2a2}.elc.on{border:1px solid rgba(0,0,0,.2);cursor:pointer}
+.elc.gap{border:0;background:transparent}.elc.young{opacity:.55}.elc.has{border-style:dashed;border-color:#b9b2a2}.elc.on{border:1px solid rgba(0,0,0,.2);cursor:pointer}
 button.elc[data-cell]{cursor:pointer}button.elc[data-cell]:hover{outline:2px solid #e0a23c}
 .elbadge{display:inline-flex;align-items:center;justify-content:center;border-radius:22%;font-weight:800;color:#1f2d24;position:relative;box-shadow:inset 0 -4px 0 rgba(0,0,0,.12);vertical-align:middle}
 .elbadge i{position:absolute;top:5%;left:9%;font-size:.36em;font-style:normal;font-weight:600;opacity:.75}
@@ -445,6 +445,16 @@ button.spell{cursor:pointer} button.spell:hover{border-color:var(--accent)}
 .vex{font-style:italic}
 .reading{background:var(--soft);border-radius:12px;padding:12px 14px;line-height:1.8}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+.hintline{display:flex;gap:8px;justify-content:space-between;align-items:baseline}
+.linkbtn{background:none;border:1px dashed var(--line,#ccc);border-radius:999px;padding:2px 10px;font:inherit;font-size:.8rem;color:inherit;cursor:pointer;white-space:nowrap}
+.exsteps{margin:.4em 0;padding-left:1.4em;display:flex;flex-direction:column;gap:8px}
+.exsteps li{line-height:1.7;padding:6px 8px;border-radius:10px}
+.exsteps li.now{background:rgba(255,214,102,.22);animation:stepin .35s ease}
+@keyframes stepin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.dcard{flex-direction:row!important;min-height:0!important;text-align:left!important;width:100%;gap:12px;align-items:center;padding:10px 12px!important}
+.labrow{display:grid;grid-template-columns:1fr;gap:2px;margin:6px 0}.labrow input{width:100%}
+.labstats{display:grid;grid-template-columns:repeat(4,1fr);text-align:center;gap:6px;margin:10px 0}
+.labhist{width:100%;max-width:420px;display:block;margin:auto;color:var(--ink)}
 </style>
 
 <div class="wrap" id="app">
@@ -683,6 +693,24 @@ function nextDay(d){ const t=new Date(d); t.setDate(t.getDate()+1); t.setHours(0
 function weekStart(d){ const t=new Date(d); t.setHours(0,0,0,0); t.setDate(t.getDate()-((t.getDay()+6)%7)); return t.getTime() }
 function xpOf(a){ if(isSkip(a)||a.type==="daymode") return 0; if(typeof a.xp==="number") return a.xp; return (a.correct||0)*10+((a.total||0)-(a.correct||0))*5+20 }
 /* a wrong answer given in under 4 seconds looks like a tap, not a try: 0 XP instead of 5 */
+/* explanations are split into short steps (father, 9 Nov): she reads one step at a time instead of facing a wall of text.
+   Thai separates clauses with spaces, so a step ends at a space before a Thai word once it is long enough, or before a linking word. */
+function exSteps(t){ const w=String(t||"").split(/\s+/).filter(Boolean), out=[]; let cur="";
+  for(const x of w){ const thai=/^[\u0E00-\u0E7F]/.test(x), kw=/^(ดังนั้น|จากนั้น|ต่อมา|ระวัง|จำไว้|สรุป|ถ้า|เพราะ|ขั้นที่|ส่วน|แต่|อีกวิธี|ตรวจ|ลอง)/.test(x);
+    if(cur&&thai&&(cur.length>=90||(kw&&cur.length>=30))){ out.push(cur); cur=x } else cur=cur?cur+" "+x:x }
+  if(cur){ if(out.length&&cur.length<25) out[out.length-1]+=" "+cur; else out.push(cur) } return out }
+/* a third hint: the first step of the worked solution. Authored as q.step1; for typed-number questions it can come from the
+   explanation's first step when that step does not contain the answer. Choice questions without step1 get no third hint,
+   because the first explanation step usually names the right option. */
+/* wrong, don't-know or guessed → the explanation opens one step at a time; a confident right answer sees it all at once */
+function exStepped(q,ans){ return ans&&(!ans.correct||S.guessed||S.checkPick===-1)&&exSteps(q.ex).length>=2 }
+function exLeft(q,ans){ return exStepped(q,ans)&&(S.exStep||1)<exSteps(q.ex).length }
+function exHtml(q,ans){ if(!exStepped(q,ans)) return `<p>${gloss(q.ex)}</p>`; const st=exSteps(q.ex), n=Math.min(st.length,S.exStep||1);
+  return `<ol class="exsteps">${st.slice(0,n).map((x,i)=>`<li class="${i===n-1?"now":""}">${gloss(x)}</li>`).join("")}</ol>
+    ${n<st.length?`<button class="btn small" id="exnext" type="button">ขั้นต่อไป ▸ (${n}/${st.length})</button>`:`<span class="small muted">ครบ ${st.length} ขั้นแล้ว</span>`}` }
+function hintList(q){ const h=[...(q.hints||[])], st=exSteps(q.ex), a=String(q.num?(q.answerText||q.answer):q.opts?q.opts[q.a]:"").trim();
+  const leaks=a&&new RegExp("(^|[^0-9.])"+a.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"([^0-9.]|$)").test(st[0]||"");
+  if(q.step1) h.push("ขั้นแรกของวิธีทำ: "+q.step1); else if(q.num&&st.length>=2&&!leaks&&(q.hints||[]).length<3) h.push("ขั้นแรกของวิธีทำ: "+st[0]); return h }
 function itemXp(items){ return items.reduce((s,x)=>s+(x.skipped||x.dontknow?0:x.correct?10:(x.timeSec!=null&&x.timeSec<4?0:5))+(x.checkOk?5:0),0) }
 /* anti-grinding (father, 8 Nov 2026), applied when a lesson-type record is saved:
    - replaying a set she already finished pays only for questions she had missed before and now gets right, no finish bonus
@@ -743,7 +771,7 @@ function progressOf(list){
   list.forEach(a=>{ const k=dayKey(a.endedAt);
     if(a.type==="daymode") return;
     if(a.type==="mission"||a.type==="teach"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* mission / teaching dad: XP only, not a daily unit */
-    if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood"||a.type==="adv"||a.type==="studio"||a.type==="elem") return;
+    if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood"||a.type==="adv"||a.type==="studio"||a.type==="elem"||a.type==="save"||a.type==="card") return;
     if(a.type==="lab"||a.type==="labverdict"||a.type==="labquest"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
     if(a.type==="sweep"){ sweepDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* old-topic sweep: its own daily step, not a lesson unit */
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
@@ -856,7 +884,7 @@ function reviewPool(list){
     /* a right answer only clears a mistake if she had to think: a twin, a typed answer, hidden options, or a fresh set.
        Re-tapping the same remembered option in a review does not count. */
     const thought=a.type!=="review"&&!x.retry||x.of||x.recall||x.cover;
-    if(x.notTaught) return; if(x.correct===false||(x.correct&&(x.conf==="unsure"||x.checkOk===false||x.guessed))) wrong.set(id,+new Date(a.endedAt)); else if(x.correct&&thought) wrong.delete(id);
+    if(x.notTaught) return; if(x.correct===false||(x.correct&&(x.conf==="unsure"||x.checkOk===false||x.guessed||x.hintStep))) wrong.set(id,+new Date(a.endedAt)); else if(x.correct&&thought) wrong.delete(id);
   }));
   return [...wrong.entries()].sort((a,b)=>a[1]-b[1]).map(([qid])=>QBANK[qid].q);
 }
@@ -894,7 +922,7 @@ function spellStats(list){
     (a.items||[]).forEach(x=>{
       if(x.skipped||x.notTaught) return; const sp=x.spell||QBANK[x.qid]?.q.spell; if(!sp||!x.level) return;
       const o=st[sp]??={days:{},last:0}; const dd=o.days[d]??={1:[0,0],2:[0,0],3:[0,0]};
-      dd[x.level][0]++; if(x.correct&&!x.guessed) dd[x.level][1]++; o.last=Math.max(o.last,d);
+      dd[x.level][0]++; if(x.correct&&!x.guessed&&!x.hintStep) dd[x.level][1]++; o.last=Math.max(o.last,d);
     });
   });
   const out={}, t=todayKey();
@@ -1565,6 +1593,7 @@ function renderStep(){
         ${ans?"":`<button class="xopt" type="button" data-x="${k}" aria-pressed="${struck}" aria-label="${struck?"เอาคืน":"ตัดตัวเลือกนี้"}" title="${struck?"เอาคืน":"ตัดตัวเลือกนี้"}">${struck?"↺":"✕"}</button>`}</div>`}).join("")}</div>
       ${ans?"":`<p class="small muted">${staged?"แตะตัวเลือกเพื่อเลือก แล้วกดส่งคำตอบ · ":""}กด ✕ ท้ายข้อเพื่อตัดตัวเลือกที่ไม่ใช่แน่ๆ</p>`}${panel}`;
   }
+  const HL=hintList(q); S.hintKnown=S.hintKnown||[];
   let fb = "";
   /* reason check: right answer on a question that has q.check → ask how she got it before showing the explanation */
   const ck=ans&&ans.correct&&q.check&&!S.checkDone?q.check:null;
@@ -1581,7 +1610,7 @@ function renderStep(){
     const confNote = ans.dontknow||!ans.conf?"":ans.correct&&ans.conf==="unsure"?`<p class="small">ถูกแล้ว แต่ยังไม่ชัวร์ ระบบจะเอาข้อนี้มาให้ทวนอีกรอบ จะได้มั่นใจขึ้น</p>`
       :!ans.correct&&ans.conf==="sure"?`<p class="small"><b>มั่นใจแต่พลาด</b> ข้อแบบนี้ถ้าเข้าใจตอนนี้ จะจำได้แม่นที่สุด อ่านเฉลยช้าๆ นะ</p>`:"";
     const own = st.explain&&(ans.ownWhy||ans.ownWhyPad)?`<div class="feedback"><span class="small"><b>เหตุผลของเธอ:</b> ${ans.ownWhy?esc(ans.ownWhy):"(เขียนในกระดาษทด)"}</span><span class="small muted">ลองเทียบกับเฉลยด้านล่าง ตรงกันไหม ต่างกันตรงไหน</span></div>`:"";
-    fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answerText||q.answer} ${q.unit}`:""}</b>${ckNote}${confNote}<p>${gloss(q.ex)}</p>
+    fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answerText||q.answer} ${q.unit}`:""}</b>${ckNote}${confNote}${exHtml(q,ans)}
       ${q.en?"":`<div>${readBtn("ex","🔊 ฟังเฉลย")}</div>`}
       ${ans.correct||ans.dontknow?"":`<span class="small muted">พลาดเพราะอะไร เลือกได้หลายข้อ (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
       <div class="why">${Object.entries(ERR).filter(([k])=>k!=="dontknow"&&k!=="notTaught").map(([k,v])=>`<button data-why="${k}" aria-pressed="${(S.why||[]).includes(k)}">${v}</button>`).join("")}</div>
@@ -1589,7 +1618,7 @@ function renderStep(){
       ${ans.correct&&!ans.dontknow&&!(q.check&&S.checkPick!=null)?`<button class="btn ghost small" id="guessed" aria-pressed="${!!S.guessed}">${S.guessed?"✓ บอกแล้วว่าข้อนี้เดา":"🎲 ข้อนี้ถูกเพราะเดา"}</button>`:""}
       ${askHtml("question")}
     </div>
-    <button class="btn" id="next">ต่อไป</button>`;
+    ${exLeft(q,ans)?`<p class="small muted">อ่านเฉลยทีละขั้นให้ครบก่อน แล้วปุ่ม "ต่อไป" จะขึ้นมา</p>`:`<button class="btn" id="next">ต่อไป</button>`}`;
   }
   $v.innerHTML = `<section class="card">${header()}
     <span class="row" style="gap:6px">${S.set.kind==="mixed"?`<span class="chip">${/^s/.test(q.spell||"")?"🔬 วิทย์":"📐 คณิต"}</span>`:""}<span class="chip l${q.level}">${LV[q.level]}${S.set.kind==="mixed"&&!ans?"":" · "+esc(q.topic)}</span>${q.en?`<span class="chip">English corner</span>`:""}</span>
@@ -1602,9 +1631,10 @@ function renderStep(){
       <span class="small"><b>โจทย์ให้อะไรมา</b></span><ul style="margin:0;padding-left:1.2em">${(q.parts.given||[]).map(g=>`<li class="small">${esc(g)}</li>`).join("")}</ul>
       <span class="small"><b>โจทย์ถามอะไร</b> ${esc(q.parts.ask||"")}</span>${q.parts.watch?`<span class="small"><b>ระวัง</b> ${esc(q.parts.watch)}</span>`:""}</div>`
 :""):""}
-    ${S.hints?`<div class="feedback">${q.hints.slice(0,S.hints).map((h,k)=>`<span class="small"><b>คำใบ้ ${k+1}</b> ${esc(h)}</span>`).join("")}</div>`:""}
+    ${S.hints?`<div class="feedback">${HL.slice(0,S.hints).map((h,k)=>`<span class="small hintline"><span><b>คำใบ้ ${k+1}</b> ${esc(h)}</span>${ans?"":S.hintKnown.includes(k)?`<span class="muted">✓ รู้อยู่แล้ว</span>`:`<button class="linkbtn" data-hk="${k}" type="button">รู้อยู่แล้ว</button>`}</span>`).join("")}
+      ${!ans&&S.hints>=HL.length?`<span class="small muted">ใช้คำใบ้ครบแล้ว ลองเขียนสิ่งที่รู้ลงกระดาษทดก่อน ถ้ายังไปต่อไม่ได้ กด "ยังคิดไม่ออก ดูเฉลย" ได้เลย ไม่ผิดอะไร</span>`:""}</div>`:""}
     ${body}${fb}
-    <div class="row">${!ans&&S.hints<q.hints.length?`<button class="btn ghost" id="hint">ขอคำใบ้ (${S.hints}/${q.hints.length})</button>`:""}
+    <div class="row">${!ans&&S.hints<HL.length?`<button class="btn ghost" id="hint">${S.hints===HL.length-1&&HL.length>(q.hints||[]).length?"ขอดูขั้นแรกของวิธีทำ":"ขอคำใบ้"} (${S.hints}/${HL.length})</button>`:""}
     ${!ans?`<div class="row" style="gap:8px"><button class="btn ghost" id="dontknow">🤔 ยังคิดไม่ออก ดูเฉลย</button>${["mixed","probe","sweep"].includes(S.set.kind)||S.set.type==="sweep"?`<button class="btn ghost" id="nottaught">📭 ยังไม่ได้เรียนเรื่องนี้</button>`:""}</div>`:""}
     ${st.optional&&!ans?`<button class="btn ghost" id="skip">ข้ามข้อนี้</button>`:""}</div>
     ${!ans&&q.recall?`<p class="small muted">🧠 ข้อนี้เคยเจอแล้ว รอบนี้ไม่มีตัวเลือก พิมพ์คำตอบเองเลย</p>`:""}
@@ -1647,6 +1677,7 @@ function renderStep(){
       $v.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{const k=+b.dataset.x; S.struck=S.struck.includes(k)?S.struck.filter(x=>x!==k):[...S.struck,k]; const y=window.scrollY; renderStep(); window.scrollTo({top:y})});
     }
     const hb=document.getElementById("hint"); if(hb) hb.onclick=()=>{S.hints++;const y=window.scrollY;renderStep();window.scrollTo({top:y})};
+    $v.querySelectorAll("[data-hk]").forEach(b=>b.onclick=()=>{ const k=+b.dataset.hk; S.hintKnown=[...new Set([...(S.hintKnown||[]),k])]; if(k===S.hints-1&&S.hints<hintList(q).length) S.hints++; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) });
     document.getElementById("dontknow").onclick=()=>{S.why=["dontknow"]; answer({choice:-1,raw:"",correct:false,dontknow:true})};
     { const nt=document.getElementById("nottaught"); if(nt) nt.onclick=()=>{S.why=["notTaught"]; S.notTaught=true; answer({choice:-1,raw:"",correct:false,dontknow:true})} }
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
@@ -1657,15 +1688,16 @@ function renderStep(){
     $v.querySelectorAll("[data-ck]").forEach(b=>b.onclick=()=>{ S.checkPick=+b.dataset.ck; S.checkDone=true; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) });
     $v.querySelectorAll("[data-why]").forEach(b=>b.onclick=()=>{const k=b.dataset.why; S.why=(S.why||[]).includes(k)?S.why.filter(x=>x!==k):[...(S.why||[]),k];const y=window.scrollY;renderStep();window.scrollTo({top:y})});
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
+    const exn=document.getElementById("exnext"); if(exn) exn.onclick=()=>{ S.exStep=(S.exStep||1)+1; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) };
     const nx=document.getElementById("next"); if(nx) nx.onclick=()=>{
-      S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
+      S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,...(S.hints&&S.hints>=(q.hints||[]).length+1?{hintStep:true}:{}),...(S.hintKnown&&S.hintKnown.length?{hintKnown:S.hintKnown}:{}),...(exStepped(q,ans)?{exSteps:Math.min(S.exStep||1,exSteps(q.ex).length)}:{}),struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
         ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(S.whyOther&&(S.why||[]).includes("other")?{whyOther:S.whyOther.trim()}:{}),...(ans.correct&&(S.guessed||S.checkPick===-1)?{guessed:true}:{}),...(S.notTaught?{notTaught:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0}:{}),...(q.check&&S.checkPick!=null&&S.checkPick!==-1?{checkOk:S.checkPick===q.check.a}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),len:q.q.length});
       advance();
     };
   }
 }
 function answer(a){ readStop(); S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
-function advance(){ readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.hints=0; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
+function advance(){ readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
 
 /* concept card, one idea per screen: (1) why this topic exists — a puzzle to guess first (c.hook) or the "use" line,
    (2) each point alone with "เข้าใจแล้ว" / "ขออธิบายอีกแบบ" (c.more[i], else the next whole alternative),
@@ -1902,6 +1934,7 @@ function buddyLines(list,p,plan){
   try{ const ev=skyEvent(Date.now()); if(ev&&!ev.quiet) L.unshift(ev.line); else if(ev&&new Date().getDay()===1) L.push(ev.line);
     if(skyNow(Date.now())==="night"&&!ev){ const m=moonInfo(Date.now()); L.push(`คืนนี้${m.name} ลองออกไปดูดวงจันทร์สิ ${m.wax?"ข้างขึ้นด้านที่สว่างจะหันไปทางทิศตะวันตก ที่ดวงอาทิตย์เพิ่งตก":"ข้างแรมจะขึ้นดึกขึ้นทุกคืน"}`) } }catch(e){}
   try{ const er=eggsReady(list).length; if(er) L.unshift(`ไข่ที่หุบเขามังกรฟักแล้ว ${er} ครอก! ไปดูที่ "แผนที่คาถา" แตะ 🐉 สิ ว่าที่ทำนายไว้ตรงไหม`) }catch(e){}
+  try{ if(dcNew()) L.unshift(`วันนี้มีเกร็ดประจำวันใบใหม่ "${dcToday().title}" อยู่ที่ "บ้านคู่หู" มาอ่านด้วยกันนะ`) }catch(e){}
   try{ const fn=factsNew(list).length; if(fn) L.unshift(`มีการ์ดความรู้ใบใหม่ ${fn} ใบรออยู่ที่ "บ้านคู่หู" มาอ่านเรื่องจริงของพวกเราด้วยกันนะ`) }catch(e){}
   try{ const mn=museumNew(list); if(mn) L.unshift(`มีของ ${mn} ชิ้นใหม่เข้าพิพิธภัณฑ์แล้ว ไปดูที่ "แผนที่คาถา" แตะ 🏛️ สิ เราจะเล่าให้ฟัง`) }catch(e){}
   if(plan.mixed) L.push("วันนี้มีชุดผสมแบบข้อสอบ ลองดูว่าเธอแยกออกไหม ข้อไหนต้องใช้คาถาอะไร");
@@ -1955,7 +1988,7 @@ function homeTiles(list,p,pool){
   { const er=eggsReady(list).length, can=pairsToday(list)<labPairsPerDay(list); T.push({id:"lab",i:"🐉",t:"หุบเขามังกร",s:er?"ไข่ฟักแล้ว ไปดูกัน!":can?"วันนี้จับคู่ได้":"ไข่กำลังฟัก",rew:can?"ทำนายถูก +25 XP":"",todo:!!er||can,badge:er?"🐣":"",done:!er&&!can}) }
   { const st=studioTile(list); if(st) T.push(st) }
   T.push(elTile(list));
-  { const en=advEnergy(list), n=advUnits(list).length; T.push({id:"adv",i:"🌍",t:"ภารกิจกู้โลก",s:n?`พลังผจญภัย ${en.left}/${en.max}`:"ต้องมีคู่หูก่อน",rew:"",todo:!!(n&&en.left&&p.goalToday),badge:n&&en.left&&p.goalToday?String(en.left):""}) }
+  { const en=advEnergy(list), n=advRoster(list).length; T.push({id:"adv",i:"🌍",t:"ภารกิจกู้โลก",s:n?`พลังผจญภัย ${en.left}/${en.max}`:"ต้องมีคู่หูก่อน",rew:"",todo:!!(n&&en.left&&p.goalToday),badge:n&&en.left&&p.goalToday?String(en.left):""}) }
   const gl=goalOf(list); T.push({id:"goal",i:"🎯",t:"เป้าหมายเดือนนี้",s:gl?"ดูความคืบหน้า":"ยังไม่ได้ตั้ง",rew:gl?"":"รางวัลจริงที่เลือกเอง",todo:!gl,badge:gl?"":"!"});
   const wk=weekStart(todayKey()), told=list.some(a=>a.type==="teach"&&dayKey(a.endedAt)>=wk); T.push({id:"teach",i:"💬",t:"เล่าให้พ่อฟัง",s:told?"สัปดาห์นี้แล้ว ✓":"สัปดาห์ละครั้ง ราว 3 นาที",rew:told?"":`+50 XP${firstTeach?" · หมวกครู 🎓":""}`,todo:!told,badge:told?"":"!",done:told});
   const panel=homeOpen?tilePanel(homeOpen,list,p,pool):"";
@@ -2371,7 +2404,10 @@ const SHOP=[...WEAR,...PROPS,...RARE,...GUEST_ITEMS,...Object.entries(SCENES).fi
 const WEAR_HOME={head:[50,6],neck:[50,64],side:[86,62]};   /* where items bought in the old slot system start */
 function ls(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v) }catch(e){ return d } }
 function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)) }catch(e){} }
-function wallet(list){ const earned=list.filter(a=>a.type!=="shop").reduce((s,a)=>s+Math.max(0,xpOf(a)),0)+QUEST_BONUS*questWeeks(list).length, spent=list.filter(a=>a.type==="shop").reduce((s,a)=>s+(a.cost||0),0); return {earned,spent,stars:earned-spent} }
+/* stars put in the wish jar (type "save", +deposit / −withdraw) are kept apart: buying other things cannot use them */
+function jarOf(list){ return Math.max(0,list.filter(a=>a.type==="save").reduce((s,a)=>s+(a.amount||0),0)) }
+function wallet(list){ const earned=list.filter(a=>a.type!=="shop"&&a.type!=="save").reduce((s,a)=>s+Math.max(0,xpOf(a)),0)+QUEST_BONUS*questWeeks(list).length, spent=list.filter(a=>a.type==="shop").reduce((s,a)=>s+(a.cost||0),0), jar=jarOf(list); return {earned,spent,jar,stars:earned-spent-jar} }
+async function jarMove(amount,note){ const now=new Date().toISOString(); await saveAttempt({type:"save",setId:"jar",amount,topic:note||"กระปุกออมดาว",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]}) }
 let _specKey=null,_specVal=null;
 function earnedSpecials(list){ const key=list.length+"|"+(list[0]&&list[0].endedAt)+"|"+todayKey(); if(key===_specKey) return _specVal; _specKey=key; _specVal=earnedSpecials0(list); return _specVal }
 function earnedSpecials0(list){ const out=new Set(), p=progressOf(list), ss=spellStats(list);
@@ -2449,6 +2485,29 @@ function factSheet(kind,i,after){ const F=PET_FACTS[kind]||[], list=mine(), n=Ma
   try{ localStorage.setItem("fieldnote.factseen",JSON.stringify([...new Set([...factSeen(),kind+":"+i])])) }catch(e){}
   sheet({icon:`<span class="factbig">${petLook(kind,3)}</span>`,title:`การ์ดความรู้ใบที่ ${i+1} · ${P?P.n:""}`,read:F[i],html:`<p class="factread">${esc(F[i])}</p>`,
     actions:[...(i>0?[{label:"← ใบก่อน",ghost:true,fn:()=>factSheet(kind,i-1,after)}]:[]),...(i+1<n?[{label:"ใบถัดไป →",fn:()=>factSheet(kind,i+1,after)}]:[{label:"เข้าใจแล้ว",fn:()=>{ closeSheet(); if(after) after() }}])]}) }
+/* ---------- เกร็ดประจำวัน (father, 9 Nov): the pet cards never change, so the companion also brings one new card a day,
+   tied to what she is studying. Before a new card opens, one quick question about the last card she read (+5 XP if right):
+   reading is free, only remembering earns XP. */
+const DCARDS=((CONTENT.cards||{}).cards)||[];
+function dcSeen(){ return ls("fieldnote.dcseen",{}) }
+function dcOpenList(){ const t=todayKey(); return DCARDS.filter(c=>dayKey(c.day+"T00:00:00+07:00")<=t) }
+function dcToday(){ const o=dcOpenList(), seen=dcSeen(); return o.filter(c=>!seen[c.day]).pop()||o[o.length-1]||null }
+function dcNew(){ const c=dcToday(); return !!(c&&!dcSeen()[c.day]) }
+function dcRecallDue(list){ const seen=dcSeen(), t=todayKey(), done=new Set(list.filter(a=>a.type==="card").map(a=>a.card));
+  return dcOpenList().filter(c=>seen[c.day]&&seen[c.day]<t&&!done.has(c.day)&&c.q).pop()||null }
+function dcHtml(list){ if(!DCARDS.length) return ""; const c=dcToday(); if(!c) return ""; const nw=dcNew(), rc=dcRecallDue(list), n=Object.keys(dcSeen()).length;
+  return `<div class="factbox"><div class="todayhead"><b>🗞️ เกร็ดประจำวัน</b><span class="small muted">อ่านแล้ว ${n} ใบ</span></div>
+    <button class="fcard dcard ${nw?"newf":""}" data-dc="1"><span class="fpet">${c.icon}</span><span><b>${esc(c.title)}</b><br><span class="small muted">${nw?(rc?"ทายใบเก่า 1 ข้อ (+5 XP) แล้วเปิดใบใหม่":"ใบใหม่วันนี้ แตะเพื่ออ่าน"):"อ่านแล้ว · พรุ่งนี้มีใบใหม่"}</span></span></button></div>` }
+function dcOpen(after){ const list=mine(), rc=dcRecallDue(list); if(rc&&dcNew()) return dcQuiz(rc,()=>dcShow(dcToday(),after)); dcShow(dcToday(),after) }
+function dcShow(c,after){ if(!c) return; const s=dcSeen(); if(!s[c.day]){ s[c.day]=todayKey(); lsSet("fieldnote.dcseen",s) }
+  const o=dcOpenList().filter(x=>dcSeen()[x.day]), i=o.indexOf(c);
+  sheet({icon:c.icon,title:c.title,read:c.title+" "+c.body,html:`${c.tag?`<span class="chip">${esc(c.tag)}</span>`:""}<p class="factread">${esc(c.body)}</p><p class="small muted">พรุ่งนี้จะมีคำถามทวนใบนี้ 1 ข้อ ตอบถูกได้ +5 XP</p>`,
+    actions:[...(i>0?[{label:"← ใบก่อน",ghost:true,fn:()=>dcShow(o[i-1],after)}]:[]),...(i>=0&&i<o.length-1?[{label:"ใบถัดไป →",ghost:true,fn:()=>dcShow(o[i+1],after)}]:[]),{label:"เข้าใจแล้ว",fn:()=>{ closeSheet(); if(after) after() }}]}) }
+function dcQuiz(c,next){ const ord=c.q.opts.map((_,i)=>i).sort(()=>Math.random()-.5);
+  const d=sheet({icon:"🧠",title:"ทวนเกร็ดใบก่อน",html:`<p class="small muted">${c.icon} ${esc(c.title)}</p><p><b>${esc(c.q.q)}</b></p><div class="opts">${ord.map(k=>`<button class="opt" data-dq="${k}">${esc(c.q.opts[k])}</button>`).join("")}</div>`,actions:[]});
+  d.querySelectorAll("[data-dq]").forEach(b=>b.onclick=async()=>{ const k=+b.dataset.dq, ok=k===c.q.a, now=new Date().toISOString();
+    await saveAttempt({type:"card",card:c.day,setId:"card-"+c.day,topic:"เกร็ดประจำวัน: "+c.title,correct:ok?1:0,total:1,startedAt:now,endedAt:now,durationSec:0,xp:ok?5:0,items:[]});
+    sheet({icon:ok?"🌟":"📘",title:ok?"จำได้! +5 XP":"ยังไม่ใช่ ไม่เป็นไร",html:`<p><b>คำตอบ:</b> ${esc(c.q.opts[c.q.a])}</p>${ok?"":`<p class="small">${esc(c.body)}</p>`}`,actions:[{label:"เปิดใบใหม่ →",fn:next}]}) }) }
 function bondHtml(kind,name,list){ const pts=bondPts(kind,list), lv=Math.floor(pts/BOND_STEP)+1, inLv=pts%BOND_STEP;
   return `<div class="bond"><span class="small"><b>ความผูกพัน ❤️ ระดับ ${lv}</b></span><div class="progress"><i style="width:${Math.round(inLv/BOND_STEP*100)}%;background:#ff6f91"></i></div></div>
     <p class="small muted" style="margin:2px 0 0">ลูบ${esc(name)}ได้ทุกวัน และทุกวันที่ฝึก ความผูกพันจะเพิ่มขึ้น ไม่มีวันลดลง</p>` }
@@ -2474,24 +2533,27 @@ let denMsg="", denBuy=null, denName="", denTab="food", denCele=null, denArrange=
 function wish(){ return ls("fieldnote.wish",null) }
 function wishItem(list){ const w=wish(); if(!w) return null; if(w.startsWith("pet:")){ const P=ALL_PETS.find(x=>x.k===w.slice(4)); return P&&!owns(list).has(w)?{id:w,e:glyph(P.forms[2]),n:P.n,cost:nextPetPrice(list)}:null }
   const s=SHOP.find(x=>x.id===w); return s&&!owns(list).has(w)&&s.cost?{id:w,e:s.e||"🏞️",n:s.n,cost:s.cost}:null }
-function wishHtml(list){ const w=wishItem(list); if(!w) return ""; const st=wallet(list).stars, left=Math.max(0,w.cost-st);
+function wishHtml(list,controls){ const w=wishItem(list); if(!w) return ""; const W=wallet(list), jar=W.jar, left=Math.max(0,w.cost-jar), free=W.stars;
   return `<div class="wishbar"><span style="font-size:1.8rem">${w.e}</span><div style="flex:1;display:flex;flex-direction:column;gap:4px">
-    <span class="small"><b>ของที่อยากได้: ${esc(w.n)}</b> · ${left?`อีก ⭐${left}`:"ดาวพอแล้ว ไปซื้อได้เลย!"}</span>
-    <div class="progress"><i style="width:${Math.min(100,Math.round(st/w.cost*100))}%;background:var(--beak)"></i></div></div></div>` }
+    <span class="small"><b>ของที่อยากได้: ${esc(w.n)}</b> · 🫙 ออมไว้ ⭐${jar}/${w.cost}${left?` · ขาดอีก ⭐${left}`:" · ครบแล้ว ไปซื้อได้เลย!"}</span>
+    <div class="progress"><i style="width:${Math.min(100,Math.round(jar/w.cost*100))}%;background:var(--beak)"></i></div>
+    ${controls?`<span class="row" style="gap:6px">${[20,50].map(n=>`<button class="btn ghost small" data-jar="${n}" ${free>=n&&left>0?"":"disabled"}>หยอด ⭐${n}</button>`).join("")}
+      <button class="btn ghost small" data-jar="${Math.min(left,Math.max(0,free))}" ${left>0&&free>0?"":"disabled"}>หยอดเท่าที่ขาด/ที่มี</button>${jar?`<button class="btn ghost small" data-jar="-${jar}">แคะกระปุก</button>`:""}</span>
+      <span class="small muted">ดาวในกระปุกจะไม่ถูกใช้ซื้อของอื่น ซื้อของที่อยากได้เมื่อไรจะใช้ดาวในกระปุกก่อน</span>`:""}</div></div>` }
 function renderDen(){
   const list=mine(), w=wallet(list), o=owns(list), pets=ownedPets(list), b=getBuddy(), R=room();
   if(!b){ $v.innerHTML=`<section class="card"><h2>บ้านคู่หู</h2><p>ไปเลือกคู่หูตัวแรกที่หน้า "ฝึกวันนี้" ก่อนนะ</p><a class="btn" href="#home">ไปเลือกคู่หู</a></section>`; return }
   const g=growth(b.kind,list), st=growStage(g), next=GROW[st+1], price=nextPetPrice(list), P=ALL_PETS.find(x=>x.k===b.kind);
   const scene=SCENES[R.bg]||SCENES["bg:home"], mine1=R.wear[b.kind]||{};
   const buyBtn=(item,cost,label)=>denBuy===item?`<button class="btn small" data-confirm="${item}">ยืนยัน ใช้ ⭐${cost}</button><button class="btn ghost small" data-cancel="1">ไม่เอาแล้ว</button>`
-    :`<button class="btn ghost small" data-buy="${item}" ${w.stars<cost?"disabled":""}>${label||`⭐${cost}`}</button>`;
+    :`<button class="btn ghost small" data-buy="${item}" ${w.stars+(wish()===item?w.jar:0)<cost?"disabled":""}>${label||`⭐${cost}`}</button>`;
   const tabs=[["food","🍪 อาหารวิเศษ"],["pets","🐾 สัตว์คู่หู"],["wear","🎀 ของแต่งตัว"],["fx","✨ เอฟเฟกต์"],["prop","🪴 ของในห้อง"],["bg","🏞️ ฉาก"]];
   if(!tabs.some(t=>t[0]===denTab)) denTab="wear";
   const worn=R.wear[b.kind]||[], wishBtn=id=>wish()===id?`<span class="small muted">⭐ เป้าหมายอยู่</span>`:`<button class="btn ghost small" data-wish="${id}" style="border:0">☆ อยากได้</button>`;
   $v.innerHTML=`<section class="card"><div class="row" style="justify-content:space-between"><h2>บ้านคู่หู</h2><span class="stars">⭐ ${w.stars} ดาวเวท</span></div>
     <p class="small muted">ดาวเวทได้จาก XP ทุกครั้งที่ฝึก (สะสมแล้ว ${w.earned} XP) ใช้ซื้ออาหารวิเศษให้คู่หูโต รับคู่หูตัวใหม่ และแต่งตัวแต่งบ้าน ทุกอย่างเป็นของเล่น ไม่มีผลกับการเรียน</p>
     ${denMsg?`<p class="small" style="color:var(--good)"><b>${esc(denMsg)}</b></p>`:""}
-    ${wishHtml(list)}
+    ${wishHtml(list,true)}
     <div class="scene ${denArrange?"arrange":""}" id="scene">${scene.svg()}${denArrange?"":skyOverlay(Date.now(),"den",R.bg||"bg:home")}${skyEvent(Date.now())?.k==="krathong"?`<span style="position:absolute;left:12%;bottom:10%;font-size:28px;z-index:2">🪷</span>`:""}
       <div class="props" id="props">${R.props.map((p,i)=>({p,i,s:SHOP.find(z=>z.id===p.id)})).filter(x=>x.s).sort((a,b)=>(b.s.shelf?1:0)-(a.s.shelf?1:0)).map(({p,i,s})=>`<span class="prop-it ${s.shelf?"shelfit":""} ${denSel&&denSel.t==="p"&&denSel.i===i?"sel":""}" data-pi="${i}" ${s.shelf?`data-shelf="${p.id.slice(5)}"`:""} title="${esc(s.n)}" style="left:${p.x}%;top:${p.y}%;font-size:${Math.round((s.big?96:32)*(p.s||1))}px">${s.e}</span>`).join("")}</div>
       <button class="hero-pet bbtn" id="petpat" type="button" aria-label="${esc(b.name)}">${petFace(b.kind,130,true,list)}</button>
@@ -2503,7 +2565,7 @@ function renderDen(){
       ${denSel?(()=>{const o=denSel.t==="p"?R.props[denSel.i]:(R.wear[b.kind]||[])[denSel.i]; return o?`<div class="row" style="gap:10px;align-items:center"><label class="small" for="szr">ขนาด</label>
         <input type="range" id="szr" min="40" max="250" step="5" value="${Math.round((o.s||1)*100)}" style="flex:1;min-width:140px;accent-color:var(--accent)">
         <button class="btn ghost small" data-rm="1">เก็บออก</button></div>`:""})():`<p class="small"><b>แตะของชิ้นที่อยากปรับ</b> แล้วจะมีแถบปรับขนาดขึ้นมา</p>`}</div>`:""}
-    ${factsHtml(b.kind,b.name,st)}
+    ${dcHtml(mine())}${factsHtml(b.kind,b.name,st)}
     <div id="bondbox">${bondHtml(b.kind,b.name,list)}</div>
 
     <label class="small row" style="gap:6px"><input type="checkbox" id="psound" ${petSoundOn()?"checked":""}> เสียงคู่หูเวลาลูบ</label>
@@ -2544,7 +2606,8 @@ function renderDen(){
   $v.querySelectorAll("[data-cancel]").forEach(x=>x.onclick=()=>{denBuy=null;reRender()});
   const nn=document.getElementById("newname"); if(nn) nn.oninput=()=>{denName=nn.value};
   $v.querySelectorAll("[data-confirm]").forEach(x=>x.onclick=async()=>{ const item=x.dataset.confirm, isPet=item.startsWith("pet:"), cost=isPet?price:SHOP.find(s=>s.id===item).cost;
-    if(wallet(mine()).stars<cost) return; const kind=item.slice(4), name=isPet?((document.getElementById("newname")?.value||"").trim().slice(0,20)||ALL_PETS.find(p=>p.k===kind).n):null;
+    { const W=wallet(mine()), useJar=wish()===item?Math.min(W.jar,cost):0; if(W.stars+useJar<cost) return; if(useJar) await jarMove(-useJar,"ใช้ดาวในกระปุกซื้อของที่อยากได้") }
+    const kind=item.slice(4), name=isPet?((document.getElementById("newname")?.value||"").trim().slice(0,20)||ALL_PETS.find(p=>p.k===kind).n):null;
     x.disabled=true; const now=new Date().toISOString();
     await saveAttempt({type:"shop",setId:"shop",item,cost,...(name?{name}:{}),topic:"บ้านคู่หู",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
     const s=SHOP.find(z=>z.id===item), r=room();
@@ -2558,9 +2621,11 @@ function renderDen(){
     else { placeItem(r,s,b.kind); denArrange=true; denSel=s.slot==="prop"?{t:"p",i:r.props.length-1}:{t:"w",i:r.wear[b.kind].length-1};
       lsSet("fieldnote.room",r); denMsg=s.slot==="prop"?`วาง${s.n}แล้ว ลากไปวางตรงไหนก็ได้ ปรับขนาดด้วยแถบเลื่อน`:`${b.name}ใส่${s.n}แล้ว ลากปรับตำแหน่งได้ ปรับขนาดด้วยแถบเลื่อน`; reRender(); return }
     lsSet("fieldnote.room",r); denSel=null; reRender() });
+  $v.querySelectorAll("[data-jar]").forEach(x=>x.onclick=async()=>{ const n=+x.dataset.jar; if(!n) return; x.disabled=true; if(n>0&&wallet(mine()).stars<n) return; await jarMove(n,n>0?"หยอดกระปุกออมดาว":"แคะกระปุกออมดาว"); denMsg=n>0?`หยอดกระปุก ⭐${n} แล้ว`:"แคะกระปุกแล้ว ดาวกลับมาใช้ได้"; reRender() });
   $v.querySelectorAll("[data-wish]").forEach(x=>x.onclick=()=>{ lsSet("fieldnote.wish",x.dataset.wish); denMsg="ตั้งเป็นของที่อยากได้แล้ว ดูความคืบหน้าได้ที่หน้าแรก"; reRender() });
   on("arrange",()=>{ denArrange=!denArrange; denSel=null; reRender() });
   $v.querySelectorAll("[data-fact]").forEach(c=>c.onclick=()=>factSheet(b.kind,+c.dataset.fact,reRender));
+  $v.querySelectorAll("[data-dc]").forEach(c=>c.onclick=()=>dcOpen(reRender));
   { const sr=document.getElementById("szr"); if(sr&&denSel){ const el=denSel.t==="p"?$v.querySelector(`#props [data-pi="${denSel.i}"]`):$v.querySelector(`#petpat [data-wi="${denSel.i}"]`), base=el?parseFloat(el.style.fontSize)/((denSel.t==="p"?room().props[denSel.i]:room().wear[b.kind][denSel.i]).s||1):0;
     sr.oninput=()=>{ if(el) el.style.fontSize=Math.round(base*sr.value/100)+"px" };
     sr.onchange=()=>{ const r=room(), o2=denSel.t==="p"?r.props[denSel.i]:(r.wear[b.kind]||[])[denSel.i]; if(!o2) return; o2.s=sr.value/100; lsSet("fieldnote.room",r) } } }
@@ -3425,8 +3490,20 @@ const ADV_REGIONS=[{id:"river",n:"แม่น้ำสายเศร้า",e:
   {id:"r4",n:"สาหร่ายบลูมยักษ์",e:"🟢",hp:105,atk:7,weak:"plant",x:270,y:270,
    fact:"ปุ๋ยจากไร่นาไหลลงแม่น้ำ ทำให้สาหร่ายโตเร็วเกินไปจนน้ำเขียว พอสาหร่ายตาย จุลินทรีย์ที่ย่อยสลายใช้ออกซิเจนในน้ำจนหมด พื้นที่ชุ่มน้ำและพืชริมตลิ่งช่วยดูดธาตุอาหารไว้ก่อนไหลลงแม่น้ำ"},
   {id:"r5",n:"ราชาโคลนไร้ออกซิเจน",e:"🌫️",hp:150,atk:9,weak:"wind",x:160,y:345,boss:true,needSpells:3,
-   fact:"น้ำที่ไม่มีออกซิเจนเรียกว่าน้ำเน่า สัตว์น้ำอยู่ไม่ได้ เครื่องเติมอากาศ เช่น กังหันน้ำชัยพัฒนาที่คนไทยประดิษฐ์ ตีน้ำให้สัมผัสอากาศ ออกซิเจนจึงละลายลงน้ำได้มากขึ้น แม่น้ำก็ค่อยๆ ฟื้น"}]}];
-let advSel=null, advB=null, advMsg="";
+   fact:"น้ำที่ไม่มีออกซิเจนเรียกว่าน้ำเน่า สัตว์น้ำอยู่ไม่ได้ เครื่องเติมอากาศ เช่น กังหันน้ำชัยพัฒนาที่คนไทยประดิษฐ์ ตีน้ำให้สัมผัสอากาศ ออกซิเจนจึงละลายลงน้ำได้มากขึ้น แม่น้ำก็ค่อยๆ ฟื้น"}]},
+  {id:"ice",n:"ขั้วโลกที่กำลังละลาย",e:"🧊",needBoss:"r5",intro:"ก๊าซเรือนกระจกห่มโลกจนร้อนขึ้น น้ำแข็งขั้วโลกละลาย หมีขั้วโลกไม่มีที่ยืน ทีมกู้โลกต้องลดก๊าซเรือนกระจกและความร้อนทีละจุด",
+  stages:[
+  {id:"c1",n:"ภูตคาร์บอนไดออกไซด์",e:"☁️",weak:"plant",x:80,y:70,
+   fact:"คาร์บอนไดออกไซด์จากการเผาเชื้อเพลิงเก็บความร้อนไว้ในบรรยากาศ ต้นไม้ดูดคาร์บอนไดออกไซด์ไปใช้สังเคราะห์ด้วยแสง การปลูกและรักษาป่าจึงช่วยลดก๊าซนี้ได้"},
+  {id:"c2",n:"ภูตมีเทนจากกองขยะ",e:"🫧",weak:"fire",x:250,y:120,
+   fact:"ขยะอินทรีย์ที่เน่าโดยไม่มีอากาศและนาข้าวที่น้ำขังปล่อยก๊าซมีเทน ซึ่งเก็บความร้อนได้แรงกว่าคาร์บอนไดออกไซด์หลายสิบเท่า บ่อก๊าซชีวภาพเก็บมีเทนไปเผาเป็นเชื้อเพลิงหุงต้ม ดีกว่าปล่อยออกสู่อากาศ"},
+  {id:"c3",n:"ปีศาจเขม่าดำ",e:"⚫",weak:"light",x:120,y:200,
+   fact:"เขม่าจากการเผาไหม้ที่ตกบนน้ำแข็งทำให้ผิวน้ำแข็งเข้ม ดูดแสงอาทิตย์และร้อนขึ้นจนละลายเร็ว ผิวสีขาวสะท้อนแสงได้ดีกว่าสีดำ เมืองหลายแห่งจึงทาหลังคาสีขาวให้บ้านเย็นลง"},
+  {id:"c4",n:"อสูรคลื่นความร้อน",e:"🥵",weak:"water",x:270,y:270,
+   fact:"คลื่นความร้อนคือช่วงที่อากาศร้อนผิดปกติหลายวันติดกัน น้ำช่วยลดความร้อนได้เพราะการระเหยดึงความร้อนออกไป ต้นไม้ร่มเงาและแหล่งน้ำในเมืองจึงทำให้เมืองเย็นลง"},
+  {id:"c5",n:"ราชาเรือนกระจก",e:"🏭",weak:"wind",x:160,y:345,boss:true,needSpells:6,
+   fact:"ไฟฟ้าส่วนใหญ่ในโลกยังผลิตจากการเผาถ่านหินและก๊าซธรรมชาติ พลังงานลมและแสงอาทิตย์ผลิตไฟฟ้าได้โดยไม่ปล่อยก๊าซเรือนกระจกระหว่างใช้งาน การเปลี่ยนมาใช้พลังงานหมุนเวียนจึงเป็นทางสำคัญในการลดโลกร้อน"}]}];
+let advSel=null, advB=null, advMsg="", advRegion=null;
 function advRecs(list){ return list.filter(a=>a.type==="adv") }
 function advTrainLv(list,uid){ return list.filter(a=>(a.type==="shop"&&a.item==="train:"+uid)||(a.type==="adv"&&a.act==="freelevel"&&a.unit===uid)).length }
 function advUnits(list){
@@ -3438,7 +3515,12 @@ function advUnits(list){
     return {...u,el2:u.el2||ADV_SECOND[u.uid.slice(4)]||"water",lv,tl,exp,expIn:exp%6,power:u.base+3*lv+advGearP(list),skill:lv>=3} }) }
 function advGearP(list){ const o=new Set(list.filter(a=>a.type==="shop").map(a=>a.item)); return ADV_GEAR.filter(g=>o.has(g.id)).reduce((s,g)=>s+g.p,0) }
 function advUnitArt(u,size){ return u.svg?`<svg viewBox="0 0 100 100" width="${size}" height="${size}">${u.svg}</svg>`:`<span style="font-size:${Math.round(size*0.8)}px;line-height:1">${u.look}</span>` }
-function advTeam(list){ const us=advUnits(list); let t=ls("fieldnote.advteam",null);
+/* bred animals live in the valley; up to ADV_LAB_SLOTS of them can be recruited into the rescue team (father, 9 Nov) */
+const ADV_LAB_SLOTS=4;
+function advRecruits(){ return ls("fieldnote.advrecruits",[]) }
+function advRoster(list){ const r=new Set(advRecruits()); return advUnits(list).filter(u=>!u.uid.startsWith("lab:")||r.has(u.uid)) }
+function advValley(list){ const r=new Set(advRecruits()); return advUnits(list).filter(u=>u.uid.startsWith("lab:")&&!r.has(u.uid)) }
+function advTeam(list){ const us=advRoster(list); let t=ls("fieldnote.advteam",null);
   t=(Array.isArray(t)?t:[]).filter(id=>us.some(u=>u.uid===id)).slice(0,3);
   if(!t.length){ const b=getBuddy(); if(b&&us.some(u=>u.uid==="pet:"+b.kind)) t.push("pet:"+b.kind);
     us.slice().sort((a,b)=>b.power-a.power).forEach(u=>{ if(t.length<3&&!t.includes(u.uid)) t.push(u.uid) }) }
@@ -3451,12 +3533,12 @@ function advStamina(team){ return 30+team.reduce((s,u)=>s+u.lv*4,0) }
 function advTrainCost(lv){ return 30+20*lv }
 
 function renderAdv(){
-  const list=mine(), w=wallet(list), R=ADV_REGIONS[0], cleared=advCleared(list), en=advEnergy(list), team=advTeam(list), units=advUnits(list);
+  const list=mine(), w=wallet(list), cleared=advCleared(list), regOpen=r=>!r.needBoss||cleared.has(r.needBoss), R=ADV_REGIONS[advRegion!=null&&regOpen(ADV_REGIONS[advRegion])?advRegion:Math.max(0,ADV_REGIONS.map(regOpen).lastIndexOf(true))], en=advEnergy(list), team=advTeam(list), units=advRoster(list), valley=advValley(list), slots=ADV_LAB_SLOTS-units.filter(u=>u.uid.startsWith("lab:")).length;
   if(advB) return renderAdvBattle(list);
   const got=advSpellsGot(list);
   const open=st=>{ const i=R.stages.indexOf(st); return (i===0||cleared.has(R.stages[i-1].id))&&(!st.needSpells||got>=st.needSpells) };
-  const clean=cleared.size/R.stages.length;
-  const water=`rgb(${Math.round(150-90*clean)},${Math.round(130+40*clean)},${Math.round(100+130*clean)})`;
+  const clean=R.stages.filter(st=>cleared.has(st.id)).length/R.stages.length, ice=R.id==="ice";
+  const water=ice?`rgb(${Math.round(150+80*clean)},${Math.round(150+80*clean)},${Math.round(150+100*clean)})`:`rgb(${Math.round(150-90*clean)},${Math.round(130+40*clean)},${Math.round(100+130*clean)})`;
   const path="M80 40 C 40 90, 140 110, 250 120 S 330 170, 200 205 S 60 230, 150 260 S 330 290, 270 300 S 120 330, 160 380";
   const nodes=R.stages.map((st,i)=>{ const done=cleared.has(st.id), can=open(st), sel=advSel===st.id;
     return `<g class="mnode" data-adv="${st.id}" transform="translate(${st.x} ${st.y})" role="button" aria-label="${esc(st.n)}">
@@ -3478,33 +3560,42 @@ function renderAdv(){
     return `<div class="advrow"><span>${advUnitArt(u,32)}</span><span class="small" style="flex:1"><b>${esc(u.name)}</b> ${ELEM[u.el].e}${ELEM[u.el].n}${u.lv>=2?` + ${ELEM[u.el2].e}`:""} · Lv ${u.lv} · พลัง ${u.power}
       <span class="expbar" title="EXP จากการออกผจญภัย"><i style="width:${u.expIn/6*100}%"></i></span><span class="muted">EXP ${u.expIn}/6${advSkillLock(u)?" · "+advSkillLock(u):" · ปลดครบทุกท่าแล้ว"}</span></span>
       <button class="btn ghost small" data-advteam="${u.uid}">${inT?"ออกจากทีม":"เข้าทีม"}</button>
-      <button class="btn ghost small" data-advtrain="${u.uid}" ${w.stars>=cost&&u.lv<10?"":"disabled"}>ฝึก ⭐${cost}</button></div>` }).join("");
+      <button class="btn ghost small" data-advtrain="${u.uid}" ${w.stars>=cost&&u.lv<10?"":"disabled"}>ฝึก ⭐${cost}</button>
+      ${u.uid.startsWith("lab:")?`<button class="btn ghost small" data-advrel="${u.uid}">ส่งกลับหุบเขา</button>`:""}</div>` }).join("");
+  const valleyHtml=valley.length?`<details class="small"><summary>🐉 ในหุบเขามังกร ${valley.length} ตัว · รับเข้าทีมได้อีก ${Math.max(0,slots)} ตัว</summary>
+    ${valley.map(u=>`<div class="advrow"><span>${advUnitArt(u,28)}</span><span class="small" style="flex:1">${esc(u.name)} ${ELEM[u.el].e}${ELEM[u.el2].e}</span><button class="btn ghost small" data-advrec="${u.uid}" ${slots>0?"":"disabled"}>รับเข้าทีม</button></div>`).join("")}
+    <p class="small muted">ทีมกู้โลกรับสัตว์จากหุบเขาได้สูงสุด ${ADV_LAB_SLOTS} ตัว เลือกตัวที่ธาตุช่วยทีมได้ ตัวที่เหลืออยู่ในหุบเขาอย่างมีความสุข</p></details>`:"";
   const owned=new Set(list.filter(a=>a.type==="shop").map(a=>a.item));
   const gear=ADV_GEAR.map(g=>`<div class="advrow"><span style="font-size:24px">${g.e}</span><span class="small" style="flex:1"><b>${g.n}</b> · ทั้งทีม +${g.p} พลัง</span>
     ${owned.has(g.id)?`<span class="small">มีแล้ว ✓</span>`:`<button class="btn ghost small" data-advgear="${g.id}" ${w.stars>=g.cost?"":"disabled"}>⭐${g.cost}</button>`}</div>`).join("");
   $v.innerHTML=`<section class="card"><div class="todayhead"><span class="eyebrow">🌍 ภารกิจกู้โลก · ${R.e} ${R.n}</span><span class="small">⚡ พลัง ${en.left}/${en.max} · ⭐ ${w.stars}</span></div>
       <p class="small">${R.intro}</p>
-      <div class="islandwrap"><svg class="island" viewBox="0 0 340 420" role="img" aria-label="แผนที่แม่น้ำ">
-        <rect width="340" height="420" fill="#cfe8c6"/>
-        ${[[30,20],[300,60],[40,300],[310,230],[20,170],[300,380],[200,40]].map(([x,y],k)=>`<text x="${x}" y="${y}" font-size="${16+k%3*4}" opacity="${0.35+clean*0.6}">${k%2?"🌳":"🌲"}</text>`).join("")}
+      ${ADV_REGIONS.length>1?`<div class="row" style="gap:6px">${ADV_REGIONS.map((r,k)=>`<button class="btn ${r===R?"":"ghost"} small" data-advreg="${k}" ${regOpen(r)?"":"disabled"}>${regOpen(r)?r.e:"🔒"} ${r.n}</button>`).join("")}</div>
+        ${ADV_REGIONS.some(r=>!regOpen(r))?`<p class="small muted">เขตใหม่เปิดเมื่อชนะบอสของเขตก่อนหน้า</p>`:""}`:""}
+      <div class="islandwrap"><svg class="island" viewBox="0 0 340 420" role="img" aria-label="แผนที่${esc(R.n)}">
+        <rect width="340" height="420" fill="${ice?`rgb(${Math.round(200+40*clean)},${Math.round(205+40*clean)},${Math.round(210+40*clean)})`:"#cfe8c6"}"/>
+        ${[[30,20],[300,60],[40,300],[310,230],[20,170],[300,380],[200,40]].map(([x,y],k)=>`<text x="${x}" y="${y}" font-size="${16+k%3*4}" opacity="${0.35+clean*0.6}">${ice?(k%3===0?"🐧":k%3===1?"🏔️":"❄️"):k%2?"🌳":"🌲"}</text>`).join("")}
         <path d="${path}" stroke="${water}" stroke-width="34" fill="none" stroke-linecap="round"/>
         <path d="${path}" stroke="#fff" stroke-opacity=".25" stroke-width="3" fill="none" stroke-dasharray="6 14" class="flow"/>
-        ${clean>=1?`<text x="210" y="360" font-size="20">🐟</text><text x="60" y="130" font-size="18">🐟</text>`:""}${nodes}</svg></div>
-      <p class="small muted">ชนะด่านไหน แม่น้ำช่วงนั้นจะใสขึ้น ${cleared.size}/${R.stages.length} ด่าน · ด่านบอสต้องใช้คาถาที่เก็บจากเกาะคาถา</p>
+        ${clean>=1?(ice?`<text x="210" y="360" font-size="22">🐻‍❄️</text><text x="60" y="130" font-size="18">🦭</text>`:`<text x="210" y="360" font-size="20">🐟</text><text x="60" y="130" font-size="18">🐟</text>`):""}${nodes}</svg></div>
+      <p class="small muted">ชนะด่านไหน ${ice?"น้ำแข็งช่วงนั้นจะกลับมาขาว":"แม่น้ำช่วงนั้นจะใสขึ้น"} ${R.stages.filter(st=>cleared.has(st.id)).length}/${R.stages.length} ด่าน · ด่านบอสต้องใช้คาถาที่เก็บจากเกาะคาถา</p>
       ${advMsg?`<p class="small"><b>${esc(advMsg)}</b></p>`:""}</section>
     ${selHtml}
     <section class="card"><span class="eyebrow">ทีมที่ออกผจญภัย (สูงสุด 3)</span><div class="advteam">${teamHtml}</div>
       <p class="small muted">ธาตุตรงจุดอ่อนของศัตรู ▲ แรง ×1.5 ธาตุที่ศัตรูทนทาน ▼ เบา ×0.5 · เลเวลขึ้นได้ 2 ทาง: ออกผจญภัย (ได้ EXP ทุกตัวที่ไป) หรือฝึกด้วย XP · Lv 2 ปลดธาตุที่ 2 · Lv 3 ท่าพิเศษ · Lv 5 ท่าไม้ตาย</p></section>
-    <section class="card"><span class="eyebrow">สมาชิกทั้งหมด · ฝึกด้วย XP</span>${roster||`<p class="small">ยังไม่มีสมาชิก</p>`}
-      <p class="small muted">ได้สมาชิกใหม่จากการรับคู่หูที่บ้านคู่หู และลูกที่ฟักจากหุบเขามังกร สายพันธุ์ต่างกันได้ธาตุต่างกัน</p></section>
+    <section class="card"><span class="eyebrow">สมาชิกทีมกู้โลก · ฝึกด้วย XP</span>${roster||`<p class="small">ยังไม่มีสมาชิก</p>`}${valleyHtml}
+      <p class="small muted">สมาชิกมาจากคู่หูที่บ้านคู่หู และสัตว์จากหุบเขามังกรที่รับเข้าทีม (สูงสุด ${ADV_LAB_SLOTS} ตัว) สายพันธุ์ต่างกันได้ธาตุต่างกัน</p></section>
     <section class="card"><span class="eyebrow">อุปกรณ์ทีม</span>${gear}</section>
     <button class="btn ghost" id="advback" style="border:0;padding-left:0">← กลับ</button>`;
   document.getElementById("advback").onclick=()=>{ advSel=null; advMsg=""; location.hash="#home"; view="home"; render() };
+  $v.querySelectorAll("[data-advreg]").forEach(b=>b.onclick=()=>{ advRegion=+b.dataset.advreg; advSel=ADV_REGIONS[advRegion].stages[0].id; advMsg=""; renderAdv() });
   $v.querySelectorAll("[data-adv]").forEach(g=>g.onclick=()=>{ advSel=g.dataset.adv; advMsg=""; renderAdv() });
   const go=document.getElementById("advgo"); if(go) go.onclick=()=>{ const st=R.stages.find(s=>s.id===advSel), tm=advTeam(list);
     advStart(st,tm); renderAdv(); window.scrollTo({top:0}) };
   $v.querySelectorAll("[data-advteam]").forEach(b=>b.onclick=()=>{ let t=advTeam(list).map(u=>u.uid); const id=b.dataset.advteam;
     if(t.includes(id)) t=t.filter(x=>x!==id); else { if(t.length>=3) t.shift(); t.push(id) } lsSet("fieldnote.advteam",t); renderAdv() });
+  $v.querySelectorAll("[data-advrec]").forEach(b=>b.onclick=()=>{ const r=advRecruits(); if(r.length>=ADV_LAB_SLOTS) return; lsSet("fieldnote.advrecruits",[...r,b.dataset.advrec]); advMsg="รับเข้าทีมแล้ว"; renderAdv() });
+  $v.querySelectorAll("[data-advrel]").forEach(b=>b.onclick=()=>{ lsSet("fieldnote.advrecruits",advRecruits().filter(x=>x!==b.dataset.advrel)); lsSet("fieldnote.advteam",(ls("fieldnote.advteam",[])||[]).filter(x=>x!==b.dataset.advrel)); advMsg="ส่งกลับหุบเขาแล้ว"; renderAdv() });
   $v.querySelectorAll("[data-advtrain]").forEach(b=>b.onclick=async()=>{ const u=advUnits(list).find(x=>x.uid===b.dataset.advtrain); if(!u) return; const cost=advTrainCost(u.lv);
     if(wallet(mine()).stars<cost) return; b.disabled=true; const now=new Date().toISOString();
     await saveAttempt({type:"shop",setId:"shop",item:"train:"+u.uid,cost,name:u.name,topic:"ฝึกทีมกู้โลก",startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
@@ -3545,11 +3636,27 @@ const MON_ART={
   mud:`<path d="M8 92 Q4 58 24 44 Q32 22 52 22 Q76 22 82 44 Q98 58 92 92Z" fill="#6b4f36"/><path d="M30 26 L36 6 L46 20 L52 2 L58 20 L68 6 L72 26Z" fill="#e0b13b" stroke="#a87a1a" stroke-width="2"/>
     <circle cx="52" cy="14" r="3.4" fill="#e2574c"/><circle cx="22" cy="74" r="5" fill="#523b27"/><circle cx="78" cy="80" r="6" fill="#523b27"/><path d="M14 92 q6 -10 12 0 q6 -10 12 0" stroke="#523b27" stroke-width="3" fill="none"/>
     ${mEyes(50,54,7,1).replace(/#1b1b1b/g,"#f5d742")}${mMouth(50,78,13)}`};
+Object.assign(MON_ART,{
+  co2:`<path d="M20 74 Q4 70 10 52 Q6 30 30 30 Q36 12 56 18 Q78 10 84 30 Q98 36 92 56 Q100 76 78 78 Q66 92 46 86 Q28 92 20 74Z" fill="#8e959c" stroke="#6b7177" stroke-width="2"/>
+    <text x="50" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="#4d5257">CO₂</text>${mEyes(50,56,5.5,1)}${mMouth(50,72,8)}`,
+  methane:`<circle cx="50" cy="58" r="32" fill="#9dc37a" opacity=".9" stroke="#6f9a4c" stroke-width="3"/><circle cx="24" cy="30" r="9" fill="#9dc37a" opacity=".7"/><circle cx="78" cy="26" r="7" fill="#9dc37a" opacity=".7"/>
+    <text x="50" y="40" text-anchor="middle" font-size="10" font-weight="700" fill="#4f6e35">CH₄</text>${mEyes(50,58,5,1)}${mMouth(50,74,8)}`,
+  soot:`<path d="M50 10 L58 26 L76 18 L72 36 L90 40 L76 52 L90 64 L72 66 L76 84 L58 76 L50 92 L42 76 L24 84 L28 66 L10 64 L24 52 L10 40 L28 36 L24 18 L42 26Z" fill="#26262b"/>${mEyes(50,50,6,1).replace(/#1b1b1b/g,"#e2574c")}${mMouth(50,66,8)}`,
+  heatwave:`<path d="M10 80 Q20 60 30 80 T50 80 T70 80 T90 80 V94 H10Z" fill="#ff9a3d"/><circle cx="50" cy="44" r="30" fill="#ffcf4a"/><path d="M50 4 v10 M50 74 v8 M14 44 h-8 M94 44 h-8 M24 18 l6 6 M76 18 l-6 6" stroke="#ff9a3d" stroke-width="4" stroke-linecap="round"/>
+    ${mEyes(50,42,5,1)}${mMouth(50,58,8)}`,
+  greenking:`<rect x="16" y="40" width="68" height="52" rx="6" fill="#6d6f73"/><rect x="24" y="14" width="10" height="30" fill="#55575b"/><rect x="66" y="20" width="10" height="24" fill="#55575b"/>
+    <circle cx="29" cy="8" r="7" fill="#9aa0a6" opacity=".8"/><circle cx="71" cy="12" r="6" fill="#9aa0a6" opacity=".8"/><path d="M34 40 L40 28 L46 38 L50 26 L54 38 L60 28 L66 40Z" fill="#e0b13b" stroke="#a87a1a" stroke-width="2"/>
+    ${mEyes(50,60,6.5,1).replace(/#1b1b1b/g,"#f5d742")}${mMouth(50,80,12)}`});
 const ADV_FOES={
   r1:[{n:"ปีศาจขวดพลาสติก",art:"bottle",hp:70,atk:5,weak:"wind",resist:"water"},{n:"ปีศาจขวดพลาสติก",art:"bottle",hp:70,atk:5,weak:"wind",resist:"water"}],
   r2:[{n:"อสูรคราบน้ำมัน",art:"oil",hp:125,atk:7,weak:"fire",resist:"water"},{n:"ผีถุงพลาสติก",art:"bag",hp:65,atk:5,weak:"wind",resist:"water"}],
   r3:[{n:"ภูตน้ำร้อน",art:"heat",hp:150,atk:8,weak:"water",resist:"fire"},{n:"ภูตไอร้อน",art:"steam",hp:80,atk:6,weak:"water",resist:"fire"}],
   r4:[{n:"อสูรสาหร่ายบลูม",art:"algae",hp:170,atk:9,weak:"plant",resist:"light",big:true},{n:"สาหร่ายจิ๋ว",art:"algaeS",hp:65,atk:5,weak:"plant",resist:"light"},{n:"สาหร่ายจิ๋ว",art:"algaeS",hp:65,atk:5,weak:"plant",resist:"light"}],
+  c1:[{n:"ภูตคาร์บอนไดออกไซด์",art:"co2",hp:200,atk:9,weak:"plant",resist:"fire"},{n:"ภูตคาร์บอนไดออกไซด์",art:"co2",hp:200,atk:9,weak:"plant",resist:"fire"}],
+  c2:[{n:"ภูตมีเทน",art:"methane",hp:240,atk:10,weak:"fire",resist:"plant",big:true},{n:"ฟองมีเทน",art:"methane",hp:90,atk:6,weak:"fire",resist:"plant"},{n:"ฟองมีเทน",art:"methane",hp:90,atk:6,weak:"fire",resist:"plant"}],
+  c3:[{n:"ปีศาจเขม่าดำ",art:"soot",hp:230,atk:11,weak:"light",resist:"wind"},{n:"เขม่าจิ๋ว",art:"soot",hp:100,atk:7,weak:"light",resist:"wind"}],
+  c4:[{n:"อสูรคลื่นความร้อน",art:"heatwave",hp:300,atk:12,weak:"water",resist:"fire",big:true},{n:"ภูตไอร้อน",art:"steam",hp:110,atk:7,weak:"water",resist:"fire"}],
+  c5:[{n:"ราชาเรือนกระจก",art:"greenking",hp:420,atk:14,weak:"wind",resist:"fire",boss:true},{n:"ภูตคาร์บอนไดออกไซด์",art:"co2",hp:120,atk:8,weak:"plant",resist:"fire"},{n:"ภูตมีเทน",art:"methane",hp:120,atk:8,weak:"fire",resist:"plant"}],
   r5:[{n:"ราชาโคลนไร้ออกซิเจน",art:"mud",hp:260,atk:11,weak:"wind",resist:"plant",boss:true},{n:"ฟองก๊าซเน่า",art:"gas",hp:80,atk:6,weak:"wind",resist:"water"},{n:"ฟองก๊าซเน่า",art:"gas",hp:80,atk:6,weak:"wind",resist:"water"}]};
 const ADV_SECOND={dragon:"wind",owl:"light",fox:"light",cat:"wind",bunny:"plant",wolf:"wind",tiger:"plant",peacock:"wind",swan:"wind",dino:"fire",dolphin:"light",bubble:"wind",
   butterfly:"plant",turtle:"plant",panda:"water",penguin:"wind",deer:"light",otter:"plant",unicorn:"wind",whale:"light",hedgehog:"fire",ballpython:"water",banana:"plant",corn:"plant",
@@ -3566,7 +3673,10 @@ function advSkills(u){ const S=[{id:"basic",n:"โจมตีธาตุ"+ELEM
   return S }
 function advSkillLock(u){ return u.lv<2?"Lv 2 ปลดโจมตีธาตุที่ 2":u.lv<3?"Lv 3 ปลดท่าพิเศษ":u.lv<5?"Lv 5 ปลดท่าไม้ตาย":"" }
 /* battle EXP: every member that fights gains EXP (win 3, rest 1, boss win +3); every 6 EXP = 1 level */
-function advExp(list,uid){ return advRecs(list).filter(a=>a.act==="battle"&&(a.team||[]).includes(uid)).reduce((s,a)=>s+(a.win?3+(a.stage==="r5"?3:0):1),0)+advRecs(list).filter(a=>a.act==="bonusexp"&&a.unit===uid).reduce((s,a)=>s+(a.exp||0),0) }
+function advAllStages(){ return ADV_REGIONS.flatMap(r=>r.stages) }
+function advStageIdx(id){ return advAllStages().findIndex(s=>s.id===id)+1 }
+function advIsBoss(id){ return !!advAllStages().find(s=>s.id===id&&s.boss) }
+function advExp(list,uid){ return advRecs(list).filter(a=>a.act==="battle"&&(a.team||[]).includes(uid)).reduce((s,a)=>s+(a.win?3+(advIsBoss(a.stage)?3:0):1),0)+advRecs(list).filter(a=>a.act==="bonusexp"&&a.unit===uid).reduce((s,a)=>s+(a.exp||0),0) }
 function advStars(list,stage){ return Math.max(0,...advRecs(list).filter(a=>a.act==="battle"&&a.win&&a.stage===stage).map(a=>a.stars||1)) }
 const advSleep=ms=>new Promise(r=>setTimeout(r,ms/(advSpeed||1)));
 let advSpeed=1;
@@ -3590,7 +3700,7 @@ function advFighter(u,i,side,B){
     <div class="hp"><i style="width:${pct}%;background:${side==="t"?"#3f9b5a":"#e2574c"}"></i></div>
     <span class="hpn">${Math.max(0,Math.round(u.hp))}/${u.max}</span>
     ${side==="e"&&!u.ko&&cur?`<span class="mk ${mk>1?"up":mk<1?"down":""}">${mk>1?"▲ แรง ×1.5":mk<1?"▼ เบา ×0.5":"ปกติ"}</span>`:""}</div>` }
-function advGaugeSpec(B,sk){ const cur=B.team[B.cur], f=B.foes[B.target]||B.foes.find(x=>!x.ko), stLv=["r1","r2","r3","r4","r5"].indexOf(B.st.id)+1;
+function advGaugeSpec(B,sk){ const cur=B.team[B.cur], f=B.foes[B.target]||B.foes.find(x=>!x.ko), stLv=advStageIdx(B.st.id);
   const diff=Math.max(-3,Math.min(4,stLv*1.2-cur.lv));
   const zone=Math.max(6,Math.min(22,18-sk.tier*4-(f&&f.boss?4:0)-diff*1.5));
   const speed=1+sk.tier*0.3+(f&&f.boss?0.3:0)+diff*0.08;
@@ -3678,12 +3788,12 @@ async function advFoeTurn(){
   advAnim("f-e"+ei,"lungeL",420); await advShot("f-e"+ei,"f-t"+mi,{bottle:"💧",bag:"🛍️",oil:"🛢️",heat:"🔥",steam:"💨",algae:"🦠",algaeS:"🦠",gas:"🫧",mud:"🟤"}[f.art]||"💥");
   const d=await strike(mi,1); B.log.push(`${f.n} โจมตี ${m.name} ความอึด -${d}`); await advSleep(350) }
 async function advEnd(res){
-  const B=advB, st=B.st; B.over=res; B.phase="over"; B.par=6+["r1","r2","r3","r4","r5"].indexOf(st.id)*2;
+  const B=advB, st=B.st; B.over=res; B.phase="over"; B.par=6+Math.min(8,(advStageIdx(st.id)-1)*2);
   const L2=mine(), first=res==="win"&&!advCleared(L2).has(st.id), now=new Date().toISOString();
   B.stars=res!=="win"?0:B.slept===0&&B.round<=B.par?3:B.slept<=1?2:1;
   await saveAttempt({type:"adv",act:"battle",setId:"adv-"+st.id,stage:st.id,win:res==="win",stars:B.stars,turns:B.round,team:B.team.map(x=>x.uid),topic:"ภารกิจกู้โลก: "+st.n,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
   if(res==="win") setTimeout(()=>sheet({icon:"📘",title:"เรื่องจริงของด่านนี้",read:st.fact,html:`<p class="factread">${esc(st.fact)}</p><p class="small muted">${"⭐".repeat(B.stars)}${"☆".repeat(3-B.stars)} · ชนะแล้วแม่น้ำช่วงนี้ใสขึ้น</p>`,actions:[{label:"เก็บความรู้นี้ไว้",fn:closeSheet}]}),900/(advSpeed||1));
-  if(res==="win") B.reward=`ทุกตัวที่ออกไปได้ EXP +${3+(st.id==="r5"?3:0)} (ครบ 6 EXP เลเวลขึ้น 1)${first?" · ครั้งแรกที่ชนะด่านนี้ แม่น้ำช่วงนี้ใสขึ้นแล้ว":""}`;
+  if(res==="win") B.reward=`ทุกตัวที่ออกไปได้ EXP +${3+(st.boss?3:0)} (ครบ 6 EXP เลเวลขึ้น 1)${first?" · ครั้งแรกที่ชนะด่านนี้ แม่น้ำช่วงนี้ใสขึ้นแล้ว":""}`;
   renderAdvBattle(mine()) }
 
 /* parent view: where XP came from in the last 7 days, and the adventure at a glance */
@@ -3722,10 +3832,10 @@ function studioRecs(list){ return list.filter(a=>a.type==="studio") }
 function studioCards(list){ if(!STUDIO) return []; const t=todayKey(), done=new Set(studioRecs(list).filter(a=>a.act==="card").map(a=>a.card));
   return STUDIO.cards.map((c,i)=>({...c,i,open:dayKey(c.day+"T00:00:00+07:00")<=t,done:done.has(c.day)})) }
 function studioWorkshopOpen(){ return STUDIO&&STUDIO.workshop&&dayKey(STUDIO.workshop.day+"T00:00:00+07:00")<=todayKey() }
-function studioTile(list){ if(!STUDIO) return null; const cs=studioCards(list), due=cs.filter(c=>c.open&&!c.done).length, ws=studioWorkshopOpen(), wsDone=studioRecs(list).some(a=>a.act==="workshop");
+function studioTile(list){ if(!STUDIO) return null; const cs=studioCards(list), rw=STUDIO.rewrite&&!rewriteDone(list)&&rewriteToday(list).length?1:0, due=cs.filter(c=>c.open&&!c.done).length+rw, ws=studioWorkshopOpen(), wsDone=studioRecs(list).some(a=>a.act==="workshop");
   if(wsDone&&!due) return {id:"studio",i:"🎮",t:"สตูดิโอเกม",s:"ส่งแบบแล้ว รอดูของจริง",rew:"",todo:false};
   const d=new Date(STUDIO.opens+"T00:00:00+07:00");
-  return {id:"studio",i:"🎮",t:"สตูดิโอเกม",s:ws?"เวิร์กช็อปเปิดแล้ว!":due?`เกร็ดนักออกแบบ ${due} ใบรออ่าน`:`เปิด${d.toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"short"})}`,rew:"+10 ต่อใบ",todo:!!(due||ws&&!wsDone),badge:due?String(due):ws&&!wsDone?"!":""} }
+  return {id:"studio",i:"🎮",t:"สตูดิโอเกม",s:ws?"เวิร์กช็อปเปิดแล้ว!":due-rw?`เกร็ดนักออกแบบ ${due-rw} ใบรออ่าน`:rw?"มีงานเขียนคู่มือผู้เล่นวันนี้":`เปิด${d.toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"short"})}`,rew:"+10 ต่อใบ",todo:!!(due||ws&&!wsDone),badge:due?String(due):ws&&!wsDone?"!":""} }
 function guestPop(list){ const g=activeGuest(); if(!g||view!=="home"||document.getElementById("sheet")||document.querySelector(".celebrate")) return false;
   const seen=ls("fieldnote.guestpop",[]), pr=guestProgress(g,list), key=g.id+(pr.done?":done":":hi"); if(seen.includes(key)) return false; lsSet("fieldnote.guestpop",[...seen,key]);
   if(pr.done) sheet({icon:`<span class="factbig">${g.item.e}</span>`,title:`ได้${g.item.n}แล้ว! 🎉`,html:`<p>ภารกิจของแขกพิเศษสำเร็จ ไปวาง${esc(g.item.n)}ที่บ้านคู่หูได้เลย</p>${g.why?`<p class="small muted">ทำไมภารกิจนี้ดี: ${esc(g.why)}</p>`:""}`,actions:[{label:"ไปบ้านคู่หู",fn:()=>{ closeSheet(); view="den"; render() }},{label:"ปิด",ghost:true,fn:closeSheet}]});
@@ -3738,11 +3848,13 @@ function studioOpen(){ const list=mine(), cs=studioCards(list), next=cs.find(c=>
   if(next) return studioCard(next); if(studioWorkshopOpen()&&!studioRecs(list).some(a=>a.act==="workshop")) return studioWorkshop(); studioShelf() }
 function studioShelf(){ const list=mine(), cs=studioCards(list), ws=STUDIO.workshop, wsDone=studioRecs(list).some(a=>a.act==="workshop");
   const d=sheet({icon:"🎮",title:nm(STUDIO.title),wide:true,html:`<p class="small">${esc(nm(STUDIO.teaser))}</p>
-    <div class="studiolist">${cs.map(c=>`<button class="studiocard ${c.done?"done":""}" data-sc="${c.i}" ${c.open?"":"disabled"}><span style="font-size:1.6rem">${c.open?c.icon:"🔒"}</span>
+    <div class="studiolist">${STUDIO.labs?`<button class="studiocard ws" data-sc="lab"><span style="font-size:1.6rem">🧪</span><span><b>ห้องทดลองสมดุลเกม</b><br><span class="small muted">ลงมือปรับค่าเอง · ${studioRecs(list).filter(a=>a.act==="lab").length}/${STUDIO.labs.length} โจทย์ (+10 XP ต่อโจทย์)</span></span></button>`:""}
+      ${STUDIO.rewrite?`<button class="studiocard ws ${rewriteDone(list)?"done":""}" data-sc="rw"><span style="font-size:1.6rem">${STUDIO.rewrite.icon}</span><span><b>งานประจำวัน: ${esc(STUDIO.rewrite.title)}</b><br><span class="small muted">${rewriteDone(list)?"วันนี้เขียนแล้ว ✓":rewriteToday(list).length?`วันนี้มี ${rewriteToday(list).length} ข้อให้เลือก (+10 XP)`:"ทำภารกิจก่อน ข้อที่พลาดจะมาอยู่ตรงนี้"}</span></span></button>`:""}
+      ${cs.map(c=>`<button class="studiocard ${c.done?"done":""}" data-sc="${c.i}" ${c.open?"":"disabled"}><span style="font-size:1.6rem">${c.open?c.icon:"🔒"}</span>
       <span><b>${esc(nm(c.title))}</b><br><span class="small muted">${c.done?"อ่านและตอบแล้ว ✓":c.open?"แตะเพื่ออ่าน (+10 XP)":"เปิด "+new Date(c.day+"T00:00:00+07:00").toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})}</span></span></button>`).join("")}
       ${ws?`<button class="studiocard ws ${wsDone?"done":""}" data-sc="ws" ${studioWorkshopOpen()?"":"disabled"}><span style="font-size:1.6rem">${studioWorkshopOpen()?ws.icon:"🔒"}</span><span><b>${esc(ws.title)}</b><br><span class="small muted">${wsDone?"ส่งแบบแล้ว ✓ รอพ่ออนุมัติแล้ว Claude จะสร้างให้":studioWorkshopOpen()?"เปิดแล้ว!":"เปิด "+new Date(ws.day+"T00:00:00+07:00").toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"short"})}</span></span></button>`:""}</div>`,
     actions:[{label:"ปิด",ghost:true,fn:closeSheet}]});
-  d.querySelectorAll("[data-sc]").forEach(b=>b.onclick=()=>{ if(b.dataset.sc==="ws") return studioWorkshop(); studioCard(cs[+b.dataset.sc]) }) }
+  d.querySelectorAll("[data-sc]").forEach(b=>b.onclick=()=>{ if(b.dataset.sc==="ws") return studioWorkshop(); if(b.dataset.sc==="lab") return studioLab(); if(b.dataset.sc==="rw") return studioRewrite(0); studioCard(cs[+b.dataset.sc]) }) }
 function studioCard(c){ const list=mine(), rec=studioRecs(list).find(a=>a.act==="card"&&a.card===c.day), draft=ls("fieldnote.studioDraft."+c.day,"");
   sheet({icon:c.icon,title:nm(c.title),read:nm(c.body)+" "+nm(c.ask),html:`<p>${esc(nm(c.body))}</p><div class="usebox feedback"><b>✍️ ลองคิด</b><span class="small">${esc(nm(c.ask))}</span>
       ${rec?`<span class="small"><b>คำตอบที่ส่งไป:</b> ${esc(rec.answer)}</span>`:`<textarea id="sc-ans" rows="3" maxlength="400" placeholder="พิมพ์สั้นๆ ไม่มีถูกผิด">${esc(draft)}</textarea>`}</div>`,
@@ -3760,9 +3872,58 @@ function studioWorkshop(){ const W=STUDIO.workshop, list=mine(), rec=studioRecs(
       lsSet("fieldnote.studioWS",{}); closeSheet(); render();
       sheet({icon:"🎉",title:"ส่งแบบแล้ว!",html:`<p>+30 XP · พ่อจะดูแบบของ${esc(myName()||"เธอ")} แล้ว Claude จะสร้างเขตใหม่ตามแบบ อย่าลืมกดส่งผลให้พ่อด้วยนะ</p>`,actions:[{label:"เยี่ยม!",fn:closeSheet}]}) }},{label:"เก็บไว้ทำต่อ",ghost:true,fn:closeSheet}]});
   d.querySelectorAll("[data-wf]").forEach(t=>t.oninput=()=>{ const o=ls("fieldnote.studioWS",{}); o[t.dataset.wf]=t.value; lsSet("fieldnote.studioWS",o) }) }
+/* ---------- hands-on studio (father, 9 Nov: she wants to make games, not only read about them) ----------
+   1) a balance lab: set team / monster numbers, simulate 100 battles, read win rate, mean and median turns and a histogram.
+   2) a daily "player guide": rewrite the explanation of a question she missed today in her own words, for a new player. */
+function labSim(v){ const R=[], sw=x=>x*(1+v.luck/100*(2*Math.random()-1));
+  for(let n=0;n<100;n++){ let th=v.th, mh=v.mh, t=0, win=false; while(t<40){ t++; mh-=sw(v.ta); if(mh<=0){ win=true; break } th-=sw(v.ma); if(th<=0) break } R.push({t,win}) }
+  const ts=R.map(r=>r.t).sort((a,b)=>a-b), mean=ts.reduce((a,b)=>a+b,0)/ts.length, med=(ts[49]+ts[50])/2;
+  return {R,win:R.filter(r=>r.win).length,mean,med,min:ts[0],max:ts[ts.length-1]} }
+function labOk(L,v,r){ const c=L.check||{}; return (c.winMin==null||r.win>=c.winMin)&&(c.winMax==null||r.win<=c.winMax)&&(c.meanMin==null||r.mean>=c.meanMin)&&(c.meanMax==null||r.mean<=c.meanMax)&&(c.luckMin==null||v.luck>=c.luckMin)&&(c.skewMin==null||r.mean-r.med>=c.skewMin) }
+function labHist(r){ const top=Math.min(20,Math.max(...r.R.map(x=>x.t))), b=Array.from({length:top},()=>[0,0]); r.R.forEach(x=>{ const i=Math.min(top,x.t)-1; b[i][x.win?0:1]++ });
+  const mx=Math.max(...b.map(x=>x[0]+x[1]),1), W=300, H=120, bw=W/top;
+  return `<svg viewBox="0 0 ${W} ${H+28}" class="labhist" role="img" aria-label="กราฟจำนวนตาที่ใช้">${b.map((x,i)=>{ const hw=x[0]/mx*H, hl=x[1]/mx*H;
+    return `<rect x="${i*bw+1}" y="${H-hw}" width="${bw-2}" height="${hw}" fill="#3f9b5a"/><rect x="${i*bw+1}" y="${H-hw-hl}" width="${bw-2}" height="${hl}" fill="#e08a2c"/>${top<=12||i%2===0?`<text x="${i*bw+bw/2}" y="${H+12}" font-size="9" text-anchor="middle" fill="currentColor">${i+1}${i===top-1&&top===20?"+":""}</text>`:""}` }).join("")}
+    <line x1="${(r.mean-0.5)*bw}" x2="${(r.mean-0.5)*bw}" y1="0" y2="${H}" stroke="#2f6f8f" stroke-width="2" stroke-dasharray="4 3"/><line x1="${(r.med-0.5)*bw}" x2="${(r.med-0.5)*bw}" y1="0" y2="${H}" stroke="#b04a8c" stroke-width="2"/>
+    <text x="${W/2}" y="${H+26}" font-size="9" text-anchor="middle" fill="currentColor">จำนวนตาที่ใช้ (เขียว = ชนะ, ส้ม = แพ้)</text></svg>` }
+let LABV=null;
+function studioLab(id){ const labs=STUDIO.labs||[], L=labs.find(x=>x.id===id)||labs[0], list=mine(), done=new Set(studioRecs(list).filter(a=>a.act==="lab").map(a=>a.lab));
+  LABV=LABV||ls("fieldnote.labv",{th:120,ta:20,mh:150,ma:15,luck:30}); let res=null;
+  const F=[["th","❤️ พลังชีวิตทีม",50,300,10],["ta","⚔️ พลังโจมตีทีม (ต่อตา)",5,60,1],["mh","👾 พลังชีวิตมอนสเตอร์",50,600,10],["ma","💥 พลังโจมตีมอนสเตอร์ (ต่อตา)",5,60,1],["luck","🎲 ความดวง (± %)",0,60,5]];
+  const d=sheet({icon:"🧪",title:"ห้องทดลองสมดุลเกม",wide:true,html:`<p class="small">${esc(nm(STUDIO.labIntro||""))}</p>
+    <div class="row" style="gap:6px">${labs.map(x=>`<button class="btn small ${x===L?"":"ghost"}" data-lab="${x.id}">${done.has(x.id)?"✅":x.icon} ${esc(x.title)}</button>`).join("")}</div>
+    <div class="usebox feedback"><b>🎯 โจทย์: ${esc(L.title)}</b><span class="small">${esc(nm(L.goal))}</span></div>
+    ${F.map(([k,t,a,b,st])=>`<label class="labrow"><span class="small">${t}</span><input type="range" min="${a}" max="${b}" step="${st}" value="${LABV[k]}" data-lv="${k}"><b class="small" id="lv-${k}">${LABV[k]}</b></label>`).join("")}
+    <button class="btn" id="labrun" type="button">▶ จำลอง 100 ครั้ง</button><div id="labout"></div>`,actions:[{label:"ปิด",ghost:true,fn:closeSheet}]});
+  d.querySelectorAll("[data-lab]").forEach(b=>b.onclick=()=>studioLab(b.dataset.lab));
+  d.querySelectorAll("[data-lv]").forEach(i=>i.oninput=()=>{ LABV[i.dataset.lv]=+i.value; d.querySelector("#lv-"+i.dataset.lv).textContent=i.value; lsSet("fieldnote.labv",LABV) });
+  d.querySelector("#labrun").onclick=()=>{ res=labSim(LABV); const ok=labOk(L,LABV,res), got=done.has(L.id), out=d.querySelector("#labout");
+    out.innerHTML=`<div class="labstats"><span><b>${res.win}%</b><br><span class="small muted">ชนะ</span></span><span><b>${res.mean.toFixed(1)}</b><br><span class="small muted">ตาเฉลี่ย</span></span><span><b>${res.med}</b><br><span class="small muted">มัธยฐาน</span></span><span><b>${res.min}–${res.max}</b><br><span class="small muted">พิสัย</span></span></div>
+      ${labHist(res)}<p class="small muted">เส้นประฟ้า = ค่าเฉลี่ย · เส้นทึบม่วง = มัธยฐาน · กดจำลองซ้ำ ผลจะต่างไปนิดหน่อยเพราะความดวง</p>
+      ${ok?`<div class="feedback"><b class="ok">🎯 ผ่านโจทย์แล้ว!</b>${got?`<span class="small">ทำโจทย์นี้ไปแล้ว ลองโจทย์อื่นได้เลย</span>`:`<span class="small">${esc(nm(L.ask))}</span><textarea id="labans" rows="2" maxlength="300" placeholder="ตอบสั้นๆ"></textarea><button class="btn" id="labsend">ส่งคำตอบ +10 XP</button>`}</div>`
+      :`<p class="small">ยังไม่ตรงโจทย์ ลองเลื่อนค่าทีละตัว แล้วสังเกตว่าตัวไหนเปลี่ยนผลมากที่สุด</p>`}`;
+    const sb=out.querySelector("#labsend"); if(sb) sb.onclick=async()=>{ const v=(out.querySelector("#labans").value||"").trim(); if(v.length<4){ out.querySelector("#labans").focus(); return }
+      const now=new Date().toISOString(); await saveAttempt({type:"studio",act:"lab",lab:L.id,setId:"studio-lab-"+L.id,topic:"สตูดิโอเกม: ห้องทดลอง "+L.title,settings:{...LABV},result:{win:res.win,mean:+res.mean.toFixed(1),med:res.med},answer:v.slice(0,300),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:10,items:[]});
+      render(); sheet({icon:"🌟",title:"นักออกแบบตัวจริง!",html:`<p>+10 XP · ทำโจทย์ห้องทดลองแล้ว ${done.size+1}/${labs.length} ข้อ</p>`,actions:[{label:"ลองโจทย์อื่น",ghost:true,fn:()=>studioLab()},{label:"เยี่ยม!",fn:closeSheet}]}) } } }
+/* today's missed questions she can rewrite (one guide a day earns XP) */
+function rewriteToday(list){ const t=todayKey(), seen=new Set(), out=[];
+  list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===t).forEach(a=>(a.items||[]).forEach(x=>{ if(x.correct===false&&!x.notTaught&&QBANK[x.qid]&&!seen.has(x.qid)){ seen.add(x.qid); out.push(QBANK[x.qid].q) } })); return out }
+function rewriteDone(list){ const t=todayKey(); return studioRecs(list).some(a=>a.act==="rewrite"&&dayKey(a.endedAt)===t) }
+function studioRewrite(qi){ const W=STUDIO.rewrite, list=mine(), qs=rewriteToday(list); if(!W) return;
+  if(!qs.length) return sheet({icon:W.icon,title:W.title,html:`<p>${esc(nm(W.intro))}</p><p class="small muted">วันนี้ยังไม่มีข้อที่พลาด ทำภารกิจก่อน ถ้ามีข้อที่พลาดจะมาเขียนคู่มือได้</p>`,actions:[{label:"ปิด",fn:closeSheet}]});
+  const q=qs[Math.min(qi||0,qs.length-1)], st=exSteps(q.ex), dn=rewriteDone(list);
+  const d=sheet({icon:W.icon,title:W.title,wide:true,read:q.ex,html:`<p class="small">${esc(nm(W.intro))}</p>
+    ${qs.length>1?`<div class="row" style="gap:6px">${qs.slice(0,5).map((x,i)=>`<button class="btn small ${x===q?"":"ghost"}" data-rq="${i}">ข้อ ${i+1}</button>`).join("")}</div>`:""}
+    <div class="feedback"><span class="small"><b>โจทย์</b> ${esc(q.q)}</span><span class="small"><b>คำตอบ</b> ${esc(q.num?(q.answerText||q.answer)+" "+(q.unit||""):q.opts[q.a])}</span>
+      <ol class="exsteps">${st.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></div>
+    <label class="wsf"><b class="small">คู่มือผู้เล่นของ${esc(myName()||"เธอ")} (2–3 ประโยค)</b><textarea id="rw" rows="3" maxlength="400" placeholder="ข้อนี้ต้องดูว่า... แล้ว... ระวัง..."></textarea></label>`,
+    actions:[{label:dn?"ส่ง (วันนี้ได้ XP ไปแล้ว)":"ส่งคู่มือ +10 XP",fn:async d=>{ const v=(d.querySelector("#rw").value||"").trim(); if(v.length<15){ alertSoft(d,"เขียนให้ยาวอีกนิด อย่างน้อยหนึ่งประโยคเต็ม"); return }
+      const now=new Date().toISOString(); await saveAttempt({type:"studio",act:"rewrite",qid:q.id,setId:"studio-rw-"+q.id,topic:"สตูดิโอเกม: คู่มือผู้เล่น · "+(q.topic||""),answer:v.slice(0,400),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:dn?0:10,items:[]});
+      closeSheet(); render(); sheet({icon:"📗",title:"เขียนคู่มือแล้ว!",html:`<p>${dn?"ส่งเพิ่มแล้ว (XP ได้วันละครั้ง)":"+10 XP"} · พ่อจะได้อ่านคู่มือของเธอด้วย</p>`,actions:[{label:"เยี่ยม!",fn:closeSheet}]}) }},{label:"ไว้ทีหลัง",ghost:true,fn:closeSheet}]});
+  d.querySelectorAll("[data-rq]").forEach(b=>b.onclick=()=>studioRewrite(+b.dataset.rq)) }
 function alertSoft(root,msg){ let p=root.querySelector(".sheetmsg"); if(!p){ p=document.createElement("p"); p.className="small sheetmsg"; root.querySelector(".sheetbody").appendChild(p) } p.innerHTML=`<b>${esc(msg)}</b>` }
 function studioParent(list){ const r=studioRecs(list).slice().sort((a,b)=>new Date(b.endedAt)-new Date(a.endedAt)); if(!r.length) return "";
-  return `<div><span class="eyebrow">🎮 สตูดิโอเกม · คำตอบล่าสุดของน้อง</span>${r.slice(0,3).map(a=>a.act==="workshop"?`<p class="small"><b>แบบเขตใหม่:</b> ${esc(Object.values(a.answers||{}).filter(Boolean).join(" · ").slice(0,300))}</p>`
+  return `<div><span class="eyebrow">🎮 สตูดิโอเกม · คำตอบล่าสุดของน้อง</span>${r.slice(0,5).map(a=>a.act==="lab"?`<p class="small"><b>ห้องทดลอง ${esc(a.lab)}</b> (ชนะ ${a.result?.win}% · ${a.result?.mean} ตา): “${esc(a.answer)}”</p>`:a.act==="rewrite"?`<p class="small"><b>คู่มือผู้เล่น (${esc(a.qid)}):</b> “${esc(a.answer)}”</p>`:a.act==="workshop"?`<p class="small"><b>แบบเขตใหม่:</b> ${esc(Object.values(a.answers||{}).filter(Boolean).join(" · ").slice(0,300))}</p>`
     :`<p class="small"><b>${esc((a.topic||"").replace("สตูดิโอเกม: ",""))}:</b> “${esc(a.answer)}”</p>`).join("")}</div>` }
 
 /* ---------- ภูตธาตุ: elements as collectible characters (her request, 9 Nov 2026)
@@ -3822,8 +3983,8 @@ function elTile(list){ const st=elState(list), got=elCollected(st).length, done=
 function elQueue(list){ const st=elState(list), t=todayKey(), due=[], fresh=[];
   ELEMENTS.forEach(e=>{ const o=st[e.z]; if(!o){ fresh.push(e); return } if(o.box>=6) return; if(t-o.last>=EL_GAP[o.box]*DAY) due.push(e) });
   const learnOrder=[...fresh].sort((a,b)=>a.z-b.z); const newOnes=learnOrder.slice(0,due.length>6?1:3);
-  const q=[]; newOnes.forEach(e=>{ q.push({z:e.z,mode:"intro"}); q.push({z:e.z,mode:"sym2name"}) });
-  const toPlace=ELEMENTS.filter(e=>st[e.z]&&st[e.z].box>=2&&!st[e.z].placed).slice(0,3);
+  const q=[]; newOnes.forEach(e=>{ q.push({z:e.z,mode:"intro"}); q.push({z:e.z,mode:"place"}); q.push({z:e.z,mode:"sym2name"}) });
+  const toPlace=ELEMENTS.filter(e=>st[e.z]&&!st[e.z].placed).slice(0,3);
   due.filter(e=>!toPlace.includes(e)).slice(0,8).forEach(e=>{ const b=st[e.z].box; const m=b<=1?(Math.random()<.5?"sym2name":"name2sym"):b===2?"type":b===3?(Math.random()<.5?"use":"name2sym"):(Math.random()<.5?"use":"sym2name"); q.push({z:e.z,mode:m}) });
   toPlace.forEach(e=>q.push({z:e.z,mode:"place"}));
   if(elFormulaOpen(st)){ q.push({mode:"formula"}); q.push({mode:"formula"}) }
@@ -3834,7 +3995,7 @@ function elGrid(st,opts){ opts=opts||{}; const cells=[];
   const exists=(p,g)=>p===1?(g===1||g===18):p<=3?(g<=2||g>=13):p<=7;
   for(let p=1;p<=7;p++) for(let g=1;g<=18;g++){ if(!exists(p,g)) { cells.push(`<span class="elc gap"></span>`); continue }
     const e=ELEMENTS.find(x=>x.p===p&&x.g===g), o=e&&st[e.z], show=e&&(opts.all||o&&o.placed);
-    cells.push(`<button class="elc ${e?"has":""} ${show?"on":""}" ${opts.tap?`data-cell="${p}-${g}"`:e&&show?`data-el="${e.z}"`:"disabled"} style="${show?`background:${EL_TYPES[e.t].c}`:""}">${show?e.s:""}</button>`) }
+    cells.push(`<button class="elc ${e?"has":""} ${show?"on":""} ${show&&(o?.box||0)<2&&!opts.all?"young":""}" ${opts.tap?`data-cell="${p}-${g}"`:e&&show?`data-el="${e.z}"`:"disabled"} style="${show?`background:${EL_TYPES[e.t].c}`:""}">${show?e.s:""}</button>`) }
   const u=EL_BY[92], ou=st[92], showU=opts.all||ou&&ou.placed;
   const act=`<div class="elgrid elrow2">${Array.from({length:3},(_,k)=>`<span class="elc gap">${k===0?`<span class="actl">แอกทิไนด์</span>`:""}</span>`).join("")}${Array.from({length:15},(_,k)=>k===3?`<button class="elc has ${showU?"on":""}" ${opts.tap?`data-cell="9-6"`:showU?`data-el="92"`:"disabled"} style="${showU?`background:${EL_TYPES.radio.c}`:""}">${showU?"U":""}</button>`:`<span class="elc"></span>`).join("")}</div>`;
   return `<div class="elgridwrap"><div class="elgrid">${cells.join("")}</div>${act}</div>
@@ -3851,7 +4012,8 @@ function renderElem(){
       <p class="small">ธาตุแต่ละตัวคือภูตที่มีนิสัยตามสมบัติจริง ฝึกวันละ 3 นาที ตัวไหนจำได้แล้วจะได้วางลงช่องของมันในตารางธาตุด้วยมือตัวเอง ตารางจะค่อยๆ เต็มไปด้วยสี${got>=ELEMENTS.length?"":" (ไม่ต้องท่องทั้งตาราง แค่ธาตุสำคัญ "+ELEMENTS.length+" ตัว)"}</p>
       <div class="row"><button class="btn" id="elgo">${done?"ฝึกอีกรอบ (ไม่ได้ XP เพิ่ม)":"ฝึกวันนี้ · ราว 3 นาที"}</button></div>
       ${elMsg?`<p class="small"><b>${esc(elMsg)}</b></p>`:""}</section>
-    <section class="card"><span class="eyebrow">ตารางธาตุสะสม · แตะภูตเพื่ออ่านการ์ด</span>${elGrid(st)}
+    <section class="card"><span class="eyebrow">ตารางธาตุสะสม · วางแล้ว ${Object.values(st).filter(o=>o.placed).length} · จำได้แล้ว ${got} · แตะภูตเพื่ออ่านการ์ด</span>${elGrid(st)}
+      <p class="small muted">ภูตตัวใหม่จะได้วางลงตารางตั้งแต่วันแรก สีจางแปลว่ายังใหม่ พอจำได้แล้ว (ตอบถูกข้ามวัน) สีจะเข้มขึ้น${got?"":" · ยังว่างอยู่? กด “ฝึกวันนี้” แล้ววางภูต 3 ตัวแรกได้เลย"}</p>
       <p class="small muted">โลหะอยู่ฝั่งซ้าย อโลหะอยู่ฝั่งขวา กึ่งโลหะอยู่ตามแนวขั้นบันไดตรงกลาง ลองสังเกตดูตอนตารางเริ่มเต็ม</p></section>
     <section class="card"><span class="eyebrow">🧪 ห้องปรุงสาร (เขียนสูตรสารประกอบ)</span>
       ${fo?`<p class="small">เปิดแล้ว! ในการฝึกแต่ละวันจะมีโจทย์เขียนสูตรสารประกอบ 2 ข้อ <button class="btn ghost small" id="elhow">ดูวิธีคิด</button></p>`
@@ -3874,7 +4036,7 @@ function elMakeQ(st,item){ const e=item.z?EL_BY[item.z]:null, pool=ELEMENTS.filt
   if(item.mode==="name2sym") return {e,prompt:`พิมพ์สัญลักษณ์ของ <b>${e.n}</b>`,typed:true,a:e.s};
   if(item.mode==="type") return {e,prompt:`<b>${e.n} (${e.s})</b> เป็นธาตุประเภทไหน`,opts:Object.values(EL_TYPES).map(t=>t.n),a:EL_TYPES[e.t].n};
   if(item.mode==="use") return {e,prompt:`ภูตตัวไหน: “${esc(e.use)}”`,opts:pick([e.s+" "+e.n,...pick(pool,3).map(x=>x.s+" "+x.n)],4),a:e.s+" "+e.n};
-  if(item.mode==="place") return {e,prompt:`วาง <b>${e.n} (${e.s})</b> ลงในช่องของมัน`,place:true,a:`${e.p}-${e.g}`};
+  if(item.mode==="place") return {e,prompt:`วาง <b>${e.n} (${e.s})</b> ลงในช่องของมัน`+((st[e.z]?.box||0)<2?`<br><span class="small muted">ใบ้: เลขอะตอม ${e.z} · ${e.p<=7?`แถวที่ ${e.p} (คาบ) คอลัมน์ที่ ${e.g} (หมู่)`:"แถวแอกทิไนด์ด้านล่าง"}</span>`:""),place:true,a:`${e.p}-${e.g}`};
   if(item.mode==="formula"){ const ms=ELEMENTS.filter(x=>x.q>0&&x.t==="metal"&&(st[x.z]?.box||0)>=2), ns=ELEMENTS.filter(x=>x.q<0&&(st[x.z]?.box||0)>=2); if(!ms.length||!ns.length) return null;
     const m=pick(ms,1)[0], n=pick(ns,1)[0], f=elFormula(m,n), opts=[...new Set([f.right,...f.wrong])].slice(0,4);
     return {e:null,prompt:`สารประกอบระหว่าง <b>${m.n} (${m.s}, ไอออน +${m.q})</b> กับ <b>${n.n} (${n.s}, ไอออน −${Math.abs(n.q)})</b> มีสูตรอย่างไร`,opts:pick(opts,opts.length),a:f.right,formula:true,m,n} }

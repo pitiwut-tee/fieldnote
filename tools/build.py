@@ -15,7 +15,7 @@ content = {"sets": sets, "spells": load("content/spells.json"), "vocab": load("c
            "readings": load("content/readings.json"), "calendar": load("content/calendar.json"),
            "missions": load("content/missions.json"), "letters": load("content/letters.json"),
            "decisions": load("content/decisions.json"), "variants": load("content/variants.json"),
-           "guests": load("content/guests.json"), "studio": load("content/studio.json")}
+           "guests": load("content/guests.json"), "studio": load("content/studio.json"), "cards": load("content/cards.json")}
 
 src = open(P("src", "app.html"), encoding="utf8").read()
 import datetime as _dt
