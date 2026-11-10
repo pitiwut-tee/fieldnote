@@ -66,6 +66,7 @@
  ],
  "voidNote": "Records the father said were only button tests (matched by endedAt).",
  "lessonQueue": [
+  "sci-pressure-1",
   "math-dotplot-1",
   "sci-solution-1",
   "math-stats-4",
@@ -79,7 +80,7 @@
   "sci-solution-4",
   "sci-solution-5"
  ],
- "lessonQueueNote": "School order (her school's term-2 workbook): statistics first (she missed a week), science midterm = solutions + separation. The content run updates this queue. (2026-11-08 run: math-ratio-1 added after sci-separation-1 because ratio questions were missed twice in the mixed set.)",
+ "lessonQueueNote": "School order (her school's term-2 workbook): statistics first (she missed a week), science midterm = solutions + separation. The content run updates this queue. (2026-11-08 run: math-ratio-1 added after sci-separation-1 because ratio questions were missed twice in the mixed set.) (2026-11-10 evening: sci-pressure-1 put first; she said she has not learned Pa, and pressure is in the exam scope; the father asked to teach it now.)",
  "sweepFrom": "2026-11-09",
  "dailyMinutes": {
   "school": "45–60",
