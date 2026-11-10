@@ -486,6 +486,13 @@ button.spell{cursor:pointer} button.spell:hover{border-color:var(--accent)}
 @keyframes exppulse{0%,100%{box-shadow:0 0 0 0 rgba(217,130,43,.45)}50%{box-shadow:0 0 0 9px rgba(217,130,43,0)}}
 .exppow{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
 .expgo{width:100%;min-height:52px;font-size:1.05rem}
+.bosscard{display:flex;gap:10px;align-items:center;background:linear-gradient(90deg,#fbeee9,#fff7ef);border:1px solid #efd3c8;border-radius:14px;padding:8px 10px;margin:6px 0}
+.bosscard.won{background:linear-gradient(90deg,#e6f5ea,#f3fbf1);border-color:#bfe0c8}
+.bossart{position:relative;display:inline-block}.bosscard.won .monster{opacity:.45;filter:grayscale(.6)}.bosszz{position:absolute;right:-4px;top:-6px}
+.bosshp{display:block;height:9px;border-radius:5px;background:#eadbd8;overflow:hidden}.bosshp i{display:block;height:100%;background:#c0453a;transition:width .5s}
+.bosscard.won .bosshp i{background:#3f9b5a}
+.bossstrip{display:flex;align-items:center;gap:8px;margin-top:6px;padding:4px 8px;border-radius:10px;background:#fbeee9}
+.bosshit{display:block;color:#a8382e;font-weight:600;margin-top:2px}
 </style>
 
 <div class="wrap" id="app">
@@ -654,7 +661,7 @@ async function importCode(raw, asTest){
 }
 
 /* ---------- updates: GitHub Pages lets the browser keep an old copy for a while, so check for a newer build ---------- */
-const BUILD="2026-11-10 23:35";
+const BUILD="2026-11-10 23:42";
 async function checkUpdate(){ if(!/^https?:/.test(location.protocol)||typeof db!=="undefined"&&db) return;
   try{ const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text(); const m=t.match(/const BUILD="(\d{4}-\d\d-\d\d \d\d:\d\d)"/);
     if(m&&m[1]!==BUILD&&!m[1].includes("@@")&&!document.getElementById("updbar")){ const d=document.createElement("button"); d.id="updbar"; d.className="btn";
@@ -1152,6 +1159,42 @@ function missionList(p){
   if(p.sweepNeeded||p.sweepToday) m.push({key:"sweep",done:p.sweepToday});
   return m;
 }
+/* ---------- บอสประจำวัน (father approved 10 Nov): one health bar for the whole day, shown above every question. Every answer
+   is an attack, scored by care, never by speed: right 3 (right but self-reported guess 2) · "don't know" then the explanation
+   read to the end 2 · wrong but explanation read 1 · fast wrong or explanation skipped 0. Vocabulary: right 1.
+   No losing: when every stop of the day is done and no explanation was skipped, the last blow lands even if HP is left.
+   Each defeated boss gives one map piece (7 pieces → a new rescue-team region). Everything is derived from records. */
+const BOSS_FROM="2026-11-11";
+const DAY_BOSSES=[{art:"mud",n:"ภูตตะกอนผสม"},{art:"oil",n:"ก้อนคราบน้ำมันยักษ์"},{art:"methane",n:"ภูตฟองมีเทน"},{art:"soot",n:"ปีศาจเขม่าดำ"},
+  {art:"algae",n:"สาหร่ายบลูมจอมป่วน"},{art:"steam",n:"ภูตไอร้อน"},{art:"co2",n:"เมฆคาร์บอนเจ้าเล่ห์"},{art:"heatwave",n:"อสูรคลื่นความร้อน"},{art:"bag",n:"ภูตถุงลอยฟ้า"},{art:"gas",n:"ภูตควันพิษ"}];
+const BOSS_SHARE={lesson:30,vocab:15,probe:20,sweep:12};
+function exRead(x){ return x.exTotal?x.exSteps>=x.exTotal:(x.exSec||0)>=5 }
+function bossHit(x,vocab){ if(x.skipped) return 0; if(vocab) return x.correct?1:0;
+  if(x.correct) return x.guessed?2:3; if(x.dontknow) return exRead(x)?2:0; return (x.timeSec!=null&&x.timeSec<4)?0:exRead(x)?1:0 }
+function bossOf(dk){ const i=Math.floor(dk/DAY)%DAY_BOSSES.length; return DAY_BOSSES[(i+DAY_BOSSES.length)%DAY_BOSSES.length] }
+function bossDay(list,dk){ const recs=list.filter(a=>dayKey(a.endedAt)===dk), its=recs.filter(a=>isLesson(a)||a.type==="recall"||a.type==="sweep").flatMap(a=>a.items||[]);
+  const live=dk===todayKey()&&S&&S.mode==="set"&&S.active?S.items:[];
+  const vocab=recs.filter(a=>a.type==="vocab").flatMap(a=>a.items||[]);
+  let ms=[], all=false; try{ const p=progressOf(list.filter(a=>dayKey(a.endedAt)<=dk)); if(dk===todayKey()){ ms=missionList(p); all=!!p.goalToday } else { all=p.met&&p.met.has?p.met.has(dk):false; ms=[{key:"lesson"},{key:"vocab"}] } }catch(e){}
+  const max=ms.reduce((n,m)=>n+(BOSS_SHARE[m.key]||15),0)||45;
+  const dmg=[...its,...live].reduce((n,x)=>n+bossHit(x),0)+Math.min(BOSS_SHARE.vocab,vocab.reduce((n,x)=>n+bossHit(x,true),0));
+  const skippedEx=[...its,...live].filter(x=>!x.skipped&&!x.correct&&!exRead(x)).length;
+  const hp=Math.max(0,max-dmg), won=hp<=0||(all&&skippedEx===0);
+  return {boss:bossOf(dk),max,hp:won?0:hp,dmg,won,all,skippedEx} }
+function bossPieces(list){ const from=dayKey(BOSS_FROM+"T00:00:00+07:00"), days=[...new Set(list.map(a=>dayKey(a.endedAt)))].filter(d=>d>=from); return days.filter(d=>bossDay(list,d).won).length }
+function bossArt(b,size){ return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" class="monster">${MON_ART[b.art]||""}</svg>` }
+function bossCard(list){ if(todayKey()<dayKey(BOSS_FROM+"T00:00:00+07:00")) return ""; const B=bossDay(list,todayKey()), pc=bossPieces(list)%7||(bossPieces(list)&&B.won?7:0);
+  return `<div class="bosscard ${B.won?"won":""}"><span class="bossart">${bossArt(B.boss,58)}${B.won?`<span class="bosszz">🌿</span>`:""}</span>
+    <div style="flex:1;display:flex;flex-direction:column;gap:3px"><b class="small">บอสประจำวัน: ${esc(B.boss.n)}</b>
+      <div class="bosshp"><i style="width:${Math.round(B.hp/B.max*100)}%"></i></div>
+      <span class="small muted">${B.won?"ชนะแล้ว! ได้ชิ้นส่วนแผนที่ 1 ชิ้น":B.all&&B.skippedEx?`ทำครบทุกจุดแล้ว แต่ข้ามเฉลยไป ${B.skippedEx} ข้อ บอสเลยหนีไปได้ พรุ่งนี้ลองใหม่นะ`:`พลังชีวิต ${B.hp}/${B.max} · ตอบอย่างตั้งใจ = ตีแรง · บอสไม่ตีกลับ`}</span>
+      <span class="small">🧩 ชิ้นส่วนแผนที่ ${"■".repeat(pc)}${"□".repeat(7-pc)} ${pc}/7</span></div></div>` }
+function bossStrip(){ if(todayKey()<dayKey(BOSS_FROM+"T00:00:00+07:00")) return ""; const B=bossDay(mine(),todayKey());
+  return `<div class="bossstrip"><span>${bossArt(B.boss,30)}</span><span class="small" style="flex:1"><b>${esc(B.boss.n)}</b><span class="bosshp"><i style="width:${Math.round(B.hp/B.max*100)}%"></i></span></span><span class="small muted">${B.won?"ชนะแล้ว!":`${B.hp}/${B.max}`}</span></div>` }
+function bossHitNote(ans){ if(todayKey()<dayKey(BOSS_FROM+"T00:00:00+07:00")||!ans) return "";
+  return ans.correct?`<span class="small bosshit">⚔️ ตีบอส −${S.guessed?2:3}</span>`:ans.dontknow?`<span class="small bosshit">อ่านเฉลยให้ครบขั้น ตีบอสได้ −2</span>`:`<span class="small bosshit">อ่านเฉลยให้ครบขั้น ยังตีบอสได้ −1</span>` }
+function bossWinCheck(){ try{ const L=mine(), B=bossDay(L,todayKey()), k="fieldnote.bosswon"; if(!B.won||ls(k,null)===todayKey()) return; lsSet(k,todayKey());
+  const pc=bossPieces(L); sheet({icon:"🏆",title:`ชนะ${B.boss.n}แล้ว!`,html:`<div style="display:flex;justify-content:center">${bossArt(B.boss,90)}</div><p>ได้ชิ้นส่วนแผนที่ 1 ชิ้น · สะสมแล้ว ${pc} ชิ้น${pc>=7?" ครบ 7 ชิ้นแล้ว! เขตใหม่ของทีมกู้โลกกำลังมา":` อีก ${7-pc%7} ชิ้นเปิดเขตใหม่`}</p>`,actions:[{label:"เยี่ยม!",fn:closeSheet}]}) }catch(e){} }
 /* the day's missions drawn as one expedition route (father, 10 Nov); the optional extra is a secret path that opens at the end */
 const EXP_STOP={lesson:["📘","บทเรียน"],vocab:["🔤","คำศัพท์"],probe:["⛰️","ด่านสำรวจ"],sweep:["🧭","ย้อนของเก่า"]};
 function expRoute(ms,p){ const all=ms.every(x=>x.done), nx=ms.findIndex(x=>!x.done), n=ms.length, list=mine(), pw=expDayPower(list), bo=expBoost(list);
@@ -1235,7 +1278,7 @@ function renderHome(){
   ${TEST?`<section class="card" style="border-color:var(--beak)"><b style="color:var(--beak)">โหมดทดสอบ</b>
     <p class="small">ผลจากเครื่องนี้จะติดป้าย "ทดสอบ" และไม่ถูกนับในการวิเคราะห์ ลองกดทุกอย่างได้ตามสบาย</p>
     <button class="btn ghost" id="leave-test">ออกจากโหมดทดสอบ และล้างผลทดสอบในเครื่องนี้</button></section>`:""}
-  <section class="card expcard"><div class="todayhead"><span class="eyebrow">🗺️ ออกสำรวจวันนี้ · ${ms.filter(x=>x.done).length}/${ms.length} จุด</span></div>${expRoute(ms,p)}</section>
+  <section class="card expcard"><div class="todayhead"><span class="eyebrow">🗺️ ออกสำรวจวันนี้ · ${ms.filter(x=>x.done).length}/${ms.length} จุด</span></div>${bossCard(list)}${expRoute(ms,p)}</section>
   ${getBuddy()?buddyStrip(list,p,plan):buddySetupHtml()}
   ${V&&V.active&&view!=="vocab"?`<section class="card" style="border:2px solid var(--beak)"><b>คำศัพท์วันนี้ทำค้างไว้</b><div class="row"><button class="btn" id="resume-v">ทำต่อ</button></div></section>`:""}
   ${(()=>{const pd=pendingSet(); return pd?`<section class="card" style="border:2px solid var(--beak)"><b>ทำชุด "${esc(pd.set.topic)}" ค้างไว้</b>
@@ -1285,7 +1328,7 @@ function renderHome(){
   { const ce=document.getElementById("callme-edit"); if(ce) ce.onclick=()=>askName(true) }
   setTimeout(()=>{ if(!askName()&&!guestPop(mine())&&STUDIO) studioTeaser() },700);
   $v.querySelectorAll("[data-wishclaim]").forEach(x=>x.onclick=()=>{ x.disabled=true; wishClaim(render) }); bindWishGo($v);
-  wishMigrate();
+  wishMigrate(); setTimeout(bossWinCheck,900);
   $v.querySelectorAll("[data-tile]").forEach(t=>t.onclick=()=>{ if(t.dataset.tile==="studio"){ studioOpen(); return } if(t.dataset.tile==="elem"){ homeOpen=null; EL=null; view="elem"; render(); window.scrollTo({top:0}); return } if(t.dataset.tile==="adv"){ homeOpen=null; advSel=advSel||"r1"; view="adv"; render(); window.scrollTo({top:0}); return } homeOpen=homeOpen===t.dataset.tile?null:t.dataset.tile; renderHome();
     const tp=document.getElementById("tpanel"); if(tp) tp.scrollIntoView({block:"nearest",behavior:"smooth"}) });
   $v.querySelectorAll("[data-mood]").forEach(m=>m.onclick=async()=>{ const now=new Date().toISOString();
@@ -1421,7 +1464,7 @@ function header(){
   const pct = Math.round(S.i/(S.steps.length-1)*100);
   const combo=(()=>{let c=0; for(let k=S.items.length-1;k>=0;k--){ if(S.items[k].correct) c++; else if(!S.items[k].skipped) break } return c})();
   return `<div class="stage"><span>${esc(S.set.topic)}</span><span>${S.steps[S.i].phase} · ${itemXp(S.items)} XP${combo>=3?` · <b class="combo">ถูกติดกัน ${combo} ข้อ ✨</b>`:""}</span></div>
-  ${S.legs&&S.legs.length>=2?expBar():`<div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div>`}`;
+  ${S.legs&&S.legs.length>=2?expBar():`<div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div>`}${bossStrip()}`;
 }
 
 
@@ -1711,7 +1754,7 @@ function renderStep(){
     const confNote = ans.dontknow||!ans.conf?"":ans.correct&&ans.conf==="unsure"?`<p class="small">ถูกแล้ว แต่ยังไม่ชัวร์ ระบบจะเอาข้อนี้มาให้ทวนอีกรอบ จะได้มั่นใจขึ้น</p>`
       :!ans.correct&&ans.conf==="sure"?`<p class="small"><b>มั่นใจแต่พลาด</b> ข้อแบบนี้ถ้าเข้าใจตอนนี้ จะจำได้แม่นที่สุด อ่านเฉลยช้าๆ นะ</p>`:"";
     const own = st.explain&&(ans.ownWhy||ans.ownWhyPad)?`<div class="feedback"><span class="small"><b>เหตุผลของเธอ:</b> ${ans.ownWhy?esc(ans.ownWhy):"(เขียนในกระดาษทด)"}</span><span class="small muted">ลองเทียบกับเฉลยด้านล่าง ตรงกันไหม ต่างกันตรงไหน</span></div>`:"";
-    fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answerText||q.answer} ${q.unit}`:""}</b>${ckNote}${confNote}${exHtml(q,ans)}
+    fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answerText||q.answer} ${q.unit}`:""}</b>${bossHitNote(ans)}${ckNote}${confNote}${exHtml(q,ans)}
       ${q.en?"":`<div>${readBtn("ex","🔊 ฟังเฉลย")}</div>`}
       ${ans.correct||ans.dontknow?"":`<span class="small muted">พลาดเพราะอะไร เลือกได้หลายข้อ (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
       <div class="why">${Object.entries(ERR).filter(([k])=>k!=="dontknow"&&k!=="notTaught").map(([k,v])=>`<button data-why="${k}" aria-pressed="${(S.why||[]).includes(k)}">${v}</button>`).join("")}</div>
