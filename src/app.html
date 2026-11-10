@@ -1,15 +1,15 @@
 <title>สมุดคาถา</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
 /* Layout: one narrow column like a pocket field notebook; parent view is the same column with summary first. */
 :root{
   --paper:#F2F6F4; --card:#FFFFFF; --ink:#16302B; --muted:#5B716B; --line:#D3E0DB;
   --accent:#1F7A8C; --accent-ink:#FFFFFF; --beak:#D9822B; --good:#2E8B57; --bad:#C0453A; --warn:#B7841C;
   --soft:#E3EEEA;
-  --display:"Mitr","IBM Plex Sans Thai",system-ui,sans-serif;
-  --body:"IBM Plex Sans Thai",system-ui,sans-serif;
+  --display:"Mitr","Sarabun",system-ui,sans-serif;
+  --body:"Sarabun",system-ui,sans-serif;   /* looped Thai font: easier to read in small sizes (father, 10 Nov) */
   --mono:"IBM Plex Mono",ui-monospace,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
@@ -30,7 +30,7 @@ p{margin:0}
 .tabs a{padding:6px 14px;border-radius:999px;color:var(--ink);text-decoration:none;font-size:.9rem}
 .tabs a[aria-current="page"]{background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
-.eyebrow{font-size:.78rem;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+.eyebrow{font-size:.84rem;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
 .sets{display:grid;grid-template-columns:1fr;gap:12px}
 @media(min-width:560px){.sets{grid-template-columns:1fr 1fr}}
 .set{text-align:left;font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px;cursor:pointer}
@@ -80,7 +80,7 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .badge{font-size:.75rem;padding:1px 7px;border-radius:999px;border:1px dashed var(--line);color:var(--muted)}
 .badge.on{border:1px solid var(--beak);color:var(--ink);background:color-mix(in srgb,var(--beak) 18%,transparent)}
 .daypanel{display:flex;flex-direction:column;gap:6px;padding:8px 10px;border-radius:10px;background:var(--soft)}
-.btn.small{font-size:.82rem;padding:6px 12px}
+.btn.small{font-size:.88rem;padding:6px 12px}
 .dot.hol{border-color:color-mix(in srgb,var(--beak) 60%,var(--line))}
 .quest{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--line)}
 .quest:last-of-type{border-bottom:0}
@@ -362,7 +362,7 @@ table.mt input{font:inherit;width:100%;min-width:5.5em;padding:6px;border-radius
 .vocab span i{font-style:normal;color:var(--muted)}
 .rate{display:flex;gap:8px;flex-wrap:wrap}
 .muted{color:var(--muted)}
-.small{font-size:.86rem}
+.small{font-size:.92rem}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .stat{display:flex;flex-direction:column}
@@ -455,6 +455,9 @@ button.spell{cursor:pointer} button.spell:hover{border-color:var(--accent)}
 .labrow{display:grid;grid-template-columns:1fr;gap:2px;margin:6px 0}.labrow input{width:100%}
 .labstats{display:grid;grid-template-columns:repeat(4,1fr);text-align:center;gap:6px;margin:10px 0}
 .labhist{width:100%;max-width:420px;display:block;margin:auto;color:var(--ink)}
+.prompt .qline{display:block;padding-left:1em;font-variant-numeric:tabular-nums}
+.prompt .qline::before{content:"▸ ";color:var(--muted);margin-left:-1em}
+.prompt .qafter{display:block;margin-top:.4em}
 </style>
 
 <div class="wrap" id="app">
@@ -685,7 +688,7 @@ const VOID=new Set(CAL.voidRecords||[]);   /* records the father said were only 
 /* voidRules: whole kinds of records the father asked to reset, e.g. {type:"labverdict", before:"…"} (10 Nov: verdicts made by
    blind clicking before the detective game was explained). Ignored everywhere, including XP. */
 const VOID_RULES=CAL.voidRules||[];
-function voided(a){ return VOID.has(a.endedAt)||VOID_RULES.some(r=>a.type===r.type&&(!r.before||new Date(a.endedAt)<new Date(r.before))&&(!r.missing||a[r.missing]==null)) }
+function voided(a){ return VOID.has(a.endedAt)||VOID_RULES.some(r=>a.type===r.type&&(!r.setId||a.setId===r.setId)&&(!r.before||new Date(a.endedAt)<new Date(r.before))&&(!r.missing||a[r.missing]==null)) }
 function realAttempts(){ return attempts.filter(a=>!a.example&&!a.test&&!voided(a)) }
 function mine(){ return TEST ? attempts.filter(a=>!a.example) : realAttempts() }
 function isSkip(a){ return a.type==="skip" }
@@ -777,7 +780,8 @@ function progressOf(list){
     if(a.type==="mission"||a.type==="teach"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* mission / teaching dad: XP only, not a daily unit */
     if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood"||a.type==="adv"||a.type==="studio"||a.type==="elem"||a.type==="save"||a.type==="card"||a.type==="wish"||a.type==="chem") return;
     if(a.type==="lab"||a.type==="labverdict"||a.type==="labquest"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
-    if(a.type==="sweep"){ sweepDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* old-topic sweep: its own daily step, not a lesson unit */
+    if(a.type==="sweep"){ sweepDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
+    if(a.type==="recall"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* 🧠 3-question recall tile: XP, not a lesson unit */   /* old-topic sweep: its own daily step, not a lesson unit */
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
     byDay.set(k,(byDay.get(k)||0)+xpOf(a));
     if(a.type==="vocab") vocabDays.add(k); else { units.set(k,(units.get(k)||0)+1); if(a.type==="probe"||a.type==="mixed"||a.type==="passage") probes.set(k,(probes.get(k)||0)+1) } });
@@ -1449,6 +1453,16 @@ const GLOSS={
  "% w/v":"ร้อยละโดยมวลต่อปริมาตร คือ มีตัวละลายกี่กรัม ในสารละลายทุก 100 cm³"
 };
 const GLOSS_KEYS=Object.keys(GLOSS).sort((a,b)=>b.length-a.length);
+/* question data written as "a → b · c → d · ..." is shown one item per line (father, 10 Nov: the dots were hard to read) */
+function qLines(h){ if(!h||h.indexOf(" · ")<0||/English corner/.test(h)) return h; const parts=h.split(" · ");
+  let head=parts[0], first="", after=""; const c=head.lastIndexOf(": "); if(c>0&&c>head.length-40){ first=head.slice(c+2); head=head.slice(0,c+1) } else { const o=head.lastIndexOf("("); if(o>=0&&o>head.length-40){ first=head.slice(o+1); head=head.slice(0,o+1) } else { first=head; head="" } }
+  const items=[first,...parts.slice(1)]; let last=items[items.length-1];
+  const startsData=x=>/^\s*[\d(]/.test(x);
+  if(items.length>2&&startsData(items[0])&&!startsData(last)&&!/→/.test(last)){ items.pop(); after=last }
+  else { const r=/\)\s+(?=[ก-๙])|\s(?=(?:ข้อใด|ข้อสรุป|ถ้า|จง|ฐานนิยม|มัธยฐาน|ค่าเฉลี่ย|พิสัย|ชมรม|ส่วนกลุ่ม|มีนักเรียน|ทำไม|ช่วงคะแนนใด|ช่วงใด))/g; let mm, cut=-1;
+    while((mm=r.exec(last))){ if(mm.index>0){ cut=mm.index+(mm[0].startsWith(")")?1:0); break } }
+    if(cut>0){ items[items.length-1]=last.slice(0,cut); after=last.slice(cut).trim() } }
+  return head+items.map(x=>`<span class="qline">${x}</span>`).join("")+(after?`<span class="qafter">${after}</span>`:"") }
 function gloss(raw){
   let t=esc(raw); const marks=[];
   GLOSS_KEYS.forEach(k=>{ const ek=esc(k), i=t.indexOf(ek); if(i<0) return;
@@ -1629,7 +1643,7 @@ function renderStep(){
   $v.innerHTML = `<section class="card">${header()}
     <span class="row" style="gap:6px">${S.set.kind==="mixed"?`<span class="chip">${/^s/.test(q.spell||"")?"🔬 วิทย์":"📐 คณิต"}</span>`:""}<span class="chip l${q.level}">${LV[q.level]}${S.set.kind==="mixed"&&!ans?"":" · "+esc(q.topic)}</span>${q.en?`<span class="chip">English corner</span>`:""}</span>
     ${st.passage?passageDetails():""}
-    <p class="prompt">${gloss(q.q)}</p>
+    <p class="prompt">${qLines(gloss(q.q))}</p>
     ${figHtml(q.fig)}
     <div class="feedback" id="gloss-box" hidden></div>
     ${(canQ||q.parts&&S.set.kind!=="mixed"&&!S.partsShown)&&!ans?`<div class="row" style="gap:8px">${canQ?readBtn("q",waitMs?"🔊 ฟังโจทย์ (ลองอ่านเองก่อนนะ)":"🔊 ฟังโจทย์",waitMs>0):""}${q.parts&&S.set.kind!=="mixed"&&!S.partsShown?`<button class="btn ghost small" id="parts" type="button">🧩 ช่วยแบ่งโจทย์</button>`:""}</div>`:""}
@@ -3580,7 +3594,7 @@ function advTrainLv(list,uid){ return list.filter(a=>(a.type==="shop"&&a.item===
 function advUnits(list){
   const pets=ownedPets(list).map(p=>{ const st=growStage(growth(p.k,list)); return {uid:"pet:"+p.k,name:petName(p.k,list),el:PET_ELEM[p.k]||"plant",el2:ADV_SECOND[p.k],base:10+st*2,look:petLook(p.k,Math.max(1,st)),pet:true} });
   const lab=[]; LAB_ORDER.forEach(sp=>{ const L=LAB_LINES[sp]; labAnimals(list,sp).filter(x=>!x.stock&&x.g&&!/\?/.test(x.g)).forEach(x=>{ const ph=L.ph(x.g);
-    lab.push({uid:"lab:"+x.id,name:(L.names[ph]||L.n),el:LAB_ELEM[ph]||"plant",el2:LAB_SECOND[ph]||"water",base:sp==="dragon"?12:10,svg:L.art[ph](),sp}) }) });
+    lab.push({uid:"lab:"+x.id,name:L.n.replace("ปริศนา","")+" "+(L.names[ph]||""),el:LAB_ELEM[ph]||"plant",el2:LAB_SECOND[ph]||"water",base:sp==="dragon"?12:10,svg:L.art[ph](),sp}) }) });
   const seen={}; lab.forEach(u=>{ seen[u.name]=(seen[u.name]||0)+1; if(seen[u.name]>1) u.name+=" #"+seen[u.name] });
   return [...pets,...lab].map(u=>{ const tl=advTrainLv(list,u.uid), exp=advExp(list,u.uid), el=Math.floor(exp/6), lv=Math.min(20,tl+el);
     return {...u,el2:u.el2||ADV_SECOND[u.uid.slice(4)]||"water",lv,tl,exp,expIn:exp%6,power:u.base+3*lv+advGearP(list),skill:lv>=3} }) }
@@ -3590,7 +3604,8 @@ function advUnitArt(u,size){ return u.svg?`<svg viewBox="0 0 100 100" width="${s
 const ADV_LAB_SLOTS=4;
 function advRecruits(){ return ls("fieldnote.advrecruits",[]) }
 function advRoster(list){ const r=new Set(advRecruits()); return advUnits(list).filter(u=>!u.uid.startsWith("lab:")||r.has(u.uid)) }
-function advValley(list){ const r=new Set(advRecruits()); return advUnits(list).filter(u=>u.uid.startsWith("lab:")&&!r.has(u.uid)) }
+function advFreed(){ return ls("fieldnote.advfreed",[]) }
+function advValley(list){ const r=new Set(advRecruits()), fr=new Set(advFreed()); return advUnits(list).filter(u=>!fr.has(u.uid)).filter(u=>u.uid.startsWith("lab:")&&!r.has(u.uid)) }
 function advTeam(list){ const us=advRoster(list); let t=ls("fieldnote.advteam",null);
   t=(Array.isArray(t)?t:[]).filter(id=>us.some(u=>u.uid===id)).slice(0,3);
   if(!t.length){ const b=getBuddy(); if(b&&us.some(u=>u.uid==="pet:"+b.kind)) t.push("pet:"+b.kind);
@@ -3628,13 +3643,14 @@ function renderAdv(){
   const teamHtml=team.length?team.map(u=>`<div class="advunit">${advUnitArt(u,40)}<b class="small">${esc(u.name)}</b><span class="small">${ELEM[u.el].e}${ELEM[u.el2].e} พลัง ${u.power} · Lv ${u.lv}</span></div>`).join("")
     :`<p class="small">ยังไม่มีสมาชิก ไปรับคู่หูที่บ้านคู่หู หรือฟักไข่ที่หุบเขามังกรก่อนนะ</p>`;
   const roster=units.map(u=>{ const inT=team.some(t=>t.uid===u.uid), cost=advTrainCost(u.lv);
-    return `<div class="advrow"><span>${advUnitArt(u,32)}</span><span class="small" style="flex:1"><b>${esc(u.name)}</b> ${ELEM[u.el].e}${ELEM[u.el].n}${u.lv>=2?` + ${ELEM[u.el2].e}`:""} · Lv ${u.lv} · พลัง ${u.power}
+    return `<div class="advrow"><span>${advUnitArt(u,32)}</span><span class="small" style="flex:1"><b>${esc(u.name)}</b> ${ELEM[u.el].e}${ELEM[u.el].n}${u.lv>=2?` + ${ELEM[u.el2].e}`:""} · Lv ${u.lv} · ❤️ ${40+8*u.lv+(u.pet?6:0)} · พลัง ${u.power}
       <span class="expbar" title="EXP จากการออกผจญภัย"><i style="width:${u.expIn/6*100}%"></i></span><span class="muted">EXP ${u.expIn}/6${advSkillLock(u)?" · "+advSkillLock(u):" · ปลดครบทุกท่าแล้ว"}</span></span>
       <button class="btn ghost small" data-advteam="${u.uid}">${inT?"ออกจากทีม":"เข้าทีม"}</button>
       <button class="btn ghost small" data-advtrain="${u.uid}" ${w.stars>=cost&&u.lv<10?"":"disabled"}>ฝึก ⭐${cost}</button>
       ${u.uid.startsWith("lab:")?`<button class="btn ghost small" data-advrel="${u.uid}">ส่งกลับหุบเขา</button>`:""}</div>` }).join("");
   const valleyHtml=valley.length?`<details class="small"><summary>🐉 ในหุบเขามังกร ${valley.length} ตัว · รับเข้าทีมได้อีก ${Math.max(0,slots)} ตัว</summary>
-    ${valley.map(u=>`<div class="advrow"><span>${advUnitArt(u,28)}</span><span class="small" style="flex:1">${esc(u.name)} ${ELEM[u.el].e}${ELEM[u.el2].e}</span><button class="btn ghost small" data-advrec="${u.uid}" ${slots>0?"":"disabled"}>รับเข้าทีม</button></div>`).join("")}
+    ${valley.slice().sort((a,b)=>b.lv-a.lv||b.power-a.power).map(u=>`<div class="advrow"><span>${advUnitArt(u,32)}</span><span class="small" style="flex:1"><b>${esc(u.name)}</b><br>${ELEM[u.el].e} ${ELEM[u.el].n} + ${ELEM[u.el2].e} ${ELEM[u.el2].n}<br>Lv ${u.lv} · ❤️ ${40+8*u.lv} · พลัง ${u.power}</span>
+      <span style="display:flex;flex-direction:column;gap:4px"><button class="btn ghost small" data-advrec="${u.uid}" ${slots>0?"":"disabled"}>รับเข้าทีม</button><button class="btn ghost small" data-advfree="${u.uid}">ปล่อยคืนธรรมชาติ</button></span></div>`).join("")}
     <p class="small muted">ทีมกู้โลกรับสัตว์จากหุบเขาได้สูงสุด ${ADV_LAB_SLOTS} ตัว เลือกตัวที่ธาตุช่วยทีมได้ ตัวที่เหลืออยู่ในหุบเขาอย่างมีความสุข</p></details>`:"";
   const owned=new Set(list.filter(a=>a.type==="shop").map(a=>a.item));
   const gear=ADV_GEAR.map(g=>`<div class="advrow"><span style="font-size:24px">${g.e}</span><span class="small" style="flex:1"><b>${g.n}</b> · ทั้งทีม +${g.p} พลัง</span>
@@ -3666,6 +3682,9 @@ function renderAdv(){
   $v.querySelectorAll("[data-advteam]").forEach(b=>b.onclick=()=>{ let t=advTeam(list).map(u=>u.uid); const id=b.dataset.advteam;
     if(t.includes(id)) t=t.filter(x=>x!==id); else { if(t.length>=3) t.shift(); t.push(id) } lsSet("fieldnote.advteam",t); renderAdv() });
   $v.querySelectorAll("[data-advrec]").forEach(b=>b.onclick=()=>{ const r=advRecruits(); if(r.length>=ADV_LAB_SLOTS) return; lsSet("fieldnote.advrecruits",[...r,b.dataset.advrec]); advMsg="รับเข้าทีมแล้ว"; renderAdv() });
+  $v.querySelectorAll("[data-advfree]").forEach(b=>b.onclick=()=>{ const id=b.dataset.advfree, u=advUnits(mine()).find(x=>x.uid===id);
+    sheet({icon:"🌿",title:`ปล่อย${u?u.name:""}คืนธรรมชาติ?`,html:`<p>ตัวนี้จะออกจากรายชื่อหุบเขาของทีมกู้โลก ไปใช้ชีวิตอิสระในป่า และจะไม่กลับมาให้เลือกอีก (ลูกในคอกของห้องวิจัยพันธุกรรมยังอยู่เหมือนเดิม)</p>`,
+      actions:[{label:"ปล่อยเลย",fn:()=>{ lsSet("fieldnote.advfreed",[...advFreed(),id]); closeSheet(); advMsg=`${u?u.name:"สัตว์"}กลับสู่ธรรมชาติแล้ว ขอให้มีความสุขนะ 🌿`; renderAdv() }},{label:"เก็บไว้ก่อน",ghost:true,fn:closeSheet}]}) });
   $v.querySelectorAll("[data-advrel]").forEach(b=>b.onclick=()=>{ lsSet("fieldnote.advrecruits",advRecruits().filter(x=>x!==b.dataset.advrel)); lsSet("fieldnote.advteam",(ls("fieldnote.advteam",[])||[]).filter(x=>x!==b.dataset.advrel)); advMsg="ส่งกลับหุบเขาแล้ว"; renderAdv() });
   $v.querySelectorAll("[data-advtrain]").forEach(b=>b.onclick=async()=>{ const u=advUnits(list).find(x=>x.uid===b.dataset.advtrain); if(!u) return; const cost=advTrainCost(u.lv);
     if(wallet(mine()).stars<cost) return; b.disabled=true; const now=new Date().toISOString();
