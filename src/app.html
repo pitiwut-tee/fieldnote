@@ -1032,22 +1032,21 @@ function expLegs(steps,set){ const L=[]; const add=(name,icon)=>{ L.push({name,i
   return L.filter(l=>l.steps.some(i=>steps[i].kind==="q")).length>=2?L:[] }
 function expPts(x){ return x.skipped?0:(x.correct&&!x.guessed?2:0)+(x.exTotal&&x.exSteps>=x.exTotal?2:0)+(x.dontknow?1:0) }
 function expDayPower(list){ const t=todayKey(); let stops=0; try{ stops=missionList(progressOf(list)).filter(x=>x.done).length }catch(e){} return stops*10+list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===t).reduce((n,a)=>n+(a.items||[]).reduce((m,x)=>m+expPts(x),0),0)+(S&&S.mode==="set"&&S.active?S.items.reduce((m,x)=>m+expPts(x),0):0) }
-function expBoost(list){ return Math.min(40,Math.round(expDayPower(list)*0.5)) }
+function expBoost(list){ return 0 }   /* the damage boost was dropped on 10 Nov: power now means battle charges only */
 function expBar(){ if(!S.legs||S.legs.length<2) return ""; const cur=S.steps[S.i].leg, pw=S.items.reduce((m,x)=>m+expPts(x),0);
   return `<div class="expbar2" aria-label="ความคืบหน้าการออกสำรวจ">${S.legs.map((l,k)=>{ const n=l.steps.length, d=l.steps.filter(i=>i<S.i).length+(k===cur?0.5:0);
     return `<div class="expleg ${k===cur?"now":k<cur?"done":""}" style="flex:${n}"><span class="small">${l.icon} ${esc(l.name)}</span><div class="progress"><i style="width:${Math.min(100,(k<cur?1:k>cur?0:d/n)*100)}%"></i></div></div>` }).join("")}</div>
-    <span class="small muted">พลังทีมจากภารกิจนี้ ⚡${pw}</span>` }
+` }
 function expStartSheet(){ const L=S.legs, qn=l=>l.steps.filter(i=>S.steps[i].kind==="q").length;
   sheet({icon:"🗺️",title:"ออกสำรวจวันนี้",wide:true,html:`<p class="small">${esc(S.set.topic)}</p>
     <ol class="explist">${L.map((l,k)=>`<li><b>${l.icon} จุดที่ ${k+1}: ${esc(l.name)}</b><span class="small muted"> · ${qn(l)} ข้อ${l.steps.some(i=>S.steps[i].kind==="concept")?" + การ์ดสรุป":""}</span></li>`).join("")}</ol>
-    <p class="small">ทีมได้พลังจาก: ตอบถูก ⚡2 · อ่านเฉลยจนครบขั้น ⚡2 · กด "ไม่รู้" อย่างซื่อสัตย์ ⚡1 · ตอบเร็วไม่ได้พลังเพิ่ม</p>
-    <p class="small muted">พลังที่ได้วันนี้ทำให้ทีมกู้โลกตีแรงขึ้นในวันนี้ (สูงสุด +30%) · ระหว่างจุดพัก จะพักแล้วกลับมาทำต่อก็ได้</p>`,
+    <p class="small">ทำชุดนี้จบ ได้ ⚡ ออกรบกับทีมกู้โลกเพิ่ม 1 ครั้ง</p><p class="small muted">ระหว่างจุดพัก จะพักแล้วกลับมาทำต่อก็ได้</p>`,
     actions:[{label:"ออกเดินทาง!",fn:closeSheet}]}) }
 function expCheckpoint(k){ const l=S.legs[k], next=S.legs[k+1], its=S.items.filter(x=>x.leg===k&&!x.skipped), pw=its.reduce((m,x)=>m+expPts(x),0);
   if(!its.length||!next) return;
   sheet({icon:"🚩",title:`ผ่านจุดที่ ${k+1}: ${l.name}!`,html:`<div class="feedback" style="display:flex;flex-direction:column;gap:4px;text-align:left"><span>ตอบ ${its.length} ข้อ · ถูก ${its.filter(x=>x.correct).length} ข้อ</span>
       <span>อ่านเฉลยจนครบขั้น ${its.filter(x=>x.exTotal&&x.exSteps>=x.exTotal).length} ข้อ</span><span>กด "ไม่รู้" อย่างซื่อสัตย์ ${its.filter(x=>x.dontknow).length} ข้อ</span>
-      <b>พลังทีม +⚡${pw}</b></div><p class="small">ต่อไป: ${next.icon} ${esc(next.name)}</p>`,
+</div><p class="small">ต่อไป: ${next.icon} ${esc(next.name)}</p>`,
     actions:[{label:"เดินต่อ",fn:closeSheet},{label:"พักก่อน แล้วค่อยกลับมาทำต่อ",ghost:true,fn:()=>{ closeSheet(); saveProgress(); view="home"; render(); window.scrollTo({top:0}) }}]}) }
 /* trial "explain": one question per set (the first level-3 one, else the hardest) asks for a reason before the answer shows */
 function markExplain(steps, trial){
@@ -1169,7 +1168,7 @@ function expRoute(ms,p){ const all=ms.every(x=>x.done), nx=ms.findIndex(x=>!x.do
     <button class="expnode secret ${all?"open":""}" style="left:${sec[0]}%;top:${sec[1]}%" ${all?`data-goto="m-secret"`:"disabled"} type="button"><span class="exdot">${all?"🗝️":"🔒"}</span><span class="exlab">ทางลับ</span></button>
     <span class="expme" style="left:${at[0]}%;top:${at[1]}%">${look}</span>
   </div>
-  <div class="exppow"><span>⚡ พลังทีมวันนี้ <b>${pw}</b></span><span class="small muted">ทีมกู้โลกตีแรงขึ้น +${bo}% (ทำแต่ละจุดจบได้ ⚡10 · ตอบถูก ⚡2 · อ่านเฉลยครบ ⚡2 · "ไม่รู้" อย่างซื่อสัตย์ ⚡1)</span></div>
+  ${(()=>{ const en=advEnergy(list); return `<div class="exppow"><span>⚡ พลังทีมวันนี้: ออกรบได้ <b>${en.max}</b> ครั้ง${en.used?` (ใช้ไป ${en.used})`:""} ${"⚡".repeat(Math.min(8,en.left))}</span><span class="small muted">เริ่มต้น 2 ครั้ง · ทำแต่ละจุดจบ +1 · ครบทุกจุด +1</span></div>` })()}
   ${all?`<div class="row"><button class="btn" data-goto="m-secret" type="button">🗝️ เข้าทางลับ (ไม่บังคับ)</button><button class="btn ghost" id="exp-adv" type="button">🌍 พาทีมไปกู้โลก</button></div>`
     :`<button class="btn expgo" id="exp-go" data-key="${nxt.key}" type="button">${nic} ออกเดินทางต่อ: จุดที่ ${nx+1} · ${nt}</button>`}` }
 function missionsDone(p){ const m=missionList(p); return {done:m.filter(x=>x.done).length,total:m.length} }
@@ -1975,7 +1974,7 @@ function renderDone(){
   const ce=S.cele&&S.ci<S.cele.length?celeHtml(S.cele[S.ci]):null;
   $v.innerHTML=`<section class="card"><span class="eyebrow">เสร็จแล้ว</span>
     <h2>+${r.xp} XP</h2>${r.xpNote?`<p class="small muted">${esc(r.xpNote)}</p>`:""}
-    ${(r.items||[]).some(x=>x.leg!=null)?`<p class="small">⚡ พลังทีมจากภารกิจนี้ +${(r.items||[]).reduce((m,x)=>m+expPts(x),0)} · วันนี้ทีมกู้โลกตีแรงขึ้น +${expBoost(mine())}%</p>`:""}
+    ${(r.items||[]).some(x=>x.leg!=null)?`<p class="small">⚡ วันนี้ออกรบกับทีมกู้โลกได้ ${advEnergy(mine()).left} ครั้ง</p>`:""}
     <p>${r.type==="vocab"?`คำศัพท์ถูก ${r.correct} จาก ${r.total}`:`ทำได้ ${r.correct} จาก ${r.total} ข้อ`} ใน ${mins} นาที</p>
     ${byL?`<p class="small muted">${byL}</p>`:""}
     ${r.type!=="vocab"&&getBuddy()?buddyHtml([buddyAfter(r)].filter(Boolean)):""}
@@ -3677,7 +3676,7 @@ function advTrainLv(list,uid){ return list.filter(a=>(a.type==="shop"&&a.item===
 function advUnits(list){
   const pets=ownedPets(list).map(p=>{ const st=growStage(growth(p.k,list)); return {uid:"pet:"+p.k,name:petName(p.k,list),el:PET_ELEM[p.k]||"plant",el2:ADV_SECOND[p.k],base:10+st*2,look:petLook(p.k,Math.max(1,st)),pet:true} });
   const lab=[]; LAB_ORDER.forEach(sp=>{ const L=LAB_LINES[sp]; labAnimals(list,sp).filter(x=>!x.stock&&x.g&&!/\?/.test(x.g)).forEach(x=>{ const ph=L.ph(x.g);
-    lab.push({uid:"lab:"+x.id,name:L.n.replace("ปริศนา","")+" "+(L.names[ph]||""),el:LAB_ELEM[ph]||"plant",el2:LAB_SECOND[ph]||"water",base:sp==="dragon"?12:10,svg:L.art[ph](),sp}) }) });
+    lab.push({uid:"lab:"+x.id,name:L.n.replace("ปริศนา","").split(" ")[0]+" "+(L.names[ph]||""),el:LAB_ELEM[ph]||"plant",el2:LAB_SECOND[ph]||"water",base:sp==="dragon"?12:10,svg:L.art[ph](),sp}) }) });
   const seen={}; lab.forEach(u=>{ seen[u.name]=(seen[u.name]||0)+1; if(seen[u.name]>1) u.name+=" #"+seen[u.name] });
   return [...pets,...lab].map(u=>{ const tl=advTrainLv(list,u.uid), exp=advExp(list,u.uid), el=Math.floor(exp/6), lv=Math.min(20,tl+el);
     return {...u,el2:u.el2||ADV_SECOND[u.uid.slice(4)]||"water",lv,tl,exp,expIn:exp%6,power:u.base+3*lv+advGearP(list),skill:lv>=3} }) }
@@ -3694,7 +3693,10 @@ function advTeam(list){ const us=advRoster(list); let t=ls("fieldnote.advteam",n
   if(!t.length){ const b=getBuddy(); if(b&&us.some(u=>u.uid==="pet:"+b.kind)) t.push("pet:"+b.kind);
     us.slice().sort((a,b)=>b.power-a.power).forEach(u=>{ if(t.length<3&&!t.includes(u.uid)) t.push(u.uid) }) }
   return t.map(id=>us.find(u=>u.uid===id)) }
-function advEnergy(list){ const t=todayKey(), used=advRecs(list).filter(a=>a.act==="battle"&&dayKey(a.endedAt)===t).length, max=3+(progressOf(list).goalToday?3:0);
+/* พลังทีม ⚡ = how many battles today (father, 10 Nov: one resource only). 2 to start, +1 for each finished mission stop,
+   +1 more when the whole day is done. */
+function advEnergy(list){ const t=todayKey(), used=advRecs(list).filter(a=>a.act==="battle"&&dayKey(a.endedAt)===t).length; let stops=0, all=false;
+  try{ const p=progressOf(list), m=missionList(p); stops=m.filter(x=>x.done).length; all=!!p.goalToday }catch(e){} const max=2+stops+(all?1:0);
   return {used,max,left:Math.max(0,max-used)} }
 function advCleared(list){ return new Set(advRecs(list).filter(a=>a.act==="battle"&&a.win).map(a=>a.stage)) }
 function advSpellsGot(list){ return Object.values(spellStats(list)).filter(v=>(v.tier||0)>=1).length }
@@ -3716,13 +3718,15 @@ function renderAdv(){
       ${done?`<text y="${st.boss?44:38}" text-anchor="middle" font-size="12">${"⭐".repeat(advStars(list,st.id))}</text>`:!can?`<text x="14" y="-12" font-size="13">🔒</text>`:""}</g>` }).join("");
   const sel=R.stages.find(s=>s.id===advSel);
   const selHtml=sel?(()=>{ const done=cleared.has(sel.id), can=open(sel), i=R.stages.indexOf(sel);
-    const lock=!can?(i>0&&!cleared.has(R.stages[i-1].id)?"ต้องผ่านด่านก่อนหน้าก่อน":`ต้องเก็บคาถาบนเกาะคาถาให้ได้ ${sel.needSpells} อัน (ตอนนี้ ${got}) ด่านนี้ต้องใช้ความรู้จริงช่วยเปิดทาง`):"";
+    const lock=!can?(i>0&&!cleared.has(R.stages[i-1].id)?"ต้องผ่านด่านก่อนหน้าก่อน":`ต้องมีคาถาที่ขึ้นขั้นแล้ว ${sel.needSpells} อัน (ตอนนี้ ${got}) บอสด่านนี้ต้องใช้ความรู้จริงช่วยเปิดทาง${(()=>{ const ss=spellStats(list), near=SPELLS.filter(x=>ss[x.id]&&!(ss[x.id].tier>=1)&&(ss[x.id].n1||0)>0).sort((a,b)=>(ss[b.id].c1||0)-(ss[a.id].c1||0)).slice(0,3); return near.length?` · ใกล้ขึ้นขั้นแล้ว: ${near.map(x=>x.name).join(", ")} ทำภารกิจประจำวันต่อ คาถาจะขึ้นขั้นเอง`:"" })()}`):"";
     return `<section class="card"><span class="eyebrow">ด่าน ${i+1}${sel.boss?" · บอส":""}</span><h3 style="margin:0">${sel.e} ${esc(sel.n)}</h3>
       <div class="foerow">${(ADV_FOES[sel.id]||[]).map(f=>`<div class="foecard">${advFoeArt(f,f.boss?64:48)}<span class="small"><b>${esc(f.n)}</b><br>แพ้ ${ELEM[f.weak].e} · ทน ${ELEM[f.resist].e}</span></div>`).join("")}</div>
       ${done?`<p class="small">ดาวที่ได้: ${"⭐".repeat(advStars(list,sel.id))}${"☆".repeat(3-advStars(list,sel.id))} · 3 ดาว = ไม่มีใครหลับ และจบเร็ว</p>`:""}
       ${done?`<div class="feedback usebox"><b>📘 เรื่องจริงของด่านนี้</b><span class="small">${esc(sel.fact)}</span></div>`:`<p class="small muted">ชนะแล้วจะได้การ์ดเรื่องจริงของปัญหานี้ และทุกตัวในทีมได้ EXP</p>`}
-      ${lock?`<p class="small"><b>🔒 ${lock}</b></p>`:`<div class="row"><button class="btn" id="advgo" ${en.left&&team.length?"":"disabled"}>${done?"ลุยอีกรอบ":"ออกผจญภัย"} (ใช้พลัง 1)</button></div>
-      ${!en.left?`<p class="small muted">พลังผจญภัยวันนี้หมดแล้ว${progressOf(list).goalToday?"":" ทำภารกิจวันนี้ให้ครบได้พลังเพิ่มอีก 3"} พรุ่งนี้มาใหม่นะ</p>`:""}`}</section>` })():"";
+      ${lock?"":`<div class="row" style="gap:6px">${ADV_DIFF.map(D=>{ const ok=D.id===0||done, sel_=advDiff===D.id&&ok; return `<button class="btn ${sel_?"":"ghost"} small" data-advdiff="${D.id}" ${ok?"":"disabled"}>${ok?D.e:"🔒"} ${D.n}${done?` ${"⭐".repeat(advStars(list,sel.id,D.id))}`:""}</button>` }).join("")}</div>
+        <p class="small muted">${done?`ยาก: ศัตรูแข็งขึ้น EXP +2 · ตำนาน: แข็งขึ้นมาก EXP +4 · ศัตรูปรับตามความแรงของทีมด้วย`:"ชนะระดับปกติแล้ว จะเปิดระดับยากและตำนาน"}</p>`}
+      ${lock?`<p class="small"><b>🔒 ${lock}</b></p>`:`<div class="row"><button class="btn" id="advgo" ${en.left&&team.length?"":"disabled"}>${done?`ลุยอีกรอบ (${ADV_DIFF[advDiff].n})`:"ออกผจญภัย"} (ใช้ ⚡ 1)</button></div>
+      ${!en.left?`<p class="small muted">พลังทีมวันนี้หมดแล้ว${progressOf(list).goalToday?" พรุ่งนี้มาใหม่นะ":" ทำภารกิจวันนี้จบแต่ละจุดได้ ⚡ เพิ่มจุดละ 1"}</p>`:""}`}</section>` })():"";
   const teamHtml=team.length?team.map(u=>`<div class="advunit">${advUnitArt(u,40)}<b class="small">${esc(u.name)}</b><span class="small">${ELEM[u.el].e}${ELEM[u.el2].e} พลัง ${u.power} · Lv ${u.lv}</span></div>`).join("")
     :`<p class="small">ยังไม่มีสมาชิก ไปรับคู่หูที่บ้านคู่หู หรือฟักไข่ที่หุบเขามังกรก่อนนะ</p>`;
   const roster=units.map(u=>{ const inT=team.some(t=>t.uid===u.uid), cost=advTrainCost(u.lv);
@@ -3738,7 +3742,7 @@ function renderAdv(){
   const owned=new Set(list.filter(a=>a.type==="shop").map(a=>a.item));
   const gear=ADV_GEAR.map(g=>`<div class="advrow"><span style="font-size:24px">${g.e}</span><span class="small" style="flex:1"><b>${g.n}</b> · ทั้งทีม +${g.p} พลัง</span>
     ${owned.has(g.id)?`<span class="small">มีแล้ว ✓</span>`:`<button class="btn ghost small" data-advgear="${g.id}" ${w.stars>=g.cost?"":"disabled"}>⭐${g.cost}</button>`}</div>`).join("");
-  $v.innerHTML=`<section class="card"><div class="todayhead"><span class="eyebrow">🌍 ภารกิจกู้โลก · ${R.e} ${R.n}</span><span class="small">⚡ พลัง ${en.left}/${en.max} · ⭐ ${w.stars}</span></div>
+  $v.innerHTML=`<section class="card"><div class="todayhead"><span class="eyebrow">🌍 ภารกิจกู้โลก · ${R.e} ${R.n}</span><span class="small">⚡ ออกรบได้อีก ${en.left}/${en.max} · ⭐ ${w.stars}</span></div>
       <p class="small">${R.intro}</p>
       ${ADV_REGIONS.length>1?`<div class="row" style="gap:6px">${ADV_REGIONS.map((r,k)=>`<button class="btn ${r===R?"":"ghost"} small" data-advreg="${k}" ${regOpen(r)?"":"disabled"}>${regOpen(r)?r.e:"🔒"} ${r.n}</button>`).join("")}</div>
         ${ADV_REGIONS.some(r=>!regOpen(r))?`<p class="small muted">เขตใหม่เปิดเมื่อชนะบอสของเขตก่อนหน้า</p>`:""}`:""}
@@ -3761,7 +3765,8 @@ function renderAdv(){
   $v.querySelectorAll("[data-advreg]").forEach(b=>b.onclick=()=>{ advRegion=+b.dataset.advreg; advSel=ADV_REGIONS[advRegion].stages[0].id; advMsg=""; renderAdv() });
   $v.querySelectorAll("[data-adv]").forEach(g=>g.onclick=()=>{ advSel=g.dataset.adv; advMsg=""; renderAdv() });
   const go=document.getElementById("advgo"); if(go) go.onclick=()=>{ const st=R.stages.find(s=>s.id===advSel), tm=advTeam(list);
-    advStart(st,tm); renderAdv(); window.scrollTo({top:0}) };
+    advStart(st,tm,cleared.has(st.id)?advDiff:0); renderAdv(); window.scrollTo({top:0}) };
+  $v.querySelectorAll("[data-advdiff]").forEach(b=>b.onclick=()=>{ advDiff=+b.dataset.advdiff; renderAdv() });
   $v.querySelectorAll("[data-advteam]").forEach(b=>b.onclick=()=>{ let t=advTeam(list).map(u=>u.uid); const id=b.dataset.advteam;
     if(t.includes(id)) t=t.filter(x=>x!==id); else { if(t.length>=3) t.shift(); t.push(id) } lsSet("fieldnote.advteam",t); renderAdv() });
   $v.querySelectorAll("[data-advrec]").forEach(b=>b.onclick=()=>{ const r=advRecruits(); if(r.length>=ADV_LAB_SLOTS) return; lsSet("fieldnote.advrecruits",[...r,b.dataset.advrec]); advMsg="รับเข้าทีมแล้ว"; renderAdv() });
@@ -3862,18 +3867,25 @@ const ADV_SQ={
 function advAllStages(){ return ADV_REGIONS.flatMap(r=>r.stages) }
 function advStageIdx(id){ return advAllStages().findIndex(s=>s.id===id)+1 }
 function advIsBoss(id){ return !!advAllStages().find(s=>s.id===id&&s.boss) }
-function advExp(list,uid){ return advRecs(list).filter(a=>a.act==="battle"&&(a.team||[]).includes(uid)).reduce((s,a)=>s+(a.win?3+(advIsBoss(a.stage)?3:0):1),0)+advRecs(list).filter(a=>a.act==="bonusexp"&&a.unit===uid).reduce((s,a)=>s+(a.exp||0),0) }
-function advStars(list,stage){ return Math.max(0,...advRecs(list).filter(a=>a.act==="battle"&&a.win&&a.stage===stage).map(a=>a.stars||1)) }
+function advExp(list,uid){ return advRecs(list).filter(a=>a.act==="battle"&&(a.team||[]).includes(uid)).reduce((s,a)=>s+(a.win?3+(advIsBoss(a.stage)?3:0)+(ADV_DIFF[a.diff||0]||ADV_DIFF[0]).exp:1),0)+advRecs(list).filter(a=>a.act==="bonusexp"&&a.unit===uid).reduce((s,a)=>s+(a.exp||0),0) }
+function advStars(list,stage,diff){ return Math.max(0,...advRecs(list).filter(a=>a.act==="battle"&&a.win&&a.stage===stage&&(diff==null||(a.diff||0)===diff)).map(a=>a.stars||1)) }
 const advSleep=ms=>new Promise(r=>setTimeout(r,ms/(advSpeed||1)));
 let advSpeed=1;
 function advMult(el,f){ return el===f.weak?1.5:el===f.resist?0.5:1 }
 function advFoeArt(f,size){ return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" class="monster">${MON_ART[f.art]||""}</svg>` }
-function advStart(st,team){
-  const n=team.length, k=0.45+0.18*n;
+/* difficulty (father, 10 Nov: she won 18 of 18 with 3 stars). Enemies scale partly with the team's strength so training still
+   helps but never makes a stage trivial; plus a mode she picks: ปกติ / ยาก / ตำนาน (harder modes open after a normal win). */
+const ADV_DIFF=[{id:0,n:"ปกติ",e:"🟢",hp:1,atk:1,exp:0},{id:1,n:"ยาก",e:"🟠",hp:1.5,atk:1.3,exp:2},{id:2,n:"ตำนาน",e:"🔴",hp:2.1,atk:1.6,exp:4}];
+let advDiff=0;
+function advScale(st,team){ const idx=advStageIdx(st.id), recLv=2+1.5*(idx-1), avgP=team.reduce((s,u)=>s+u.power,0)/Math.max(1,team.length), avgH=team.reduce((s,u)=>s+(40+8*u.lv),0)/Math.max(1,team.length);
+  /* base ×1.7: with the first numbers an on-level team finished in ~3 rounds; aim for 5–8 rounds and real risk */
+  return {hp:1.7*Math.pow(Math.max(1,avgP/(10+3*recLv)),0.8), atk:1.7*Math.pow(Math.max(1,avgH/(40+8*recLv)),0.75)} }
+function advStart(st,team,diff){
+  const n=team.length, D=ADV_DIFF[diff||0], sc=advScale(st,team), k=(0.45+0.18*n)*sc.hp*D.hp;
   const tm=team.map(u=>({...u,max:40+8*u.lv+(u.pet?6:0),hp:0,cd:{},shield:0,ko:false})); tm.forEach(u=>u.hp=u.max);
-  const foes=(ADV_FOES[st.id]||[]).map(f=>({...f,hp:Math.round(f.hp*k),max:Math.round(f.hp*k),stun:0,charge:0}));
+  const foes=(ADV_FOES[st.id]||[]).map(f=>({...f,hp:Math.round(f.hp*k),max:Math.round(f.hp*k),atk:Math.round(f.atk*sc.atk*D.atk*10)/10,stun:0,charge:0}));
   const bo=expBoost(mine());
-  advB={st,team:tm,foes,cur:0,target:0,skill:null,phase:"pick",log:[`${st.n}! ศัตรูปรากฏตัว ${foes.length} ตัว`,...(bo?[`พลังจากภารกิจวันนี้: ทีมตีแรงขึ้น +${bo}%`]:[])],round:1,over:null,eTurns:0,slept:0,boost:bo,sq:ADV_SQ[st.id]?null:"none",x2:false};
+  advB={st,team:tm,foes,cur:0,target:0,skill:null,phase:"pick",log:[`${st.n}! ศัตรูปรากฏตัว ${foes.length} ตัว`,...(bo?[`พลังจากภารกิจวันนี้: ทีมตีแรงขึ้น +${bo}%`]:[])],round:1,over:null,eTurns:0,slept:0,boost:bo,diff:diff||0,sq:ADV_SQ[st.id]?null:"none",x2:false};
 }
 function advFighter(u,i,side,B){
   const pct=Math.max(0,u.hp/u.max*100), active=side==="t"&&B.phase!=="over"&&B.cur===i&&!u.ko, tgt=side==="e"&&B.target===i&&B.phase!=="over"&&!u.ko;
@@ -3985,9 +3997,9 @@ async function advEnd(res){
   const B=advB, st=B.st; B.over=res; B.phase="over"; B.par=6+Math.min(8,(advStageIdx(st.id)-1)*2);
   const L2=mine(), first=res==="win"&&!advCleared(L2).has(st.id), now=new Date().toISOString();
   B.stars=res!=="win"?0:B.slept===0&&B.round<=B.par?3:B.slept<=1?2:1;
-  await saveAttempt({type:"adv",act:"battle",setId:"adv-"+st.id,stage:st.id,win:res==="win",stars:B.stars,turns:B.round,team:B.team.map(x=>x.uid),...(B.sq&&B.sq!=="none"?{sq:B.sq}:{}),...(B.boost?{boost:B.boost}:{}),topic:"ภารกิจกู้โลก: "+st.n,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
+  await saveAttempt({type:"adv",act:"battle",setId:"adv-"+st.id,stage:st.id,win:res==="win",stars:B.stars,turns:B.round,team:B.team.map(x=>x.uid),diff:B.diff||0,...(B.sq&&B.sq!=="none"?{sq:B.sq}:{}),...(B.boost?{boost:B.boost}:{}),topic:"ภารกิจกู้โลก: "+st.n,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
   if(res==="win") setTimeout(()=>sheet({icon:"📘",title:"เรื่องจริงของด่านนี้",read:st.fact,html:`<p class="factread">${esc(st.fact)}</p><p class="small muted">${"⭐".repeat(B.stars)}${"☆".repeat(3-B.stars)} · ชนะแล้วแม่น้ำช่วงนี้ใสขึ้น</p>`,actions:[{label:"เก็บความรู้นี้ไว้",fn:closeSheet}]}),900/(advSpeed||1));
-  if(res==="win") B.reward=`ทุกตัวที่ออกไปได้ EXP +${3+(st.boss?3:0)} (ครบ 6 EXP เลเวลขึ้น 1)${first?" · ครั้งแรกที่ชนะด่านนี้ แม่น้ำช่วงนี้ใสขึ้นแล้ว":""}`;
+  if(res==="win") B.reward=`ทุกตัวที่ออกไปได้ EXP +${3+(st.boss?3:0)+ADV_DIFF[B.diff||0].exp} (ครบ 6 EXP เลเวลขึ้น 1)${first?" · ครั้งแรกที่ชนะด่านนี้ แม่น้ำช่วงนี้ใสขึ้นแล้ว":""}`;
   renderAdvBattle(mine()) }
 
 /* parent view: where XP came from in the last 7 days, and the adventure at a glance */
