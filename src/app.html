@@ -471,6 +471,21 @@ button.spell{cursor:pointer} button.spell:hover{border-color:var(--accent)}
 .exstop:disabled{opacity:.6;cursor:default}
 .exline{flex:1;min-width:14px;height:0;border-top:3px dotted var(--line);margin-top:19px}.exline.on{border-top-style:solid;border-color:var(--good)}
 .exline.secret{border-top-style:dashed}.exline.secret.on{border-color:var(--beak)}
+.expmap{position:relative;height:250px;border-radius:16px;margin:8px 0;overflow:hidden;background:linear-gradient(180deg,#d8ecf2 0%,#e3f1e2 45%,#cfe6c9 100%)}
+.exppath{position:absolute;inset:0;width:100%;height:100%}
+.expdeco{position:absolute;transform:translate(-50%,-50%);font-size:20px;opacity:.55;pointer-events:none}
+.expnode{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:0;font:inherit;color:var(--ink);cursor:pointer}
+.expnode .exdot{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:#fff;border:3px solid #9fb8ab;font-size:21px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.expnode.done .exdot{background:var(--good);border-color:var(--good);color:#fff;font-weight:700}
+.expnode.now .exdot{border-color:var(--beak);animation:exppulse 1.6s ease-in-out infinite}
+.expnode.secret .exdot{border-style:dashed;background:#f6f1e6}.expnode.secret.open .exdot{border-style:solid;border-color:var(--beak);background:#fff3df;animation:exppulse 1.6s ease-in-out infinite}
+.expnode:disabled{cursor:default;opacity:.75}
+.exlab{font-size:.8rem;font-weight:600;background:rgba(255,255,255,.85);border-radius:999px;padding:0 8px;white-space:nowrap;color:#16302B}
+.expme{position:absolute;transform:translate(-50%,-135%);font-size:30px;line-height:1;pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))}
+.expme svg{width:38px;height:38px}
+@keyframes exppulse{0%,100%{box-shadow:0 0 0 0 rgba(217,130,43,.45)}50%{box-shadow:0 0 0 9px rgba(217,130,43,0)}}
+.exppow{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
+.expgo{width:100%;min-height:52px;font-size:1.05rem}
 </style>
 
 <div class="wrap" id="app">
@@ -1016,8 +1031,8 @@ function expLegs(steps,set){ const L=[]; const add=(name,icon)=>{ L.push({name,i
     steps.forEach((st,i)=>{ if(st.kind==="q"&&qIdx.indexOf(i)===half&&half>0) cur=add("ช่วงหลัง","⛰️"); st.leg=cur; L[cur].steps.push(i) }) }
   return L.filter(l=>l.steps.some(i=>steps[i].kind==="q")).length>=2?L:[] }
 function expPts(x){ return x.skipped?0:(x.correct&&!x.guessed?2:0)+(x.exTotal&&x.exSteps>=x.exTotal?2:0)+(x.dontknow?1:0) }
-function expDayPower(list){ const t=todayKey(); return list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===t).reduce((n,a)=>n+(a.items||[]).reduce((m,x)=>m+expPts(x),0),0)+(S&&S.mode==="set"&&S.active?S.items.reduce((m,x)=>m+expPts(x),0):0) }
-function expBoost(list){ return Math.min(30,Math.round(expDayPower(list)*0.75)) }
+function expDayPower(list){ const t=todayKey(); let stops=0; try{ stops=missionList(progressOf(list)).filter(x=>x.done).length }catch(e){} return stops*10+list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===t).reduce((n,a)=>n+(a.items||[]).reduce((m,x)=>m+expPts(x),0),0)+(S&&S.mode==="set"&&S.active?S.items.reduce((m,x)=>m+expPts(x),0):0) }
+function expBoost(list){ return Math.min(40,Math.round(expDayPower(list)*0.5)) }
 function expBar(){ if(!S.legs||S.legs.length<2) return ""; const cur=S.steps[S.i].leg, pw=S.items.reduce((m,x)=>m+expPts(x),0);
   return `<div class="expbar2" aria-label="ความคืบหน้าการออกสำรวจ">${S.legs.map((l,k)=>{ const n=l.steps.length, d=l.steps.filter(i=>i<S.i).length+(k===cur?0.5:0);
     return `<div class="expleg ${k===cur?"now":k<cur?"done":""}" style="flex:${n}"><span class="small">${l.icon} ${esc(l.name)}</span><div class="progress"><i style="width:${Math.min(100,(k<cur?1:k>cur?0:d/n)*100)}%"></i></div></div>` }).join("")}</div>
@@ -1140,12 +1155,23 @@ function missionList(p){
 }
 /* the day's missions drawn as one expedition route (father, 10 Nov); the optional extra is a secret path that opens at the end */
 const EXP_STOP={lesson:["📘","บทเรียน"],vocab:["🔤","คำศัพท์"],probe:["⛰️","ด่านสำรวจ"],sweep:["🧭","ย้อนของเก่า"]};
-function expRoute(ms,p){ const all=ms.every(x=>x.done), firstTodo=ms.findIndex(x=>!x.done);
-  return `<div class="exproute" role="list">${ms.map((m,k)=>{ const [ic,t]=EXP_STOP[m.key]||["📍",m.key]; return `${k?`<span class="exline ${ms[k-1].done?"on":""}" aria-hidden="true"></span>`:""}
-    <button class="exstop ${m.done?"done":k===firstTodo?"now":""}" role="listitem" data-goto="m-${m.key}" type="button"><span class="exdot">${m.done?"✓":ic}</span><span class="small">${t}</span></button>` }).join("")}
-    <span class="exline secret ${all?"on":""}" aria-hidden="true"></span>
-    <button class="exstop secret ${all?"open":""}" role="listitem" ${all?`data-goto="m-secret"`:"disabled"} type="button"><span class="exdot">${all?"🗝️":"🔒"}</span><span class="small">${all?"ทางลับ":"ทางลับ"}</span></button></div>
-    <p class="small muted" style="margin:2px 0 0">${all?"ครบทุกจุดแล้ว! ทางลับเปิดแล้ว อยากไปต่อก็ได้ ไม่ไปก็ได้":`จุดต่อไป: ${(EXP_STOP[ms[firstTodo].key]||["",""])[1]} · ครบทุกจุดแล้วทางลับจะเปิด`}</p>` }
+function expRoute(ms,p){ const all=ms.every(x=>x.done), nx=ms.findIndex(x=>!x.done), n=ms.length, list=mine(), pw=expDayPower(list), bo=expBoost(list);
+  const pts=ms.map((_,k)=>[10+(n>1?k*(66/(n-1)):33), k%2?42:72]); const sec=[90,16];
+  const path=[...pts,sec].map((q,k,a)=>k?`Q ${(a[k-1][0]+q[0])/2} ${k%2?a[k-1][1]-14:a[k-1][1]+14} ${q[0]} ${q[1]}`:`M ${q[0]} ${q[1]}`).join(" ");
+  const doneTo=nx<0?n-1:nx, b=getBuddy(), look=b?petLook(b.kind,Math.max(1,growStage(growth(b.kind,list)))):"🧭", at=all?sec:pts[Math.max(0,nx)];
+  const deco=[["🌲",4,20],["🌳",30,12],["⛰️",55,8],["🌲",70,30],["🌾",22,92],["🌳",62,90],["🪨",44,58],["🌲",80,62]];
+  const nxt=nx>=0?ms[nx]:null, [nic,nt]=nxt?EXP_STOP[nxt.key]||["📍",""]:["🗝️","ทางลับ"];
+  return `<div class="expmap" aria-label="แผนที่ภารกิจวันนี้">
+    <svg class="exppath" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="${path}" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" vector-effect="non-scaling-stroke" opacity=".7"/>
+      <path d="${path}" fill="none" stroke="${all?"#D9822B":"#7a9a86"}" stroke-width="4" stroke-dasharray="2 9" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>
+    ${deco.map(([e,x,y])=>`<span class="expdeco" style="left:${x}%;top:${y}%">${e}</span>`).join("")}
+    ${ms.map((m,k)=>{ const [ic,t]=EXP_STOP[m.key]||["📍",m.key]; return `<button class="expnode ${m.done?"done":k===nx?"now":""}" style="left:${pts[k][0]}%;top:${pts[k][1]}%" data-goto="m-${m.key}" type="button"><span class="exdot">${m.done?"✓":ic}</span><span class="exlab">${k+1}. ${t}</span></button>` }).join("")}
+    <button class="expnode secret ${all?"open":""}" style="left:${sec[0]}%;top:${sec[1]}%" ${all?`data-goto="m-secret"`:"disabled"} type="button"><span class="exdot">${all?"🗝️":"🔒"}</span><span class="exlab">ทางลับ</span></button>
+    <span class="expme" style="left:${at[0]}%;top:${at[1]}%">${look}</span>
+  </div>
+  <div class="exppow"><span>⚡ พลังทีมวันนี้ <b>${pw}</b></span><span class="small muted">ทีมกู้โลกตีแรงขึ้น +${bo}% (ทำแต่ละจุดจบได้ ⚡10 · ตอบถูก ⚡2 · อ่านเฉลยครบ ⚡2 · "ไม่รู้" อย่างซื่อสัตย์ ⚡1)</span></div>
+  ${all?`<div class="row"><button class="btn" data-goto="m-secret" type="button">🗝️ เข้าทางลับ (ไม่บังคับ)</button><button class="btn ghost" id="exp-adv" type="button">🌍 พาทีมไปกู้โลก</button></div>`
+    :`<button class="btn expgo" id="exp-go" data-key="${nxt.key}" type="button">${nic} ออกเดินทางต่อ: จุดที่ ${nx+1} · ${nt}</button>`}` }
 function missionsDone(p){ const m=missionList(p); return {done:m.filter(x=>x.done).length,total:m.length} }
 
 let dmOpen=null, dmLevel=null, dmReason=null;
@@ -1210,14 +1236,14 @@ function renderHome(){
   ${TEST?`<section class="card" style="border-color:var(--beak)"><b style="color:var(--beak)">โหมดทดสอบ</b>
     <p class="small">ผลจากเครื่องนี้จะติดป้าย "ทดสอบ" และไม่ถูกนับในการวิเคราะห์ ลองกดทุกอย่างได้ตามสบาย</p>
     <button class="btn ghost" id="leave-test">ออกจากโหมดทดสอบ และล้างผลทดสอบในเครื่องนี้</button></section>`:""}
+  <section class="card expcard"><div class="todayhead"><span class="eyebrow">🗺️ ออกสำรวจวันนี้ · ${ms.filter(x=>x.done).length}/${ms.length} จุด</span></div>${expRoute(ms,p)}</section>
   ${getBuddy()?buddyStrip(list,p,plan):buddySetupHtml()}
   ${V&&V.active&&view!=="vocab"?`<section class="card" style="border:2px solid var(--beak)"><b>คำศัพท์วันนี้ทำค้างไว้</b><div class="row"><button class="btn" id="resume-v">ทำต่อ</button></div></section>`:""}
   ${(()=>{const pd=pendingSet(); return pd?`<section class="card" style="border:2px solid var(--beak)"><b>ทำชุด "${esc(pd.set.topic)}" ค้างไว้</b>
     <p class="small muted">ทำต่อจากข้อที่ค้างได้เลย ข้อที่ตอบไปแล้วยังอยู่ครบ</p>
     <div class="row"><button class="btn" id="resume">ทำต่อ</button><button class="btn ghost" id="discard">เริ่มชุดใหม่แทน</button></div></section>`:""})()}
   <section class="card pick">
-    <div class="todayhead"><span class="eyebrow">ภารกิจวันนี้ · ${md?Object.values(md).filter(Boolean).length:0}/${ms.length}</span></div>
-    ${expRoute(ms,p)}
+    <div class="todayhead"><span class="eyebrow">📋 รายละเอียดแต่ละจุดของวันนี้ · ${md?Object.values(md).filter(Boolean).length:0}/${ms.length}</span></div>
     ${dayPanel(p)}
     ${examBanner()}
     ${tr.length?`<div class="daypanel trialbox"><p class="small"><b>🧪 ทดลองของใหม่วันนี้:</b> ${tr.map(k=>TRIAL_NAMES[k]).join(" และ ")} · ลองสัปดาห์นี้แล้วบอกหน่อยว่าชอบไหม</p></div>`:""}
@@ -1268,6 +1294,9 @@ function renderHome(){
     buddyNote=moodReply(m.dataset.mood); renderHome() });
   { const sg=document.getElementById("sweep-go"); if(sg) sg.onclick=()=>startSweep() }
   const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
+  on("exp-go",()=>{ const k=document.getElementById("exp-go").dataset.key, ids={lesson:["go-rec"],vocab:["vocab-go"],probe:["go-probe","go-extra2"],sweep:["sweep-go"]}[k]||[];
+    const b=ids.map(x=>document.getElementById(x)).find(Boolean); if(b) b.click(); else { const t=document.getElementById("m-"+k); if(t) t.scrollIntoView({behavior:"smooth",block:"center"}) } });
+  on("exp-adv",()=>{ view="adv"; render(); window.scrollTo({top:0}) });
   $v.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>{ const t=document.getElementById(b.dataset.goto); if(t) t.scrollIntoView({behavior:"smooth",block:"center"}) });
   on("go-rec",()=>{ if(plan.exam) return startExamReview(plan.exam,10); if(plan.repair) return startReview(8,"ชุดซ่อมจุดอ่อน"); if(plan.lesson){introSet=plan.lesson;view="intro";render()} });
   on("go-probe",()=>{introSet=plan.probe;view="intro";render()});
