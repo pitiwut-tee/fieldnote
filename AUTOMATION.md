@@ -530,3 +530,5 @@ summarises them, and follow `calendar.lessonQueue`. Never copy textbook or workb
 - Our own accuracy numbers are measured on our own questions. Never present them as exam readiness on their own; say so when you report progress.
 - Every new set must pass an independent answer check (a separate agent that solves the questions blind before seeing the key) before it is published. Fix or drop any question it disputes.
 - Reading the father's books costs usage. Run OCR in the workspace, then read only the chapters needed for the next 1–2 weeks of content, and tell the father which chapters you read.
+- **Never refer to an option by its position** ("ข้อสุดท้าย", "ลำดับที่สอง", "ตัวเลือกแรก") in explanations: the app shuffles options. Quote the option's content instead. (Found by the independent check of 11 Nov.)
+- Independent check of all 386 questions (11 Nov): 0 wrong keys, 0 ambiguous; 4 explanation errors and 11 minor issues, all fixed. Term: use "แรงพยุง" (not "แรงลอยตัว") as in the current curriculum.
