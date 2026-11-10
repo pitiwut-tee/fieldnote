@@ -113,5 +113,12 @@
   }
  ],
  "examPrepDays": 7,
- "schoolExamsNote": "Estimated by the father from last year (9 Nov 2026): midterm = the week before Christmas, final = the last week of February. Replace with real dates when the school announces them. 7 days before: slot 1 becomes a review of the exam spells (no new lessons). During exam days only vocab is required. Spells follow content/school-plan.md; update them if the school's exam scope differs."
+ "schoolExamsNote": "Estimated by the father from last year (9 Nov 2026): midterm = the week before Christmas, final = the last week of February. Replace with real dates when the school announces them. 7 days before: slot 1 becomes a review of the exam spells (no new lessons). During exam days only vocab is required. Spells follow content/school-plan.md; update them if the school's exam scope differs.",
+ "voidRules": [
+  {
+   "type": "labverdict",
+   "missing": "why",
+   "why": "พ่อขอ reset คำตัดสินนักสืบยีนที่ทำก่อนวันที่ 10 พ.ย. 22:00 (น้องกดมั่วเพราะยังงงวิธีเล่น) คำตัดสินแบบเก่าไม่มีช่องเหตุผล จึงตัดออกทั้งหมดและไม่นับ XP"
+  }
+ ]
 }

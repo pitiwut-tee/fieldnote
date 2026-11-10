@@ -682,7 +682,11 @@ function comeback(q,list){
 /* ---------- XP, streak and ice ---------- */
 const GOAL=60, FREEZE_MAX=2, DAY=86400000;
 const VOID=new Set(CAL.voidRecords||[]);   /* records the father said were only button tests */
-function realAttempts(){ return attempts.filter(a=>!a.example&&!a.test&&!VOID.has(a.endedAt)) }
+/* voidRules: whole kinds of records the father asked to reset, e.g. {type:"labverdict", before:"…"} (10 Nov: verdicts made by
+   blind clicking before the detective game was explained). Ignored everywhere, including XP. */
+const VOID_RULES=CAL.voidRules||[];
+function voided(a){ return VOID.has(a.endedAt)||VOID_RULES.some(r=>a.type===r.type&&(!r.before||new Date(a.endedAt)<new Date(r.before))&&(!r.missing||a[r.missing]==null)) }
+function realAttempts(){ return attempts.filter(a=>!a.example&&!a.test&&!voided(a)) }
 function mine(){ return TEST ? attempts.filter(a=>!a.example) : realAttempts() }
 function isSkip(a){ return a.type==="skip" }
 const LESSON_TYPES=["set","probe","mixed","passage","review","sweep"];
@@ -3273,8 +3277,11 @@ function trueG(x){ return x.g==="??"?(hashU(x.id)<0.5?"AA":"Aa"):x.g }
 function knownG(x,list){ if(x.g!=="??") return x.g;
   if(list.some(a=>a.type==="shop"&&a.item==="lab:tester"&&a.target===x.id)) return trueG(x);
   if(list.some(a=>a.type==="labverdict"&&a.target===x.id)) return trueG(x);
-  if(labRecords(list).some(a=>a.hatched!==false&&(a.p1id===x.id||a.p2id===x.id)&&Date.now()>=(a.hatchAt||0)&&(a.babies||[]).includes("aa"))) return "Aa";
   return "A?" }
+/* evidence for the detective: hatched litters that had this mystery snake as a parent */
+function labEvidence(x,list){ const L=labRecords(list).filter(a=>(a.p1id===x.id||a.p2id===x.id)&&Date.now()>=(a.hatchAt||0));
+  return {litters:L.length,babies:L.reduce((n,a)=>n+(a.babies||[]).length,0),amel:L.reduce((n,a)=>n+(a.babies||[]).filter(g=>g==="aa").length,0),
+    withAmel:L.filter(a=>{ const o=a.p1id===x.id?a.p2:a.p1; return o==="aa" }).length} }
 function labAnimals(list,sp){ const L=LAB_LINES[sp]; let stock=L.stock.map((g,i)=>({id:sp+"-s"+i,sp,g,stock:true}));
   if(sp==="mystery") stock=stock.concat(labBought(list,"lab:mystery").map((a,i)=>({id:"mystery-b"+i,sp,g:"??",stock:true})));
   const babies=labRecords(list).filter(a=>a.species===sp&&Date.now()>=(a.hatchAt||0)).flatMap(a=>(a.babies||[]).map((g,i)=>({id:a.endedAt+"-"+i,sp,g,from:a.endedAt})));
@@ -3310,9 +3317,17 @@ function labHtml(list){
       <p class="small">${LL.names[LL.target]} ${tgt}/${a.babies.length} ตัว · เธอทำนายไว้ ${esc(a.ratio||"-")} (ทฤษฎี ${a.expect}) ${a.ratioOk?"✅":"❌"}${a.gridOk!=null?` · ตาราง Punnett ${a.gridOk?"✅":"❌"}`:""} · ได้ +${a.xp} XP</p>
       <p class="small muted">ครอกเดียวอาจไม่ตรงทฤษฎีเป๊ะ ยิ่งเพาะหลายครอก ผลรวมยิ่งเข้าใกล้ทฤษฎี</p>
       <button class="btn small" data-seen="${a.endedAt}">เก็บลูกเข้าคอก</button></div>` }).join("") }
-  if(labSp==="mystery"){ const unknown=animals.filter(x=>x.g==="??"&&knownG(x,list)==="A?"&&!list.some(a=>a.type==="labverdict"&&a.target===x.id));
-    mid+=`<div class="feedback"><b>🔎 ภารกิจนักสืบยีน</b><p class="small">งูปริศนาดูสีปกติ แต่อาจเป็น AA หรือ Aa ก็ได้ ลองจับคู่กับงูแอมเมล (aa) ถ้าแฝงยีน (Aa) ลูกครึ่งหนึ่งน่าจะเป็นแอมเมล ถ้าไม่แฝง (AA) จะไม่มีแอมเมลเลยสักตัว พอไข่ฟัก ดูผลแล้วตัดสินว่าแฝงไหม</p>
-      ${unknown.map(x=>`<div class="row" style="gap:6px;align-items:center"><span class="small"><b>${x.id.replace("mystery-","งูปริศนา ")}</b> ตัดสินว่า</span><button class="btn ghost small" data-verdict="${x.id}" data-v="Aa">แฝงยีน (Aa)</button><button class="btn ghost small" data-verdict="${x.id}" data-v="AA">ไม่แฝง (AA)</button></div>`).join("")||`<p class="small muted">งูปริศนาทุกตัวถูกไขแล้ว ซื้อตัวใหม่ได้ที่ร้านด้านล่าง</p>`}
+  if(labSp==="mystery"){ const judged=id=>list.some(a=>a.type==="labverdict"&&a.target===id), mys=animals.filter(x=>x.g==="??"&&!judged(x.id)&&!list.some(a=>a.type==="shop"&&a.item==="lab:tester"&&a.target===x.id));
+    mid+=`<div class="feedback"><b>🔎 ภารกิจนักสืบยีน: วิธีเล่น</b>
+      <p class="small"><b>1. สงสัย</b> งูปริศนาสีปกติทุกตัว แต่ข้างในอาจเป็น <b>AA</b> (ไม่แฝง) หรือ <b>Aa</b> (แฝงยีนแอมเมล) มองจากสีบอกไม่ได้</p>
+      <p class="small"><b>2. หาหลักฐาน</b> จับคู่งูปริศนากับ<b>งูแอมเมล (aa)</b> แล้วรอไข่ฟักพรุ่งนี้เช้า งูแอมเมลส่งยีน a ให้ลูกทุกตัว ลูกจะสีอะไรจึงขึ้นกับยีนจากงูปริศนาอย่างเดียว</p>
+      <p class="small"><b>3. ตัดสินพร้อมเหตุผล</b> ดูลูกที่ฟักออกมา แล้วตัดสินว่างูปริศนาแฝงยีนไหม ตัดสินได้หลังมีหลักฐานแล้วเท่านั้น</p>
+      ${mys.map(x=>{ const ev=labEvidence(x,list), nm=x.id.replace("mystery-s","งูปริศนา ").replace("mystery-b","งูปริศนาใหม่ "), pick=labVerdict[x.id]||{};
+        if(!ev.litters) return `<div class="usebox"><b class="small" style="display:block">${nm}</b><span class="small muted">ยังไม่มีหลักฐาน: จับคู่ตัวนี้กับงูแอมเมล (aa) ก่อน</span></div>`;
+        return `<div class="usebox"><b class="small" style="display:block">${nm}</b><span class="small">หลักฐาน: ลูก ${ev.babies} ตัวจาก ${ev.litters} ครอก เป็นแอมเมล <b>${ev.amel}</b> ตัว${ev.withAmel<ev.litters?" (บางครอกไม่ได้คู่กับงูแอมเมล)":""}</span>
+          <span class="small">ตัดสินว่า</span><div class="why">${[["Aa","แฝงยีน (Aa)"],["AA","ไม่แฝง (AA)"]].map(([v,t])=>`<button data-vpick="${x.id}" data-v="${v}" aria-pressed="${pick.v===v}">${t}</button>`).join("")}</div>
+          <span class="small">เพราะ</span><div class="why">${[["amel","มีลูกแอมเมล แปลว่างูปริศนาต้องส่งยีน a ให้"],["none","ลูกหลายตัวไม่มีแอมเมลเลย ถ้าแฝงยีนน่าจะเจอบ้าง"],["guess","ยังไม่แน่ใจ ขอเดา"]].map(([v,t])=>`<button data-vwhy="${x.id}" data-w="${v}" aria-pressed="${pick.w===v}">${t}</button>`).join("")}</div>
+          <button class="btn small" data-verdict="${x.id}" ${pick.v&&pick.w?"":"disabled"}>ยืนยันคำตัดสิน</button></div>` }).join("")||`<p class="small muted">งูปริศนาทุกตัวถูกไขแล้ว ซื้อตัวใหม่ได้ที่ร้านด้านล่าง</p>`}
       ${labMsg?`<p class="small"><b>${labMsg}</b></p>`:""}</div>` }
   if(left<=0) mid+=`<p class="small">เครื่องฟักไข่ไม่ว่าง${waiting.length?` ไข่ ${waiting.length} ครอกกำลังฟัก จะฟักพรุ่งนี้ 6 โมงเช้า`:""} มาจับคู่ใหม่พรุ่งนี้นะ</p>`;
   else if(picked.length===2){ const [p,q]=picked, g1=labSp==="mystery"?knownG(p,list):p.g, g2=labSp==="mystery"?knownG(q,list):q.g, hiddenPair=g1.includes("?")||g2.includes("?");
@@ -3371,9 +3386,16 @@ function bindLab(){
     labGrid[k]=labGrid[k]||["","","",""]; labGrid[k][c]=opts[(opts.indexOf(labGrid[k][c])+1)%3]; rr() });
   $v.querySelectorAll("[data-ratio]").forEach(b=>b.onclick=()=>{ labRatio=b.dataset.ratio; rr() });
   $v.querySelectorAll("[data-seen]").forEach(b=>b.onclick=()=>{ try{ localStorage.setItem("fieldnote.hatchseen",JSON.stringify([...labSeenHatch(),b.dataset.seen])) }catch(e){} rr() });
-  $v.querySelectorAll("[data-verdict]").forEach(b=>b.onclick=async()=>{ const x=labAnimals(list,"mystery").find(a=>a.id===b.dataset.verdict), truth=trueG(x), ok=b.dataset.v===truth, now=new Date().toISOString();
-    await saveAttempt({type:"labverdict",setId:"lab",target:x.id,guess:b.dataset.v,ok,topic:"นักสืบยีน",startedAt:now,endedAt:now,durationSec:0,correct:ok?1:0,total:1,xp:ok?20:5,items:[]});
-    labMsg=ok?`ถูกต้อง! ตัวนี้คือ ${truth} (+20 XP)`:`ยังไม่ใช่ ตัวนี้คือ ${truth} ${truth==="Aa"?"ถ้าไม่เห็นแอมเมลในครอกเล็กๆ ก็ยังแฝงได้ ลองดูว่าครอกใหญ่ขึ้นช่วยไหม":"เพราะ AA ส่ง A ให้ลูกทุกตัว ลูกจึงไม่มีทางเป็น aa"} (+5 XP)`; rr() });
+  $v.querySelectorAll("[data-vpick]").forEach(b=>b.onclick=()=>{ const id=b.dataset.vpick; labVerdict[id]={...(labVerdict[id]||{}),v:b.dataset.v}; rr() });
+  $v.querySelectorAll("[data-vwhy]").forEach(b=>b.onclick=()=>{ const id=b.dataset.vwhy; labVerdict[id]={...(labVerdict[id]||{}),w:b.dataset.w}; rr() });
+  $v.querySelectorAll("[data-verdict]").forEach(b=>b.onclick=async()=>{ const x=labAnimals(list,"mystery").find(a=>a.id===b.dataset.verdict), pk=labVerdict[x.id]||{}; if(!pk.v||!pk.w) return;
+    const truth=trueG(x), ev=labEvidence(x,list), ok=pk.v===truth, sound=ok&&pk.w!=="guess"&&(pk.w==="amel"?ev.amel>0:ev.amel===0), xp=sound?20:ok?8:5, now=new Date().toISOString();
+    await saveAttempt({type:"labverdict",setId:"lab",target:x.id,guess:pk.v,why:pk.w,evidence:ev,ok,sound,topic:"นักสืบยีน",startedAt:now,endedAt:now,durationSec:0,correct:ok?1:0,total:1,xp,items:[]});
+    delete labVerdict[x.id];
+    const p=Math.pow(0.5,ev.babies);
+    labMsg=sound?`ถูกต้องและเหตุผลแน่น! ตัวนี้คือ ${truth} (+${xp} XP)`
+      :ok?`คำตัดสินถูก ตัวนี้คือ ${truth} แต่${pk.w==="guess"?"มาจากการเดา":"เหตุผลไม่ตรงกับหลักฐาน"} ลองดูหลักฐานอีกครั้ง: ลูก ${ev.babies} ตัว เป็นแอมเมล ${ev.amel} ตัว (+${xp} XP)`
+      :`ยังไม่ใช่ ตัวนี้คือ ${truth} ${truth==="Aa"?(ev.amel?`ลูกแอมเมล (aa) ต้องได้ a จากพ่อและแม่ งูปริศนาจึงต้องมี a ซ่อนอยู่`:`ถ้าแฝงยีน โอกาสที่ลูก ${ev.babies} ตัวไม่มีแอมเมลเลยคือ (1/2)^${ev.babies} ≈ ${(p*100).toFixed(p<0.01?2:1)}% ถ้าไม่แน่ใจ ผสมเพิ่มอีกครอกก่อนตัดสินได้`):"AA ส่ง A ให้ลูกทุกตัว ลูกจึงไม่มีทางเป็น aa"} (+${xp} XP)`; rr() });
   $v.querySelectorAll("[data-lbuy]").forEach(b=>b.onclick=async()=>{ const it=LAB_SHOP.find(x=>x.id===b.dataset.lbuy); if(wallet(list).stars<it.cost) return;
     let target=null; if(it.id==="lab:tester"){ const u=labAnimals(list,"mystery").find(x=>x.g==="??"&&knownG(x,list)==="A?"); if(!u){ labMsg="ไม่มีงูปริศนาที่ยังไม่รู้ยีน"; rr(); return } target=u.id }
     const now=new Date().toISOString(); await saveAttempt({type:"shop",setId:"shop",item:it.id,cost:it.cost,...(target?{target}:{}),name:it.n,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
