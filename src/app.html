@@ -458,6 +458,19 @@ button.spell{cursor:pointer} button.spell:hover{border-color:var(--accent)}
 .prompt .qline{display:block;padding-left:1em;font-variant-numeric:tabular-nums}
 .prompt .qline::before{content:"▸ ";color:var(--muted);margin-left:-1em}
 .prompt .qafter{display:block;margin-top:.4em}
+.expbar2{display:flex;gap:6px;margin:6px 0 2px}.expleg{display:flex;flex-direction:column;gap:2px;min-width:0}.expleg .small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.8rem;color:var(--muted)}
+.expleg.now .small{color:var(--ink);font-weight:600}.expleg.done .progress i{background:var(--good)}
+.explist{padding-left:1.2em;display:flex;flex-direction:column;gap:6px;margin:.4em 0}
+.sqbox{border:2px solid var(--beak);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.exproute{display:flex;align-items:flex-start;gap:0;margin:8px 0 2px;overflow-x:auto;padding-bottom:4px}
+.exstop{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:0;padding:0 2px;font:inherit;color:var(--ink);cursor:pointer;min-width:58px}
+.exstop .exdot{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:2px solid var(--line);font-size:18px}
+.exstop.done .exdot{background:var(--good);border-color:var(--good);color:#fff;font-weight:700}
+.exstop.now .exdot{border-color:var(--beak);box-shadow:0 0 0 4px rgba(217,130,43,.18)}
+.exstop.secret .exdot{border-style:dashed}.exstop.secret.open .exdot{border-color:var(--beak);border-style:solid;background:#fff6e8}
+.exstop:disabled{opacity:.6;cursor:default}
+.exline{flex:1;min-width:14px;height:0;border-top:3px dotted var(--line);margin-top:19px}.exline.on{border-top-style:solid;border-color:var(--good)}
+.exline.secret{border-top-style:dashed}.exline.secret.on{border-color:var(--beak)}
 </style>
 
 <div class="wrap" id="app">
@@ -985,11 +998,42 @@ function startSet(set, conceptFirst, perms, dueIds){
     ...(set.challenge?[{kind:"q",phase:"ข้อท้าทาย (ไม่บังคับ)",q:fillize(set.challenge),optional:true}]:[]),
     {kind:"rate",phase:"ปิดท้าย"}
   ]).map((st,k)=>st.q?{...st,q:shuffleQ(st.q,perms&&perms[k])}:st);   // the right answer is not always the first choice
-  const trial=trialsToday(); markExplain(steps, trial);
-  S = {mode:"set", active:true, set, conceptFirst, steps, dueIds:due.map(q=>(q._retry?"r:":"")+q.id), trial, trialVote:{}, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, rating:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
+  const trial=trialsToday(); markExplain(steps, trial); const legs=expLegs(steps,set);
+  S = {mode:"set", active:true, set, conceptFirst, steps, legs, dueIds:due.map(q=>(q._retry?"r:":"")+q.id), trial, trialVote:{}, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, rating:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
   PAD.strokes=[]; PAD.hist=[]; saveProgress();
   view="session"; render(); window.scrollTo({top:0});
+  if(legs.length>=2&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>{ if(S&&S.mode==="set"&&S.i===0&&!S.items.length) expStartSheet() },150);
 }
+/* ---------- ภารกิจแบบออกสำรวจ (father approved 10 Nov): the same steps, told as a journey in short legs with a checkpoint
+   between legs. Team power comes from careful work (right answers, explanations read to the end, honest "don't know"),
+   never from speed, and makes today's rescue-team battles a little stronger. */
+function expLegs(steps,set){ const L=[]; const add=(name,icon)=>{ L.push({name,icon,steps:[]}); return L.length-1 };
+  const qIdx=steps.map((st,i)=>st.kind==="q"?i:-1).filter(i=>i>=0);
+  if(set.kind==="lesson"){ let cur=-1, leg={};
+    steps.forEach((st,i)=>{ const k=st.kind==="q"&&st.optional?"boss":st.kind==="q"&&st.phase==="ฝึกทำ"||st.kind==="concept"?"new":st.kind==="rate"?null:"warm";
+      if(k==null){ st.leg=cur; return } if(leg[k]==null) leg[k]=add(k==="warm"?"อุ่นเครื่อง":k==="new"?"บทเรียนใหม่":"ข้อท้าทาย",k==="boss"?"👑":k==="new"?"📘":"🔥"); st.leg=cur=leg[k]; L[cur].steps.push(i) }) }
+  else { const half=Math.ceil(qIdx.length/2); let cur=add("ช่วงแรก","🔥");
+    steps.forEach((st,i)=>{ if(st.kind==="q"&&qIdx.indexOf(i)===half&&half>0) cur=add("ช่วงหลัง","⛰️"); st.leg=cur; L[cur].steps.push(i) }) }
+  return L.filter(l=>l.steps.some(i=>steps[i].kind==="q")).length>=2?L:[] }
+function expPts(x){ return x.skipped?0:(x.correct&&!x.guessed?2:0)+(x.exTotal&&x.exSteps>=x.exTotal?2:0)+(x.dontknow?1:0) }
+function expDayPower(list){ const t=todayKey(); return list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===t).reduce((n,a)=>n+(a.items||[]).reduce((m,x)=>m+expPts(x),0),0)+(S&&S.mode==="set"&&S.active?S.items.reduce((m,x)=>m+expPts(x),0):0) }
+function expBoost(list){ return Math.min(30,Math.round(expDayPower(list)*0.75)) }
+function expBar(){ if(!S.legs||S.legs.length<2) return ""; const cur=S.steps[S.i].leg, pw=S.items.reduce((m,x)=>m+expPts(x),0);
+  return `<div class="expbar2" aria-label="ความคืบหน้าการออกสำรวจ">${S.legs.map((l,k)=>{ const n=l.steps.length, d=l.steps.filter(i=>i<S.i).length+(k===cur?0.5:0);
+    return `<div class="expleg ${k===cur?"now":k<cur?"done":""}" style="flex:${n}"><span class="small">${l.icon} ${esc(l.name)}</span><div class="progress"><i style="width:${Math.min(100,(k<cur?1:k>cur?0:d/n)*100)}%"></i></div></div>` }).join("")}</div>
+    <span class="small muted">พลังทีมจากภารกิจนี้ ⚡${pw}</span>` }
+function expStartSheet(){ const L=S.legs, qn=l=>l.steps.filter(i=>S.steps[i].kind==="q").length;
+  sheet({icon:"🗺️",title:"ออกสำรวจวันนี้",wide:true,html:`<p class="small">${esc(S.set.topic)}</p>
+    <ol class="explist">${L.map((l,k)=>`<li><b>${l.icon} จุดที่ ${k+1}: ${esc(l.name)}</b><span class="small muted"> · ${qn(l)} ข้อ${l.steps.some(i=>S.steps[i].kind==="concept")?" + การ์ดสรุป":""}</span></li>`).join("")}</ol>
+    <p class="small">ทีมได้พลังจาก: ตอบถูก ⚡2 · อ่านเฉลยจนครบขั้น ⚡2 · กด "ไม่รู้" อย่างซื่อสัตย์ ⚡1 · ตอบเร็วไม่ได้พลังเพิ่ม</p>
+    <p class="small muted">พลังที่ได้วันนี้ทำให้ทีมกู้โลกตีแรงขึ้นในวันนี้ (สูงสุด +30%) · ระหว่างจุดพัก จะพักแล้วกลับมาทำต่อก็ได้</p>`,
+    actions:[{label:"ออกเดินทาง!",fn:closeSheet}]}) }
+function expCheckpoint(k){ const l=S.legs[k], next=S.legs[k+1], its=S.items.filter(x=>x.leg===k&&!x.skipped), pw=its.reduce((m,x)=>m+expPts(x),0);
+  if(!its.length||!next) return;
+  sheet({icon:"🚩",title:`ผ่านจุดที่ ${k+1}: ${l.name}!`,html:`<div class="feedback" style="display:flex;flex-direction:column;gap:4px;text-align:left"><span>ตอบ ${its.length} ข้อ · ถูก ${its.filter(x=>x.correct).length} ข้อ</span>
+      <span>อ่านเฉลยจนครบขั้น ${its.filter(x=>x.exTotal&&x.exSteps>=x.exTotal).length} ข้อ</span><span>กด "ไม่รู้" อย่างซื่อสัตย์ ${its.filter(x=>x.dontknow).length} ข้อ</span>
+      <b>พลังทีม +⚡${pw}</b></div><p class="small">ต่อไป: ${next.icon} ${esc(next.name)}</p>`,
+    actions:[{label:"เดินต่อ",fn:closeSheet},{label:"พักก่อน แล้วค่อยกลับมาทำต่อ",ghost:true,fn:()=>{ closeSheet(); saveProgress(); view="home"; render(); window.scrollTo({top:0}) }}]}) }
 /* trial "explain": one question per set (the first level-3 one, else the hardest) asks for a reason before the answer shows */
 function markExplain(steps, trial){
   if(!trial.includes("explain")) return;
@@ -1094,6 +1138,14 @@ function missionList(p){
   if(p.sweepNeeded||p.sweepToday) m.push({key:"sweep",done:p.sweepToday});
   return m;
 }
+/* the day's missions drawn as one expedition route (father, 10 Nov); the optional extra is a secret path that opens at the end */
+const EXP_STOP={lesson:["📘","บทเรียน"],vocab:["🔤","คำศัพท์"],probe:["⛰️","ด่านสำรวจ"],sweep:["🧭","ย้อนของเก่า"]};
+function expRoute(ms,p){ const all=ms.every(x=>x.done), firstTodo=ms.findIndex(x=>!x.done);
+  return `<div class="exproute" role="list">${ms.map((m,k)=>{ const [ic,t]=EXP_STOP[m.key]||["📍",m.key]; return `${k?`<span class="exline ${ms[k-1].done?"on":""}" aria-hidden="true"></span>`:""}
+    <button class="exstop ${m.done?"done":k===firstTodo?"now":""}" role="listitem" data-goto="m-${m.key}" type="button"><span class="exdot">${m.done?"✓":ic}</span><span class="small">${t}</span></button>` }).join("")}
+    <span class="exline secret ${all?"on":""}" aria-hidden="true"></span>
+    <button class="exstop secret ${all?"open":""}" role="listitem" ${all?`data-goto="m-secret"`:"disabled"} type="button"><span class="exdot">${all?"🗝️":"🔒"}</span><span class="small">${all?"ทางลับ":"ทางลับ"}</span></button></div>
+    <p class="small muted" style="margin:2px 0 0">${all?"ครบทุกจุดแล้ว! ทางลับเปิดแล้ว อยากไปต่อก็ได้ ไม่ไปก็ได้":`จุดต่อไป: ${(EXP_STOP[ms[firstTodo].key]||["",""])[1]} · ครบทุกจุดแล้วทางลับจะเปิด`}</p>` }
 function missionsDone(p){ const m=missionList(p); return {done:m.filter(x=>x.done).length,total:m.length} }
 
 let dmOpen=null, dmLevel=null, dmReason=null;
@@ -1142,7 +1194,7 @@ function renderHome(){
         <span class="meta">${s.kind==="probe"?"ด่านสำรวจ ":s.kind==="mixed"?"ชุดผสมแบบข้อสอบ ":s.kind==="passage"?"อ่านจับใจความ ":""}ฝึก ${s.practice.length} ข้อ · ${s.mins}</span></button>`;
   const nextKey=(ms.find(x=>!x.done)||{}).key;
   const mission=(n,key,label,title,btn,extraHtml)=>{ const st=md[key]?"done":key===nextKey?"next":"later";
-    return `<div class="mission ${st}"><span class="mcheck">${md[key]?"✅":n}</span>
+    return `<div class="mission ${st}" id="m-${key}"><span class="mcheck">${md[key]?"✅":n}</span>
       <div style="display:flex;flex-direction:column;gap:6px;flex:1"><span class="small muted">${label}</span>${title}${st==="done"?"":btn}${st==="done"&&/data-notes/.test(btn)?btn:""}${extraHtml||""}</div></div>` };
   const doneToday=list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===today).sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt));
   const doneNP=doneToday.filter(a=>!["probe","mixed","passage"].includes(a.type)), doneProbe=doneToday.find(a=>a.type==="mixed"||a.type==="passage")||doneToday.find(a=>a.type==="probe");
@@ -1165,7 +1217,7 @@ function renderHome(){
     <div class="row"><button class="btn" id="resume">ทำต่อ</button><button class="btn ghost" id="discard">เริ่มชุดใหม่แทน</button></div></section>`:""})()}
   <section class="card pick">
     <div class="todayhead"><span class="eyebrow">ภารกิจวันนี้ · ${md?Object.values(md).filter(Boolean).length:0}/${ms.length}</span></div>
-    <div class="progress" style="height:8px"><i style="width:${Math.round(ms.filter(x=>x.done).length/ms.length*100)}%;background:var(--beak)"></i></div>
+    ${expRoute(ms,p)}
     ${dayPanel(p)}
     ${examBanner()}
     ${tr.length?`<div class="daypanel trialbox"><p class="small"><b>🧪 ทดลองของใหม่วันนี้:</b> ${tr.map(k=>TRIAL_NAMES[k]).join(" และ ")} · ลองสัปดาห์นี้แล้วบอกหน่อยว่าชอบไหม</p></div>`:""}
@@ -1188,7 +1240,7 @@ function renderHome(){
       md.sweep?`<h2>ย้อนคาถาเก่า</h2><p class="small muted">ทำแล้ว ✓ ข้อที่พลาดจะวนมาให้ทวน</p>`:`<h2>${sweepSize(p)} ข้อคละเรื่องที่เคยเรียน</h2><p class="small muted">เช็กว่ายังจำได้ไหม ไม่บอกล่วงหน้าว่าเรื่องอะไร ลืมไม่เป็นไร เราจะได้รู้ว่าต้องทวนตรงไหน</p>`,
       md.sweep?"":`<button class="btn" id="sweep-go">เริ่มย้อน</button>`):""}
   </section>
-  ${p.goalToday?`<section class="card usebox"><span class="eyebrow">🎉 ภารกิจวันนี้ครบแล้ว · อยากทำต่อไหม (ไม่บังคับ)</span>
+  ${p.goalToday?`<section class="card usebox" id="m-secret"><span class="eyebrow">🗝️ เส้นทางลับเปิดแล้ว · ภารกิจวันนี้ครบ ทางนี้ไม่บังคับ</span>
     <div class="row">${plan.extra&&!doneToday.some(a=>a.setId===plan.extra.id)?`<button class="btn" data-more="${plan.extra.id}">ฝึกต่อ: ${esc(plan.extra.topic)}</button>`:nextLesson?`<button class="btn" data-more="${nextLesson.id}">ฝึกต่อ: ${esc(nextLesson.topic)}</button>`:""}
       ${doneLesson?notesBtn(doneLesson):""}
       ${Object.keys(vocabState()).length?`<button class="btn ghost" id="go-words2">📖 คำศัพท์ที่เรียนแล้ว</button>`:""}</div>
@@ -1216,6 +1268,7 @@ function renderHome(){
     buddyNote=moodReply(m.dataset.mood); renderHome() });
   { const sg=document.getElementById("sweep-go"); if(sg) sg.onclick=()=>startSweep() }
   const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
+  $v.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>{ const t=document.getElementById(b.dataset.goto); if(t) t.scrollIntoView({behavior:"smooth",block:"center"}) });
   on("go-rec",()=>{ if(plan.exam) return startExamReview(plan.exam,10); if(plan.repair) return startReview(8,"ชุดซ่อมจุดอ่อน"); if(plan.lesson){introSet=plan.lesson;view="intro";render()} });
   on("go-probe",()=>{introSet=plan.probe;view="intro";render()});
   on("go-mixed",()=>{introSet=plan.mixed;view="intro";render()});
@@ -1340,7 +1393,7 @@ function header(){
   const pct = Math.round(S.i/(S.steps.length-1)*100);
   const combo=(()=>{let c=0; for(let k=S.items.length-1;k>=0;k--){ if(S.items[k].correct) c++; else if(!S.items[k].skipped) break } return c})();
   return `<div class="stage"><span>${esc(S.set.topic)}</span><span>${S.steps[S.i].phase} · ${itemXp(S.items)} XP${combo>=3?` · <b class="combo">ถูกติดกัน ${combo} ข้อ ✨</b>`:""}</span></div>
-  <div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div>`;
+  ${S.legs&&S.legs.length>=2?expBar():`<div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div>`}`;
 }
 
 
@@ -1710,14 +1763,14 @@ function renderStep(){
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
     const exn=document.getElementById("exnext"); if(exn) exn.onclick=()=>{ S.exStep=(S.exStep||1)+1; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) };
     const nx=document.getElementById("next"); if(nx) nx.onclick=()=>{
-      S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,...(S.hints&&S.hints>=(q.hints||[]).length+1?{hintStep:true}:{}),...(S.hintKnown&&S.hintKnown.length?{hintKnown:S.hintKnown}:{}),...(exStepped(q,ans)?{exSteps:Math.min(S.exStep||1,exSteps(q.ex).length),exTotal:exSteps(q.ex).length}:{}),struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
+      S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,...(st.leg!=null&&S.legs&&S.legs.length>=2?{leg:st.leg}:{}),...(S.hints&&S.hints>=(q.hints||[]).length+1?{hintStep:true}:{}),...(S.hintKnown&&S.hintKnown.length?{hintKnown:S.hintKnown}:{}),...(exStepped(q,ans)?{exSteps:Math.min(S.exStep||1,exSteps(q.ex).length),exTotal:exSteps(q.ex).length}:{}),struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
         ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(S.whyOther&&(S.why||[]).includes("other")?{whyOther:S.whyOther.trim()}:{}),...(ans.correct&&(S.guessed||S.checkPick===-1)?{guessed:true}:{}),...(S.notTaught?{notTaught:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0}:{}),...(q.check&&S.checkPick!=null&&S.checkPick!==-1?{checkOk:S.checkPick===q.check.a}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),len:q.q.length});
       advance();
     };
   }
 }
 function answer(a){ readStop(); S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
-function advance(){ readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
+function advance(){ { const a=S.steps[S.i], b=S.steps[S.i+1]; if(S.legs&&S.legs.length>=2&&a&&b&&a.leg!=null&&b.leg!=null&&b.leg>a.leg&&b.kind!=="rate"&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>expCheckpoint(a.leg),120) } readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
 
 /* concept card, one idea per screen: (1) why this topic exists — a puzzle to guess first (c.hook) or the "use" line,
    (2) each point alone with "เข้าใจแล้ว" / "ขออธิบายอีกแบบ" (c.more[i], else the next whole alternative),
@@ -1893,6 +1946,7 @@ function renderDone(){
   const ce=S.cele&&S.ci<S.cele.length?celeHtml(S.cele[S.ci]):null;
   $v.innerHTML=`<section class="card"><span class="eyebrow">เสร็จแล้ว</span>
     <h2>+${r.xp} XP</h2>${r.xpNote?`<p class="small muted">${esc(r.xpNote)}</p>`:""}
+    ${(r.items||[]).some(x=>x.leg!=null)?`<p class="small">⚡ พลังทีมจากภารกิจนี้ +${(r.items||[]).reduce((m,x)=>m+expPts(x),0)} · วันนี้ทีมกู้โลกตีแรงขึ้น +${expBoost(mine())}%</p>`:""}
     <p>${r.type==="vocab"?`คำศัพท์ถูก ${r.correct} จาก ${r.total}`:`ทำได้ ${r.correct} จาก ${r.total} ข้อ`} ใน ${mins} นาที</p>
     ${byL?`<p class="small muted">${byL}</p>`:""}
     ${r.type!=="vocab"&&getBuddy()?buddyHtml([buddyAfter(r)].filter(Boolean)):""}
@@ -3763,6 +3817,19 @@ function advSkills(u){ const S=[{id:"basic",n:"โจมตีธาตุ"+ELEM
   return S }
 function advSkillLock(u){ return u.lv<2?"Lv 2 ปลดโจมตีธาตุที่ 2":u.lv<3?"Lv 3 ปลดท่าพิเศษ":u.lv<5?"Lv 5 ปลดท่าไม้ตาย":"" }
 /* battle EXP: every member that fights gains EXP (win 3, rest 1, boss win +3); every 6 EXP = 1 level */
+/* แนวทาง ข (father approved 10 Nov): once per battle the companion spots a weak point and asks ONE question that is the real
+   science of this stage. Right → the next move hits ×2. Skipping costs nothing; no XP, so there is nothing to gain by guessing fast. */
+const ADV_SQ={
+  r1:["ขวดพลาสติกในแม่น้ำเป็นอันตรายต่อปลาในระยะยาวอย่างไร",["แตกเป็นไมโครพลาสติกที่ปลากินเข้าไปได้","ทำให้น้ำร้อนขึ้นจนปลาอยู่ไม่ได้","ละลายเป็นน้ำตาลที่ทำให้น้ำเน่า"]],
+  r2:["ทำไมคราบน้ำมันลอยอยู่บนผิวน้ำ",["น้ำมันมีความหนาแน่นน้อยกว่าน้ำ","น้ำมันมีมวลมากกว่าน้ำ","น้ำมันละลายในน้ำได้ดี"]],
+  r3:["เมื่อน้ำอุ่นขึ้น ออกซิเจนละลายในน้ำได้อย่างไร",["ได้น้อยลง ปลาจึงขาดออกซิเจน","ได้มากขึ้น ปลาจึงหายใจสะดวก","ได้เท่าเดิม อุณหภูมิไม่เกี่ยว"]],
+  r4:["สาหร่ายบลูมจนน้ำเขียว มีสาเหตุหลักจากอะไร",["ปุ๋ยไหลลงแหล่งน้ำ ธาตุอาหารมากเกินไป","น้ำเย็นลงกว่าปกติ","มีปลากินสาหร่ายมากเกินไป"]],
+  r5:["กังหันน้ำแบบตีน้ำช่วยแก้น้ำเน่าได้อย่างไร",["ตีน้ำให้สัมผัสอากาศ ออกซิเจนละลายได้มากขึ้น","ทำให้น้ำร้อนขึ้นจนเชื้อโรคตาย","กรองโคลนออกจากน้ำ"]],
+  c1:["ต้นไม้ช่วยลดคาร์บอนไดออกไซด์ในอากาศได้อย่างไร",["ใช้คาร์บอนไดออกไซด์ในการสังเคราะห์ด้วยแสง","ปล่อยคาร์บอนไดออกไซด์ออกมาเพิ่ม","เก็บคาร์บอนไดออกไซด์ไว้ในดอกเท่านั้น"]],
+  c2:["ก๊าซมีเทนจากกองขยะเปียกเกิดขึ้นได้อย่างไร",["จุลินทรีย์ย่อยขยะในที่ที่ไม่มีอากาศ","แดดเผาขยะจนลุกไหม้","น้ำฝนละลายพลาสติก"]],
+  c3:["ทำไมเขม่าดำบนน้ำแข็งทำให้น้ำแข็งละลายเร็วขึ้น",["ผิวสีดำดูดกลืนแสงมากกว่าสะท้อน จึงร้อนขึ้น","เขม่าร้อนอยู่ตลอดเวลาเอง","เขม่าทำให้น้ำแข็งเค็ม"]],
+  c4:["ทำไมแหล่งน้ำและต้นไม้ช่วยให้เมืองเย็นลงช่วงคลื่นความร้อน",["น้ำระเหยดึงความร้อนออกไป และต้นไม้ให้ร่มเงา","น้ำเก็บความเย็นไว้แล้วปล่อยออกมา","ต้นไม้เป่าลมเย็นออกมาจากใบ"]],
+  c5:["ข้อใดผลิตไฟฟ้าโดยไม่ปล่อยก๊าซเรือนกระจกระหว่างใช้งาน",["กังหันลม","โรงไฟฟ้าถ่านหิน","เครื่องปั่นไฟน้ำมันดีเซล"]]};
 function advAllStages(){ return ADV_REGIONS.flatMap(r=>r.stages) }
 function advStageIdx(id){ return advAllStages().findIndex(s=>s.id===id)+1 }
 function advIsBoss(id){ return !!advAllStages().find(s=>s.id===id&&s.boss) }
@@ -3776,7 +3843,8 @@ function advStart(st,team){
   const n=team.length, k=0.45+0.18*n;
   const tm=team.map(u=>({...u,max:40+8*u.lv+(u.pet?6:0),hp:0,cd:{},shield:0,ko:false})); tm.forEach(u=>u.hp=u.max);
   const foes=(ADV_FOES[st.id]||[]).map(f=>({...f,hp:Math.round(f.hp*k),max:Math.round(f.hp*k),stun:0,charge:0}));
-  advB={st,team:tm,foes,cur:0,target:0,skill:null,phase:"pick",log:[`${st.n}! ศัตรูปรากฏตัว ${foes.length} ตัว`],round:1,over:null,eTurns:0,slept:0};
+  const bo=expBoost(mine());
+  advB={st,team:tm,foes,cur:0,target:0,skill:null,phase:"pick",log:[`${st.n}! ศัตรูปรากฏตัว ${foes.length} ตัว`,...(bo?[`พลังจากภารกิจวันนี้: ทีมตีแรงขึ้น +${bo}%`]:[])],round:1,over:null,eTurns:0,slept:0,boost:bo,sq:ADV_SQ[st.id]?null:"none",x2:false};
 }
 function advFighter(u,i,side,B){
   const pct=Math.max(0,u.hp/u.max*100), active=side==="t"&&B.phase!=="over"&&B.cur===i&&!u.ko, tgt=side==="e"&&B.target===i&&B.phase!=="over"&&!u.ko;
@@ -3799,7 +3867,10 @@ function renderAdvBattle(list){
   const B=advB, st=B.st, cur=B.team[B.cur];
   const skills=cur&&!cur.ko?advSkills(cur):[], sk=skills.find(s=>s.id===B.skill);
   let panel="";
-  if(B.phase==="pick"&&cur){ panel=`<div class="apanel"><span class="small"><b>ตาของ ${esc(cur.name)}</b> ${ELEM[cur.el].e} · เลือกท่า แล้วแตะศัตรูที่จะโจมตี</span>
+  if(B.phase==="pick"&&cur&&B.round>=2&&B.sq==null){ const Q=ADV_SQ[st.id]; B.sqOrd=B.sqOrd||Q[1].map((_,i)=>i).sort(()=>Math.random()-.5);
+    panel=`<div class="apanel sqbox"><b>🦉 คู่หูสังเกตเห็นจุดอ่อน!</b><span class="small">${esc(Q[0])} ตอบถูก ท่าต่อไปของทีมแรง ×2</span>
+      ${B.sqOrd.map(k=>`<button class="opt" data-sq="${k}">${esc(Q[1][k])}</button>`).join("")}<button class="linkbtn" id="sqskip" type="button">ข้าม สู้ต่อตามปกติ</button></div>` }
+  else if(B.phase==="pick"&&cur){ panel=`<div class="apanel"><span class="small"><b>ตาของ ${esc(cur.name)}</b> ${ELEM[cur.el].e} · เลือกท่า แล้วแตะศัตรูที่จะโจมตี</span>
     <div class="skills">${skills.map(s=>{ const wait=(cur.cd||{})[s.id]||0; return `<button class="skill ${B.skill===s.id?"on":""}" data-skill="${s.id}" ${wait?"disabled":""}>
       <b>${s.ic||ELEM[s.el].e} ${esc(s.n)}</b><span>${esc(s.d)}${s.cd?` · พัก ${s.cd} ตา`:""}${wait?` · อีก ${wait} ตา`:""}</span></button>` }).join("")}</div>
     ${advSkillLock(cur)?`<span class="small muted">🔒 ${advSkillLock(cur)}</span>`:""}
@@ -3821,6 +3892,9 @@ function renderAdvBattle(list){
   const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
   on("aspd",()=>{ advSpeed=advSpeed===1?2:advSpeed===2?3:1; document.getElementById("aspd").textContent="ความเร็ว ×"+advSpeed });
   on("advdone",()=>{ advB=null; renderAdv() });
+  $v.querySelectorAll("[data-sq]").forEach(e=>e.onclick=()=>{ const Q=ADV_SQ[st.id], ok=+e.dataset.sq===0; B.sq=ok?"right":"wrong"; B.x2=ok;
+    B.log.push(ok?"ถูกต้อง! จุดอ่อนเปิดแล้ว ท่าต่อไปแรง ×2":`ยังไม่ใช่ คำตอบคือ "${Q[1][0]}" สู้ต่อตามปกตินะ`); renderAdvBattle(list) });
+  on("sqskip",()=>{ B.sq="skip"; renderAdvBattle(list) });
   $v.querySelectorAll("[data-tgt]").forEach(e=>e.onclick=()=>{ if(B.phase!=="pick") return; B.target=+e.dataset.tgt; renderAdvBattle(list) });
   $v.querySelectorAll("[data-skill]").forEach(e=>e.onclick=()=>{ B.skill=e.dataset.skill; renderAdvBattle(list) });
   on("ago",()=>{ if(!sk) return; if(["heal","shield"].includes(sk.k)) advResolve(1); else { B.phase="gauge"; renderAdvBattle(list) } });
@@ -3844,7 +3918,8 @@ async function advResolve(hitMul){
   const tag=hitMul>1?" เพอร์เฟกต์!":hitMul<1?" (เบาไป)":"";
   if(hitMul>1) advFloat("f-t"+B.cur,"เพอร์เฟกต์!","heal");
   advAnim("f-t"+B.cur,"lunge",420); if(sk.tier) advFloat("f-t"+B.cur,sk.n,"skill");
-  const hit=async(i,pct)=>{ const f=B.foes[i], m=advMult(sk.el,f), dmg=Math.max(1,Math.round(u.power*pct*m*hitMul*(0.92+Math.random()*0.16)));
+  const xm=(1+(B.boost||0)/100)*(B.x2?2:1);
+  const hit=async(i,pct)=>{ const f=B.foes[i], m=advMult(sk.el,f), dmg=Math.max(1,Math.round(u.power*pct*m*hitMul*xm*(0.92+Math.random()*0.16)));
     await advShot("f-t"+B.cur,"f-e"+i,ELEM[sk.el].e); f.hp-=dmg; advAnim("f-e"+i,"shake",420); advBar("f-e"+i,f);
     advFloat("f-e"+i,"-"+dmg+(m>1?" ▲":m<1?" ▼":""),m>1?"big":""); if(f.hp<=0){ f.ko=true; f.hp=0; f.charge=0; B.log.push(`${f.n} ถูกกำจัดแล้ว 🌿`) } return dmg };
   if(sk.k==="hit"){ const d=await hit(B.target,sk.p); B.log.push(`${u.name} ใช้${sk.n} ${ELEM[sk.el].e} ได้ ${d}${tag}`) }
@@ -3881,7 +3956,7 @@ async function advEnd(res){
   const B=advB, st=B.st; B.over=res; B.phase="over"; B.par=6+Math.min(8,(advStageIdx(st.id)-1)*2);
   const L2=mine(), first=res==="win"&&!advCleared(L2).has(st.id), now=new Date().toISOString();
   B.stars=res!=="win"?0:B.slept===0&&B.round<=B.par?3:B.slept<=1?2:1;
-  await saveAttempt({type:"adv",act:"battle",setId:"adv-"+st.id,stage:st.id,win:res==="win",stars:B.stars,turns:B.round,team:B.team.map(x=>x.uid),topic:"ภารกิจกู้โลก: "+st.n,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
+  await saveAttempt({type:"adv",act:"battle",setId:"adv-"+st.id,stage:st.id,win:res==="win",stars:B.stars,turns:B.round,team:B.team.map(x=>x.uid),...(B.sq&&B.sq!=="none"?{sq:B.sq}:{}),...(B.boost?{boost:B.boost}:{}),topic:"ภารกิจกู้โลก: "+st.n,startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
   if(res==="win") setTimeout(()=>sheet({icon:"📘",title:"เรื่องจริงของด่านนี้",read:st.fact,html:`<p class="factread">${esc(st.fact)}</p><p class="small muted">${"⭐".repeat(B.stars)}${"☆".repeat(3-B.stars)} · ชนะแล้วแม่น้ำช่วงนี้ใสขึ้น</p>`,actions:[{label:"เก็บความรู้นี้ไว้",fn:closeSheet}]}),900/(advSpeed||1));
   if(res==="win") B.reward=`ทุกตัวที่ออกไปได้ EXP +${3+(st.boss?3:0)} (ครบ 6 EXP เลเวลขึ้น 1)${first?" · ครั้งแรกที่ชนะด่านนี้ แม่น้ำช่วงนี้ใสขึ้นแล้ว":""}`;
   renderAdvBattle(mine()) }
