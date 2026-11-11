@@ -493,6 +493,12 @@ button.spell{cursor:pointer} button.spell:hover{border-color:var(--accent)}
 .bosscard.won .bosshp i{background:#3f9b5a}
 .bossstrip{display:flex;align-items:center;gap:8px;margin-top:6px;padding:4px 8px;border-radius:10px;background:#fbeee9}
 .bosshit{display:block;color:#a8382e;font-weight:600;margin-top:2px}
+.rdkpi{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;text-align:center;margin:8px 0}.rdkpi b{font-size:1.4rem;display:block}.rdkpi .rdchip{white-space:normal;padding:1px 5px;font-size:.72rem}
+.rdchip{display:inline-block;border-radius:999px;padding:1px 9px;font-size:.8rem;white-space:nowrap}
+.rdspell{border-top:1px solid var(--line);padding:6px 0;min-width:0;max-width:100%}.rdspell summary{cursor:pointer;display:flex;flex-direction:column;gap:2px}.rdmeta{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+#readiness{min-width:0;max-width:100%}
+.rdbar{display:inline-flex;gap:2px}.rdbar i{width:10px;height:14px;border-radius:2px;display:inline-block;border:1px solid var(--line)}
+.rdtable{overflow-x:auto;max-width:100%}.rdtable table{border-collapse:collapse;min-width:640px;width:100%;font-size:.9rem}.rdtable th,.rdtable td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 </style>
 
 <div class="wrap" id="app">
@@ -3625,7 +3631,7 @@ const PGROUPS=[["act","✍️ รอพ่อตัดสินใจ และ�
 let pgOpen=null;
 function groupParent(){
   const secs=[...$v.children].filter(e=>e.tagName==="SECTION"), groups={};
-  secs.forEach(sec=>{ const h=(sec.querySelector("h2,h3")||{}).textContent||""; if(/ภาพรวม|นำเข้าผล/.test(h)) return;
+  secs.forEach(sec=>{ const h=(sec.querySelector("h2,h3")||{}).textContent||""; if(/ภาพรวม|นำเข้าผล|ความพร้อมสอบรอบแรก/.test(h)) return;
     const g=PGROUPS.find(([,,,keys])=>keys.some(k=>h.includes(k)))||PGROUPS[3]; (groups[g[0]]??=[]).push(sec) });
   const pend=document.querySelectorAll("[data-gsok],[data-mok],[data-gok]").length;
   if(pgOpen===null) pgOpen=new Set(pend?["act"]:[]);
@@ -3638,7 +3644,9 @@ function groupParent(){
     list.forEach(sec=>d.appendChild(sec)); if(anchor) anchor.after(d); else $v.appendChild(d); anchor=d });
   /* order: dashboard, import, then the folders in PGROUPS order */
   const first=$v.querySelector("section"), imp=[...$v.children].find(e=>e.tagName==="SECTION"&&/นำเข้าผล/.test((e.querySelector("h3")||{}).textContent||""));
-  let at=first; if(imp&&first&&first!==imp){ first.after(imp); at=imp }
+  const rd=document.getElementById("readiness");
+  let at=first; if(rd&&first&&first!==rd){ first.after(rd); at=rd }
+  if(imp&&at&&at!==imp){ at.after(imp); at=imp }
   [...$v.querySelectorAll(":scope > details.pgroup")].forEach(d=>{ at.after(d); at=d });
 }
 
@@ -4537,6 +4545,38 @@ function timeCard(all){
     ${ex.length?`<p class="small">อ่านเฉลยหลังตอบ: ข้อที่ตอบถูก ใช้เวลากลาง ${med(exC.map(x=>x.exSec))} วินาที · ข้ามเฉลย (ไม่ถึง 3 วินาที) <b>${skip}/${exC.length}</b> ข้อ · ข้อที่ตอบผิด ใช้เวลากลาง ${med(exW.map(x=>x.exSec))} วินาที</p>`
       :`<p class="small muted">เวลาอ่านเฉลยเริ่มบันทึกตั้งแต่ 7 พ.ย. 2569</p>`}
   </section>` }
+/* ---------- ความพร้อมสอบ (father, 11 Nov): every exam topic broken into subtopics (content/curriculum.json), each question
+   tagged to one subtopic (q.sub or content/qtags.json). Two layers per subtopic: how far SHE is, and how ready OUR question
+   bank is. Our own accuracy is not exam readiness: real mock exams from outside are the check. */
+const CUR=(CONTENT.curriculum||{}).spells||{}, QTAGS=CONTENT.qtags||{};
+function subOf(qid){ const base=String(qid||"").replace(/^r:/,""), q=(QBANK[base]||{}).q; return (q&&q.sub)||QTAGS[base]||QTAGS[base.split("~")[0]]||null }
+function bankBySub(){ const b={}; Object.values(QBANK).forEach(o=>{ const q=o.q, s=subOf(q.id); if(!s) return; const x=b[s]??={n:0,l:{1:0,2:0,3:0}}; x.n++; x.l[q.level||1]=(x.l[q.level||1]||0)+1 }); return b }
+function subStats(list){ const st={}; list.filter(a=>isLesson(a)||a.type==="recall"||a.type==="sweep").forEach(a=>(a.items||[]).forEach(x=>{ if(x.skipped||x.notTaught) return; const s=subOf(x.qid); if(!s) return;
+    const o=st[s]??={n:0,c:0,n12:0,c12:0,n3:0,c3:0,days:new Set(),first:Infinity,last:0,lateOk:false}; const d=dayKey(a.endedAt), ok=x.correct&&!x.guessed;
+    o.n++; if(ok) o.c++; if((x.level||1)<=2){ o.n12++; if(ok){ o.c12++; o.days.add(d) } } else { o.n3++; if(ok) o.c3++ }
+    o.first=Math.min(o.first,d); o.last=Math.max(o.last,d); if(ok&&d-o.first>=7*DAY) o.lateOk=true })); return st }
+const RD_STATUS=[["none","ยังไม่เริ่ม","#E3EEEA","#16302B"],["start","เริ่มแล้ว","#9CC9D3","#16302B"],["prac","กำลังฝึก","#1F7A8C","#fff"],["base","ผ่านพื้นฐาน","#2E8B57","#fff"],["ready","พร้อมสอบ","#16302B","#fff"]];
+function subStatus(o){ if(!o||!o.n) return 0; const a12=o.n12?o.c12/o.n12:0;
+  if(o.n3>=3&&o.c3/o.n3>=0.7&&a12>=0.8&&o.lateOk) return 4; if(o.n12>=6&&a12>=0.8&&o.days.size>=2) return 3; if(o.n12>=4&&a12>=0.75) return 2; return 1 }
+function rdChip(k){ const [,t,bg,fg]=RD_STATUS[k]; return `<span class="rdchip" style="background:${bg};color:${fg}">${t}</span>` }
+function readinessSection(list){ if(!Object.keys(CUR).length) return ""; const st=subStats(list), bank=bankBySub(), groups=[["m","คณิตศาสตร์"],["s","วิทยาศาสตร์"],["t","เทคโนโลยี"]];
+  const allSubs=Object.values(CUR).flat(), cnt=[0,0,0,0,0]; allSubs.forEach(s=>cnt[subStatus(st[s.id])]++);
+  const thin=allSubs.filter(s=>!(bank[s.id]&&bank[s.id].n)).length, thin3=allSubs.filter(s=>bank[s.id]&&bank[s.id].n&&!(bank[s.id].l[3])).length;
+  const spellName=id=>{ const x=SPELLS.find(z=>z.id===id); return x?x.topic||x.name:id };
+  const fmtD=d=>d&&d!==-Infinity&&d!==0?new Date(d).toLocaleDateString("th-TH",{day:"numeric",month:"short"}):"–";
+  return `<section class="card" id="readiness"><h2>ความพร้อมสอบรอบแรก</h2>
+    <p class="small muted">ขอบเขต ม.1–3 ตามรายการหัวข้อในประกาศ MWIT ปี 2570 แตกเป็น ${allSubs.length} เรื่องย่อย (ร่างแรก รอเทียบกับหนังสือเรียนจริง) · ตัวเลขวัดจากโจทย์ในระบบเอง ยังไม่ใช่ตัววัดความพร้อมสอบจริง ต้องเทียบกับข้อสอบเสมือนจริงจากภายนอก</p>
+    <div class="rdkpi">${RD_STATUS.map(([,t],k)=>`<div><b>${cnt[k]}</b><span class="small">${rdChip(k)}</span></div>`).join("")}</div>
+    <div class="feedback"><b>คลังโจทย์ของระบบพร้อมแค่ไหน</b><span class="small">เรื่องย่อยที่ยังไม่มีโจทย์เลย ${thin} จาก ${allSubs.length} · มีโจทย์แต่ยังไม่มีระดับ 3 อีก ${thin3} เรื่อง (ช่อง "คลัง" ในตารางบอกจำนวนข้อระดับ 1/2/3)</span></div>
+    ${groups.map(([p,gt])=>{ const ids=Object.keys(CUR).filter(k=>k.startsWith(p)); if(!ids.length) return "";
+      return `<h3 style="margin:.6em 0 .2em">${gt}</h3>${ids.map(sp=>{ const subs=CUR[sp], ks=subs.map(s=>subStatus(st[s.id])), started=ks.filter(k=>k>0).length, bk=subs.reduce((n,s)=>n+((bank[s.id]||{}).n||0),0);
+        return `<details class="rdspell"><summary><b>${esc(spellName(sp))}</b><span class="rdmeta"><span class="rdbar">${ks.map(k=>`<i style="background:${RD_STATUS[k][2]}"></i>`).join("")}</span><span class="small muted">เริ่มแล้ว ${started}/${subs.length} เรื่องย่อย · คลัง ${bk} ข้อ</span></span></summary>
+          <div class="rdtable"><table><thead><tr><th>เรื่องย่อย</th><th>ชั้น</th><th>สถานะ</th><th>ทำแล้ว</th><th>ถูก ระดับ 1–2</th><th>ระดับ 3</th><th>ล่าสุด</th><th>คลัง (1/2/3)</th></tr></thead><tbody>
+          ${subs.map((s,i)=>{ const o=st[s.id], b=bank[s.id], k=ks[i];
+            return `<tr><td>${esc(s.n)}</td><td class="small">${esc(s.g)}</td><td>${rdChip(k)}</td><td>${o?o.n:"–"}</td><td>${o&&o.n12?Math.round(o.c12/o.n12*100)+"%":"–"}</td><td>${o&&o.n3?`${o.c3}/${o.n3}`:"–"}</td><td class="small">${o?fmtD(o.last):"–"}</td>
+              <td class="small" style="color:${!b?"#A8382E":b.l[3]?"inherit":"#9A6A12"}">${b?`${b.l[1]||0}/${b.l[2]||0}/${b.l[3]||0}`:"ยังไม่มี"}</td></tr>` }).join("")}</tbody></table></div></details>` }).join("")}` }).join("")}
+    <details class="small"><summary>เกณฑ์สถานะ</summary><p class="small">เริ่มแล้ว: เคยทำ · กำลังฝึก: ระดับ 1–2 อย่างน้อย 4 ข้อ ถูก 75% ขึ้นไป · ผ่านพื้นฐาน: ระดับ 1–2 อย่างน้อย 6 ข้อ ถูก 80% ขึ้นไป ใน 2 วันขึ้นไป · พร้อมสอบ: ผ่านพื้นฐาน + ระดับ 3 อย่างน้อย 3 ข้อ ถูก 70% ขึ้นไป + ยังทำถูกหลังเว้นไป 7 วัน · ข้อที่บอกว่าเดา หรือกดว่ายังไม่ได้เรียน ไม่นับ</p></details>
+  </section>` }
 function renderParent(){
   const pool = showExamples ? attempts : realAttempts();
   const all = pool.filter(isLesson), skips = pool.filter(isSkip), voc = pool.filter(a=>a.type==="vocab");
@@ -4572,6 +4612,7 @@ function renderParent(){
     </div></details>
     <p class="note">เวลาคือช่วงที่เปิดหน้าเว็บ ใช้ดูแนวโน้ม ไม่ใช่เวลาที่ตั้งใจจริงทั้งหมด</p>`}
   </section>
+  ${readinessSection(realAttempts())}
   ${db?`<section class="card"><h3>นำเข้าผลจากเครื่องลูก</h3>
     <p class="small muted">ลูกส่งมาเป็นไฟล์ทาง LINE: บันทึกไฟล์ไว้ในเครื่อง แล้วกดเลือกไฟล์ (เลือกหลายไฟล์พร้อมกันได้) ส่งไฟล์เดิมซ้ำได้ ระบบไม่นับซ้ำ</p>
     <div class="row"><label class="btn" style="cursor:pointer">เลือกไฟล์จากลูก<input type="file" id="impfile" accept=".txt,text/plain" multiple hidden></label></div>

@@ -532,3 +532,9 @@ summarises them, and follow `calendar.lessonQueue`. Never copy textbook or workb
 - Reading the father's books costs usage. Run OCR in the workspace, then read only the chapters needed for the next 1–2 weeks of content, and tell the father which chapters you read.
 - **Never refer to an option by its position** ("ข้อสุดท้าย", "ลำดับที่สอง", "ตัวเลือกแรก") in explanations: the app shuffles options. Quote the option's content instead. (Found by the independent check of 11 Nov.)
 - Independent check of all 386 questions (11 Nov): 0 wrong keys, 0 ambiguous; 4 explanation errors and 11 minor issues, all fixed. Term: use "แรงพยุง" (not "แรงลอยตัว") as in the current curriculum.
+
+## Curriculum map and readiness (11 Nov 2026)
+- `content/curriculum.json` = 51 spells → 238 subtopics (`{id,n,g}`), draft built from the MWIT 2570 topic list. Items marked "confirm" still need checking against the real textbooks.
+- `content/qtags.json` maps every qid → one subtopic id. **Every new question must be added to qtags.json** (verify that all QBANK ids are tagged before committing).
+- When choosing what to write next, prefer subtopics with no questions, then subtopics with no level-3 questions (the parent page's readiness section shows both). Current-term content first.
+- Readiness status rules (parent page): start = any attempt; prac = L1–2 n≥4 & ≥75%; base = L1–2 n≥6 & ≥80% on ≥2 days; ready = base + L3 ≥3 at ≥70% + a correct answer ≥7 days after first attempt. These are measured on our own bank only — never describe them to the father as real exam readiness.
