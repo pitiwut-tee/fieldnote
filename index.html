@@ -667,7 +667,7 @@ async function importCode(raw, asTest){
 }
 
 /* ---------- updates: GitHub Pages lets the browser keep an old copy for a while, so check for a newer build ---------- */
-const BUILD="2026-11-11 20:39";
+const BUILD="2026-11-11 20:55";
 async function checkUpdate(){ if(!/^https?:/.test(location.protocol)||typeof db!=="undefined"&&db) return;
   try{ const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text(); const m=t.match(/const BUILD="(\d{4}-\d\d-\d\d \d\d:\d\d)"/);
     if(m&&m[1]!==BUILD&&!m[1].includes("@@")&&!document.getElementById("updbar")){ const d=document.createElement("button"); d.id="updbar"; d.className="btn";
@@ -1039,8 +1039,16 @@ function startSet(set, conceptFirst, perms, dueIds){
 function expLegs(steps,set){ const L=[]; const add=(name,icon)=>{ L.push({name,icon,steps:[]}); return L.length-1 };
   const qIdx=steps.map((st,i)=>st.kind==="q"?i:-1).filter(i=>i>=0);
   if(set.kind==="lesson"){ let cur=-1, leg={};
-    steps.forEach((st,i)=>{ const k=st.kind==="q"&&st.optional?"boss":st.kind==="q"&&st.phase==="ฝึกทำ"||st.kind==="concept"?"new":st.kind==="rate"?null:"warm";
-      if(k==null){ st.leg=cur; return } if(leg[k]==null) leg[k]=add(k==="warm"?"อุ่นเครื่อง":k==="new"?"บทเรียนใหม่":"ข้อท้าทาย",k==="boss"?"👑":k==="new"?"📘":"🔥"); st.leg=cur=leg[k]; L[cur].steps.push(i) }) }
+    /* legs must be contiguous runs, in step order. A concept card joins the leg of the question that follows it, so
+       "ขออ่านสรุปก่อน" (card → warm-up → practice) no longer makes the bar jump back and forth (fixed 11 Nov). */
+    const kindOf=st=>st.kind==="q"&&st.optional?"boss":st.kind==="q"&&st.phase==="ฝึกทำ"?"new":st.kind==="rate"?null:st.kind==="concept"?"card":"warm";
+    steps.forEach((st,i)=>{ let k=kindOf(st);
+      if(k==="card"){ const nx=steps.slice(i+1).find(x=>x.kind==="q"); k=nx?kindOf(nx):"new" }
+      if(k==null){ st.leg=cur; return }
+      if(leg[k]==null){ if(cur>=0&&k!=="boss"&&Object.values(leg).includes(cur)&&L[cur].kind!==k&&L[cur].kind!=="warm"&&k==="warm") k=L[cur].kind;
+        if(leg[k]==null){ leg[k]=add(k==="warm"?(st.kind==="concept"?"อ่านสรุป + อุ่นเครื่อง":"อุ่นเครื่อง"):k==="new"?"บทเรียนใหม่":"ข้อท้าทาย",k==="boss"?"👑":k==="new"?"📘":"🔥"); L[leg[k]].kind=k } }
+      else if(leg[k]!==cur&&leg[k]<cur) k=L[cur].kind;   // never jump back to an earlier leg
+      st.leg=cur=leg[k]; L[cur].steps.push(i) }) }
   else { const half=Math.ceil(qIdx.length/2); let cur=add("ช่วงแรก","🔥");
     steps.forEach((st,i)=>{ if(st.kind==="q"&&qIdx.indexOf(i)===half&&half>0) cur=add("ช่วงหลัง","⛰️"); st.leg=cur; L[cur].steps.push(i) }) }
   return L.filter(l=>l.steps.some(i=>steps[i].kind==="q")).length>=2?L:[] }
