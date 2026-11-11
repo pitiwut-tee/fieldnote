@@ -1605,7 +1605,7 @@ function qLines(h){ if(!h||h.indexOf(" · ")<0||/English corner/.test(h)) return
   const items=[first,...parts.slice(1)]; let last=items[items.length-1];
   const startsData=x=>/^\s*[\d(]/.test(x);
   if(items.length>2&&startsData(items[0])&&!startsData(last)&&!/→/.test(last)){ items.pop(); after=last }
-  else { const r=/\)\s+(?=[ก-๙])|\s(?=(?:ข้อใด|ข้อสรุป|ถ้า|จง|ฐานนิยม|มัธยฐาน|ค่าเฉลี่ย|พิสัย|ชมรม|ส่วนกลุ่ม|มีนักเรียน|ทำไม|ช่วงคะแนนใด|ช่วงใด))/g; let mm, cut=-1;
+  else { const r=/\s{2}(?=\()|\)\s+(?=[ก-๙])|\s(?=(?:ข้อใด|ข้อสรุป|ถ้า|จง|ฐานนิยม|มัธยฐาน|ค่าเฉลี่ย|พิสัย|ชมรม|ส่วนกลุ่ม|มีนักเรียน|ทำไม|ช่วงคะแนนใด|ช่วงใด))/g; let mm, cut=-1;
     while((mm=r.exec(last))){ if(mm.index>0){ cut=mm.index+(mm[0].startsWith(")")?1:0); break } }
     if(cut>0){ items[items.length-1]=last.slice(0,cut); after=last.slice(cut).trim() } }
   return head+items.map(x=>`<span class="qline">${x}</span>`).join("")+(after?`<span class="qafter">${after}</span>`:"") }
