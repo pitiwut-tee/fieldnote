@@ -4753,6 +4753,15 @@ function readinessSection(list){ if(!Object.keys(CUR).length) return ""; const s
     <div class="feedback"><b>พร้อมสอบ (วัดรายคาถา): ${ready} จาก ${Object.keys(CUR).length} คาถา</b><span class="small">ต้องมีครบ 3 อย่าง: ทุกเรื่องย่อยของคาถาถึงขั้น "จำได้" · ชุดคละจับเวลาของคาถานั้นอย่างน้อย 20 ข้อ ถูก 80% ขึ้นไป · ยืนยันด้วยข้อสอบเสมือนจริงจากภายนอก (ยังไม่มีทั้งชุดจับเวลาและข้อสอบภายนอก)</span></div>
     ${(()=>{ const cs=list.filter(a=>a.type==="comp"), n=cs.reduce((m,a)=>m+(a.total||0),0), c=cs.reduce((m,a)=>m+(a.correct||0),0), ct=compToday(list);
       return `<div class="feedback"><b>โจทย์แนวแข่งขัน (ทางลับ วันละ 1 ข้อ ไม่นับในระดับ)</b><span class="small">ทำแล้ว ${n} ข้อ · ถูก ${c} ข้อ · เปิดให้แล้ว ${ct.open} คาถา (คาถาที่มีเรื่องย่อยถึงขั้น "เข้าใจ") · ข้อที่ยังรออยู่ ${ct.left} ข้อ จากคลัง ${COMP.length} ข้อ</span></div>` })()}
+    ${(()=>{ const EF=CONTENT.examfreq; if(!EF) return ""; const bySp={}; Object.entries(CUR).forEach(([sp,subs])=>{ bySp[sp]=subs.reduce((n,s)=>n+((bank[s.id]||{}).n||0),0) });
+      const rows=Object.entries(EF.spells).filter(([sp])=>CUR[sp]).map(([sp,x])=>({sp,x,b:bySp[sp]||0,st:CUR[sp].filter(s=>subStatus(st[s.id])>=2).length,n:CUR[sp].length})).sort((a,b)=>b.x-a.x);
+      const gap=rows.filter(r=>r.x>=3&&r.b<r.x*3);
+      return `<div class="feedback"><b>📄 เทียบกับข้อสอบรอบแรกจริง (ฉบับที่นักเรียนจำมา: วิทย์ 2 ปี คณิต 3 ปี)</b>
+        <p class="small">เรื่องที่ออกบ่อยแต่คลังเรายังบาง: ${gap.length?gap.map(r=>`<b>${esc(spellName(r.sp))}</b> (ออก ${r.x} ข้อ · คลัง ${r.b})`).join(" · "):"ไม่มี"}</p>
+        <details class="small"><summary>ดูตารางเต็มทุกคาถา</summary><div class="rdtable"><table><thead><tr><th>คาถา</th><th>ออกสอบ (ข้อ)</th><th>คลังเรา (ข้อ)</th><th>น้องถึงขั้นเข้าใจ</th></tr></thead><tbody>
+        ${rows.map(r=>`<tr><td>${esc(spellName(r.sp))}</td><td>${r.x}</td><td style="color:${r.b<r.x*3?"#A8382E":"inherit"}">${r.b}</td><td>${r.st}/${r.n} เรื่องย่อย</td></tr>`).join("")}
+        ${(EF.extra||[]).map(e=>`<tr><td>${esc(e.n)} <span class="small muted">(ยังไม่มีในแผนที่)</span></td><td>${e.x}</td><td style="color:#A8382E">0</td><td>–</td></tr>`).join("")}</tbody></table></div>
+        <p class="small muted">ข้อสอบจำมาไม่ครบทุกข้อ ใช้ดูน้ำหนักและแนวเท่านั้น · เรื่องที่ไม่อยู่ในตารางคือยังไม่พบในฉบับที่มี ไม่ได้แปลว่าไม่ออก</p></details></div>` })()}
     <div class="feedback"><b>คลังโจทย์ของระบบพร้อมแค่ไหน</b><span class="small">เรื่องย่อยที่ยังไม่มีโจทย์เลย ${thin} จาก ${allSubs.length} · มีโจทย์แต่ยังไม่มีระดับ 3 อีก ${thin3} เรื่อง · ด่านตรวจที่ถึงรอบวันนี้ ${cp.due} เรื่อง${short.size?` · <b style="color:#A8382E">ถึงรอบแล้วแต่ไม่มีข้อใหม่ให้ตรวจ ${short.size} เรื่อง</b> (ผมต้องเขียนเพิ่ม)`:""}</span></div>
     ${groups.map(([p,gt])=>{ const ids=Object.keys(CUR).filter(k=>k.startsWith(p)); if(!ids.length) return "";
       const gs=allSubs.filter(s=>ids.some(k=>CUR[k].includes(s))), gc=[0,0,0,0,0]; gs.forEach(s=>gc[subStatus(st[s.id])]++);
