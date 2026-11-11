@@ -1,0 +1,321 @@
+{
+ "note": "Phonics & morphology support for vocab spelling (father approved 11 Nov 2026). cards: one per day in the vocab session; re = regex used to link a spelling mistake to a card. probe: held-out words NEVER used in practice, for the monthly transfer check.",
+ "cards": [
+  {
+   "id": "magice",
+   "t": "e ท้ายคำที่ไม่ออกเสียง",
+   "rule": "e ตัวสุดท้ายไม่ออกเสียง แต่ทำให้สระข้างหน้าออกเสียงยาวเหมือนชื่อตัวอักษร: a_e = เอ, i_e = ไอ, o_e = โอ, u_e = ยู",
+   "ex": [
+    "brave",
+    "shade",
+    "stage",
+    "describe",
+    "outline",
+    "costume",
+    "scene"
+   ],
+   "tip": "ได้ยินเสียง เอ ไอ โอ ยาวๆ ในพยางค์สุดท้าย ให้นึกถึง e ปิดท้าย",
+   "re": "(^|[^aeiou])[aeiou][^aeiour]e$"
+  },
+  {
+   "id": "silente",
+   "t": "e ท้ายคำที่ต้องเขียนแม้ไม่ได้ยิน",
+   "rule": "คำอังกฤษจำนวนมากลงท้ายด้วย e ที่ไม่ออกเสียงเลย โดยเฉพาะหลัง s, c, g, v เช่น -se, -ce, -ge, -ve หูจะไม่ได้ยิน แต่ต้องเขียน",
+   "ex": [
+    "increase",
+    "decrease",
+    "compare",
+    "practice",
+    "force",
+    "stage",
+    "observe",
+    "dissolve"
+   ],
+   "tip": "คำที่ลงท้ายด้วยเสียง ส, จ, ฟว ให้นึกว่าต้องมี e ปิดท้ายไหม",
+   "re": "e$"
+  },
+  {
+   "id": "eeea",
+   "t": "ee และ ea ส่วนใหญ่ออกเสียง อี",
+   "rule": "เสียง อี ยาวๆ กลางคำ มักเขียนด้วย ee หรือ ea ต้องจำว่าคำไหนใช้แบบไหน",
+   "ex": [
+    "increase",
+    "decrease",
+    "reason",
+    "(คำอื่นที่ใช้ ee: green, see, speed)"
+   ],
+   "tip": "increase, decrease, reason ใช้ ea ทั้งหมด",
+   "re": "ee|ea"
+  },
+  {
+   "id": "softc",
+   "t": "c อ่านว่า ส เมื่อตามด้วย e, i, y",
+   "rule": "c ตามด้วย e, i, y จะออกเสียง ส แต่ถ้าตามด้วย a, o, u หรือพยัญชนะ จะออกเสียง ค",
+   "ex": [
+    "force",
+    "percent",
+    "practice",
+    "difference",
+    "evidence",
+    "surface",
+    "frequency"
+   ],
+   "tip": "ได้ยินเสียง ส ท้ายคำแบบ -ce บ่อยมาก: force, practice, distance, surface",
+   "re": "c[eiy]"
+  },
+  {
+   "id": "softg",
+   "t": "g มักอ่านว่า จ เมื่อตามด้วย e, i, y",
+   "rule": "g ตามด้วย e, i, y มักออกเสียง จ (มีข้อยกเว้นบ้าง) ถ้าตามด้วย a, o, u ออกเสียง ก",
+   "ex": [
+    "gentle",
+    "energy",
+    "stage",
+    "range",
+    "average"
+   ],
+   "tip": "เสียง จ ท้ายคำ เช่น stage, range, average เขียนด้วย -ge",
+   "re": "g[eiy]"
+  },
+  {
+   "id": "ture",
+   "t": "-ture อ่านว่า เชอร์ · -sure อ่านว่า เฌอร์ หรือ เชอร์",
+   "rule": "ท้ายคำที่ได้ยินเสียง เชอร์ มักเขียน -ture ส่วน -sure อ่านได้ทั้ง เฌอร์ (measure) และ เชอร์ (pressure) ต้องจำเป็นคำ",
+   "ex": [
+    "temperature",
+    "adventure",
+    "mixture",
+    "measure",
+    "pressure"
+   ],
+   "tip": "temperature, adventure, mixture ลงท้าย -ture ทั้งหมด",
+   "re": "ture|sure"
+  },
+  {
+   "id": "tion",
+   "t": "-tion อ่านว่า ชั่น",
+   "rule": "เสียง ชั่น ท้ายคำ มักเขียน -tion (บางคำเป็น -sion) เป็นท้ายคำนามที่พบบ่อยที่สุดในศัพท์วิทยาศาสตร์",
+   "ex": [
+    "equation",
+    "evaporation",
+    "solution",
+    "reaction",
+    "condensation"
+   ],
+   "tip": "ได้ยิน ชั่น ท้ายคำ เขียน -tion ไว้ก่อน ถูกบ่อยที่สุด",
+   "re": "tion|sion"
+  },
+  {
+   "id": "greek",
+   "t": "ph = ฟ, ch = ค, rh = ร ในคำที่มาจากภาษากรีก",
+   "rule": "คำวิทยาศาสตร์หลายคำมาจากภาษากรีก เสียง ฟ เขียน ph และบางคำเสียง ค เขียน ch",
+   "ex": [
+    "graph",
+    "character",
+    "rhythm",
+    "photosynthesis",
+    "chemistry"
+   ],
+   "tip": "คำวิทย์ที่ได้ยินเสียง ฟ ให้ลอง ph ก่อน",
+   "re": "ph|ch|rh"
+  },
+  {
+   "id": "igh",
+   "t": "igh อ่านว่า ไอ และ ow อ่านว่า โอ หรือ อาว",
+   "rule": "igh ออกเสียง ไอ (gh ไม่ออกเสียง) · ow ท้ายคำออกเสียงได้ทั้ง โอ และ อาว ต้องจำเป็นคำ",
+   "ex": [
+    "bright",
+    "weight (eigh = เอ)",
+    "glow",
+    "shadow"
+   ],
+   "tip": "gh ใน bright และ weight ไม่ออกเสียง แต่ต้องเขียน",
+   "re": "igh|eigh|ow"
+  },
+  {
+   "id": "double",
+   "t": "ตัวอักษรซ้ำหลังสระเสียงสั้น",
+   "rule": "หลังสระเสียงสั้น มักซ้ำพยัญชนะ เช่น ss, ff, pp, ll, tt เสียงไม่เปลี่ยน แต่ตัวสะกดต้องมีสองตัว",
+   "ex": [
+    "dissolve",
+    "difference",
+    "apprentice",
+    "pressure",
+    "support",
+    "palette",
+    "spell"
+   ],
+   "tip": "ได้ยินพยางค์สั้นๆ หนักๆ ตามด้วยพยัญชนะ ลองนึกว่ามีตัวซ้ำไหม",
+   "re": "(.)\\1"
+  },
+  {
+   "id": "schwa",
+   "t": "สระที่แทบไม่ได้ยิน (เสียง เออะ เบาๆ)",
+   "rule": "พยางค์ที่ไม่ลงเสียงหนัก สระจะกลายเป็นเสียง เออะ เบาๆ เขียนได้ทั้ง a, e, i, o, u หูช่วยไม่ได้ ต้องใช้คำที่มาจากคำเดียวกันช่วย",
+   "ex": [
+    "separate (sep·A·rate)",
+    "memory (mem·O·ry)",
+    "total (to·tAl)",
+    "character (char·Ac·ter)",
+    "similar (sim·I·lar)"
+   ],
+   "tip": "สระในพยางค์ที่ออกเสียงเบาจะฟังไม่ออกว่าเป็นตัวไหน หูช่วยไม่ได้ ต้องจำตัวสะกดของคำนั้นไว้ (ดูตัวพิมพ์ใหญ่ในตัวอย่าง)",
+   "re": "[aeiou]"
+  },
+  {
+   "id": "finals",
+   "t": "เสียงท้ายคำที่คนไทยมักไม่ได้ยิน",
+   "rule": "ภาษาไทยไม่มีเสียงท้ายคำแบบ s, z, j, v, sh, ch, l หูคนไทยจึงมักตัดทิ้ง เวลาฟังให้ตั้งใจฟังเสียงลมตอนท้าย",
+   "ex": [
+    "force (-s)",
+    "stage (-j)",
+    "brave (-v)",
+    "brush (-sh)",
+    "sketch (-ch)",
+    "crystal (-l)"
+   ],
+   "tip": "ฟังช้าๆ แล้วถามตัวเองว่า ท้ายคำมีเสียงลมหรือเปล่า",
+   "re": "(se|ce|ge|ve|sh|ch|l|s)$"
+  },
+  {
+   "id": "clusters",
+   "t": "พยัญชนะควบ: อย่าเติมสระคั่น",
+   "rule": "คนไทยมักได้ยิน sketch เป็น สะ-เก็ตช์ แต่จริงๆ s กับ k ติดกันไม่มีสระคั่น เวลาสะกด อย่าเติมสระที่ไม่มีจริง",
+   "ex": [
+    "sketch (sk)",
+    "crystal (cr)",
+    "brave (br)",
+    "float (fl)",
+    "predict (pr)",
+    "explain (xpl)",
+    "stage (st)"
+   ],
+   "tip": "ถ้าได้ยินเสียง สะ หรือ ซะ สั้นๆ ก่อนพยัญชนะ อาจเป็นตัวควบ ไม่ใช่สระ",
+   "re": "^(sk|cr|br|fl|pr|st|sp|str)|xpl"
+  },
+  {
+   "id": "prefix",
+   "t": "ส่วนหน้าของคำ: in- de- dis- un- re- pre-",
+   "rule": "ส่วนหน้าเหล่านี้สะกดเหมือนเดิมทุกครั้ง รู้ความหมายแล้วเดาคำใหม่ได้ด้วย",
+   "ex": [
+    "in-crease / de-crease",
+    "dis-solve, dis-cover",
+    "un-usual",
+    "re-member",
+    "pre-dict, pre-pare"
+   ],
+   "tip": "แยกส่วนหน้าออกก่อน แล้วค่อยสะกดส่วนที่เหลือ",
+   "re": "^(in|de|dis|un|re|pre|pro|im|con|ob|sur)"
+  },
+  {
+   "id": "suffix",
+   "t": "ส่วนท้ายของคำ: -ful -ly -ity -ence -ance",
+   "rule": "ส่วนท้ายบอกชนิดคำ และสะกดคงที่ -ful มี l ตัวเดียวเสมอ",
+   "ex": [
+    "care-ful",
+    "quick-ly",
+    "dens-ity",
+    "differ-ence, evid-ence",
+    "dist-ance"
+   ],
+   "tip": "-ence กับ -ance ฟังคล้ายกันมาก ต้องจำเป็นคำ",
+   "re": "(ful|ly|ity|ence|ance|cy)$"
+  },
+  {
+   "id": "scimorph",
+   "t": "รากศัพท์วิทยาศาสตร์",
+   "rule": "คำวิทย์หลายคำต่อจากรากเหล่านี้: therm = ความร้อน, photo = แสง, bio = ชีวิต, hydro = น้ำ, geo = โลก, micro = เล็ก, -meter = เครื่องวัด, -logy = วิชา",
+   "ex": [
+    "thermometer = เครื่องวัดความร้อน",
+    "photosynthesis = การสร้างด้วยแสง",
+    "biology = วิชาชีวิต",
+    "hydrogen = ตัวสร้างน้ำ",
+    "microscope = กล้องดูของเล็ก"
+   ],
+   "tip": "เจอศัพท์วิทย์ยาวๆ ลองหารากที่รู้จักก่อน",
+   "re": "therm|photo|bio|hydro|geo|micro|meter|logy"
+  }
+ ],
+ "probe": [
+  {
+   "w": "evaporate",
+   "th": "ระเหย"
+  },
+  {
+   "w": "condense",
+   "th": "ควบแน่น"
+  },
+  {
+   "w": "melting",
+   "th": "การหลอมเหลว"
+  },
+  {
+   "w": "freezing",
+   "th": "การแข็งตัว"
+  },
+  {
+   "w": "pollution",
+   "th": "มลพิษ"
+  },
+  {
+   "w": "oxygen",
+   "th": "ออกซิเจน"
+  },
+  {
+   "w": "balance",
+   "th": "สมดุล / ตาชั่ง"
+  },
+  {
+   "w": "motion",
+   "th": "การเคลื่อนที่"
+  },
+  {
+   "w": "sample",
+   "th": "ตัวอย่าง"
+  },
+  {
+   "w": "compound",
+   "th": "สารประกอบ"
+  },
+  {
+   "w": "reaction",
+   "th": "ปฏิกิริยา"
+  },
+  {
+   "w": "nature",
+   "th": "ธรรมชาติ"
+  },
+  {
+   "w": "vapor",
+   "th": "ไอ (ของเหลวที่กลายเป็นแก๊ส)"
+  },
+  {
+   "w": "object",
+   "th": "วัตถุ"
+  },
+  {
+   "w": "speed",
+   "th": "อัตราเร็ว"
+  },
+  {
+   "w": "season",
+   "th": "ฤดู"
+  },
+  {
+   "w": "mineral",
+   "th": "แร่"
+  },
+  {
+   "w": "machine",
+   "th": "เครื่องจักร"
+  },
+  {
+   "w": "station",
+   "th": "สถานี"
+  },
+  {
+   "w": "bridge",
+   "th": "สะพาน"
+  }
+ ]
+}

@@ -562,3 +562,9 @@ summarises them, and follow `calendar.lessonQueue`. Never copy textbook or workb
 ## Adventure: how stages open (11 Nov 2026)
 - The adventure page now always shows "🗝️ ด่านใหม่เปิดอย่างไร" with the next stage and its condition, plus a locked "เขต 3 · ชิ้นส่วนแผนที่ x/7" tab.
 - PROMISE TO KEEP: region 3 opens at 7 daily-boss map pieces (bossPieces). It does NOT exist yet. It must be built from her Sunday studio-workshop design (studio type "studio", the workshop submission) before she can reach 7 pieces (earliest ~17–18 Nov 2026). Check bossPieces every run; when ≥5 and no region 3 exists, build it (from her design if submitted, otherwise a default pollution-monster region in the same style) and tell the father in the evening report. Region 3 = ADV_REGIONS entry with needPieces:7 (add that check to regOpen), 5 stages, ADV_FOES, ADV_SQ questions, facts; boss needSpells ~9.
+
+## Vocabulary phonics (father approved 11 Nov 2026)
+- content/vocab.json words carry `syl` (spelling chunks joined by "·", must rebuild the word exactly) and optional `parts` [[part, Thai meaning]] — only for real, well-known prefixes/suffixes/roots; when unsure, leave `parts` out. Every new word needs `syl`.
+- content/phonics.json: `cards` (one shown per day at the start of the vocab session; `re` links a misspelling to a card; TIP_ORDER in app.html decides which card wins) and `probe` (20 held-out words for the monthly transfer check, halves A/B alternate by month, answers never shown). NEVER add a probe word (or a derivative like predict→prediction) to vocab.json.
+- New words: spelling is typed chunk by chunk; review words have a "แบ่งเป็นส่วนให้ดู" hint (recorded as hintLv). Wrong spellings show highlighted letters + the matching card tip.
+- Parent page (ผลละเอียด › คำศัพท์อังกฤษ) shows the monthly probe score. Compare A with A, B with B (every 2 months). Report it honestly in the February evaluation.

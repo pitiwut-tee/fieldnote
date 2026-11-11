@@ -449,6 +449,11 @@ button.spell{cursor:pointer} button.spell:hover{border-color:var(--accent)}
 .pips i{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--line);display:inline-block}
 .pips i.on1{background:var(--good);border-color:var(--good)} .pips i.on2{background:var(--warn);border-color:var(--warn)} .pips i.on3{background:var(--beak);border-color:var(--beak)}
 .vword{font-family:var(--display);font-size:1.8rem}
+.sylbox{display:flex;flex-direction:column;gap:4px;margin:4px 0 8px}.sylrow{font-family:var(--mono);font-size:1.35rem;letter-spacing:.04em}
+.syl{padding:1px 4px;border-radius:6px;transition:background .15s}.syl.s0{color:#1F7A8C}.syl.s1{color:#B4562A}.syl.hi{background:#FFE7A3;color:#16302B}.syldot{color:var(--muted,#888);margin:0 1px}
+.chunkin{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:6px 0}.chunkin .chk{font:inherit;font-family:var(--mono);font-size:1.1rem;padding:8px 6px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);text-align:center}
+.phoncard{display:flex;flex-direction:column;gap:6px;background:color-mix(in srgb,var(--accent) 8%,var(--card));border:1.5px solid color-mix(in srgb,var(--accent) 35%,var(--line));border-radius:14px;padding:12px}
+mark.sperr{background:#FFD3CC;color:#8A1F14;border-radius:3px;padding:0 1px}
 .vex{font-style:italic}
 .reading{background:var(--soft);border-radius:12px;padding:12px 14px;line-height:1.8}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
@@ -3103,6 +3108,41 @@ function vOpts(word,dir){
   const all=[word,...others].sort(()=>Math.random()-.5);
   return {opts:all.map(x=>dir==="en"?x.th:x.w), a:all.indexOf(word)};
 }
+/* ---------- phonics support (father approved 11 Nov): sound→spelling patterns, syllable chunks, word parts,
+   pinpointed spelling feedback, and a monthly spelling check on words she has never practised (transfer) ---------- */
+const PHON=CONTENT.phonics||{cards:[],probe:[]};
+const sylOf=w=>(w.syl||w.w).split("·");
+function sylHtml(w,hi){ return `<span class="sylrow" aria-label="${esc(w.w)}">${sylOf(w).map((c,i)=>`<span class="syl s${i%2} ${hi===i?"hi":""}">${esc(c)}</span>`).join(`<span class="syldot">·</span>`)}</span>` }
+function speakChunks(w,elId){ const ch=sylOf(w); speak(w.w,true); const box=document.getElementById(elId); if(!box) return;
+  const per=ch.map(c=>220+170*c.length), tot=per.reduce((a,b)=>a+b,0); let t=150;
+  ch.forEach((c,i)=>{ setTimeout(()=>{ const b=document.getElementById(elId); if(b) b.innerHTML=sylHtml(w,i) },t); t+=per[i] });
+  setTimeout(()=>{ const b=document.getElementById(elId); if(b) b.innerHTML=sylHtml(w,-1) },t+200) }
+function cardMatches(card,word){ try{ return new RegExp(card.re,"i").test(word) }catch(e){ return false } }
+function phonSeen(){ try{ return JSON.parse(localStorage.getItem("fieldnote.phonSeen")||"{}") }catch(e){ return {} } }
+function cardForToday(words){ const seen=phonSeen(), t=todayKey(); if(!PHON.cards.length) return null;
+  const done=Object.entries(seen).find(([,d])=>d===t); if(done) return PHON.cards.find(c=>c.id===done[0])||null;
+  const score=c=>(seen[c.id]?1000+(seen[c.id]-0)/DAY:0)-words.filter(w=>cardMatches(c,w.w)).length*(c.id==="schwa"?0.1:1)+PHON.cards.indexOf(c)*0.15;
+  return PHON.cards.slice().sort((a,b)=>score(a)-score(b))[0] }
+function markCardSeen(id){ try{ const s=phonSeen(); s[id]=todayKey(); localStorage.setItem("fieldnote.phonSeen",JSON.stringify(s)) }catch(e){} }
+function cardHtml(c){ return `<div class="phoncard"><span class="eyebrow">🔤 หลักเสียงวันนี้</span><b>${esc(c.t)}</b><p class="small">${esc(c.rule)}</p>
+  <div class="row" style="gap:6px">${c.ex.map((x,i)=>{ const w=x.split(/[ (→]/)[0]; return `<button class="chipbtn" data-sayex="${esc(w)}" type="button">🔊 ${esc(x)}</button>` }).join("")}</div>
+  <p class="small"><b>เคล็ดลับ:</b> ${esc(c.tip)}</p></div>` }
+/* align typed vs correct (LCS); returns html of the correct word with letters she missed/changed marked, and the first wrong index */
+function spellDiff(right,typed){ const a=right.toLowerCase(), b=(typed||"").toLowerCase(), n=a.length, m=b.length, L=Array.from({length:n+1},()=>new Array(m+1).fill(0));
+  for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--) L[i][j]=a[i]===b[j]?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
+  const ok=new Array(n).fill(false); let i=0,j=0; while(i<n&&j<m){ if(a[i]===b[j]){ ok[i]=true; i++; j++ } else if(L[i+1][j]>=L[i][j+1]) i++; else j++ }
+  const first=ok.indexOf(false);
+  return {html:[...right].map((ch,k)=>ok[k]?esc(ch):`<mark class="sperr">${esc(ch)}</mark>`).join(""), first, extra:m>L[0][0]+(n-L[0][0])} }
+const TIP_ORDER=["softc","softg","ture","tion","igh","double","eeea","suffix","finals","greek","prefix","clusters","silente","magice","scimorph"];
+function spellTip(word,idx,extra){ const w=word.toLowerCase(); if(idx<0&&extra) idx=w.length-1; if(idx<0) return null;
+  const hit=c=>{ if(c.id==="schwa") return false; try{ const re=new RegExp(c.re,"gi"); let mm; while((mm=re.exec(w))){ if(idx>=mm.index&&idx<mm.index+Math.max(1,mm[0].length)) return true; if(!mm[0].length) re.lastIndex++ } }catch(e){} return false };
+  const sw=PHON.cards.find(c=>c.id==="schwa");   // last resort: a vowel inside the word, not the final letter and not part of a vowel pair
+  const ordered=TIP_ORDER.map(id=>PHON.cards.find(c=>c.id===id)).filter(Boolean);
+  return ordered.find(hit)||(idx>0&&idx<w.length-1&&/[aeiou]/.test(w[idx])&&!/[aeiou]/.test(w[idx-1])&&!/[aeiou]/.test(w[idx+1])?sw:null) }
+/* monthly transfer check: 10 never-practised words, halves alternate by month, no answers shown (so the words stay unseen) */
+function probeDue(list){ if(!PHON.probe||!PHON.probe.length) return null; const now=new Date(), mk=now.getFullYear()*12+now.getMonth();
+  if(list.some(a=>a.type==="vocab"&&a.probe&&a.probe.mk===mk)) return null; const half=mk%2, words=PHON.probe.filter((x,i)=>i%2===half).slice(0,10);
+  return {mk,half,words} }
 function startVocab(){
   const {due,fresh}=vocabToday(); if(!due.length&&!fresh.length) return;
   const st=vocabState();
@@ -3113,19 +3153,43 @@ function startVocab(){
   const quiz=[...meaning.sort(()=>Math.random()-.5),...[...spellNew,...spellDue].sort(()=>Math.random()-.5)];
   const base=isWeekend()?READINGS[Math.floor(todayKey()/DAY)%READINGS.length]:null;
   const read=base?{...base,qs:base.qs.map((q,qi)=>{const sq=shuffleQ(q); return {...sq,qth:base.th.qs[qi].q,optsTh:sq.perm.map(k=>base.th.qs[qi].opts[k])}})}:null;
-  V={active:true,fresh,quiz,read,phase:fresh.length?"learn":"quiz",li:0,qi:0,ri:0,ans:null,results:[],rres:[],heard:new Set(),showTh:false,start:Date.now()};
+  const card=cardForToday([...fresh,...due]), probe=probeDue(mine());
+  V={active:true,fresh,quiz,read,card,probe,pi:0,pres:[],phase:card&&!phonSeen()[card.id]?"card":fresh.length?"learn":"quiz",li:0,qi:0,ri:0,ans:null,results:[],rres:[],heard:new Set(),showTh:false,start:Date.now()};
   view="vocab"; render(); window.scrollTo({top:0});
 }
 const sayBtn=(id,label)=>`<button class="btn ghost" id="${id}" type="button">🔊 ${label}</button>`;
 function bindSay(id,text,slow,after){ const b=document.getElementById(id); if(b) b.onclick=()=>{speak(text,slow); if(after) after()} }
 function renderVocab(){
-  const top=`<div class="stage"><span>คำศัพท์วันนี้</span><span>${V.phase==="learn"?`คำใหม่ ${V.li+1}/${V.fresh.length}`:V.phase==="quiz"?`ทดสอบ ${V.qi+1}/${V.quiz.length}`:`อ่านสั้นๆ`}</span></div>${voicePicker()}`;
+  const top=`<div class="stage"><span>คำศัพท์วันนี้</span><span>${V.phase==="learn"?`คำใหม่ ${V.li+1}/${V.fresh.length}`:V.phase==="quiz"?`ทดสอบ ${V.qi+1}/${V.quiz.length}`:V.phase==="card"?"หลักเสียง":V.phase==="probe"?"เช็คประจำเดือน":`อ่านสั้นๆ`}</span></div>${voicePicker()}`;
   setTimeout(bindVoicePicker,0);
+  if(V.phase==="card"){
+    $v.innerHTML=`<section class="card">${top}${cardHtml(V.card)}<div id="speech-slot"></div>
+      <p class="small muted">อ่าน 1 นาที แล้วลองฟังตัวอย่าง วันนี้ตอนสะกดคำ ลองใช้หลักนี้ดู</p><button class="btn" id="vn">เข้าใจแล้ว ไปต่อ</button></section>`;
+    $v.querySelectorAll("[data-sayex]").forEach(b=>b.onclick=()=>speak(b.dataset.sayex,true));
+    document.getElementById("vn").onclick=()=>{ markCardSeen(V.card.id); V.phase=V.fresh.length?"learn":"quiz"; renderVocab(); window.scrollTo({top:0}) };
+    return;
+  }
+  if(V.phase==="probe"){ const w=V.probe.words[V.pi];
+    $v.innerHTML=`<section class="card">${top}<span class="eyebrow">✏️ เช็คการสะกดประจำเดือน ${V.pi+1}/${V.probe.words.length}</span>
+      <p class="small">คำที่ยังไม่เคยฝึกในแอป ไม่มีเฉลย (เพื่อให้เดือนหน้ายังเป็นคำใหม่) ฟังแล้วลองสะกดด้วยหลักเสียงที่เรียนมา ผิดได้ ไม่เสียอะไร</p>
+      <p><b>${esc(w.th)}</b></p><div class="row">${sayBtn("say-w","ฟังเสียง")}${sayBtn("say-slow","ฟังช้าๆ")}</div><div id="speech-slot"></div>
+      <div class="num"><input id="spin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="พิมพ์คำ" style="width:14ch"><button class="btn" id="check">บันทึก</button></div>
+      <button class="btn ghost small" id="pskip" type="button">ไม่รู้เลย ข้าม</button></section>`;
+    bindSay("say-w",w.w,false); bindSay("say-slow",w.w,true); if(!speechBroken) setTimeout(()=>speak(w.w),150);
+    const inp=document.getElementById("spin"); inp.focus();
+    const go=raw=>{ V.pres.push({w:w.w,raw,correct:raw.toLowerCase()===w.w.toLowerCase()}); if(V.pi+1<V.probe.words.length){ V.pi++; renderVocab() } else { V.phase=V.read?"read":"done"; if(V.phase==="done") return finishVocab(); renderVocab() } window.scrollTo({top:0}) };
+    document.getElementById("check").onclick=()=>{ const raw=inp.value.trim(); if(raw) go(raw) }; inp.onkeydown=e=>{ if(e.key==="Enter"&&inp.value.trim()) go(inp.value.trim()) };
+    document.getElementById("pskip").onclick=()=>go("");
+    return;
+  }
   if(V.phase==="learn"){
     const w=V.fresh[V.li], heard=speechBroken||V.heard.has(w.w);
     $v.innerHTML=`<section class="card">${top}<span class="eyebrow">คำใหม่</span>
       <span class="vword">${esc(w.w)}</span><p><b>${esc(w.th)}</b></p>
-      <div class="row">${sayBtn("say-w","ฟังคำนี้")}${sayBtn("say-slow","ฟังช้าๆ")}</div>
+      <div class="sylbox"><span class="small muted">แบ่งเป็นส่วนตามเสียง</span><span id="sylw">${sylHtml(w,-1)}</span>
+        ${w.parts?`<span class="small">ส่วนประกอบ: ${w.parts.map(([pp,mm])=>`<b>${esc(pp)}</b> (${esc(mm)})`).join(" + ")}</span>`:""}
+        ${(()=>{ const cs=PHON.cards.filter(c=>c.id!=="schwa"&&cardMatches(c,w.w)).slice(0,2); return cs.length?`<span class="small muted">หลักเสียงในคำนี้: ${cs.map(c=>esc(c.t)).join(" · ")}</span>`:"" })()}</div>
+      <div class="row">${sayBtn("say-w","ฟังคำนี้")}${sayBtn("say-slow","ฟังช้าๆ")}${sylOf(w).length>1?`<button class="btn ghost" id="say-ch" type="button">🔊 ฟังทีละส่วน</button>`:""}</div>
       <p class="small ${heard?"muted":""}" style="${heard?"":"color:var(--beak)"}">${speechBroken?"อ่านออกเสียงเองดังๆ หนึ่งรอบ":heard?"ฟังแล้ว ลองพูดตามดังๆ หนึ่งรอบ":"กดฟังเสียงก่อนนะ แล้วพูดตามดังๆ"}</p>
       <div id="speech-slot">${speechBroken?speechHelpHtml():""}</div>
       <div class="feedback"><p class="vex">“${esc(w.ex)}”</p>
@@ -3135,6 +3199,7 @@ function renderVocab(){
     bindSay("say-w",w.w,false,()=>{if(!V.heard.has(w.w)){V.heard.add(w.w);renderVocab()}});
     bindSay("say-slow",w.w,true,()=>{if(!V.heard.has(w.w)){V.heard.add(w.w);renderVocab()}});
     bindSay("say-ex",w.ex,false); bindSay("say-ex-slow",w.ex,true);
+    { const sc=document.getElementById("say-ch"); if(sc) sc.onclick=()=>{ speakChunks(w,"sylw"); if(!V.heard.has(w.w)){ V.heard.add(w.w); const vn=document.getElementById("vn"); if(vn) vn.disabled=false } } }
     const st=document.getElementById("show-th"); if(st) st.onclick=()=>{V.showTh=true;renderVocab()};
     document.getElementById("vn").onclick=()=>{ V.showTh=false; if(V.li+1<V.fresh.length) V.li++; else V.phase="quiz"; renderVocab() };
     const vp=document.getElementById("vprev"); if(vp) vp.onclick=()=>{ V.showTh=false; V.li--; renderVocab() };
@@ -3142,20 +3207,26 @@ function renderVocab(){
   }
   if(V.phase==="quiz"){
     const it=V.quiz[V.qi], ans=V.ans;
-    const next=()=>{ V.results.push({w:it.w.w,kind:it.kind,correct:ans.correct,fresh:!!it.fresh}); V.ans=null;
-      if(V.qi+1<V.quiz.length) V.qi++; else if(V.read) V.phase="read"; else return finishVocab();
+    const next=()=>{ V.results.push({w:it.w.w,kind:it.kind,correct:ans.correct,fresh:!!it.fresh,...(it.kind==="spell"?{raw:ans.raw,hintLv:it.hintLv||0,chunked:!!(it.fresh&&sylOf(it.w).length>1)}:{})}); V.ans=null;
+      if(V.qi+1<V.quiz.length) V.qi++; else if(V.probe) { V.phase="probe" } else if(V.read) V.phase="read"; else return finishVocab();
       renderVocab(); window.scrollTo({top:0}); };
     if(it.kind==="spell"){
-      const hint=it.w.w[0]+" "+"_ ".repeat(it.w.w.length-1).trim();
+      const ch=sylOf(it.w), chunked=it.fresh&&ch.length>1, hl=it.hintLv||0;
+      const hint=hl?ch.map(c=>c[0]+" "+"_ ".repeat(c.length-1)).join(" · ").replace(/\s+/g," ").trim():it.w.w[0]+" "+"_ ".repeat(it.w.w.length-1).trim();
+      const dif=ans&&!ans.correct?spellDiff(it.w.w,ans.raw):null, tip=dif?spellTip(it.w.w,dif.first,dif.extra):null;
       $v.innerHTML=`<section class="card">${top}
         <p class="small muted">ฝึกสะกด${it.fresh?" · คำใหม่":" · ทบทวน"} · ฟังเสียงแล้วพิมพ์คำภาษาอังกฤษ</p>
         <p><b>${esc(it.w.th)}</b></p>
-        <p style="font-family:var(--mono);letter-spacing:.15em">${esc(hint)} <span class="small muted" style="letter-spacing:0">(${it.w.w.length} ตัว)</span></p>
-        <div class="row">${sayBtn("say-w","ฟังเสียง")}${sayBtn("say-slow","ฟังช้าๆ")}</div><div id="speech-slot"></div>
+        ${chunked&&!ans?`<p class="small">คำนี้มี ${ch.length} ส่วน ฟังช้าๆ แล้วสะกดทีละส่วน</p>
+          <div class="chunkin">${ch.map((c,k)=>`<input class="chk" data-ck="${k}" maxlength="${c.length+2}" style="width:${Math.max(3,c.length+1.5)}ch" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="ส่วนที่ ${k+1} (${c.length} ตัว)" placeholder="${"_".repeat(c.length)}">`).join(`<span class="syldot">·</span>`)}</div>
+          <div class="row">${sayBtn("say-w","ฟังเสียง")}${sayBtn("say-slow","ฟังช้าๆ")}<button class="btn" id="check">ตรวจ</button></div><div id="speech-slot"></div>`
+        :`<p style="font-family:var(--mono);letter-spacing:.15em">${esc(hint)} <span class="small muted" style="letter-spacing:0">(${it.w.w.length} ตัว)</span></p>
+        <div class="row">${sayBtn("say-w","ฟังเสียง")}${sayBtn("say-slow","ฟังช้าๆ")}${!ans&&!hl&&ch.length>1?`<button class="btn ghost" id="vhint" type="button">💡 แบ่งเป็นส่วนให้ดู</button>`:""}</div><div id="speech-slot"></div>
         <div class="num"><input id="spin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="พิมพ์คำศัพท์" style="width:14ch" ${ans&&!ans.retype?"disabled":""} value="${ans&&!ans.retype?esc(ans.raw):""}">
-        ${ans?"":`<button class="btn" id="check">ตรวจ</button>`}</div>
+        ${ans?"":`<button class="btn" id="check">ตรวจ</button>`}</div>`}
         ${ans?`<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?"สะกดถูก +5 XP":"ยังไม่ถูก +2 XP"}</b>
-          <p>คำที่ถูกคือ <b style="font-family:var(--mono);font-size:1.1rem">${esc(it.w.w)}</b>${ans.correct?"":` · ที่พิมพ์มา <span style="font-family:var(--mono)">${esc(ans.raw)}</span>`}</p>
+          <p>คำที่ถูกคือ <b style="font-family:var(--mono);font-size:1.1rem">${ans.correct?esc(it.w.w):dif.html}</b>${ans.correct?"":` · ที่พิมพ์มา <span style="font-family:var(--mono)">${esc(ans.raw)}</span>`}</p>
+          ${ans.correct?"":`<p class="small">ตัวที่ไฮไลต์คือตรงที่ต่างจากที่พิมพ์ · แบ่งส่วน: ${sylHtml(it.w,-1)}</p>${tip?`<div class="phoncard small"><b>🔤 ${esc(tip.t)}</b><span>${esc(tip.tip)}</span></div>`:""}`}
           ${ans.correct?"":`<p class="small">${ans.retype?"ลองพิมพ์คำที่ถูกอีกครั้ง ช่วยให้มือจำตัวสะกด":""}</p>`}</div>
           ${!ans.correct&&ans.retype?`<p class="small" id="rmsg" aria-live="polite"></p>`:""}
           <button class="btn" id="vn" ${!ans.correct&&ans.retype?"disabled":""}>ต่อไป</button>`:""}
@@ -3164,8 +3235,13 @@ function renderVocab(){
       const inp=document.getElementById("spin");
       if(!ans){
         if(!speechBroken) setTimeout(()=>speak(it.w.w),150);
-        const go=()=>{const raw=inp.value.trim(); if(!raw) return; const ok=raw.toLowerCase()===it.w.w.toLowerCase(); V.ans={raw,correct:ok,retype:!ok}; renderVocab(); const i2=document.getElementById("spin"); if(i2&&!ok) i2.focus()};
-        document.getElementById("check").onclick=go; inp.onkeydown=e=>{if(e.key==="Enter")go()}; inp.focus();
+        const cks=[...$v.querySelectorAll(".chk")];
+        const val=()=>cks.length?cks.map(x=>x.value.trim()).join(""):inp.value.trim();
+        const go=()=>{const raw=val(); if(!raw) return; const ok=raw.toLowerCase()===it.w.w.toLowerCase(); V.ans={raw,correct:ok,retype:!ok}; renderVocab(); const i2=document.getElementById("spin"); if(i2&&!ok) i2.focus()};
+        document.getElementById("check").onclick=go;
+        if(cks.length){ cks.forEach((x,k)=>{ x.oninput=()=>{ if(x.value.length>=ch[k].length&&cks[k+1]) cks[k+1].focus() }; x.onkeydown=e=>{ if(e.key==="Enter") go(); if(e.key==="Backspace"&&!x.value&&cks[k-1]) cks[k-1].focus() } }); cks[0].focus() }
+        else { inp.onkeydown=e=>{if(e.key==="Enter")go()}; inp.focus() }
+        const vh=document.getElementById("vhint"); if(vh) vh.onclick=()=>{ it.hintLv=1; renderVocab() };
       } else {
         if(!ans.correct&&ans.retype){
           const ok=()=>inp.value.trim().toLowerCase()===it.w.w.toLowerCase();
@@ -3230,8 +3306,10 @@ async function finishVocab(){
   await finishWith({type:"vocab",setId:"vocab",subject:"อังกฤษ",topic:"คำศัพท์วันนี้",startedAt:new Date(V.start).toISOString(),endedAt:new Date().toISOString(),
     durationSec:Math.round((Date.now()-V.start)/1000),correct:c,total:V.results.length,newWords:V.fresh.length,
     spelling:{correct:sp.filter(r=>r.correct).length,total:sp.length},
-    reading:V.read?{correct:rc,total:V.rres.length}:null,xp:c*5+(V.results.length-c)*2+rc*5+(V.rres.length-rc)*2,
-    items:V.results.map(r=>({qid:"v:"+r.w,word:r.w,kind:r.kind,fresh:r.fresh,correct:r.correct}))});
+    reading:V.read?{correct:rc,total:V.rres.length}:null,xp:c*5+(V.results.length-c)*2+rc*5+(V.rres.length-rc)*2+V.pres.length*2,
+    ...(V.card?{phonCard:V.card.id}:{}),
+    ...(V.probe&&V.pres.length?{probe:{mk:V.probe.mk,half:V.probe.half,correct:V.pres.filter(x=>x.correct).length,total:V.pres.length,items:V.pres}}:{}),
+    items:V.results.map(r=>({qid:"v:"+r.w,word:r.w,kind:r.kind,fresh:r.fresh,correct:r.correct,...(r.kind==="spell"?{raw:r.raw,hintLv:r.hintLv,chunked:r.chunked}:{})}))});
 }
 
 /* ---------- spell map ---------- */
@@ -4797,6 +4875,9 @@ function renderParent(){
   </div>
   <p class="note">ผิดเพราะไม่เข้าใจหลัก ต้องอธิบายใหม่ ผิดเพราะอ่านพลาดหรือคิดเลขผิด ต้องฝึกความรอบคอบ คนละวิธีแก้กัน</p></section>
   <section class="card"><h3>คำศัพท์อังกฤษ</h3>
+    ${(()=>{ const pr=voc.filter(a=>a.probe).map(a=>({d:a.endedAt,...a.probe})); const cs=voc.filter(a=>a.phonCard).length;
+      return `<p class="small"><b>เช็คการสะกดคำที่ไม่เคยฝึก (รายเดือน · วัดว่าใช้หลักเสียงกับคำใหม่ได้ไหม):</b> ${pr.length?pr.map(x=>`${new Date(x.d).toLocaleDateString("th-TH",{month:"short",year:"2-digit"})} ชุด ${x.half?"B":"A"} ถูก ${x.correct}/${x.total}`).join(" · "):"ยังไม่มี (ครั้งแรกจะขึ้นในรอบคำศัพท์ถัดไป)"} · การ์ดหลักเสียงที่อ่านแล้ว ${cs}/${PHON.cards.length} ใบ</p>
+        <p class="small muted">ชุด A กับ B สลับเดือนเว้นเดือน เทียบได้ทุก 2 เดือน · ไม่แสดงเฉลยให้น้อง เพื่อให้คำยังเป็นคำใหม่</p>` })()}
     ${voc.length?`<p>ทำ ${voc.length} ครั้ง · เรียนคำใหม่ ${voc.reduce((s,a)=>s+(a.newWords||0),0)} คำ · ตอบถูก ${vAcc}%</p>
     ${(()=>{const miss={};vItems.filter(x=>!x.correct).forEach(x=>miss[x.word]=(miss[x.word]||0)+1);const m=Object.entries(miss).sort((a,b)=>b[1]-a[1]).slice(0,6);return m.length?`<p class="small muted">คำที่พลาดบ่อย: ${m.map(([w,n])=>`${esc(w)} (${n})`).join(", ")}</p>`:""})()}`:`<p class="muted small">ยังไม่ได้เริ่มคำศัพท์</p>`}
   </section>

@@ -4,601 +4,915 @@
   "th": "เพิ่มขึ้น",
   "ex": "The number of fans increased after episode 5.",
   "exTh": "จำนวนแฟนๆ เพิ่มขึ้นหลังตอนที่ 5",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "in·crease",
+  "parts": [
+   [
+    "in-",
+    "เข้า/เพิ่ม"
+   ],
+   [
+    "crease",
+    "เติบโต"
+   ]
+  ]
  },
  {
   "w": "decrease",
   "th": "ลดลง",
   "ex": "Oxygen in water decreases when it gets hot.",
   "exTh": "ออกซิเจนในน้ำลดลงเมื่อน้ำร้อนขึ้น",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "de·crease",
+  "parts": [
+   [
+    "de-",
+    "ลง/ออก"
+   ],
+   [
+    "crease",
+    "เติบโต"
+   ]
+  ]
  },
  {
   "w": "sketch",
   "th": "ภาพร่าง",
   "ex": "She made a quick sketch of the cat.",
   "exTh": "เธอร่างภาพแมวอย่างเร็วๆ",
-  "cat": "art"
+  "cat": "art",
+  "syl": "sketch"
  },
  {
   "w": "compare",
   "th": "เปรียบเทียบ",
   "ex": "Compare the two graphs.",
   "exTh": "เปรียบเทียบกราฟสองอันนี้",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "com·pare"
  },
  {
   "w": "ratio",
   "th": "อัตราส่วน",
   "ex": "Mix blue and yellow in a 2 : 5 ratio.",
   "exTh": "ผสมสีฟ้ากับสีเหลืองในอัตราส่วน 2 : 5",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "ra·ti·o"
  },
  {
   "w": "spell",
   "th": "คาถา",
   "ex": "The mage learned a new spell.",
   "exTh": "นักเวทเรียนคาถาใหม่",
-  "cat": "art"
+  "cat": "art",
+  "syl": "spell"
  },
  {
   "w": "average",
   "th": "ค่าเฉลี่ย",
   "ex": "The average score was 8.",
   "exTh": "คะแนนเฉลี่ยคือ 8",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "av·er·age"
  },
  {
   "w": "journey",
   "th": "การเดินทาง",
   "ex": "Their journey took ten years.",
   "exTh": "การเดินทางของพวกเขาใช้เวลาสิบปี",
-  "cat": "art"
+  "cat": "art",
+  "syl": "jour·ney"
  },
  {
   "w": "describe",
   "th": "บรรยาย อธิบายลักษณะ",
   "ex": "Describe what you see in the picture.",
   "exTh": "บรรยายสิ่งที่เห็นในภาพ",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "de·scribe"
  },
  {
   "w": "dissolve",
   "th": "ละลาย",
   "ex": "Sugar dissolves in warm water.",
   "exTh": "น้ำตาลละลายในน้ำอุ่น",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "dis·solve",
+  "parts": [
+   [
+    "dis-",
+    "แยกออก"
+   ],
+   [
+    "solve",
+    "คลาย"
+   ]
+  ]
  },
  {
   "w": "apprentice",
   "th": "ลูกศิษย์ ผู้ฝึกหัด",
   "ex": "The apprentice practiced every day.",
   "exTh": "ลูกศิษย์ฝึกซ้อมทุกวัน",
-  "cat": "art"
+  "cat": "art",
+  "syl": "ap·pren·tice"
  },
  {
   "w": "measure",
   "th": "วัด",
   "ex": "Measure the length of the leaf.",
   "exTh": "วัดความยาวของใบไม้",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "meas·ure"
  },
  {
   "w": "temperature",
   "th": "อุณหภูมิ",
   "ex": "The temperature dropped at night.",
   "exTh": "อุณหภูมิลดลงตอนกลางคืน",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "tem·per·a·ture"
  },
  {
   "w": "brave",
   "th": "กล้าหาญ",
   "ex": "A brave hero is not always strong.",
   "exTh": "ฮีโร่ที่กล้าหาญไม่จำเป็นต้องแข็งแรงเสมอไป",
-  "cat": "art"
+  "cat": "art",
+  "syl": "brave"
  },
  {
   "w": "result",
   "th": "ผลลัพธ์",
   "ex": "The result surprised everyone.",
   "exTh": "ผลลัพธ์ทำให้ทุกคนประหลาดใจ",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "re·sult"
  },
  {
   "w": "experiment",
   "th": "การทดลอง",
   "ex": "We did an experiment with salt water.",
   "exTh": "เราทำการทดลองกับน้ำเกลือ",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "ex·per·i·ment"
  },
  {
   "w": "gentle",
   "th": "อ่อนโยน",
   "ex": "He was gentle with the small bird.",
   "exTh": "เขาอ่อนโยนกับนกตัวเล็ก",
-  "cat": "art"
+  "cat": "art",
+  "syl": "gen·tle"
  },
  {
   "w": "reason",
   "th": "เหตุผล",
   "ex": "What is the reason for your answer?",
   "exTh": "คำตอบของเธอมีเหตุผลอะไร",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "rea·son"
  },
  {
   "w": "percent",
   "th": "ร้อยละ",
   "ex": "Forty percent of the class likes anime.",
   "exTh": "ร้อยละสี่สิบของห้องชอบอนิเมะ",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "per·cent",
+  "parts": [
+   [
+    "per",
+    "ต่อ"
+   ],
+   [
+    "cent",
+    "ร้อย"
+   ]
+  ]
  },
  {
   "w": "ancient",
   "th": "โบราณ",
   "ex": "They found an ancient book.",
   "exTh": "พวกเขาพบหนังสือโบราณเล่มหนึ่ง",
-  "cat": "art"
+  "cat": "art",
+  "syl": "an·cient"
  },
  {
   "w": "example",
   "th": "ตัวอย่าง",
   "ex": "Give one example of a mixture.",
   "exTh": "ยกตัวอย่างสารผสมมาหนึ่งอย่าง",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "ex·am·ple"
  },
  {
   "w": "variable",
   "th": "ตัวแปร",
   "ex": "Change only one variable at a time.",
   "exTh": "เปลี่ยนตัวแปรทีละตัวเท่านั้น",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "var·i·a·ble"
  },
  {
   "w": "curious",
   "th": "อยากรู้อยากเห็น",
   "ex": "The curious cat opened the box.",
   "exTh": "แมวขี้สงสัยเปิดกล่องออก",
-  "cat": "art"
+  "cat": "art",
+  "syl": "cu·ri·ous"
  },
  {
   "w": "difference",
   "th": "ความแตกต่าง ผลต่าง",
   "ex": "Find the difference between 15 and 9.",
   "exTh": "หาผลต่างระหว่าง 15 กับ 9",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "dif·fer·ence",
+  "parts": [
+   [
+    "differ",
+    "ต่างกัน"
+   ],
+   [
+    "-ence",
+    "ความ..."
+   ]
+  ]
  },
  {
   "w": "graph",
   "th": "กราฟ",
   "ex": "The graph shows a rising line.",
   "exTh": "กราฟแสดงเส้นที่สูงขึ้น",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "graph"
  },
  {
   "w": "shadow",
   "th": "เงา",
   "ex": "Her shadow grew long in the evening.",
   "exTh": "เงาของเธอยาวขึ้นในตอนเย็น",
-  "cat": "art"
+  "cat": "art",
+  "syl": "shad·ow"
  },
  {
   "w": "amount",
   "th": "ปริมาณ จำนวน",
   "ex": "Use the same amount of water.",
   "exTh": "ใช้น้ำในปริมาณเท่ากัน",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "a·mount"
  },
  {
   "w": "estimate",
   "th": "ประมาณ คาดคะเน",
   "ex": "Estimate the number of fish in the pond.",
   "exTh": "ประมาณจำนวนปลาในบ่อ",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "es·ti·mate"
  },
  {
   "w": "memory",
   "th": "ความทรงจำ",
   "ex": "She kept the memory of her teacher.",
   "exTh": "เธอเก็บความทรงจำเกี่ยวกับครูของเธอไว้",
-  "cat": "art"
+  "cat": "art",
+  "syl": "mem·o·ry"
  },
  {
   "w": "explain",
   "th": "อธิบาย",
   "ex": "Explain how you got the answer.",
   "exTh": "อธิบายว่าได้คำตอบมาอย่างไร",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "ex·plain"
  },
  {
   "w": "data",
   "th": "ข้อมูล",
   "ex": "Collect data for one week.",
   "exTh": "เก็บข้อมูลเป็นเวลาหนึ่งสัปดาห์",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "da·ta"
  },
  {
   "w": "wander",
   "th": "เดินเตร็ดเตร่",
   "ex": "They wandered through the forest.",
   "exTh": "พวกเขาเดินเตร็ดเตร่ไปในป่า",
-  "cat": "art"
+  "cat": "art",
+  "syl": "wan·der"
  },
  {
   "w": "predict",
   "th": "ทำนาย คาดการณ์",
   "ex": "Predict what will happen next.",
   "exTh": "ทำนายว่าจะเกิดอะไรขึ้นต่อไป",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "pre·dict",
+  "parts": [
+   [
+    "pre-",
+    "ล่วงหน้า"
+   ],
+   [
+    "dict",
+    "พูด"
+   ]
+  ]
  },
  {
   "w": "evidence",
   "th": "หลักฐาน",
   "ex": "Use evidence to support your idea.",
   "exTh": "ใช้หลักฐานสนับสนุนความคิดของเธอ",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "ev·i·dence",
+  "parts": [
+   [
+    "e-",
+    "ออกมา"
+   ],
+   [
+    "vid",
+    "เห็น"
+   ],
+   [
+    "-ence",
+    "สิ่ง..."
+   ]
+  ]
  },
  {
   "w": "character",
   "th": "ตัวละคร",
   "ex": "My favorite character is quiet but kind.",
   "exTh": "ตัวละครที่ชอบที่สุดเป็นคนเงียบแต่ใจดี",
-  "cat": "art"
+  "cat": "art",
+  "syl": "char·ac·ter"
  },
  {
   "w": "observe",
   "th": "สังเกต",
   "ex": "Observe the color change carefully.",
   "exTh": "สังเกตการเปลี่ยนสีอย่างตั้งใจ",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "ob·serve",
+  "parts": [
+   [
+    "ob-",
+    "ไปที่"
+   ],
+   [
+    "serve",
+    "เฝ้าดู"
+   ]
+  ]
  },
  {
   "w": "density",
   "th": "ความหนาแน่น",
   "ex": "Ice has a lower density than water.",
   "exTh": "น้ำแข็งมีความหนาแน่นน้อยกว่าน้ำ",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "den·si·ty",
+  "parts": [
+   [
+    "dense",
+    "แน่น"
+   ],
+   [
+    "-ity",
+    "ความ..."
+   ]
+  ]
  },
  {
   "w": "shade",
   "th": "ลงเงา แรเงา",
   "ex": "Shade the left side of the apple.",
   "exTh": "แรเงาด้านซ้ายของแอปเปิล",
-  "cat": "art"
+  "cat": "art",
+  "syl": "shade"
  },
  {
   "w": "total",
   "th": "ทั้งหมด ผลรวม",
   "ex": "The total is 40.",
   "exTh": "ผลรวมคือ 40",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "to·tal"
  },
  {
   "w": "energy",
   "th": "พลังงาน",
   "ex": "Plants get energy from sunlight.",
   "exTh": "พืชได้พลังงานจากแสงแดด",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "en·er·gy"
  },
  {
   "w": "adventure",
   "th": "การผจญภัย",
   "ex": "Every adventure starts with one step.",
   "exTh": "การผจญภัยทุกครั้งเริ่มจากก้าวแรก",
-  "cat": "art"
+  "cat": "art",
+  "syl": "ad·ven·ture"
  },
  {
   "w": "similar",
   "th": "คล้ายกัน",
   "ex": "These two triangles are similar.",
   "exTh": "สามเหลี่ยมสองรูปนี้คล้ายกัน",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "sim·i·lar"
  },
  {
   "w": "force",
   "th": "แรง",
   "ex": "A force can push or pull.",
   "exTh": "แรงสามารถผลักหรือดึงได้",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "force"
  },
  {
   "w": "patient",
   "th": "อดทน",
   "ex": "Be patient. Good drawings take time.",
   "exTh": "ใจเย็นๆ ภาพวาดที่ดีต้องใช้เวลา",
-  "cat": "art"
+  "cat": "art",
+  "syl": "pa·tient"
  },
  {
   "w": "solve",
   "th": "แก้ (ปัญหา โจทย์)",
   "ex": "Can you solve this puzzle?",
   "exTh": "เธอแก้ปริศนานี้ได้ไหม",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "solve"
  },
  {
   "w": "mixture",
   "th": "ของผสม",
   "ex": "The apprentice made a mixture of salt and sand by mistake.",
   "exTh": "ศิษย์ฝึกหัดทำเกลือกับทรายปนกันเป็นของผสมโดยไม่ตั้งใจ",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "mix·ture",
+  "parts": [
+   [
+    "mix",
+    "ผสม"
+   ],
+   [
+    "-ture",
+    "สิ่ง..."
+   ]
+  ]
  },
  {
   "w": "separate",
   "th": "แยกออกจากกัน",
   "ex": "We can separate sand from water with filter paper.",
   "exTh": "เราแยกทรายออกจากน้ำได้ด้วยกระดาษกรอง",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "sep·a·rate"
  },
  {
   "w": "filter",
   "th": "กรอง / ที่กรอง",
   "ex": "Filter the muddy water before you boil it.",
   "exTh": "กรองน้ำขุ่นก่อนนำไปต้ม",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "fil·ter"
  },
  {
   "w": "crystal",
   "th": "ผลึก",
   "ex": "Blue crystals grew slowly in the cooling solution.",
   "exTh": "ผลึกสีฟ้าค่อยๆ โตขึ้นในสารละลายที่เย็นลง",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "crys·tal"
  },
  {
   "w": "boil",
   "th": "ต้ม / เดือด",
   "ex": "Water boils at about 100 °C at sea level.",
   "exTh": "น้ำเดือดที่ประมาณ 100 องศาเซลเซียสที่ระดับน้ำทะเล",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "boil"
  },
  {
   "w": "volume",
   "th": "ปริมาตร",
   "ex": "The volume of the cube is 27 cubic centimetres.",
   "exTh": "ลูกบาศก์นี้มีปริมาตร 27 ลูกบาศก์เซนติเมตร",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "vol·ume"
  },
  {
   "w": "distance",
   "th": "ระยะทาง",
   "ex": "The robot measured the distance to the lighthouse.",
   "exTh": "หุ่นยนต์วัดระยะทางไปถึงประภาคาร",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "dis·tance"
  },
  {
   "w": "practice",
   "th": "ฝึกซ้อม",
   "ex": "The dance group practices every evening after school.",
   "exTh": "ทีมเต้นฝึกซ้อมทุกเย็นหลังเลิกเรียน",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "prac·tice"
  },
  {
   "w": "improve",
   "th": "พัฒนาให้ดีขึ้น",
   "ex": "Her drawings improve a little every week.",
   "exTh": "ภาพวาดของเธอดีขึ้นทีละนิดทุกสัปดาห์",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "im·prove"
  },
  {
   "w": "choose",
   "th": "เลือก",
   "ex": "Choose the answer that makes the most sense.",
   "exTh": "เลือกคำตอบที่สมเหตุสมผลที่สุด",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "choose"
  },
  {
   "w": "careful",
   "th": "ระมัดระวัง",
   "ex": "Be careful when you pour hot water.",
   "exTh": "ระวังตอนเทน้ำร้อนด้วยนะ",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "care·ful",
+  "parts": [
+   [
+    "care",
+    "ระวัง"
+   ],
+   [
+    "-ful",
+    "เต็มไปด้วย"
+   ]
+  ]
  },
  {
   "w": "discover",
   "th": "ค้นพบ",
   "ex": "The explorers discovered a cave full of glowing stones.",
   "exTh": "นักสำรวจค้นพบถ้ำที่เต็มไปด้วยหินเรืองแสง",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "dis·cov·er",
+  "parts": [
+   [
+    "dis-",
+    "เอาออก"
+   ],
+   [
+    "cover",
+    "สิ่งที่ปิด"
+   ]
+  ]
  },
  {
   "w": "protect",
   "th": "ปกป้อง",
   "ex": "The swordsman promised to protect the village.",
   "exTh": "นักดาบสัญญาว่าจะปกป้องหมู่บ้าน",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "pro·tect"
  },
  {
   "w": "prepare",
   "th": "เตรียม",
   "ex": "She prepared her pencils the night before the exam.",
   "exTh": "เธอเตรียมดินสอไว้ตั้งแต่คืนก่อนสอบ",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "pre·pare",
+  "parts": [
+   [
+    "pre-",
+    "ล่วงหน้า"
+   ],
+   [
+    "pare",
+    "จัด"
+   ]
+  ]
  },
  {
   "w": "outline",
   "th": "เส้นโครงร่าง",
   "ex": "Draw a light outline first, then add the details.",
   "exTh": "วาดเส้นโครงร่างบางๆ ก่อน แล้วค่อยเติมรายละเอียด",
-  "cat": "art"
+  "cat": "art",
+  "syl": "out·line",
+  "parts": [
+   [
+    "out",
+    "นอก"
+   ],
+   [
+    "line",
+    "เส้น"
+   ]
+  ]
  },
  {
   "w": "brush",
   "th": "พู่กัน / แปรง",
   "ex": "Use a soft brush for the sky.",
   "exTh": "ใช้พู่กันขนนุ่มระบายท้องฟ้า",
-  "cat": "art"
+  "cat": "art",
+  "syl": "brush"
  },
  {
   "w": "rhythm",
   "th": "จังหวะ",
   "ex": "The dancers moved together to the rhythm.",
   "exTh": "นักเต้นขยับพร้อมกันตามจังหวะ",
-  "cat": "art"
+  "cat": "art",
+  "syl": "rhy·thm"
  },
  {
   "w": "glow",
   "th": "เรืองแสง",
   "ex": "The magic stone began to glow in the dark.",
   "exTh": "หินเวทเริ่มเรืองแสงในความมืด",
-  "cat": "art"
+  "cat": "art",
+  "syl": "glow"
  },
  {
   "w": "costume",
   "th": "ชุดแต่งกาย / ชุดคอสตูม",
   "ex": "She designed a costume for the mage character.",
   "exTh": "เธอออกแบบชุดให้ตัวละครจอมเวท",
-  "cat": "art"
+  "cat": "art",
+  "syl": "cos·tume"
  },
  {
   "w": "scene",
   "th": "ฉาก",
   "ex": "The last scene of the story made everyone cry.",
   "exTh": "ฉากสุดท้ายของเรื่องทำให้ทุกคนร้องไห้",
-  "cat": "art"
+  "cat": "art",
+  "syl": "scene"
  },
  {
   "w": "detail",
   "th": "รายละเอียด",
   "ex": "Look at the small details in the background.",
   "exTh": "ดูรายละเอียดเล็กๆ ในฉากหลังสิ",
-  "cat": "art"
+  "cat": "art",
+  "syl": "de·tail"
  },
  {
   "w": "pressure",
   "th": "ความดัน",
   "ex": "The pressure of water is greater at the bottom of the lake.",
   "exTh": "ความดันของน้ำที่ก้นทะเลสาบมากกว่าที่ผิวน้ำ",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "pres·sure",
+  "parts": [
+   [
+    "press",
+    "กด"
+   ],
+   [
+    "-ure",
+    "การ..."
+   ]
+  ]
  },
  {
   "w": "float",
   "th": "ลอย",
   "ex": "A wooden boat can float on the river.",
   "exTh": "เรือไม้ลอยอยู่บนแม่น้ำได้",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "float"
  },
  {
   "w": "sink",
   "th": "จม",
   "ex": "A small stone will sink in water.",
   "exTh": "ก้อนหินเล็กๆ จะจมในน้ำ",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "sink"
  },
  {
   "w": "weight",
   "th": "น้ำหนัก",
   "ex": "The robot checked the weight of each box.",
   "exTh": "หุ่นยนต์ตรวจน้ำหนักของกล่องแต่ละใบ",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "weight"
  },
  {
   "w": "surface",
   "th": "ผิว / พื้นผิว",
   "ex": "Leaves were floating on the surface of the pond.",
   "exTh": "ใบไม้ลอยอยู่บนผิวน้ำในสระ",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "sur·face",
+  "parts": [
+   [
+    "sur-",
+    "บน"
+   ],
+   [
+    "face",
+    "หน้า"
+   ]
+  ]
  },
  {
   "w": "frequency",
   "th": "ความถี่",
   "ex": "Write the frequency of each score in the table.",
   "exTh": "เขียนความถี่ของแต่ละคะแนนลงในตาราง",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "fre·quen·cy",
+  "parts": [
+   [
+    "frequent",
+    "บ่อย"
+   ],
+   [
+    "-cy",
+    "ความ..."
+   ]
+  ]
  },
  {
   "w": "range",
   "th": "พิสัย / ช่วง",
   "ex": "The range of the scores is 34 points.",
   "exTh": "พิสัยของคะแนนเท่ากับ 34 คะแนน",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "range"
  },
  {
   "w": "equation",
   "th": "สมการ",
   "ex": "She wrote an equation to find the missing number.",
   "exTh": "เธอเขียนสมการเพื่อหาจำนวนที่หายไป",
-  "cat": "sci"
+  "cat": "sci",
+  "syl": "e·qua·tion",
+  "parts": [
+   [
+    "equa",
+    "เท่ากัน"
+   ],
+   [
+    "-tion",
+    "การ..."
+   ]
+  ]
  },
  {
   "w": "goal",
   "th": "เป้าหมาย",
   "ex": "Her goal is to pass the science-school exam.",
   "exTh": "เป้าหมายของเธอคือสอบผ่านข้อสอบโรงเรียนวิทยาศาสตร์",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "goal"
  },
  {
   "w": "mistake",
   "th": "ความผิดพลาด",
   "ex": "Everyone makes mistakes when they learn something new.",
   "exTh": "ทุกคนทำพลาดได้ตอนเรียนเรื่องใหม่",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "mis·take"
  },
  {
   "w": "confident",
   "th": "มั่นใจ",
   "ex": "After a week of practice, she felt more confident.",
   "exTh": "หลังฝึกมาหนึ่งสัปดาห์ เธอรู้สึกมั่นใจขึ้น",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "con·fi·dent",
+  "parts": [
+   [
+    "con-",
+    "อย่างเต็มที่"
+   ],
+   [
+    "fid",
+    "เชื่อ"
+   ],
+   [
+    "-ent",
+    "ที่..."
+   ]
+  ]
  },
  {
   "w": "support",
   "th": "สนับสนุน / ช่วยเหลือ",
   "ex": "Her teammates always support each other in a hard match.",
   "exTh": "เพื่อนร่วมทีมของเธอช่วยกันเสมอเวลาแข่งเกมยากๆ",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "sup·port"
  },
  {
   "w": "quickly",
   "th": "อย่างรวดเร็ว",
   "ex": "The creature quickly hid behind a rock.",
   "exTh": "เจ้าสัตว์ตัวนั้นรีบหลบหลังก้อนหินอย่างรวดเร็ว",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "quick·ly",
+  "parts": [
+   [
+    "quick",
+    "เร็ว"
+   ],
+   [
+    "-ly",
+    "อย่าง..."
+   ]
+  ]
  },
  {
   "w": "unusual",
   "th": "ผิดปกติ / แปลก",
   "ex": "The sensor recorded an unusual temperature.",
   "exTh": "เซนเซอร์บันทึกอุณหภูมิที่ผิดปกติได้",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "un·u·su·al",
+  "parts": [
+   [
+    "un-",
+    "ไม่"
+   ],
+   [
+    "usual",
+    "ปกติ"
+   ]
+  ]
  },
  {
   "w": "remember",
   "th": "จำได้ / จดจำ",
   "ex": "Can you remember the rule for exponents?",
   "exTh": "เธอจำกฎของเลขยกกำลังได้ไหม",
-  "cat": "gen"
+  "cat": "gen",
+  "syl": "re·mem·ber",
+  "parts": [
+   [
+    "re-",
+    "อีกครั้ง"
+   ],
+   [
+    "member",
+    "นึกถึง"
+   ]
+  ]
  },
  {
   "w": "palette",
   "th": "จานสี",
   "ex": "She mixed blue and yellow on her palette.",
   "exTh": "เธอผสมสีฟ้ากับสีเหลืองบนจานสี",
-  "cat": "art"
+  "cat": "art",
+  "syl": "pal·ette"
  },
  {
   "w": "canvas",
   "th": "ผ้าใบวาดภาพ",
   "ex": "The painter stretched a new canvas on the frame.",
   "exTh": "จิตรกรขึงผ้าใบใหม่บนกรอบ",
-  "cat": "art"
+  "cat": "art",
+  "syl": "can·vas"
  },
  {
   "w": "hero",
   "th": "วีรบุรุษ / ตัวเอก",
   "ex": "The hero of the story is a young swordsman.",
   "exTh": "ตัวเอกของเรื่องคือนักดาบหนุ่ม",
-  "cat": "art"
+  "cat": "art",
+  "syl": "he·ro"
  },
  {
   "w": "stage",
   "th": "เวที",
   "ex": "The dance group bowed on the stage.",
   "exTh": "วงเต้นโค้งคำนับบนเวที",
-  "cat": "art"
+  "cat": "art",
+  "syl": "stage"
  },
  {
   "w": "bright",
   "th": "สดใส / สว่าง",
   "ex": "Use bright colours for a happy scene.",
   "exTh": "ใช้สีสดใสสำหรับฉากที่มีความสุข",
-  "cat": "art"
+  "cat": "art",
+  "syl": "bright"
  }
 ]
