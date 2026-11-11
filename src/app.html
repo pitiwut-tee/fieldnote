@@ -4618,7 +4618,7 @@ function readinessSection(list){ if(!Object.keys(CUR).length) return ""; const s
   const spellReady=sp=>{ const subs=CUR[sp]; return {ret:subs.filter(s=>subStatus(st[s.id])>=3).length,n:subs.length} };
   const ready=0; // a spell is exam-ready only with a timed mixed set (≥20 items, ≥80%) and an external mock exam; neither exists yet
   return `<section class="card" id="readiness"><h2>ความพร้อมสอบรอบแรก</h2>
-    <p class="small muted">ขอบเขต ม.1–3 ตามรายการหัวข้อในประกาศ MWIT ปี 2570 แตกเป็น ${allSubs.length} เรื่องย่อย (ร่างแรก รอเทียบกับหนังสือเรียนจริง) · ระดับเกิน "เข้าใจ" นับจาก<b>ด่านตรวจ</b>เท่านั้น คือข้อที่น้องไม่เคยเห็น เจอแบบคละเรื่อง และทำคนละวันกับที่ฝึก · ระดับลดลงได้ถ้าด่านตรวจพลาดซ้ำ</p>
+    <p class="small muted">ขอบเขต ม.1–3 ตามรายการหัวข้อในประกาศ MWIT ปี 2570 แตกเป็น ${allSubs.length} เรื่องย่อย · เทียบกับโครงสร้างบทของหนังสือเรียน สสวท. ม.1–3 แล้ว (สีน้ำตาล = อยู่ในรายการสอบหรือพบบ่อยในข้อสอบ แต่ไม่อยู่ในหนังสือเรียนพื้นฐาน) · ระดับเกิน "เข้าใจ" นับจาก<b>ด่านตรวจ</b>เท่านั้น คือข้อที่น้องไม่เคยเห็น เจอแบบคละเรื่อง และทำคนละวันกับที่ฝึก · ระดับลดลงได้ถ้าด่านตรวจพลาดซ้ำ</p>
     <div class="rdkpi">${RD_STATUS.map(([,t],k)=>`<div><b>${cnt[k]}</b><span class="small">${rdChip(k)}</span></div>`).join("")}</div>
     <div class="feedback"><b>พร้อมสอบ (วัดรายคาถา): ${ready} จาก ${Object.keys(CUR).length} คาถา</b><span class="small">ต้องมีครบ 3 อย่าง: ทุกเรื่องย่อยของคาถาถึงขั้น "จำได้" · ชุดคละจับเวลาของคาถานั้นอย่างน้อย 20 ข้อ ถูก 80% ขึ้นไป · ยืนยันด้วยข้อสอบเสมือนจริงจากภายนอก (ยังไม่มีทั้งชุดจับเวลาและข้อสอบภายนอก)</span></div>
     ${(()=>{ const cs=list.filter(a=>a.type==="comp"), n=cs.reduce((m,a)=>m+(a.total||0),0), c=cs.reduce((m,a)=>m+(a.correct||0),0), ct=compToday(list);
@@ -4629,7 +4629,7 @@ function readinessSection(list){ if(!Object.keys(CUR).length) return ""; const s
         return `<details class="rdspell"><summary><b>${esc(spellName(sp))}</b><span class="rdmeta"><span class="rdbar">${ks.map(k=>`<i style="background:${RD_STATUS[k][2]}"></i>`).join("")}</span><span class="small muted">เริ่มแล้ว ${started}/${subs.length} · จำได้ขึ้นไป ${sr.ret}/${sr.n} · คลัง ${bk} ข้อ</span></span></summary>
           <div class="rdtable"><table><thead><tr><th>เรื่องย่อย</th><th>ชั้น</th><th>สถานะ</th><th>ฝึก: ถูก ระดับ 1–2</th><th>ด่านตรวจ: ถูก/ทำ</th><th>วันที่ผ่านด่านตรวจ</th><th>ด่านตรวจ ระดับ 3</th><th>ล่าสุด</th><th>คลัง (1/2/3) · ข้อใหม่เหลือ</th></tr></thead><tbody>
           ${subs.map((s,i)=>{ const o=st[s.id], b=bank[s.id], k=ks[i];
-            return `<tr><td>${esc(s.n)}</td><td class="small">${esc(s.g)}</td><td>${rdChip(k)}</td><td>${o&&o.n12?`${o.c12}/${o.n12} (${Math.round(o.c12/o.n12*100)}%)`:"–"}</td>
+            return `<tr><td>${esc(s.n)}</td><td class="small">${esc(s.g)}${s.b?`<br><span style="color:${/นอกหนังสือ/.test(s.b)?"#9A6A12":"var(--muted,#5B716B)"}">${esc(s.b)}</span>`:""}</td><td>${rdChip(k)}</td><td>${o&&o.n12?`${o.c12}/${o.n12} (${Math.round(o.c12/o.n12*100)}%)`:"–"}</td>
               <td>${o&&o.chk.length?`${o.chk.filter(e=>e.ok).length}/${o.chk.length}`:"–"}</td><td class="small">${o&&o.okDays.length?`${o.okDays.length} วัน · ห่าง ${Math.round(o.span/DAY)} วัน`:"–"}</td>
               <td>${o&&o.n3c?`${o.c3c}/${o.n3c}`:"–"}</td><td class="small">${o?fmtD(o.last):"–"}</td>
               <td class="small" style="color:${!b||short.has(s.id)?"#A8382E":b.l[3]?"inherit":"#9A6A12"}">${b?`${b.l[1]||0}/${b.l[2]||0}/${b.l[3]||0} · ${unseen[s.id]||0}`:"ยังไม่มี"}</td></tr>` }).join("")}</tbody></table></div></details>` }).join("")}` }).join("")}
