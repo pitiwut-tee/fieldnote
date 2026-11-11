@@ -667,7 +667,7 @@ async function importCode(raw, asTest){
 }
 
 /* ---------- updates: GitHub Pages lets the browser keep an old copy for a while, so check for a newer build ---------- */
-const BUILD="2026-11-11 20:55";
+const BUILD="2026-11-11 21:18";
 async function checkUpdate(){ if(!/^https?:/.test(location.protocol)||typeof db!=="undefined"&&db) return;
   try{ const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text(); const m=t.match(/const BUILD="(\d{4}-\d\d-\d\d \d\d:\d\d)"/);
     if(m&&m[1]!==BUILD&&!m[1].includes("@@")&&!document.getElementById("updbar")){ const d=document.createElement("button"); d.id="updbar"; d.className="btn";
@@ -3781,6 +3781,22 @@ function advSpellsGot(list){ return Object.values(spellStats(list)).filter(v=>(v
 function advStamina(team){ return 30+team.reduce((s,u)=>s+u.lv*4,0) }
 function advTrainCost(lv){ return 30+20*lv }
 
+/* always-visible "how do new stages open" (father, 11 Nov: it was only shown after tapping a locked node) */
+function advHowOpen(list,cleared,got,regOpen){
+  const all=ADV_REGIONS.flatMap(r=>r.stages.map((st,i)=>({r,st,i}))), next=all.find(x=>!cleared.has(x.st.id)&&regOpen(x.r)), pc=bossPieces(list), lastBoss=ADV_REGIONS[ADV_REGIONS.length-1].stages.slice(-1)[0];
+  const ss=spellStats(list), near=SPELLS.filter(x=>ss[x.id]&&!(ss[x.id].tier>=1)&&(ss[x.id].n1||0)>0).sort((a,b)=>(ss[b.id].c1||0)-(ss[a.id].c1||0)).slice(0,3);
+  let nextLine="";
+  if(next){ const prevOk=next.i===0||cleared.has(next.r.stages[next.i-1].id), spOk=!next.st.needSpells||got>=next.st.needSpells;
+    nextLine=prevOk&&spOk?`ด่านต่อไป: <b>${next.st.e} ${esc(next.st.n)}</b> เปิดแล้ว ไปลุยได้เลย`
+      :`ด่านต่อไป: <b>${next.st.e} ${esc(next.st.n)}</b> ${!prevOk?"ต้องผ่านด่านก่อนหน้าก่อน":`ต้องมีคาถาที่ขึ้นขั้นฝึกหัดแล้ว ${next.st.needSpells} คาถา (ตอนนี้ ${got})${near.length?` · ใกล้ขึ้นขั้นแล้ว: ${near.map(x=>esc(x.name)).join(", ")}`:""}`}` }
+  else nextLine=`ผ่านทุกด่านที่เปิดอยู่แล้ว เก่งมาก!`;
+  return `<details class="feedback" style="text-align:left" ${next&&!(next.i===0||cleared.has(next.r.stages[next.i-1].id))||next&&next.st.needSpells&&got<next.st.needSpells?"open":""}><summary class="small"><b>🗝️ ด่านใหม่เปิดอย่างไร</b> · ${nextLine}</summary>
+    <ul class="small" style="margin:.4em 0 0;padding-left:1.2em">
+      <li>ด่านธรรมดา: ชนะด่านก่อนหน้า ด่านถัดไปจะเปิดเอง</li>
+      <li>บอสของแต่ละเขต: ต้องมีคาถาที่ขึ้นขั้น "ฝึกหัด" แล้วครบตามจำนวน (เขต 1 ต้อง 3 คาถา · เขต 2 ต้อง 6 คาถา) ดูได้ที่แผนที่คาถา คาถาจะขึ้นขั้นเมื่อตอบข้อพื้นฐานของคาถานั้นถูก 80% ขึ้นไป (อย่างน้อย 3 ข้อ)</li>
+      <li>เขต 2 ${ADV_REGIONS[1]?.e||""} ${esc(ADV_REGIONS[1]?.n||"")}: เปิดเมื่อชนะบอสเขต 1</li>
+      <li>เขต 3 🗺️ (ยังเป็นความลับ): เปิดเมื่อสะสมชิ้นส่วนแผนที่ครบ 7 ชิ้น ได้จากการชนะบอสประจำวันในภารกิจหลัก วันละ 1 ชิ้น · ตอนนี้ ${Math.min(pc,7)}/7 · เขตนี้จะสร้างจากแบบที่เธอออกแบบเองในเวิร์กช็อปสตูดิโอเกม</li>
+      <li>ด่านที่ชนะแล้ว: เล่นซ้ำระดับยากและตำนานได้ เพื่อเก็บดาวและ EXP</li></ul></details>` }
 function renderAdv(){
   const list=mine(), w=wallet(list), cleared=advCleared(list), regOpen=r=>!r.needBoss||cleared.has(r.needBoss), R=ADV_REGIONS[advRegion!=null&&regOpen(ADV_REGIONS[advRegion])?advRegion:Math.max(0,ADV_REGIONS.map(regOpen).lastIndexOf(true))], en=advEnergy(list), team=advTeam(list), units=advRoster(list), valley=advValley(list), slots=ADV_LAB_SLOTS-units.filter(u=>u.uid.startsWith("lab:")).length;
   if(advB) return renderAdvBattle(list);
@@ -3822,8 +3838,9 @@ function renderAdv(){
     ${owned.has(g.id)?`<span class="small">มีแล้ว ✓</span>`:`<button class="btn ghost small" data-advgear="${g.id}" ${w.stars>=g.cost?"":"disabled"}>⭐${g.cost}</button>`}</div>`).join("");
   $v.innerHTML=`<section class="card"><div class="todayhead"><span class="eyebrow">🌍 ภารกิจกู้โลก · ${R.e} ${R.n}</span><span class="small">⚡ ออกรบได้อีก ${en.left}/${en.max} · ⭐ ${w.stars}</span></div>
       <p class="small">${R.intro}</p>
-      ${ADV_REGIONS.length>1?`<div class="row" style="gap:6px">${ADV_REGIONS.map((r,k)=>`<button class="btn ${r===R?"":"ghost"} small" data-advreg="${k}" ${regOpen(r)?"":"disabled"}>${regOpen(r)?r.e:"🔒"} ${r.n}</button>`).join("")}</div>
-        ${ADV_REGIONS.some(r=>!regOpen(r))?`<p class="small muted">เขตใหม่เปิดเมื่อชนะบอสของเขตก่อนหน้า</p>`:""}`:""}
+      ${ADV_REGIONS.length>1?`<div class="row" style="gap:6px">${ADV_REGIONS.map((r,k)=>`<button class="btn ${r===R?"":"ghost"} small" data-advreg="${k}" ${regOpen(r)?"":"disabled"}>${regOpen(r)?r.e:"🔒"} ${r.n}</button>`).join("")}<button class="btn ghost small" disabled>🔒 เขต 3 · ชิ้นส่วนแผนที่ ${Math.min(bossPieces(list),7)}/7</button></div>
+        `:""}
+      ${advHowOpen(list,cleared,got,regOpen)}
       <div class="islandwrap"><svg class="island" viewBox="0 0 340 420" role="img" aria-label="แผนที่${esc(R.n)}">
         <rect width="340" height="420" fill="${ice?`rgb(${Math.round(200+40*clean)},${Math.round(205+40*clean)},${Math.round(210+40*clean)})`:"#cfe8c6"}"/>
         ${[[30,20],[300,60],[40,300],[310,230],[20,170],[300,380],[200,40]].map(([x,y],k)=>`<text x="${x}" y="${y}" font-size="${16+k%3*4}" opacity="${0.35+clean*0.6}">${ice?(k%3===0?"🐧":k%3===1?"🏔️":"❄️"):k%2?"🌳":"🌲"}</text>`).join("")}
