@@ -538,3 +538,9 @@ summarises them, and follow `calendar.lessonQueue`. Never copy textbook or workb
 - `content/qtags.json` maps every qid → one subtopic id. **Every new question must be added to qtags.json** (verify that all QBANK ids are tagged before committing).
 - When choosing what to write next, prefer subtopics with no questions, then subtopics with no level-3 questions (the parent page's readiness section shows both). Current-term content first.
 - Readiness status rules (parent page): start = any attempt; prac = L1–2 n≥4 & ≥75%; base = L1–2 n≥6 & ≥80% on ≥2 days; ready = base + L3 ≥3 at ≥70% + a correct answer ≥7 days after first attempt. These are measured on our own bank only — never describe them to the father as real exam readiness.
+
+## Father's status doc (living note, 11 Nov 2026)
+- Doc: https://claude.ai/artifact/4kHsdKcNKfudfYGiyqbRQx ("สมุดคาถา · สิ่งที่ต้องการจากพ่อ และสถานะล่าสุด"), Claude Docs project id 1e56cbde-7272-43ad-9beb-270fb7f5f0dd. Written in Thai.
+- Sections: สิ่งที่ต้องการจากพ่อ (table with a สถานะ dropdown the father changes himself) · รอพ่อตัดสินใจ (checklist) · สถานะระบบตอนนี้ (numbers table) · งานถัดไปของผม · ทำเสร็จล่าสุด (newest first).
+- Every run, if the Claude Docs tools are available: read the doc first with sinceRev (the father edits it — his edits win), update the as-of date chip, the numbers table (bank size, subtopics with questions, with L3, spells without questions, her status counts) and add one row to ทำเสร็จล่าสุด. Add a row to the needs table only when a new need appears; never flip a status the father set.
+- If the Docs tools are not available in the run, say so in the evening report instead of skipping silently.
