@@ -39,7 +39,7 @@ for(const f of files){
       else { if(new Set(q.opts).size!==q.opts.length) warn(`${w}: options repeat`);
         if(!(q.a>=0&&q.a<q.opts.length)) warn(`${w}: answer index out of range`); }
     }
-    if(q.fig){ const f=q.fig; if(!["dot","stem","hist","bar","table"].includes(f.kind)) warn(`${w}: fig.kind must be dot, stem, hist, bar or table`);
+    if(q.fig){ const f=q.fig; if(!["dot","stem","hist","bar","table","line"].includes(f.kind)) warn(`${w}: fig.kind must be dot, stem, hist, bar, table or line`);
       if(f.kind==="dot"&&!(typeof f.min==="number"&&typeof f.max==="number"&&f.counts)) warn(`${w}: dot fig needs min, max, counts`);
       if((f.kind==="hist"||f.kind==="bar")&&!(Array.isArray(f.values)&&f.values.length)) warn(`${w}: ${f.kind} fig needs values`);
       if((f.kind==="stem"||f.kind==="table")&&!Array.isArray(f.rows)) warn(`${w}: ${f.kind} fig needs rows`); }
@@ -58,7 +58,7 @@ for(const f of files){ let s; try{ s=J("content/sets/"+f) }catch(e){ continue } 
   const qs=[...(s.warm||[]),...(s.practice||[]),...(s.challenge?[s.challenge]:[])];
   for(const q of qs) if(!["life","earth","fun","pure"].includes(q.ctx)) warn(`${f} ${q.id}: ctx must be life, earth, fun or pure`);
   const pr=(s.practice||[]).filter(q=>!q.ctxAuto), n=k=>pr.filter(q=>q.ctx===k).length;
-  if(s.kind!=="probe"&&pr.length&&(n("life")+n("earth")<Math.ceil(pr.length*0.5)||n("earth")<1)) warn(`${f}: practice needs about half life/earth contexts and at least 1 earth (has life ${n("life")}, earth ${n("earth")})`);
+  if(s.kind!=="probe"&&pr.length&&(n("life")+n("earth")<Math.ceil(pr.length*0.5)||(n("earth")<1&&!s.oneContext))) warn(`${f}: practice needs about half life/earth contexts and at least 1 earth (has life ${n("life")}, earth ${n("earth")})`);
   for(const q of qs) if(q.optErr&&!(Array.isArray(q.optErr)&&q.opts&&q.optErr.length===q.opts.length&&q.optErr[q.a]==null&&q.optErr.every((e,i)=>i===q.a||typeof e==="string"&&e))) warn(`${f} ${q.id}: optErr must match opts, null at the answer, a short code for each wrong option`);
   for(const q of qs) if(q.check&&!(Array.isArray(q.check.opts)&&q.check.opts.length>=2&&Number.isInteger(q.check.a)&&q.check.a>=0&&q.check.a<q.check.opts.length)) warn(`${f} ${q.id}: check needs {q?, opts:[2+], a:index, ex}`);
   for(const q of qs) if(q.level===3&&!(q.parts&&Array.isArray(q.parts.given)&&q.parts.given.length&&q.parts.ask)) warn(`${f} ${q.id}: level-3 question needs parts {given:[...], ask, watch?}`);

@@ -575,3 +575,11 @@ summarises them, and follow `calendar.lessonQueue`. Never copy textbook or workb
 - Style rules for every new science set: most items hang on a figure/table/graph/experiment; include at least one "which statements are correct" item and one experiment-logic item. For math level 3: prefer written-answer (fill) items; statistics as "condition" problems.
 - Still to build (tell the father when done): math unseen-passage sets (number bases, binary-like codes, a new distance/operation definition; 1 page + 5 graded items), physics/biology unseen passages, a minority "pick 2" item type, a counting & logic strand in the curriculum map.
 - The recalled papers are the external mock exams. Plan: father prints one, she sits it timed (90 min) after ม.2 term ends; only per-item right/wrong goes into the system. Do not use them before then, and do not expose her to their items through the app.
+
+## New fig kind, gap sets, math unseen passage (12 Nov 2026, evening)
+- `fig` kind `"line"`: {pts:[[x,y],...] or series:[{name,pts}], xl, yl, xmax, ymax, xstep, ystep, caption}. Use it for distance–time / speed–time graphs and any "read the graph" item. verify.js accepts it.
+- New sets: math-numtheory-1 (m5), sci-motion-1 (s16), sci-body-1 (s9), passage-math-1 (first math Unseen passage, spell t3, binary code idea). All 40 new items passed an independent blind check (40/40 keys agreed; wording fixes applied).
+- Set-level `oneContext` (string reason) waives ONLY the "at least 1 earth context" rule, for single-story passages. Do not use it on ordinary lessons.
+- The father decided (12 Nov): math this term is trained at IPST textbook level and above; the school workbook level is the floor, not the target.
+- IPST math ม.1 เล่ม 2 บทที่ 2 file on the father's computer has only 1 page (end-of-chapter exercises); its problem STYLES (inverse proportion with workers, scale drawing -> real area -> cost, currency exchange) informed sw-m3-4/5/6 in sweep-3. No text was copied.
+- Next gap sets to write: plants s8, earth s20, volumes m19 (incl. cone/pyramid), counting & logic, a second math unseen passage (new operation definition), physics/biology unseen passages.
