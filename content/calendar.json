@@ -73,6 +73,9 @@
   "sci-solution-2",
   "math-stats-3",
   "sci-separation-1",
+  "sci-solution-7",
+  "sci-separation-3",
+  "math-ratio-2",
   "math-ratio-1",
   "math-stats-5",
   "sci-solution-3",
@@ -83,7 +86,7 @@
   "sci-motion-1",
   "sci-body-1"
  ],
- "lessonQueueNote": "School order (her school's term-2 workbook): statistics first (she missed a week), science midterm = solutions + separation. The content run updates this queue. (2026-11-08 run: math-ratio-1 added after sci-separation-1 because ratio questions were missed twice in the mixed set.) (2026-11-10 evening: sci-pressure-1 put first; she said she has not learned Pa, and pressure is in the exam scope; the father asked to teach it now.) (2026-11-12: math-numtheory-1, sci-motion-1, sci-body-1 appended at the END: exam-gap lessons, after the school-order lessons.)",
+ "lessonQueueNote": "School order (her school's term-2 workbook): statistics first (she missed a week), science midterm = solutions + separation. The content run updates this queue. (2026-11-08 run: math-ratio-1 added after sci-separation-1 because ratio questions were missed twice in the mixed set.) (2026-11-10 evening: sci-pressure-1 put first; she said she has not learned Pa, and pressure is in the exam scope; the father asked to teach it now.) (2026-11-12: math-numtheory-1, sci-motion-1, sci-body-1 appended at the END: exam-gap lessons, after the school-order lessons.) (2026-11-12 evening: sci-solution-7, sci-separation-3, math-ratio-2 inserted after sci-separation-1 — all three cover the school's December midterm scope, read from the school's own documents.)",
  "sweepFrom": "2026-11-09",
  "dailyMinutes": {
   "school": "45–60",

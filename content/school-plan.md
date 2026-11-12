@@ -19,10 +19,28 @@ The school rushed statistics and she was ill for a week, so statistics is the mo
   tendency from a frequency table and finding x → then congruence SAS/ASA/SSS with short proofs.
   Every statistics question should show the chart with `fig`, not describe it in words.
 
-**Science midterm (Nov–Dec):** สารละลาย (s4: solubility, factors affecting it, concentration as % by mass,
-% by volume and mass-per-volume) and การแยกสารผสม (s3: evaporation, crystallisation, simple distillation,
-paper chromatography, solvent extraction / สกัดด้วยตัวทำละลาย). Make sure all three % types and solvent
-extraction are covered.
+**Science midterm (Nov–Dec):** READ FROM THE SCHOOL'S OWN FIVE DOCUMENTS, 12 Nov 2026 (82 pages; they are
+text-PDFs, not scans, so re-reading them is cheap). The documents stay on the father's computer; this is the
+whole scope as they present it, and nothing below is copied wording.
+- **สารละลาย (s4).** Definition (homogeneous, particles < 10⁻⁷ cm). Deciding solvent vs solute by TWO rules the
+  school states explicitly: same state → the larger amount is the solvent; different states → whichever matches
+  the state of the solution is the solvent. Worked examples in all three phases: solid solutions (brass Cu 60 /
+  Zn 40; stainless steel Fe 74 / Cr 18 / Ni 8), liquid (syrup, vinegar, rubbing alcohol ethanol 70 / water 30),
+  gas (air N₂ 78 / O₂ 21 / other 1; LPG propane 70 : butane 30). สภาพละลายได้ with a solubility table at
+  0/20/60/100 °C for NaCl, NaNO₃, KNO₃, Li₂CO₃ (LITHIUM CARBONATE GOES DOWN with temperature — the school's own
+  trap) and CaCl₂. Five factors: temperature (solids up, gases down), solvent type, particle size, stirring,
+  pressure (gases only). Concentration in three units (% w/w, % v/v, % w/v) with nine drill problems.
+  Everyday concentrations the school gives as facts: vinegar 4–18 % v/v, rubbing alcohol 70 % v/v, nail-polish
+  remover acetone 80 % v/v, medical saline 0.9 % w/v (and 15 % w/v as a laxative).
+- **การแยกสารผสม (s3).** Five methods, each with an industrial example: การระเหยแห้ง (sea-salt making),
+  การตกผลึก (cane sugar, 6 steps), การกลั่น in three kinds — ธรรมดา (needs boiling points ≥ 30 °C apart),
+  ไอน้ำ (volatile, water-insoluble, heat-sensitive oils), and **ลำดับส่วน incl. the crude-oil tower with the
+  boiling range of every fraction** — โครมาโทกราฟีแบบกระดาษ **with the Rf formula and a worked four-pigment
+  calculation**, and การสกัดด้วยตัวทำละลาย (7 criteria for choosing a solvent; sunflower-seed oil in hexane).
+- **Gaps this read exposed, now filled:** fractional distillation / crude oil had NO subtopic and no questions
+  (added s3.7 + set sci-separation-3), and solid/gas solutions plus real-world concentrations were thin
+  (added s4.9 + set sci-solution-7). Rf calculation existed but only 4 items for a topic the school teaches
+  with a full worked example.
 **Science final (Jan–Feb):** การเคลื่อนที่ / work & energy (s16), then ดิน แหล่งน้ำ เชื้อเพลิงซากดึกดำบรรพ์
 โลกและการเปลี่ยนแปลง (s20). Start these lessons in late December.
 
@@ -73,3 +91,29 @@ The school uses its own booklet, not the IPST textbook. Unit: statistics (2), co
 - Geometric reasoning: fill-in proofs with parallel lines (given / to prove / reasons).
 Father's decision (12 Nov): train her at IPST-textbook level and above this term; the school level is the floor, not the target.
 So for m22/m16/m15: keep a few items in the school's format (fill-in proof steps, class boundaries), but write most at IPST level and add exam-style "condition" problems.
+
+## Pilot: reading a whole IPST chapter (12 Nov 2026) — VERDICT: worth it, do it again
+
+The father asked whether reading an IPST textbook chapter in full pays for the usage. Tried on
+**คณิต ม.1 เล่ม 2 บทที่ 2 อัตราส่วน สัดส่วน และร้อยละ** (23 scanned pages, book pp. 73–129; the file is a
+selection of the chapter, not every page). It is a scan, so pages must be rasterised and viewed as images —
+about 10× the cost of a text PDF per page. Even so: **yes, worth it**, because the chapter carries three things
+the school's own workbook does not.
+
+1. **ชวนคิด boxes** — open-ended comparison prompts (two lemonade recipes, which is more sour; two cars at
+   different average speeds, who arrives first). This is exactly the proportional-reasoning style the entrance
+   exam uses, and the school workbook has nothing like it. Good model for level-3 items.
+2. **End-of-chapter exercises at real exam level** — chained three-term ratios on alloys (Fe : Ni = 21 : 5 and
+   Ni : Au = 4 : 3), ratios with fractional terms (3 : 3/5 : 2/5), work-rate problems, a two-school
+   admission-ratio problem, and inverse-proportion sets (workers/days, speed/time, current vs resistance).
+   แบบฝึกหัด 2.2 ค is an inverse-proportion set on its own.
+3. **Enrichment sidebars** — the golden ratio (1.618 : 1) and income-tax brackets as a percentage application.
+   These show up in competition questions and in the recalled exam papers.
+
+Written from this read (own wording only, nothing copied): **math-ratio-2** (three-term ratios, chaining via
+the common term, ratios with fractions, inverse proportion for work / speed / machines).
+
+**Rule going forward:** read an IPST chapter in full when (a) its spell is on the current term's plan or in the
+exam-gap list, and (b) the bank has fewer than ~10 items at level 3 for that spell. Ask the father first when
+the chapter is a scan, and say roughly how many pages. Chapters of the books he still has to supply
+(คณิต ม.2 เล่ม 2, วิทย์ ม.2) come first — they are this term's actual content.

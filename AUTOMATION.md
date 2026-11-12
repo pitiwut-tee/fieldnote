@@ -583,3 +583,20 @@ summarises them, and follow `calendar.lessonQueue`. Never copy textbook or workb
 - The father decided (12 Nov): math this term is trained at IPST textbook level and above; the school workbook level is the floor, not the target.
 - IPST math ม.1 เล่ม 2 บทที่ 2 file on the father's computer has only 1 page (end-of-chapter exercises); its problem STYLES (inverse proportion with workers, scale drawing -> real area -> cost, currency exchange) informed sw-m3-4/5/6 in sweep-3. No text was copied.
 - Next gap sets to write: plants s8, earth s20, volumes m19 (incl. cone/pyramid), counting & logic, a second math unseen passage (new operation definition), physics/biology unseen passages.
+
+## School midterm scope read in full + IPST chapter pilot (12 Nov 2026, evening)
+- Read the school's five science midterm PDFs (82 pages, text-extractable). Full scope is now in
+  content/school-plan.md under "Science midterm (Nov–Dec)". Re-read them cheaply whenever a สารละลาย or
+  การแยกสารผสม item is being written; do not guess the scope.
+- Curriculum additions: s3.7 การกลั่นลำดับส่วนและการแยกน้ำมันดิบ, s4.9 สารละลายของแข็งและแก๊ส โลหะเจือ
+  และความเข้มข้นที่ใช้จริง. Both came straight from the school documents and had zero questions before.
+- New sets: sci-separation-3 (s3, fractional distillation + crude-oil tower + Rf), sci-solution-7 (s4, solid and
+  gas solutions, the two solvent/solute rules, solubility table incl. the lithium-carbonate trap, real-world
+  concentrations), math-ratio-2 (m3, three-term and chained ratios, inverse proportion). All three inserted into
+  calendar.lessonQueue right after sci-separation-1, ahead of the exam-gap lessons, because the school midterm
+  is in December.
+- The IPST-chapter pilot verdict and the rule for when to read a chapter in full are in school-plan.md.
+- Blind check on the 31 items: 30/31 agreed. It caught ONE WRONG KEY (math-ratio-2 challenge: the worked
+  solution derived 186 g but the stored answer index pointed at 150 g) and one ambiguous item (two options were
+  the same ratio in different terms). Both fixed, plus 6 wording/explanation fixes. This is the second time the
+  blind check has paid for itself — keep running it on every new set, no exceptions.
