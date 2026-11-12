@@ -65,3 +65,11 @@ Folder "เนื้อหาและตัวอย่างข้อสอบ
 - **Math Online มิ.ย.69** (MWIT round-1 style, fill-in): number theory and arithmetic. Foundation topics to use now: GCD/LCM word problems (incl. with polynomials), fractions, repeating decimals, square roots/surds, arithmetic series sums, counting divisors. Competition tricks parked until the father decides phase 2: number bases, last digit of aⁿ, trailing zeros of n!, remainder tricks, custom operators.
 - **วิทย์ ม.2 เทอม 1 (tutor packet, 230 pages)**: solutions with pre/post tests and hard concentration worksheets (evaporate, mix, prepare); body systems (circulation, respiration, excretion, nervous, reproduction) with a large question bank; forces, work, simple machines, energy with chapter tests.
 - **ตัวอย่างโจทย์ ระบบหายใจ ขับถ่าย ประสาท สืบพันธุ์** (scanned class bank, ~100 questions): gas exchange, O₂/CO₂ transport written as equations (Hb + O₂, bicarbonate), lung volume graphs, bell-jar model, lime water / alkaline pyrogallol experiments, kidney/nephron, skin, nervous system parts, reproduction. Red circles are class markings: do not treat them as her own answers.
+
+## School math booklet, ม.2 term 2 (seen 12 Nov 2026 from the father's photos; nothing copied)
+The school uses its own booklet, not the IPST textbook. Unit: statistics (2), congruence, geometric reasoning (1).
+- Statistics: dot plot, stem-and-leaf, back-to-back stem-and-leaf, histogram with class boundaries, mean/median/mode from raw data and tables, weighted mean (GPA-style), combined mean of two groups. Level: direct reading and computing.
+- Congruence: decide whether two triangles are congruent and why (SSS/SAS/ASA), short guided proofs.
+- Geometric reasoning: fill-in proofs with parallel lines (given / to prove / reasons).
+Father's decision (12 Nov): train her at IPST-textbook level and above this term; the school level is the floor, not the target.
+So for m22/m16/m15: keep a few items in the school's format (fill-in proof steps, class boundaries), but write most at IPST level and add exam-style "condition" problems.
