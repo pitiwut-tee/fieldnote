@@ -92,6 +92,38 @@ The school uses its own booklet, not the IPST textbook. Unit: statistics (2), co
 Father's decision (12 Nov): train her at IPST-textbook level and above this term; the school level is the floor, not the target.
 So for m22/m16/m15: keep a few items in the school's format (fill-in proof steps, class boundaries), but write most at IPST level and add exam-style "condition" problems.
 
+## IPST ม.2 เล่ม 2 vs the school's term-2 material (read 16 Nov 2026, round 1 of 2)
+
+All seven new files are scans. Round 1 read 74 pages: math ch.1 สถิติ (2) (25 pp.), ch.2 ความเท่ากันทุกประการ
+(30 pp.), science unit 6 การแยกสาร (19 pp.). Nothing copied; sets written in own words.
+
+**Math, consistency with the school booklet.** Same order (statistics → congruence → geometric reasoning), so the
+book and the school agree on *what*; they differ on *how*:
+- Statistics: the school drills procedure (class boundaries ขอบล่าง–ขอบบน, midpoints, mean from grouped tables).
+  The IPST book uses intervals written "ตั้งแต่ a แต่น้อยกว่า b" with no midpoint formula, and spends most of its
+  exercises on reasoning: build a data set that meets conditions (mean, median, mode, range together), combined
+  mean of two groups, "what is needed to reach a target mean", GPA by credits, which measure each side of a pay
+  negotiation would quote, histogram shape → mean vs median, per-capita re-ranking (CO₂ by country). That reasoning
+  is what the entrance exam asks. Keep both formats: school format for her school exam, book style for level 3.
+- Congruence: the book teaches five conditions (ด.ม.ด., ม.ด.ม., ด.ด.ด., ม.ม.ด., ฉ.ด.ด.), the non-conditions
+  (ม.ม.ม., ด.ด.ม.), and the eight isosceles-triangle properties, with applications (measuring widths that cannot be
+  reached, guy wires, tents, kites, clock hands). The 12 Nov note of the school booklet lists only SSS/SAS/ASA;
+  not re-checked against the photos (to save usage). Our sets teach all five, which covers the school either way.
+- Chapter 5 การแยกตัวประกอบ (m9.4, m10) is in the book but was not in the school's term-2 units as recorded on
+  12 Nov; it is in the exam scope and the bank has 0 items. Round 2.
+Written from round 1: math-stats-6, math-congruence-1, math-congruence-2.
+
+**Science unit 6, consistency with the school's midterm documents.** Same topics. The school documents go deeper
+on fractional distillation / crude oil, Rf worked calculations and solvent-choice criteria (already covered by
+sets 024, 037). The book adds lab technique the bank lacked: evaporation vs crystallisation (why crystallising
+purifies), crystal size vs cooling rate, condenser water in at the bottom, thermometer bulb at the vapour outlet,
+reading the temperature plateau to change receivers. Written: sci-separation-4 (fills s3.1 and s3.2).
+
+**Round 2 (not yet read, ~89 pages):** math ch.3 เส้นขนาน (21), ch.4 การให้เหตุผลทางเรขาคณิต (29), ch.5 การแยก
+ตัวประกอบ (13); science unit 5 งานและพลังงาน (26, the corrected file). Also compare unit 5 with the school's
+final-term "หน่วย 3 การเคลื่อนที่" document, which has never been read (60 MB scan: read only its contents and
+exercise pages). Geometry chapters need figures; the app has no geometry `fig` kind yet (father to decide).
+
 ## Pilot: reading a whole IPST chapter (12 Nov 2026) — VERDICT: worth it, do it again
 
 The father asked whether reading an IPST textbook chapter in full pays for the usage. Tried on
