@@ -97,6 +97,26 @@ This file is the long-term memory. Chats are disposable; this repo and the statu
   the situation, not only the numbers; (4) the explain step becomes "pick the right reason from 3" plus a one-line
   own reason on some items only (data: she left the free-text box empty on almost every item).
 
+## Build plan agreed 17 Nov 2026 (do in this order; each is one fresh Opus chat unless noted)
+Also approved 17 Nov: (a) **repeated-error loop**: when she misses the same idea on 2 different days → a new
+explanation in a different form (table/diagram/real situation, two contrasting cases side by side) → faded worked
+examples (full, then last step blank, then two steps blank) → the item goes to the dad brief → she writes a player's
+guide for it → "resolved" only after 2 correct answers in different situations ≥ 7 days apart with the right reason
+picked. (b) a **misconception list** on the parent page (open / resolved, days open; > 3 weeks open = evidence for
+the February decision). (c) the **ratio table** as one tool reused in science and math (scaling by amount, percent,
+ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/w vs %w/v, mean vs median, …).
+(e) a **monthly home experiment** sheet for the father (predict → try → explain), first: saturate salt in 50 g vs
+100 g water, and density with a measuring jug.
+1. **Chat "แชท 1" (app):** the four understanding-first changes, (a) loop logic, (b) list, 15-min minimum day,
+   checkpoint mode (timed, no hints, results to the parent page), level rename จำได้ → คงทน. Roll out in two waves
+   by a date in `calendar.json`: wave 1 at deploy (friend's-mistake, predict, situation-changing twins), wave 2 seven
+   days later (pick-the-reason explain step). Update `tools/verify.js` for every new item field. Publish parent page.
+2. **Chat "แชท 2" (content):** ratio-table concept card, friend's-mistake and which-method items from her current
+   repeated errors, home experiment sheet 1, checkpoint 1 (24 items, Sun 6 Dec) — all with the blind answer check.
+3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
+4. **Sonnet chat after his first dad talk (~Sun 22 Nov):** read his notes in the "10 นาทีกับพ่อ" tab, twin questions
+   for those patterns, week-2 brief, then add the Sunday dad-brief step to AUTOMATION.md.
+
 ## Which model for which work (agreed with the father, 12 Nov 2026, Pro plan = limited usage)
 - **Opus** (newest) for: writing new sets with keys and explanations, reading books to decide what the exam needs,
   large changes to `src/app.html`. A wrong key or wrong explanation teaches her something false.
