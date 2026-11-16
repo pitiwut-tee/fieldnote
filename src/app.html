@@ -498,13 +498,6 @@ mark.sperr{background:#FFD3CC;color:#8A1F14;border-radius:3px;padding:0 1px}
 @keyframes exppulse{0%,100%{box-shadow:0 0 0 0 rgba(217,130,43,.45)}50%{box-shadow:0 0 0 9px rgba(217,130,43,0)}}
 .exppow{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
 .expgo{width:100%;min-height:52px;font-size:1.05rem}
-.bosscard{display:flex;gap:10px;align-items:center;background:linear-gradient(90deg,#fbeee9,#fff7ef);border:1px solid #efd3c8;border-radius:14px;padding:8px 10px;margin:6px 0}
-.bosscard.won{background:linear-gradient(90deg,#e6f5ea,#f3fbf1);border-color:#bfe0c8}
-.bossart{position:relative;display:inline-block}.bosscard.won .monster{opacity:.45;filter:grayscale(.6)}.bosszz{position:absolute;right:-4px;top:-6px}
-.bosshp{display:block;height:9px;border-radius:5px;background:#eadbd8;overflow:hidden}.bosshp i{display:block;height:100%;background:#c0453a;transition:width .5s}
-.bosscard.won .bosshp i{background:#3f9b5a}
-.bossstrip{display:flex;align-items:center;gap:8px;margin-top:6px;padding:4px 8px;border-radius:10px;background:#fbeee9}
-.bosshit{display:block;color:#a8382e;font-weight:600;margin-top:2px}
 .rdkpi{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;text-align:center;margin:8px 0}.rdkpi b{font-size:1.4rem;display:block}.rdkpi .rdchip{white-space:normal;padding:1px 5px;font-size:.72rem}
 .rdchip{display:inline-block;border-radius:999px;padding:1px 9px;font-size:.8rem;white-space:nowrap}
 .rdspell{border-top:1px solid var(--line);padding:6px 0;min-width:0;max-width:100%}.rdspell summary{cursor:pointer;display:flex;flex-direction:column;gap:2px}.rdmeta{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
@@ -1198,42 +1191,23 @@ function missionList(p){
   if(p.sweepNeeded||p.sweepToday) m.push({key:"sweep",done:p.sweepToday});
   return m;
 }
-/* ---------- บอสประจำวัน (father approved 10 Nov): one health bar for the whole day, shown above every question. Every answer
-   is an attack, scored by care, never by speed: right 3 (right but self-reported guess 2) · "don't know" then the explanation
-   read to the end 2 · wrong but explanation read 1 · fast wrong or explanation skipped 0. Vocabulary: right 1.
-   No losing: when every stop of the day is done and no explanation was skipped, the last blow lands even if HP is left.
-   Each defeated boss gives one map piece (7 pieces → a new rescue-team region). Everything is derived from records. */
-const BOSS_FROM="2026-11-11";
-const DAY_BOSSES=[{art:"mud",n:"ภูตตะกอนผสม"},{art:"oil",n:"ก้อนคราบน้ำมันยักษ์"},{art:"methane",n:"ภูตฟองมีเทน"},{art:"soot",n:"ปีศาจเขม่าดำ"},
-  {art:"algae",n:"สาหร่ายบลูมจอมป่วน"},{art:"steam",n:"ภูตไอร้อน"},{art:"co2",n:"เมฆคาร์บอนเจ้าเล่ห์"},{art:"heatwave",n:"อสูรคลื่นความร้อน"},{art:"bag",n:"ภูตถุงลอยฟ้า"},{art:"gas",n:"ภูตควันพิษ"}];
-const BOSS_SHARE={lesson:30,vocab:15,probe:20,sweep:12};
+/* ---------- ชิ้นส่วนแผนที่ (16 Nov: the daily boss was removed at the student's request — it did not motivate her).
+   A day on which every stop of the daily mission is done gives 1 map piece; 7 pieces open rescue-team region 3.
+   Pieces already won from the old daily boss (11–16 Nov) are kept: those days count if the old boss was beaten
+   (enough careful answers) OR the mission was complete. Pieces never go down. Everything is derived from records. */
+const PIECE_FROM="2026-11-11", PIECE_RULE_CHANGE="2026-11-17";
 function exRead(x){ return x.exTotal?x.exSteps>=x.exTotal:(x.exSec||0)>=5 }
-function bossHit(x,vocab){ if(x.skipped) return 0; if(vocab) return x.correct?1:0;
-  if(x.correct) return x.guessed?2:3; if(x.dontknow) return exRead(x)?2:0; return (x.timeSec!=null&&x.timeSec<4)?0:exRead(x)?1:0 }
-function bossOf(dk){ const i=Math.floor(dk/DAY)%DAY_BOSSES.length; return DAY_BOSSES[(i+DAY_BOSSES.length)%DAY_BOSSES.length] }
-function bossDay(list,dk){ const recs=list.filter(a=>dayKey(a.endedAt)===dk), its=recs.filter(a=>isLesson(a)||a.type==="recall"||a.type==="sweep").flatMap(a=>a.items||[]);
-  const live=dk===todayKey()&&S&&S.mode==="set"&&S.active?S.items:[];
-  const vocab=recs.filter(a=>a.type==="vocab").flatMap(a=>a.items||[]);
-  let ms=[], all=false; try{ const p=progressOf(list.filter(a=>dayKey(a.endedAt)<=dk)); if(dk===todayKey()){ ms=missionList(p); all=!!p.goalToday } else { all=p.met&&p.met.has?p.met.has(dk):false; ms=[{key:"lesson"},{key:"vocab"}] } }catch(e){}
-  const max=ms.reduce((n,m)=>n+(BOSS_SHARE[m.key]||15),0)||45;
-  const dmg=[...its,...live].reduce((n,x)=>n+bossHit(x),0)+Math.min(BOSS_SHARE.vocab,vocab.reduce((n,x)=>n+bossHit(x,true),0));
-  const skippedEx=[...its,...live].filter(x=>!x.skipped&&!x.correct&&!exRead(x)).length;
-  const hp=Math.max(0,max-dmg), won=hp<=0||(all&&skippedEx===0);
-  return {boss:bossOf(dk),max,hp:won?0:hp,dmg,won,all,skippedEx} }
-function bossPieces(list){ const from=dayKey(BOSS_FROM+"T00:00:00+07:00"), days=[...new Set(list.map(a=>dayKey(a.endedAt)))].filter(d=>d>=from); return days.filter(d=>bossDay(list,d).won).length }
-function bossArt(b,size){ return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" class="monster">${MON_ART[b.art]||""}</svg>` }
-function bossCard(list){ if(todayKey()<dayKey(BOSS_FROM+"T00:00:00+07:00")) return ""; const B=bossDay(list,todayKey()), pc=bossPieces(list)%7||(bossPieces(list)&&B.won?7:0);
-  return `<div class="bosscard ${B.won?"won":""}"><span class="bossart">${bossArt(B.boss,58)}${B.won?`<span class="bosszz">🌿</span>`:""}</span>
-    <div style="flex:1;display:flex;flex-direction:column;gap:3px"><b class="small">บอสประจำวัน: ${esc(B.boss.n)}</b>
-      <div class="bosshp"><i style="width:${Math.round(B.hp/B.max*100)}%"></i></div>
-      <span class="small muted">${B.won?"ชนะแล้ว! ได้ชิ้นส่วนแผนที่ 1 ชิ้น":B.all&&B.skippedEx?`ทำครบทุกจุดแล้ว แต่ข้ามเฉลยไป ${B.skippedEx} ข้อ บอสเลยหนีไปได้ พรุ่งนี้ลองใหม่นะ`:`พลังชีวิต ${B.hp}/${B.max} · ตอบอย่างตั้งใจ = ตีแรง · บอสไม่ตีกลับ`}</span>
-      <span class="small">🧩 ชิ้นส่วนแผนที่ ${"■".repeat(pc)}${"□".repeat(7-pc)} ${pc}/7</span></div></div>` }
-function bossStrip(){ if(todayKey()<dayKey(BOSS_FROM+"T00:00:00+07:00")) return ""; const B=bossDay(mine(),todayKey());
-  return `<div class="bossstrip"><span>${bossArt(B.boss,30)}</span><span class="small" style="flex:1"><b>${esc(B.boss.n)}</b><span class="bosshp"><i style="width:${Math.round(B.hp/B.max*100)}%"></i></span></span><span class="small muted">${B.won?"ชนะแล้ว!":`${B.hp}/${B.max}`}</span></div>` }
-function bossHitNote(ans){ if(todayKey()<dayKey(BOSS_FROM+"T00:00:00+07:00")||!ans) return "";
-  return ans.correct?`<span class="small bosshit">⚔️ ตีบอส −${S.guessed?2:3}</span>`:ans.dontknow?`<span class="small bosshit">อ่านเฉลยให้ครบขั้น ตีบอสได้ −2</span>`:`<span class="small bosshit">อ่านเฉลยให้ครบขั้น ยังตีบอสได้ −1</span>` }
-function bossWinCheck(){ try{ const L=mine(), B=bossDay(L,todayKey()), k="fieldnote.bosswon"; if(!B.won||ls(k,null)===todayKey()) return; lsSet(k,todayKey());
-  const pc=bossPieces(L); sheet({icon:"🏆",title:`ชนะ${B.boss.n}แล้ว!`,html:`<div style="display:flex;justify-content:center">${bossArt(B.boss,90)}</div><p>ได้ชิ้นส่วนแผนที่ 1 ชิ้น · สะสมแล้ว ${pc} ชิ้น${pc>=7?" ครบ 7 ชิ้นแล้ว! เขตใหม่ของทีมกู้โลกกำลังมา":` อีก ${7-pc%7} ชิ้นเปิดเขตใหม่`}</p>`,actions:[{label:"เยี่ยม!",fn:closeSheet}]}) }catch(e){} }
+function legacyBossWon(list,dk){ const recs=list.filter(a=>dayKey(a.endedAt)===dk), its=recs.filter(a=>isLesson(a)||a.type==="recall"||a.type==="sweep").flatMap(a=>a.items||[]);
+  const hit=x=>x.skipped?0:x.correct?(x.guessed?2:3):x.dontknow?(exRead(x)?2:0):(x.timeSec!=null&&x.timeSec<4)?0:exRead(x)?1:0;
+  const vocab=recs.filter(a=>a.type==="vocab").flatMap(a=>a.items||[]).filter(x=>!x.skipped&&x.correct).length;
+  return its.reduce((n,x)=>n+hit(x),0)+Math.min(15,vocab)>=45 }
+function mapPieces(list){ const from=dayKey(PIECE_FROM+"T00:00:00+07:00"), chg=dayKey(PIECE_RULE_CHANGE+"T00:00:00+07:00"); let met=new Set();
+  try{ met=progressOf(list).met||new Set() }catch(e){}
+  const days=[...new Set(list.map(a=>dayKey(a.endedAt)))].filter(d=>d>=from);
+  return days.filter(d=>met.has(d)||(d<chg&&legacyBossWon(list,d))).length }
+function piecesBar(n){ const pc=n%7||(n?7:0); return `${"■".repeat(pc)}${"□".repeat(7-pc)} ${pc}/7` }
+function piecesLine(list){ if(todayKey()<dayKey(PIECE_FROM+"T00:00:00+07:00")) return ""; const n=mapPieces(list);
+  return `<p class="small" style="margin:4px 0">🧩 ชิ้นส่วนแผนที่ ${piecesBar(n)} <span class="muted">· ทำภารกิจวันนี้ครบทุกจุด ได้ 1 ชิ้น${n>=7?" · ครบแล้ว! เขตใหม่ของทีมกู้โลกกำลังมา":""}</span></p>` }
 /* the day's missions drawn as one expedition route (father, 10 Nov); the optional extra is a secret path that opens at the end */
 const EXP_STOP={lesson:["📘","บทเรียน"],vocab:["🔤","คำศัพท์"],probe:["⛰️","ด่านสำรวจ"],sweep:["🧭","ย้อนของเก่า"]};
 function expRoute(ms,p){ const all=ms.every(x=>x.done), nx=ms.findIndex(x=>!x.done), n=ms.length, list=mine(), pw=expDayPower(list), bo=expBoost(list);
@@ -1318,7 +1292,7 @@ function renderHome(){
     <p class="small">ผลจากเครื่องนี้จะติดป้าย "ทดสอบ" และไม่ถูกนับในการวิเคราะห์ ลองกดทุกอย่างได้ตามสบาย</p>
     <button class="btn ghost" id="leave-test">ออกจากโหมดทดสอบ และล้างผลทดสอบในเครื่องนี้</button></section>`:""}
   ${getBuddy()?buddyStrip(list,p,plan,"top"):""}
-  <section class="card expcard"><div class="todayhead"><span class="eyebrow">🗺️ ออกสำรวจวันนี้ · ${ms.filter(x=>x.done).length}/${ms.length} จุด</span></div>${bossCard(list)}${expRoute(ms,p)}</section>
+  <section class="card expcard"><div class="todayhead"><span class="eyebrow">🗺️ ออกสำรวจวันนี้ · ${ms.filter(x=>x.done).length}/${ms.length} จุด</span></div>${piecesLine(list)}${expRoute(ms,p)}</section>
   ${getBuddy()?buddyStrip(list,p,plan,"wish"):buddySetupHtml()}
   ${V&&V.active&&view!=="vocab"?`<section class="card" style="border:2px solid var(--beak)"><b>คำศัพท์วันนี้ทำค้างไว้</b><div class="row"><button class="btn" id="resume-v">ทำต่อ</button></div></section>`:""}
   ${(()=>{const pd=pendingSet(); return pd?`<section class="card" style="border:2px solid var(--beak)"><b>ทำชุด "${esc(pd.set.topic)}" ค้างไว้</b>
@@ -1370,7 +1344,7 @@ function renderHome(){
   { const ce=document.getElementById("callme-edit"); if(ce) ce.onclick=()=>askName(true) }
   setTimeout(()=>{ if(!askName()&&!guestPop(mine())&&STUDIO) studioTeaser() },700);
   $v.querySelectorAll("[data-wishclaim]").forEach(x=>x.onclick=()=>{ x.disabled=true; wishClaim(render) }); bindWishGo($v);
-  wishMigrate(); setTimeout(bossWinCheck,900);
+  wishMigrate();
   $v.querySelectorAll("[data-tile]").forEach(t=>t.onclick=()=>{ if(t.dataset.tile==="studio"){ studioOpen(); return } if(t.dataset.tile==="elem"){ homeOpen=null; EL=null; view="elem"; render(); window.scrollTo({top:0}); return } if(t.dataset.tile==="adv"){ homeOpen=null; advSel=advSel||"r1"; view="adv"; render(); window.scrollTo({top:0}); return } homeOpen=homeOpen===t.dataset.tile?null:t.dataset.tile; renderHome();
     const tp=document.getElementById("tpanel"); if(tp) tp.scrollIntoView({block:"nearest",behavior:"smooth"}) });
   $v.querySelectorAll("[data-mood]").forEach(m=>m.onclick=async()=>{ const now=new Date().toISOString();
@@ -1507,7 +1481,7 @@ function header(){
   const pct = Math.round(S.i/(S.steps.length-1)*100);
   const combo=(()=>{let c=0; for(let k=S.items.length-1;k>=0;k--){ if(S.items[k].correct) c++; else if(!S.items[k].skipped) break } return c})();
   return `<div class="stage"><span>${esc(S.set.topic)}</span><span>${S.steps[S.i].phase} · ${itemXp(S.items)} XP${combo>=3?` · <b class="combo">ถูกติดกัน ${combo} ข้อ ✨</b>`:""}</span></div>
-  ${S.legs&&S.legs.length>=2?expBar():`<div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div>`}${bossStrip()}`;
+  ${S.legs&&S.legs.length>=2?expBar():`<div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div>`}`;
 }
 
 
@@ -1807,7 +1781,7 @@ function renderStep(){
     const confNote = ans.dontknow||!ans.conf?"":ans.correct&&ans.conf==="unsure"?`<p class="small">ถูกแล้ว แต่ยังไม่ชัวร์ ระบบจะเอาข้อนี้มาให้ทวนอีกรอบ จะได้มั่นใจขึ้น</p>`
       :!ans.correct&&ans.conf==="sure"?`<p class="small"><b>มั่นใจแต่พลาด</b> ข้อแบบนี้ถ้าเข้าใจตอนนี้ จะจำได้แม่นที่สุด อ่านเฉลยช้าๆ นะ</p>`:"";
     const own = st.explain&&(ans.ownWhy||ans.ownWhyPad)?`<div class="feedback"><span class="small"><b>เหตุผลของเธอ:</b> ${ans.ownWhy?esc(ans.ownWhy):"(เขียนในกระดาษทด)"}</span><span class="small muted">ลองเทียบกับเฉลยด้านล่าง ตรงกันไหม ต่างกันตรงไหน</span></div>`:"";
-    fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answerText||q.answer} ${q.unit}`:""}</b>${bossHitNote(ans)}${ckNote}${confNote}${exHtml(q,ans)}
+    fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answerText||q.answer} ${q.unit}`:""}</b>${ckNote}${confNote}${exHtml(q,ans)}
       ${q.en?"":`<div>${readBtn("ex","🔊 ฟังเฉลย")}</div>`}
       ${ans.correct||ans.dontknow?"":`<span class="small muted">พลาดเพราะอะไร เลือกได้หลายข้อ (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
       <div class="why">${Object.entries(ERR).filter(([k])=>k!=="dontknow"&&k!=="notTaught").map(([k,v])=>`<button data-why="${k}" aria-pressed="${(S.why||[]).includes(k)}">${v}</button>`).join("")}</div>
@@ -2079,7 +2053,7 @@ function renderDone(){
     ${byL?`<p class="small muted">${byL}</p>`:""}
     ${r.type!=="vocab"&&getBuddy()?buddyHtml([buddyAfter(r)].filter(Boolean)):""}
     ${flameHtml(a)}
-    ${reached?`<p><b>ภารกิจวันนี้ครบแล้ว ไฟ ${a.streak} วันยังลุกอยู่ 🔥</b></p>`:left.length?`<p><b style="color:var(--beak)">เหลืออีก ${left.length} ภารกิจ: ${left.join(" · ")}</b> ทำให้ครบแล้วไฟจะติด</p>`:""}
+    ${reached?`<p><b>ภารกิจวันนี้ครบแล้ว ไฟ ${a.streak} วันยังลุกอยู่ 🔥</b></p><p class="small">🧩 ได้ชิ้นส่วนแผนที่ 1 ชิ้น · ${(()=>{ const L=mine(); return piecesBar(mapPieces(L.some(x=>x===r||x.endedAt===r.endedAt&&x.setId===r.setId)?L:[r,...L])) })()}</p>`:left.length?`<p><b style="color:var(--beak)">เหลืออีก ${left.length} ภารกิจ: ${left.join(" · ")}</b> ทำให้ครบแล้วไฟจะติด</p>`:""}
     ${sp&&!(S.cele||[]).some(e=>e.kind==="tier"&&e.sp.id===sp.id)?`<p class="small muted">${esc(sp.name)}: ${TIER[info?.tier||0]} · ${nextStep(sp,info)}</p>`:""}
     <p class="small muted">${S.where==="db"?"บันทึกแล้ว พ่อเห็นสรุปได้จากหน้าผู้ปกครอง":"บันทึกไว้ในเครื่องนี้แล้ว อย่าลืมส่งผลให้พ่อนะ"}</p>
     <div class="row">
@@ -2739,7 +2713,7 @@ let denMsg="", denBuy=null, denName="", denTab="food", denCele=null, denArrange=
    habits, never accuracy, speed or unbroken streaks. Stored as records (type "wish") so the parent page sees them and can swap a goal. */
 const WISH_GOALS={
   exread:{t:"อ่านเฉลยทีละขั้นจนครบ",n:8,u:"ข้อ",why:"ข้อที่พลาดหรือไม่รู้ อ่านเฉลยให้ถึงขั้นสุดท้าย"},
-  rewrite:{t:"เขียนคู่มือผู้เล่น",n:2,u:"ครั้ง",why:"ที่สตูดิโอเกม เขียนวิธีคิดของข้อที่พลาดด้วยคำของตัวเอง"},
+  rewrite:{t:"เขียนคู่มือผู้เล่น",n:2,u:"ครั้ง",why:"ที่สตูดิโอเกม เลือกข้อจากภารกิจ (ข้อที่พลาด หรือข้อที่ทำถูกก็ได้) แล้วเขียนวิธีคิดด้วยคำของตัวเอง"},
   days:{t:"ฝึกภารกิจ",n:4,u:"วัน",why:"วันไหนก็ได้ ไม่ต้องติดกัน"},
   recall:{t:"ตอบคำถามทวนเกร็ดประจำวันถูก",n:3,u:"ใบ",why:"ที่บ้านคู่หู ก่อนเปิดเกร็ดใบใหม่"},
   review:{t:"ทำรอบทบทวน",n:3,u:"รอบ",why:"หน้าแรก ช่อง 🧠 ทบทวนวันนี้ หรือ 🔁 ข้อที่เคยพลาด (ถ้าไม่มีข้อค้าง จะพาไปย้อนคาถาเก่าแทน) ทำจบ 1 ครั้งนับ 1 รอบ"}};
@@ -3890,7 +3864,7 @@ function advTrainCost(lv){ return 30+20*lv }
 
 /* always-visible "how do new stages open" (father, 11 Nov: it was only shown after tapping a locked node) */
 function advHowOpen(list,cleared,got,regOpen){
-  const all=ADV_REGIONS.flatMap(r=>r.stages.map((st,i)=>({r,st,i}))), next=all.find(x=>!cleared.has(x.st.id)&&regOpen(x.r)), pc=bossPieces(list), lastBoss=ADV_REGIONS[ADV_REGIONS.length-1].stages.slice(-1)[0];
+  const all=ADV_REGIONS.flatMap(r=>r.stages.map((st,i)=>({r,st,i}))), next=all.find(x=>!cleared.has(x.st.id)&&regOpen(x.r)), pc=mapPieces(list), lastBoss=ADV_REGIONS[ADV_REGIONS.length-1].stages.slice(-1)[0];
   const ss=spellStats(list), near=SPELLS.filter(x=>ss[x.id]&&!(ss[x.id].tier>=1)&&(ss[x.id].n1||0)>0).sort((a,b)=>(ss[b.id].c1||0)-(ss[a.id].c1||0)).slice(0,3);
   let nextLine="";
   if(next){ const prevOk=next.i===0||cleared.has(next.r.stages[next.i-1].id), spOk=!next.st.needSpells||got>=next.st.needSpells;
@@ -3902,7 +3876,7 @@ function advHowOpen(list,cleared,got,regOpen){
       <li>ด่านธรรมดา: ชนะด่านก่อนหน้า ด่านถัดไปจะเปิดเอง</li>
       <li>บอสของแต่ละเขต: ต้องมีคาถาที่ขึ้นขั้น "ฝึกหัด" แล้วครบตามจำนวน (เขต 1 ต้อง 3 คาถา · เขต 2 ต้อง 6 คาถา) ดูได้ที่แผนที่คาถา คาถาจะขึ้นขั้นเมื่อตอบข้อพื้นฐานของคาถานั้นถูก 80% ขึ้นไป (อย่างน้อย 3 ข้อ)</li>
       <li>เขต 2 ${ADV_REGIONS[1]?.e||""} ${esc(ADV_REGIONS[1]?.n||"")}: เปิดเมื่อชนะบอสเขต 1</li>
-      <li>เขต 3 🗺️ (ยังเป็นความลับ): เปิดเมื่อสะสมชิ้นส่วนแผนที่ครบ 7 ชิ้น ได้จากการชนะบอสประจำวันในภารกิจหลัก วันละ 1 ชิ้น · ตอนนี้ ${Math.min(pc,7)}/7 · เขตนี้จะสร้างจากแบบที่เธอออกแบบเองในเวิร์กช็อปสตูดิโอเกม</li>
+      <li>เขต 3 🗺️ (ยังเป็นความลับ): เปิดเมื่อสะสมชิ้นส่วนแผนที่ครบ 7 ชิ้น ได้จากการทำภารกิจประจำวันครบทุกจุด วันละ 1 ชิ้น · ตอนนี้ ${Math.min(pc,7)}/7 · เขตนี้จะสร้างจากแบบที่เธอออกแบบเองในเวิร์กช็อปสตูดิโอเกม</li>
       <li>ด่านที่ชนะแล้ว: เล่นซ้ำระดับยากและตำนานได้ เพื่อเก็บดาวและ EXP</li></ul></details>` }
 function renderAdv(){
   const list=mine(), w=wallet(list), cleared=advCleared(list), regOpen=r=>!r.needBoss||cleared.has(r.needBoss), R=ADV_REGIONS[advRegion!=null&&regOpen(ADV_REGIONS[advRegion])?advRegion:Math.max(0,ADV_REGIONS.map(regOpen).lastIndexOf(true))], en=advEnergy(list), team=advTeam(list), units=advRoster(list), valley=advValley(list), slots=ADV_LAB_SLOTS-units.filter(u=>u.uid.startsWith("lab:")).length;
@@ -3945,7 +3919,7 @@ function renderAdv(){
     ${owned.has(g.id)?`<span class="small">มีแล้ว ✓</span>`:`<button class="btn ghost small" data-advgear="${g.id}" ${w.stars>=g.cost?"":"disabled"}>⭐${g.cost}</button>`}</div>`).join("");
   $v.innerHTML=`<section class="card"><div class="todayhead"><span class="eyebrow">🌍 ภารกิจกู้โลก · ${R.e} ${R.n}</span><span class="small">⚡ ออกรบได้อีก ${en.left}/${en.max} · ⭐ ${w.stars}</span></div>
       <p class="small">${R.intro}</p>
-      ${ADV_REGIONS.length>1?`<div class="row" style="gap:6px">${ADV_REGIONS.map((r,k)=>`<button class="btn ${r===R?"":"ghost"} small" data-advreg="${k}" ${regOpen(r)?"":"disabled"}>${regOpen(r)?r.e:"🔒"} ${r.n}</button>`).join("")}<button class="btn ghost small" disabled>🔒 เขต 3 · ชิ้นส่วนแผนที่ ${Math.min(bossPieces(list),7)}/7</button></div>
+      ${ADV_REGIONS.length>1?`<div class="row" style="gap:6px">${ADV_REGIONS.map((r,k)=>`<button class="btn ${r===R?"":"ghost"} small" data-advreg="${k}" ${regOpen(r)?"":"disabled"}>${regOpen(r)?r.e:"🔒"} ${r.n}</button>`).join("")}<button class="btn ghost small" disabled>🔒 เขต 3 · ชิ้นส่วนแผนที่ ${Math.min(mapPieces(list),7)}/7</button></div>
         `:""}
       ${advHowOpen(list,cleared,got,regOpen)}
       <div class="islandwrap"><svg class="island" viewBox="0 0 340 420" role="img" aria-label="แผนที่${esc(R.n)}">
@@ -4258,7 +4232,7 @@ function studioOpen(){ const list=mine(), cs=studioCards(list), next=cs.find(c=>
 function studioShelf(){ const list=mine(), cs=studioCards(list), ws=STUDIO.workshop, wsDone=studioRecs(list).some(a=>a.act==="workshop");
   const d=sheet({icon:"🎮",title:nm(STUDIO.title),wide:true,html:`<p class="small">${esc(nm(STUDIO.teaser))}</p>
     <div class="studiolist">${STUDIO.labs?`<button class="studiocard ws" data-sc="lab"><span style="font-size:1.6rem">🧪</span><span><b>ห้องทดลองสมดุลเกม</b><br><span class="small muted">ลงมือปรับค่าเอง · ${studioRecs(list).filter(a=>a.act==="lab").length}/${STUDIO.labs.length} โจทย์ (+10 XP ต่อโจทย์)</span></span></button>`:""}
-      ${STUDIO.rewrite?`<button class="studiocard ws ${rewriteDone(list)?"done":""}" data-sc="rw"><span style="font-size:1.6rem">${STUDIO.rewrite.icon}</span><span><b>งานประจำวัน: ${esc(STUDIO.rewrite.title)}</b><br><span class="small muted">${rewriteDone(list)?"วันนี้เขียนแล้ว ✓":rewriteToday(list).length?`วันนี้มี ${rewriteToday(list).length} ข้อให้เลือก (+10 XP)`:"ทำภารกิจก่อน ข้อที่พลาดจะมาอยู่ตรงนี้"}</span></span></button>`:""}
+      ${STUDIO.rewrite?`<button class="studiocard ws ${rewriteDone(list)?"done":""}" data-sc="rw"><span style="font-size:1.6rem">${STUDIO.rewrite.icon}</span><span><b>งานประจำวัน: ${esc(STUDIO.rewrite.title)}</b><br><span class="small muted">${rewriteDone(list)?"วันนี้เขียนแล้ว ✓":rewriteToday(list).length?`วันนี้มี ${rewriteToday(list).length} ข้อให้เลือก (+10 XP)`:"ทำภารกิจก่อน 1 ชุด แล้วเลือกข้อมาเขียนได้"}</span></span></button>`:""}
       ${cs.map(c=>`<button class="studiocard ${c.done?"done":""}" data-sc="${c.i}" ${c.open?"":"disabled"}><span style="font-size:1.6rem">${c.open?c.icon:"🔒"}</span>
       <span><b>${esc(nm(c.title))}</b><br><span class="small muted">${c.done?"อ่านและตอบแล้ว ✓":c.open?"แตะเพื่ออ่าน (+10 XP)":"เปิด "+new Date(c.day+"T00:00:00+07:00").toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})}</span></span></button>`).join("")}
       ${ws?`<button class="studiocard ws ${wsDone?"done":""}" data-sc="ws" ${studioWorkshopOpen()?"":"disabled"}><span style="font-size:1.6rem">${studioWorkshopOpen()?ws.icon:"🔒"}</span><span><b>${esc(ws.title)}</b><br><span class="small muted">${wsDone?"ส่งแบบแล้ว ✓ รอพ่ออนุมัติแล้ว Claude จะสร้างให้":studioWorkshopOpen()?"เปิดแล้ว!":"เปิด "+new Date(ws.day+"T00:00:00+07:00").toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"short"})}</span></span></button>`:""}</div>`,
@@ -4314,16 +4288,24 @@ function studioLab(id){ const labs=STUDIO.labs||[], L=labs.find(x=>x.id===id)||l
     const sb=out.querySelector("#labsend"); if(sb) sb.onclick=async()=>{ const v=(out.querySelector("#labans").value||"").trim(); if(v.length<4){ out.querySelector("#labans").focus(); return }
       const now=new Date().toISOString(); await saveAttempt({type:"studio",act:"lab",lab:L.id,setId:"studio-lab-"+L.id,topic:"สตูดิโอเกม: ห้องทดลอง "+L.title,settings:{...LABV},result:{win:res.win,mean:+res.mean.toFixed(1),med:res.med},answer:v.slice(0,300),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:10,items:[]});
       render(); sheet({icon:"🌟",title:"นักออกแบบตัวจริง!",html:`<p>+10 XP · ทำโจทย์ห้องทดลองแล้ว ${done.size+1}/${labs.length} ข้อ</p>`,actions:[{label:"ลองโจทย์อื่น",ghost:true,fn:()=>studioLab()},{label:"เยี่ยม!",fn:closeSheet}]}) } } }
-/* today's missed questions she can rewrite (one guide a day earns XP) */
-function rewriteToday(list){ const t=todayKey(), seen=new Set(), out=[];
-  list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===t).forEach(a=>(a.items||[]).forEach(x=>{ if(x.correct===false&&!x.notTaught&&QBANK[x.qid]&&!seen.has(x.qid)){ seen.add(x.qid); out.push(QBANK[x.qid].q) } })); return out }
+/* questions she can write a player guide for (one guide a day earns XP).
+   16 Nov fix: it used to offer ONLY questions missed today in a lesson, so on a day she got everything right the
+   wish goal "เขียนคู่มือผู้เล่น" could not be done at all, and she read it as "I must answer wrong to write one".
+   Now, in order: missed today → missed in the last 14 days (lessons, reviews, sweeps) and not guided yet →
+   answered right today (explain how she did it, for a new player). Always something once she has practised. */
+function rewritePool(list){ const t=todayKey(), since=Date.now()-14*864e5, done=new Set(studioRecs(list).filter(a=>a.act==="rewrite").map(a=>a.qid)), seen=new Set();
+  const src=list.filter(a=>(isLesson(a)||a.type==="review"||a.type==="recall"||a.type==="sweep")&&new Date(a.endedAt).getTime()>=since).slice().sort((a,b)=>new Date(b.endedAt)-new Date(a.endedAt));
+  const pick=(f,kind)=>{ const out=[]; src.forEach(a=>(a.items||[]).forEach(x=>{ if(f(a,x)&&!x.notTaught&&!x.skipped&&QBANK[x.qid]&&QBANK[x.qid].q.ex&&!seen.has(x.qid)&&!done.has(x.qid)){ seen.add(x.qid); out.push({q:QBANK[x.qid].q,kind}) } })); return out };
+  return [...pick((a,x)=>x.correct===false&&dayKey(a.endedAt)===t,"today"),...pick((a,x)=>x.correct===false,"recent"),...pick((a,x)=>x.correct===true&&dayKey(a.endedAt)===t,"right")] }
+function rewriteToday(list){ return rewritePool(list).map(x=>x.q) }
 function rewriteDone(list){ const t=todayKey(); return studioRecs(list).some(a=>a.act==="rewrite"&&dayKey(a.endedAt)===t) }
 function studioRewrite(qi){ const W=STUDIO.rewrite, list=mine(), qs=rewriteToday(list); if(!W) return;
-  if(!qs.length) return sheet({icon:W.icon,title:W.title,html:`<p>${esc(nm(W.intro))}</p><p class="small muted">วันนี้ยังไม่มีข้อที่พลาด ทำภารกิจก่อน ถ้ามีข้อที่พลาดจะมาเขียนคู่มือได้</p>`,actions:[{label:"ปิด",fn:closeSheet}]});
-  const q=qs[Math.min(qi||0,qs.length-1)], st=exSteps(q.ex), dn=rewriteDone(list);
+  if(!qs.length) return sheet({icon:W.icon,title:W.title,html:`<p>${esc(nm(W.intro))}</p><p class="small muted">ทำภารกิจวันนี้ก่อน 1 ชุด แล้วกลับมาเลือกข้อจากชุดนั้นมาเขียนคู่มือได้ ไม่ต้องตอบผิดก็เขียนได้</p>`,actions:[{label:"ปิด",fn:closeSheet}]});
+  const pool=rewritePool(list), cur=pool[Math.min(qi||0,pool.length-1)], q=cur.q, st=exSteps(q.ex), dn=rewriteDone(list);
+  const tag={today:"ข้อที่พลาดวันนี้",recent:"ข้อที่เคยพลาดช่วงนี้",right:"ข้อที่ทำถูกวันนี้ · อธิบายวิธีคิดให้ผู้เล่นใหม่"}[cur.kind];
   const d=sheet({icon:W.icon,title:W.title,wide:true,read:q.ex,html:`<p class="small">${esc(nm(W.intro))}</p>
     ${qs.length>1?`<div class="row" style="gap:6px">${qs.slice(0,5).map((x,i)=>`<button class="btn small ${x===q?"":"ghost"}" data-rq="${i}">ข้อ ${i+1}</button>`).join("")}</div>`:""}
-    <div class="feedback"><span class="small"><b>โจทย์</b> ${esc(q.q)}</span><span class="small"><b>คำตอบ</b> ${esc(q.num?(q.answerText||q.answer)+" "+(q.unit||""):q.opts[q.a])}</span>
+    <p class="small muted" style="margin:2px 0">${tag}</p><div class="feedback"><span class="small"><b>โจทย์</b> ${esc(q.q)}</span><span class="small"><b>คำตอบ</b> ${esc(q.num?(q.answerText||q.answer)+" "+(q.unit||""):q.opts[q.a])}</span>
       <ol class="exsteps">${st.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></div>
     <label class="wsf"><b class="small">คู่มือผู้เล่นของ${esc(myName()||"เธอ")} (2–3 ประโยค)</b><textarea id="rw" rows="3" maxlength="400" placeholder="ข้อนี้ต้องดูว่า... แล้ว... ระวัง..."></textarea></label>`,
     actions:[{label:dn?"ส่ง (วันนี้ได้ XP ไปแล้ว)":"ส่งคู่มือ +10 XP",fn:async d=>{ const v=(d.querySelector("#rw").value||"").trim(); if(v.length<15){ alertSoft(d,"เขียนให้ยาวอีกนิด อย่างน้อยหนึ่งประโยคเต็ม"); return }
