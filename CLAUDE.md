@@ -83,9 +83,19 @@ This file is the long-term memory. Chats are disposable; this repo and the statu
   or ask-her-to-explain activity, one check question with its answer), plus what NOT to discuss (untaught topics,
   patterns already improving, our own unclear questions). After he records the talk, give twin questions on those
   patterns 2–3 days later. First brief: 17 Nov. Once he has tried it, add a Sunday step to AUTOMATION.md.
-- Checkpoint schedule still open (father wants 4–5 smaller checkpoints; both science and math). Short
-  checkpoints are our own unseen, timed, mixed questions on topics taught ≥ 7 days earlier: they show trend, not
-  readiness (hard rule 6). Recalled papers are scarce (science 2, math 3): spend them only on full timed mocks.
+- Checkpoints (approved 17 Nov): short = 45–50 min, ~24 items (science 12 + math 12), on a Sunday in place of
+  the lesson; our own unseen, timed, mixed questions on topics taught ≥ 7 days earlier, new contexts not new
+  numbers, some "which reasoning is right" items. Full = a recalled paper, 90 min, printed. Dates (avoid school
+  exam weeks; father's estimate: midterm 21–24 Dec, final 23–26 Feb): Sun 6 Dec short · Sat 2 Jan full math ·
+  Sun 17 Jan short · Sun 31 Jan short · Sat 6 + Sun 7 Feb full science + math → decision ~8–10 Feb.
+  Short checkpoints show trend, not readiness (hard rule 6). Science recalled papers: only 2; ask the father for
+  more external science papers (O-NET ม.3 science re-send; commercial วมว./MWIT science mock books).
+- Level names (approved 17 Nov): เริ่มแล้ว / เข้าใจ / **คงทน** (was "จำได้": understanding still there after
+  ≥ 7 days) / ใช้เป็น / พร้อมสอบ. The goal is lasting understanding, never rote memory.
+- Understanding over drilling (approved 17 Nov, build all four): (1) "spot the friend's mistake" items built from
+  her own wrong answers; (2) predict before computing ("bigger or smaller than before?"); (3) twin questions change
+  the situation, not only the numbers; (4) the explain step becomes "pick the right reason from 3" plus a one-line
+  own reason on some items only (data: she left the free-text box empty on almost every item).
 
 ## Which model for which work (agreed with the father, 12 Nov 2026, Pro plan = limited usage)
 - **Opus** (newest) for: writing new sets with keys and explanations, reading books to decide what the exam needs,
