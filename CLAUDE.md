@@ -71,6 +71,22 @@ This file is the long-term memory. Chats are disposable; this repo and the statu
   not to scale; every figure has a short text description for read-aloud. Never copy a figure from a book.
   Sample of the agreed style: father saw three samples on 16 Nov (bridge-over-pond, isosceles roof, parallel circuit).
 
+## Assessment and the father's weekly talk (discussed 16–17 Nov 2026)
+- Agreed: decide on tutoring from pre-set criteria, not from one February test. Read the problem by kind:
+  low time + good retention = load/motivation (fix the schedule first) · enough time + cross-day retry accuracy
+  under ~60% = teaching method (add a human explainer) · time and retention fine but exam-style points lost on
+  taught topics = depth/technique (targeted tutoring). Split external-mock points into "not taught yet" vs
+  "taught but wrong".
+- Agreed: a minimum day of ~15 min that still counts (app change; not built yet, needs an Opus session).
+- Agreed: "10 minutes with dad" once a week. Each week write a brief in the status doc tab "10 นาทีกับพ่อ":
+  at most 3 error patterns (evidence from repeated cross-day mistakes and `optErr`, a hypothesis, a hands-on
+  or ask-her-to-explain activity, one check question with its answer), plus what NOT to discuss (untaught topics,
+  patterns already improving, our own unclear questions). After he records the talk, give twin questions on those
+  patterns 2–3 days later. First brief: 17 Nov. Once he has tried it, add a Sunday step to AUTOMATION.md.
+- Checkpoint schedule still open (father wants 4–5 smaller checkpoints; both science and math). Short
+  checkpoints are our own unseen, timed, mixed questions on topics taught ≥ 7 days earlier: they show trend, not
+  readiness (hard rule 6). Recalled papers are scarce (science 2, math 3): spend them only on full timed mocks.
+
 ## Which model for which work (agreed with the father, 12 Nov 2026, Pro plan = limited usage)
 - **Opus** (newest) for: writing new sets with keys and explanations, reading books to decide what the exam needs,
   large changes to `src/app.html`. A wrong key or wrong explanation teaches her something false.
