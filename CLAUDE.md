@@ -59,6 +59,18 @@ This file is the long-term memory. Chats are disposable; this repo and the statu
 4. At the end: update the status doc (date chip, numbers, one row of "ทำเสร็จล่าสุด"), and if you learned a new
    standing rule, write it into the right file here, not just into the chat.
 
+## Figures in questions (father approved 16 Nov 2026)
+- Plan, in this order: (1) add a declarative geometry `fig` kind to `src/app.html` (points by coordinates,
+  segments, labels, equal-length ticks, angle arcs, right-angle marks, parallel arrows, dashed lines, "?" marker;
+  the app places labels) and teach it to `tools/verify.js`; (2) add figures to sets 040–041 (congruence);
+  (3) use it for IPST ม.2 เล่ม 2 ch.3–4 in round 2. Science: hand-written SVG for now (an `svg` fig kind, sanitised),
+  a circuit/optics kind later when those chapters come. Do (1) in the same Opus session as round 2 when the
+  father says "ทำรอบ 2 หนังสือ ม.2 เล่ม 2"; he does not need to repeat this plan.
+- Standing rules for every figure: render it to an image (playwright screenshot) and look at it before
+  committing; the independent blind check gets the rendered figures too; write "รูปไม่ได้วาดตามสเกล" when it is
+  not to scale; every figure has a short text description for read-aloud. Never copy a figure from a book.
+  Sample of the agreed style: father saw three samples on 16 Nov (bridge-over-pond, isosceles roof, parallel circuit).
+
 ## Which model for which work (agreed with the father, 12 Nov 2026, Pro plan = limited usage)
 - **Opus** (newest) for: writing new sets with keys and explanations, reading books to decide what the exam needs,
   large changes to `src/app.html`. A wrong key or wrong explanation teaches her something false.
