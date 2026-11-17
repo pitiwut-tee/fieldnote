@@ -503,6 +503,9 @@ mark.sperr{background:#FFD3CC;color:#8A1F14;border-radius:3px;padding:0 1px}
 .rdspell{border-top:1px solid var(--line);padding:6px 0;min-width:0;max-width:100%}.rdspell summary{cursor:pointer;display:flex;flex-direction:column;gap:2px}.rdmeta{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 #readiness{min-width:0;max-width:100%}
 .rdbar{display:inline-flex;gap:2px}.rdbar i{width:10px;height:14px;border-radius:2px;display:inline-block;border:1px solid var(--line)}
+.friendbox{border:1.5px dashed var(--line);border-radius:12px;padding:8px 12px;margin:6px 0;background:rgba(255,248,225,.55)}.friendbox ol{margin:4px 0 0;padding-left:1.4em}.friendbox li{margin:2px 0}
+.lptable{overflow-x:auto}.lptable table{border-collapse:collapse;width:100%;font-size:.95rem}.lptable th,.lptable td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left}
+.lpcontrast{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 .rdtable{overflow-x:auto;max-width:100%}.rdtable table{border-collapse:collapse;min-width:640px;width:100%;font-size:.9rem}.rdtable th,.rdtable td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 </style>
 
@@ -572,7 +575,7 @@ setTimeout(()=>{ try{ migrateBuddy() }catch(e){} },0);
   if(!db) return;
   const t = setTimeout(()=>{}, 10000);
   try{
-    unsub = db.collection("attempts").orderBy("endedAt","desc").limit(200).onSnapshot(s=>{
+    unsub = db.collection("attempts").orderBy("endedAt","desc").limit(2000).onSnapshot(s=>{
       clearTimeout(t); store="db";
       attempts = s.docs.map(d=>({id:d.id,...d.data()}));
       if(view==="parent"||view==="home") render();
@@ -725,7 +728,10 @@ function fillize(q,mixed){
 function comeback(q,list){
   const seen=new Set(list.filter(isLesson).flatMap(a=>(a.items||[]).map(x=>x.qid)));
   const root=q.of||q.id, twins=(VARIANTS[root]||[]).map(v=>QBANK[v.id]?.q).filter(Boolean);
-  const fresh=twins.find(t=>!seen.has(t.id)); return fresh?{...fresh}:recallize(q);
+  /* wave 1: a twin that changes the situation (not only the numbers) comes first, and a situation she has not met yet */
+  const sits=new Set([QBANK[root]?.q.sit,...twins.filter(t=>seen.has(t.id)).map(t=>t.sit)].filter(Boolean));
+  const sc=t=>waveOn(1)?(t.change==="situation"?2:0)+(t.sit&&!sits.has(t.sit)?1:0):0;
+  const fresh=twins.filter(t=>!seen.has(t.id)).sort((a,b)=>sc(b)-sc(a))[0]; return fresh?{...fresh}:recallize(q);
 }
 
 /* ---------- XP, streak and ice ---------- */
@@ -738,7 +744,7 @@ function voided(a){ return VOID.has(a.endedAt)||VOID_RULES.some(r=>a.type===r.ty
 function realAttempts(){ return attempts.filter(a=>!a.example&&!a.test&&!voided(a)) }
 function mine(){ return TEST ? attempts.filter(a=>!a.example) : realAttempts() }
 function isSkip(a){ return a.type==="skip" }
-const LESSON_TYPES=["set","probe","mixed","passage","review","sweep"];
+const LESSON_TYPES=["set","probe","mixed","passage","review","sweep","checkpoint","mini"];
 function isLesson(a){ return LESSON_TYPES.includes(a.type||"set") }
 function dayKey(iso){ const d=new Date(iso); d.setHours(0,0,0,0); return d.getTime() }
 function todayKey(){ return dayKey(new Date().toISOString()) }
@@ -764,7 +770,7 @@ function exHtml(q,ans){ if(!exStepped(q,ans)) return `<p>${gloss(q.ex)}</p>`; co
 function hintList(q){ const h=[...(q.hints||[])], st=exSteps(q.ex), a=String(q.num?(q.answerText||q.answer):q.opts?q.opts[q.a]:"").trim();
   const leaks=a&&new RegExp("(^|[^0-9.])"+a.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"([^0-9.]|$)").test(st[0]||"");
   if(q.step1) h.push("ขั้นแรกของวิธีทำ: "+q.step1); else if(q.num&&st.length>=2&&!leaks&&(q.hints||[]).length<3) h.push("ขั้นแรกของวิธีทำ: "+st[0]); return h }
-function itemXp(items){ return items.reduce((s,x)=>s+(x.skipped||x.dontknow?0:x.correct?10:(x.timeSec!=null&&x.timeSec<4?0:5))+(x.checkOk?5:0),0) }
+function itemXp(items){ return items.reduce((s,x)=>s+(x.skipped||x.dontknow?0:x.correct?10:(x.timeSec!=null&&x.timeSec<4?0:5))+(x.checkOk&&x.correct?5:0),0) }
 /* anti-grinding (father, 8 Nov 2026), applied when a lesson-type record is saved:
    - replaying a set she already finished pays only for questions she had missed before and now gets right, no finish bonus
    - lesson XP above DAY_XP_SOFT in one day counts half ("พักบ้างนะ") */
@@ -785,7 +791,7 @@ function xpRules(rec,prev){
 }
 
 /* ---------- day types: school day or holiday (Thai public holidays, school days off, weekends), plus a manual switch ---------- */
-const LEVELS={full:{label:"เต็ม",mins:"ราว 75–90 นาที แบ่งทำเป็นช่วงๆ",units:2,probe:true,sweep:10},mid:{label:"กลาง",mins:"ราว 60 นาที",units:2,probe:true,sweep:5},light:{label:"เบา",mins:"ราว 40 นาที",units:1,probe:false,sweep:5}};
+const LEVELS={full:{label:"เต็ม",mins:"ราว 75–90 นาที แบ่งทำเป็นช่วงๆ",units:2,probe:true,sweep:10},mid:{label:"กลาง",mins:"ราว 60 นาที",units:2,probe:true,sweep:5},light:{label:"เบา",mins:"ราว 40 นาที",units:1,probe:false,sweep:5},min:{label:"ขั้นต่ำ",mins:"ราว 15 นาที",units:0,probe:false,sweep:0}};
 const SWEEP_SCHOOL=5;
 const LOWER_REASONS=["มีธุระครอบครัว","ไปเที่ยว/ออกนอกบ้าน","การบ้านหรืองานเยอะ","เรียนพิเศษ/กิจกรรม","ไม่สบาย","อื่นๆ"];
 const MILESTONES=[3,7,14,30,50,100,200,365];
@@ -801,9 +807,9 @@ function baseDay(dk){
 function dayModes(list){ const m={}; list.filter(a=>a.type==="daymode").sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt)).forEach(a=>{m[a.day]={...(m[a.day]||{}),...a}}); return m }
 function dayInfo(dk, modes){
   const b=baseDay(dk), o=modes[isoDay(dk)]||{};
-  const kind=o.kind||b.kind, level=kind==="school"?"school":(o.level||"full");
+  const kind=o.kind||b.kind, level=o.level==="min"?"min":kind==="school"?"school":(o.level==="school"?"full":o.level||"full");
   const name=o.kind&&o.kind!==b.kind?(o.kind==="holiday"?"หยุดเรียน (แจ้งเอง)":"ไปโรงเรียน (แจ้งเอง)"):b.name;
-  return {kind,level,name,override:!!o.kind&&o.kind!==b.kind,lowered:kind==="holiday"&&level!=="full",reason:o.reason||""};
+  return {kind,level,name,override:!!o.kind&&o.kind!==b.kind,lowered:kind==="holiday"&&level!=="full"&&level!=="min",min:level==="min",reason:o.reason||""};
 }
 
 /* ---------- weekly quests ---------- */
@@ -820,14 +826,16 @@ function questStatus(list, wk, upto, met){
 
 function progressOf(list){
   const modes=dayModes(list);
-  const byDay=new Map(), sweepDays=new Set(), skipDays=new Set(), leaveDays=new Set(), vocabDays=new Set(), units=new Map(), probes=new Map(), met=new Set();
+  const byDay=new Map(), miniDays=new Set(), cpDays=new Set(), paperDays=new Set(), sweepDays=new Set(), skipDays=new Set(), leaveDays=new Set(), vocabDays=new Set(), units=new Map(), probes=new Map(), met=new Set();
   list.forEach(a=>{ const k=dayKey(a.endedAt);
     if(a.type==="daymode") return;
     if(a.type==="mission"||a.type==="teach"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* mission / teaching dad: XP only, not a daily unit */
     if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood"||a.type==="adv"||a.type==="studio"||a.type==="elem"||a.type==="save"||a.type==="card"||a.type==="wish"||a.type==="chem") return;
     if(a.type==="lab"||a.type==="labverdict"||a.type==="labquest"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
     if(a.type==="sweep"){ sweepDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
-    if(a.type==="recall"||a.type==="comp"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* 🧠 3-question recall tile: XP, not a lesson unit */   /* old-topic sweep: its own daily step, not a lesson unit */
+    if(a.type==="recall"||a.type==="comp"||a.type==="loop"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
+    if(a.type==="mini"){ miniDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* minimum day (15 min): its own daily step */
+    if(a.type==="checkpoint") cpDays.add(k); if(a.type==="paper") paperDays.add(k);   /* 🧠 3-question recall tile: XP, not a lesson unit */   /* old-topic sweep: its own daily step, not a lesson unit */
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
     byDay.set(k,(byDay.get(k)||0)+xpOf(a));
     if(a.type==="vocab") vocabDays.add(k); else { units.set(k,(units.get(k)||0)+1); if(a.type==="probe"||a.type==="mixed"||a.type==="passage") probes.set(k,(probes.get(k)||0)+1) } });
@@ -837,11 +845,13 @@ function progressOf(list){
   const today=todayKey();
   const noVocabToday=(()=>{try{const v=vocabToday();return !v.due.length&&!v.fresh.length}catch(e){return false}})();
   const need=d=>{ const info=dayInfo(d,modes); const ex=examAt(d); if(ex&&ex.phase==="during") return {units:0,probe:false,info,exam:true};
+    if(info.min) return {units:0,probe:false,info,min:true};
+    { const c=checkpointAt(d); if(c) return {units:1,probe:false,info,cp:c.kind==="short"?c:null,paper:c.kind==="full"?c:null}; }
     if(ex&&ex.phase==="prep") return {units:1,probe:false,info};
     if(info.level==="school") return {units:1,probe:false,info}; const L=LEVELS[info.level]; return {units:L.units,probe:L.probe&&probesLeft(d),info} };
   const sweepFrom=CAL.sweepFrom?new Date(CAL.sweepFrom+"T00:00:00").getTime():Infinity, noSweepToday=(()=>{try{return !sweepQuestions(list,1).length}catch(e){return true}})();
-  const sweepOk=d=>d<sweepFrom||examAt(d)||sweepDays.has(d)||(d===today&&noSweepToday);
-  const isMet=d=>{ const n=need(d); return (vocabDays.has(d)||(d===today&&noVocabToday))&&(units.get(d)||0)>=n.units&&(!n.probe||(probes.get(d)||0)>=1)&&sweepOk(d) };
+  const sweepOk=d=>d<sweepFrom||examAt(d)||sweepDays.has(d)||(d===today&&noSweepToday)||(()=>{ const n=need(d); return n.cp||n.paper })();
+  const isMet=d=>{ const n=need(d); if(n.min) return miniDays.has(d)||(units.get(d)||0)>=1; return (vocabDays.has(d)||(d===today&&noVocabToday))&&(units.get(d)||0)>=n.units&&(!n.probe||(probes.get(d)||0)>=1)&&sweepOk(d) };
   const keys=[...byDay.keys(),...skipDays,...[...leaveDays].filter(d=>d<=today)];
   let streak=0, best=0, freeze=0, goalDays=0; const frozen=new Set(), earned=[], questDone=new Set();
   if(keys.length){
@@ -862,6 +872,7 @@ function progressOf(list){
   const n=need(today), u=units.get(today)||0, pr=probes.get(today)||0;
   return {streak,best,freeze,goalDays,frozen,skipDays,byDay,met,todayXp:byDay.get(today)||0,leaveDays,onLeave:leaveDays.has(today),
     unitsToday:u,probesToday:pr,sweepToday:sweepDays.has(today),sweepNeeded:today>=sweepFrom&&!noSweepToday,lessonToday:u-pr>=1||(u>=1&&!n.probe),vocabToday:vocabDays.has(today),noVocabToday,need:n,info:n.info,modes,
+    miniToday:miniDays.has(today),cpToday:cpDays.has(today),paperToday:paperDays.has(today),
     goalToday:met.has(today),earnedToday:earned.filter(e=>e.d===today),quests:questStatus(list,weekStart(today),today,met),questDoneThisWeek:questDone.has(weekStart(today)),questWeeks:[...questDone].sort()};
 }
 
@@ -1006,13 +1017,14 @@ function startSet(set, conceptFirst, perms, dueIds){
   const probe=set.kind==="probe", mixed=set.kind==="mixed";
   /* spaced review: a lesson's warm-up gets 1 question from a spell that is due again */
   /* plus 1 earlier mistake (at least 2 days old) so the mistake pile doesn't only wait for Friday */
-  const due = set.kind==="lesson" ? (dueIds ? dueIds.map(id=>{const q=QBANK[id.replace(/^[rc]:/,"")]?.q; return q&&(id.startsWith("c:")?{...q,_chk:true}:{...recallize(q),...(id.startsWith("r:")?{_retry:true}:{})})}).filter(Boolean)
+  const due = set.kind==="lesson" ? (dueIds ? dueIds.map(id=>{const q=QBANK[id.replace(/^[rcl]:/,"").replace(/@.*$/,"")]?.q; return q&&(id.startsWith("l:")?{...q,_loop:id.split("@")[1]||subOf(q.id)}:id.startsWith("c:")?{...q,_chk:true}:{...recallize(q),...(id.startsWith("r:")?{_retry:true}:{})})}).filter(Boolean)
     : (()=>{ const l=mine(), d=dueQuestions(l,1,[set.spell,...set.warm.map(q=>q.spell)]), t=todayKey();
         const last={}; l.filter(isLesson).forEach(a=>(a.items||[]).forEach(x=>{last[x.qid]=Math.max(last[x.qid]||0,dayKey(a.endedAt))}));
         const m=reviewPool(l).find(q=>!d.some(x=>x.id===q.id)&&q.spell!==set.spell&&t-(last[q.id]||0)>=2*DAY);
         const c=checkPlan(l,2,[set.spell]).qs.filter(q=>!d.some(x=>x.id===q.id)&&!(m&&m.id===q.id));
-        return [...c.map(q=>({...q,_chk:true})),...d.map(q=>comeback(q,l)),...(m?[{...comeback(m,l),_retry:true}]:[])] })()) : [];
-  const warm = [...set.warm.map(q=>({kind:"q",phase:"อุ่นเครื่อง (ทบทวนของเก่า)",q})),...due.map(q=>q._chk?{kind:"q",phase:"ด่านตรวจความจำ (ข้อใหม่ จากเรื่องที่เคยเรียน)",q:fillize(q),chk:true}:q._retry?{kind:"q",phase:"ลองใหม่ ข้อที่เคยพลาด",q,retry:true}:{kind:"q",phase:"ทบทวนตามรอบ (คาถาที่ไม่ได้ใช้มาหลายวัน)",q,due:true})];
+        const lq=loopChecks(l,1,[...c,...d,...(m?[m]:[])].map(q=>q.id));
+        return [...lq,...c.map(q=>({...q,_chk:true})),...d.map(q=>comeback(q,l)),...(m?[{...comeback(m,l),_retry:true}]:[])] })()) : [];
+  const warm = [...set.warm.map(q=>({kind:"q",phase:"อุ่นเครื่อง (ทบทวนของเก่า)",q})),...due.map(q=>q._loop?{kind:"q",phase:"เช็กเรื่องที่สอนใหม่อีกแบบ",q,loop:q._loop}:q._chk?{kind:"q",phase:"ด่านตรวจความจำ (ข้อใหม่ จากเรื่องที่เคยเรียน)",q:fillize(q),chk:true}:q._retry?{kind:"q",phase:"ลองใหม่ ข้อที่เคยพลาด",q,retry:true}:{kind:"q",phase:"ทบทวนตามรอบ (คาถาที่ไม่ได้ใช้มาหลายวัน)",q,due:true})];
   const card = {kind:"concept",phase:"การ์ดสรุปเนื้อหา"};
   const passage=set.kind==="passage";
   const steps = (passage?[
@@ -1032,8 +1044,8 @@ function startSet(set, conceptFirst, perms, dueIds){
     ...(set.challenge?[{kind:"q",phase:"ข้อท้าทาย (ไม่บังคับ)",q:fillize(set.challenge),optional:true}]:[]),
     {kind:"rate",phase:"ปิดท้าย"}
   ]).map((st,k)=>st.q?{...st,q:shuffleQ(st.q,perms&&perms[k])}:st);   // the right answer is not always the first choice
-  const trial=trialsToday(); markExplain(steps, trial); const legs=expLegs(steps,set);
-  S = {mode:"set", active:true, set, conceptFirst, steps, legs, dueIds:due.map(q=>(q._chk?"c:":q._retry?"r:":"")+q.id), trial, trialVote:{}, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, rating:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
+  const trial=trialsToday(); markExplain(steps, trial, set.kind); const legs=expLegs(steps,set);
+  S = {mode:"set", active:true, set, conceptFirst, steps, legs, dueIds:due.map(q=>q._loop?"l:"+q.id+"@"+q._loop:(q._chk?"c:":q._retry?"r:":"")+q.id), trial, trialVote:{}, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, rating:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
   PAD.strokes=[]; PAD.hist=[]; saveProgress();
   view="session"; render(); window.scrollTo({top:0});
   if(legs.length>=2&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>{ if(S&&S.mode==="set"&&S.i===0&&!S.items.length) expStartSheet() },150);
@@ -1076,8 +1088,12 @@ function expCheckpoint(k){ const l=S.legs[k], next=S.legs[k+1], its=S.items.filt
 </div><p class="small">ต่อไป: ${next.icon} ${esc(next.name)}</p>`,
     actions:[{label:"เดินต่อ",fn:closeSheet},{label:"พักก่อน แล้วค่อยกลับมาทำต่อ",ghost:true,fn:()=>{ closeSheet(); saveProgress(); view="home"; render(); window.scrollTo({top:0}) }}]}) }
 /* trial "explain": one question per set (the first level-3 one, else the hardest) asks for a reason before the answer shows */
-function markExplain(steps, trial){
-  if(!trial.includes("explain")) return;
+function markExplain(steps, trial, setKind){
+  /* wave 2 (from calendar.understand.wave2): the free-text box became "pick the right reason" (q.check, on right AND wrong
+     answers) plus a one-line own reason on one question per lesson only, optional (she left the old box empty on almost every item) */
+  if(!trial.includes("explain")){ if(!waveOn(2)||setKind!=="lesson") return;
+    const qs=steps.filter(st=>st.kind==="q"&&!st.optional&&st.phase==="ฝึกทำ"); if(!qs.length) return;
+    const top=qs.find(st=>st.q.level===3&&!st.q.check)||qs.find(st=>st.q.level===3)||qs.slice().sort((a,b)=>b.q.level-a.q.level)[0]; top.explain=true; top.explain1=true; return }
   const all=steps.filter(st=>st.kind==="q"&&!st.optional), main=all.filter(st=>!st.due&&!st.retry&&!st.chk&&!/^อุ่นเครื่อง/.test(st.phase)), qs=main.length?main:all; if(!qs.length) return;
   const top=qs.find(st=>st.q.level===3)||qs.slice().sort((a,b)=>b.q.level-a.q.level)[0]; top.explain=true;
 }
@@ -1120,7 +1136,7 @@ function startSweep(){
 
 /* daily recall: 3 questions from what she learned today (or the last day she learned), answered from memory
    (a twin, typed answer, or hidden options). Once a day, small XP. Retrieval practice, not new content. */
-function recallSource(list){ const ls_=list.filter(a=>isLesson(a)&&a.type!=="review"&&a.type!=="sweep"&&(a.items||[]).length);
+function recallSource(list){ const ls_=list.filter(a=>isLesson(a)&&!["review","sweep","checkpoint","mini"].includes(a.type)&&(a.items||[]).length);
   if(!ls_.length) return null; const t=todayKey(), days=[...new Set(ls_.map(a=>dayKey(a.endedAt)))].sort((a,b)=>b-a);
   const day=days.includes(t)?t:days[0]; if(t-day>3*86400000) return null;
   const ids=[...new Set(ls_.filter(a=>dayKey(a.endedAt)===day).flatMap(a=>a.items.filter(x=>!x.skipped&&QBANK[x.qid]).map(x=>x.qid)))];
@@ -1162,6 +1178,8 @@ function render(){
   if(view==="sendall") return renderSend(true);
   if(view==="skip") return renderSkip();
   if(view==="session") return renderStep();
+  if(view==="loop") return renderLoop();
+  if(view==="cpintro") return renderCpIntro();
   if(view==="vocab") return renderVocab();
   if(view==="done") return renderDone();
   if(view==="parent") return renderParent();
@@ -1185,6 +1203,9 @@ function flameHtml(p){
 }
 function missionList(p){
   const lv=p.info.level, probeLeft=p.need.probe, u=p.unitsToday, nonProbe=u-p.probesToday;
+  if(p.need.min) return [{key:"mini",done:p.miniToday||u>=1}];
+  if(p.need.cp) return [{key:"checkpoint",done:p.cpToday||u>=1},{key:"vocab",done:p.vocabToday||p.noVocabToday}];
+  if(p.need.paper) return [{key:"paper",done:p.paperToday||u>=1},{key:"vocab",done:p.vocabToday||p.noVocabToday}];
   const m=[{key:"lesson",done:nonProbe>=1||(!probeLeft&&u>=1)},{key:"vocab",done:p.vocabToday||p.noVocabToday}];
   const ex=examAt(todayKey()); if(ex&&ex.phase==="during") return m.slice(1); if(ex) return m;
   if(lv==="full"||lv==="mid") m.push({key:"probe",done:probeLeft?p.probesToday>=1:u>=2});
@@ -1209,7 +1230,7 @@ function piecesBar(n){ const pc=n%7||(n?7:0); return `${"■".repeat(pc)}${"□"
 function piecesLine(list){ if(todayKey()<dayKey(PIECE_FROM+"T00:00:00+07:00")) return ""; const n=mapPieces(list);
   return `<p class="small" style="margin:4px 0">🧩 ชิ้นส่วนแผนที่ ${piecesBar(n)} <span class="muted">· ทำภารกิจวันนี้ครบทุกจุด ได้ 1 ชิ้น${n>=7?" · ครบแล้ว! เขตใหม่ของทีมกู้โลกกำลังมา":""}</span></p>` }
 /* the day's missions drawn as one expedition route (father, 10 Nov); the optional extra is a secret path that opens at the end */
-const EXP_STOP={lesson:["📘","บทเรียน"],vocab:["🔤","คำศัพท์"],probe:["⛰️","ด่านสำรวจ"],sweep:["🧭","ย้อนของเก่า"]};
+const EXP_STOP={lesson:["📘","บทเรียน"],vocab:["🔤","คำศัพท์"],probe:["⛰️","ด่านสำรวจ"],sweep:["🧭","ย้อนของเก่า"],mini:["⏱️","ชุดขั้นต่ำ"],checkpoint:["🏁","ด่านประเมิน"],paper:["📝","ข้อสอบกระดาษ"]};
 function expRoute(ms,p){ const all=ms.every(x=>x.done), nx=ms.findIndex(x=>!x.done), n=ms.length, list=mine(), pw=expDayPower(list), bo=expBoost(list);
   const pts=ms.map((_,k)=>[10+(n>1?k*(66/(n-1)):33), k%2?42:72]); const sec=[90,16];
   const path=[...pts,sec].map((q,k,a)=>k?`Q ${(a[k-1][0]+q[0])/2} ${k%2?a[k-1][1]-14:a[k-1][1]+14} ${q[0]} ${q[1]}`:`M ${q[0]} ${q[1]}`).join(" ");
@@ -1232,10 +1253,15 @@ function missionsDone(p){ const m=missionList(p); return {done:m.filter(x=>x.don
 let dmOpen=null, dmLevel=null, dmReason=null;
 function dayPanel(p){
   const i=p.info, L=LEVELS[i.level];
+  if(i.min) return `<div class="daypanel"><p class="small"><b>วันนี้: วันขั้นต่ำ</b> · ราว 15 นาที${i.reason?` · เพราะ${esc(i.reason)}`:""} · ทำชุดสั้นจบ ไฟก็ติดเหมือนวันปกติ</p>${p.goalToday?"":`<div class="row"><button class="btn ghost small" id="dm-unmin">กลับเป็นวันปกติ</button></div>`}</div>`;
   const head=i.kind==="school"?`<b>วันนี้: ${esc(i.name)}</b> · ราว 45–60 นาที`
     :`<b>วันนี้: วันหยุด (${esc(i.name)})</b> · ระดับ${L.label} ${L.mins}${i.lowered?` · ลดระดับเพราะ${esc(i.reason)}`:""}`;
   let body="";
-  if(dmOpen==="lower"){
+  if(dmOpen==="min"){
+    body=`<p class="small"><b>วันขั้นต่ำ ราว 15 นาที:</b> ชุดสั้น 6–8 ข้อ (ทวนเรื่องที่เพิ่งเรียน ข้อที่เคยพลาด และเรื่องที่ถึงรอบ) ทำจบแล้วนับเป็นวันที่ทำครบ ไฟติดเหมือนเดิม พ่อจะเห็นว่าวันนี้เป็นวันขั้นต่ำ</p>
+      <p class="small muted">เพราะอะไร</p><div class="why">${MIN_REASONS.map(r=>`<button data-rs="${r}" aria-pressed="${dmReason===r}">${r}</button>`).join("")}</div>
+      <div class="row"><button class="btn" id="dm-minsave" ${dmReason?"":"disabled"}>ใช้วันขั้นต่ำ</button><button class="btn ghost" id="dm-cancel">ยกเลิก</button></div>`;
+  } else if(dmOpen==="lower"){
     body=`<div class="why">${["mid","light"].map(l=>`<button data-lv="${l}" aria-pressed="${dmLevel===l}">ระดับ${LEVELS[l].label} · ${LEVELS[l].mins}</button>`).join("")}${i.lowered?`<button data-lv="full" aria-pressed="${dmLevel==="full"}">กลับเป็นระดับเต็ม</button>`:""}</div>
       ${dmLevel&&dmLevel!=="full"?`<p class="small muted">เพราะอะไร</p><div class="why">${LOWER_REASONS.map(r=>`<button data-rs="${r}" aria-pressed="${dmReason===r}">${r}</button>`).join("")}</div>`:""}
       <div class="row"><button class="btn" id="dm-save" ${dmLevel&&(dmLevel==="full"||dmReason)?"":"disabled"}>บันทึก</button><button class="btn ghost" id="dm-cancel">ยกเลิก</button></div>`;
@@ -1243,7 +1269,7 @@ function dayPanel(p){
     body=`<p class="small">${i.kind==="school"?"วันนี้โรงเรียนหยุด (เช่น หยุดพิเศษ หยุดกลางภาค) ใช่ไหม ภารกิจจะเป็นแบบวันหยุด":"วันนี้ต้องไปโรงเรียน (เช่น เรียนชดเชย) ใช่ไหม ภารกิจจะเหลือ 2 อย่าง"} พ่อจะเห็นว่าเปลี่ยนไว้</p>
       <div class="row"><button class="btn" id="dm-kind">${i.kind==="school"?"ใช่ วันนี้หยุดเรียน":"ใช่ วันนี้ไปโรงเรียน"}</button><button class="btn ghost" id="dm-cancel">ยกเลิก</button></div>`;
   } else {
-    body=`<div class="row" style="gap:6px">${i.kind==="holiday"?`<button class="btn ghost small" id="dm-lower">${i.lowered?"เปลี่ยนระดับ":"วันนี้มีธุระ ขอลดระดับ"}</button>`:""}
+    body=`<div class="row" style="gap:6px">${i.kind==="holiday"?`<button class="btn ghost small" id="dm-lower">${i.lowered?"เปลี่ยนระดับ":"วันนี้มีธุระ ขอลดระดับ"}</button>`:""}${minDayOn()?`<button class="btn ghost small" id="dm-min">⏱️ วันนี้ขอแบบขั้นต่ำ 15 นาที</button>`:""}
       <button class="btn ghost small" id="dm-switch">${i.kind==="school"?"วันนี้โรงเรียนหยุด":"วันนี้ต้องไปโรงเรียน"}</button></div>`;
   }
   return `<div class="daypanel"><p class="small">${head}</p>${p.goalToday?"":body}</div>`;
@@ -1252,11 +1278,14 @@ function bindDayPanel(p){
   const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
   on("dm-lower",()=>{dmOpen="lower";dmLevel=null;dmReason=null;renderHome()});
   on("dm-switch",()=>{dmOpen="kind";renderHome()});
+  on("dm-min",()=>{dmOpen="min";dmReason=null;renderHome()});
   on("dm-cancel",()=>{dmOpen=null;renderHome()});
   $v.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{dmLevel=b.dataset.lv;renderHome()});
   $v.querySelectorAll("[data-rs]").forEach(b=>b.onclick=()=>{dmReason=b.dataset.rs;renderHome()});
   const save=async rec=>{ const now=new Date().toISOString(); await saveAttempt({type:"daymode",setId:"daymode",topic:"ประเภทวัน",day:isoDay(todayKey()),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[],...rec}); dmOpen=null; renderHome() };
   on("dm-save",()=>save({kind:"holiday",level:dmLevel,reason:dmLevel==="full"?"":dmReason}));
+  on("dm-minsave",()=>save({level:"min",reason:dmReason}));
+  on("dm-unmin",()=>save({level:p.info.kind==="school"?"school":"full",reason:""}));
   on("dm-kind",()=>save(p.info.kind==="school"?{kind:"holiday",level:"full",reason:"โรงเรียนหยุด"}:{kind:"school",reason:"ต้องไปโรงเรียน"}));
 }
 
@@ -1303,11 +1332,13 @@ function renderHome(){
     ${dayPanel(p)}
     ${examBanner()}
     ${tr.length?`<div class="daypanel trialbox"><p class="small"><b>🧪 ทดลองของใหม่วันนี้:</b> ${tr.map(k=>TRIAL_NAMES[k]).join(" และ ")} · ลองสัปดาห์นี้แล้วบอกหน่อยว่าชอบไหม</p></div>`:""}
-    ${mission(1,"lesson",(examAt(todayKey())||{}).phase==="during"?"ไม่บังคับช่วงสอบ":plan.exam?"โหมดเตรียมสอบ · ราว 25 นาที":plan.repair?"ชุดซ่อมจุดอ่อน (วันศุกร์) · ราว 20 นาที":"ชุดฝึก"+(md.lesson?" · ทำแล้ว":" · ราว 30 นาที"),lessonTitle,
+    ${specialMissions(p,ms,md,mission)}
+    ${loopCard(list)}
+    ${!ms.some(x=>x.key==="lesson")?"":mission(1,"lesson",(examAt(todayKey())||{}).phase==="during"?"ไม่บังคับช่วงสอบ":plan.exam?"โหมดเตรียมสอบ · ราว 25 นาที":plan.repair?"ชุดซ่อมจุดอ่อน (วันศุกร์) · ราว 20 นาที":"ชุดฝึก"+(md.lesson?" · ทำแล้ว":" · ราว 30 นาที"),lessonTitle,
       md.lesson&&doneLesson?`<div class="row">${notesBtn(doneLesson)}<button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"เลือกชุดอื่น"}</button></div>`
       :`<div class="row"><button class="btn" id="go-rec">${plan.exam?"เริ่มทบทวน":plan.repair?"เริ่มซ่อม":"เริ่มชุดนี้"}</button><button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"อยากทำเรื่องอื่น"}</button></div>`,
-      showAll?`<div class="sets">${SETS.map((s,k)=>s===plan.lesson||s.kind==="sweep"?"":setCard(s,k)).join("")}</div>`:"")}
-    ${mission(2,"vocab","คำศัพท์อังกฤษ · ราว 10 นาที",`<h2>คำศัพท์วันนี้</h2><p class="small muted">${md.vocab?"ทำแล้ว เก่งมาก":vt.fresh.length||vt.due.length?`คำใหม่ ${vt.fresh.length} คำ · ทบทวน ${vt.due.length} คำ · ฟังเสียง ฝึกสะกด${isWeekend()?" · อ่านภาษาอังกฤษสั้นๆ":""}`:"วันนี้ไม่มีคำค้าง ข้ามได้"}</p>`,
+      showAll?`<div class="sets">${SETS.map((s,k)=>s===plan.lesson||s.kind==="sweep"||s.kind==="checkpoint"?"":setCard(s,k)).join("")}</div>`:"")}
+    ${!ms.some(x=>x.key==="vocab")?(p.need.min&&!p.vocabToday&&(vt.fresh.length||vt.due.length)?`<p class="small muted">คำศัพท์วันนี้ไม่บังคับในวันขั้นต่ำ <button class="btn ghost small" id="vocab-go">ทำคำศัพท์</button></p>`:""):mission(ms.findIndex(x=>x.key==="vocab")+1,"vocab","คำศัพท์อังกฤษ · ราว 10 นาที",`<h2>คำศัพท์วันนี้</h2><p class="small muted">${md.vocab?"ทำแล้ว เก่งมาก":vt.fresh.length||vt.due.length?`คำใหม่ ${vt.fresh.length} คำ · ทบทวน ${vt.due.length} คำ · ฟังเสียง ฝึกสะกด${isWeekend()?" · อ่านภาษาอังกฤษสั้นๆ":""}`:"วันนี้ไม่มีคำค้าง ข้ามได้"}</p>`,
       !p.vocabToday&&(vt.fresh.length||vt.due.length)?`<button class="btn" id="vocab-go">เริ่มคำศัพท์</button>`:Object.keys(vocabState()).length?`<button class="btn ghost" id="go-words">📖 ทบทวนคำศัพท์ที่เรียนแล้ว</button>`:"")}
     ${ms.some(x=>x.key==="probe")?(plan.passage&&!(md.probe&&doneProbe&&doneProbe.type!=="passage")?mission(3,"probe","อ่านจับใจความวิทย์ (สัปดาห์ละครั้ง) · ราว 20 นาที",
       md.probe&&doneProbe?doneTitle(doneProbe):`<h2>${esc(plan.passage.topic)}</h2><p class="small muted">อ่านบทความสั้นเองเงียบๆ แล้วตอบ ${plan.passage.practice.length} ข้อ ฝึกอ่านข้อความยาวให้คล่อง แบบที่ข้อสอบใช้</p>`,
@@ -1319,7 +1350,7 @@ function renderHome(){
       md.probe&&doneProbe?doneTitle(doneProbe):plan.probe?`<h2>${esc(plan.probe.topic)}</h2><p class="small muted">${plan.probe.practice.length} ข้อ ไม่มีการ์ดก่อนทำ ทำได้ดีคาถาขึ้นขั้นทันที</p>`:`<p class="small muted">ทำชุดไหนก็ได้อีก 1 ชุด</p>`,
       md.probe&&doneProbe?notesBtn(doneProbe):`<button class="btn" id="${plan.probe?"go-probe":"go-extra2"}">${plan.probe?"เข้าด่าน":"เลือกชุด"}</button>`)):""}
     ${ms.some(x=>x.key==="sweep")?mission(ms.findIndex(x=>x.key==="sweep")+1,"sweep",`ย้อนคาถาเก่า ม.1–2 · ราว ${sweepSize(p)>5?"12":"7"} นาที`,
-      md.sweep?`<h2>ย้อนคาถาเก่า</h2><p class="small muted">ทำแล้ว ✓ ข้อที่พลาดจะวนมาให้ทวน</p>`:`<h2>${sweepSize(p)} ข้อคละเรื่องที่เคยเรียน</h2><p class="small muted">เช็กว่ายังจำได้ไหม ไม่บอกล่วงหน้าว่าเรื่องอะไร ลืมไม่เป็นไร เราจะได้รู้ว่าต้องทวนตรงไหน</p>`,
+      md.sweep?`<h2>ย้อนคาถาเก่า</h2><p class="small muted">ทำแล้ว ✓ ข้อที่พลาดจะวนมาให้ทวน</p>`:`<h2>${sweepSize(p)} ข้อคละเรื่องที่เคยเรียน</h2><p class="small muted">เช็กว่ายังเข้าใจอยู่ไหม ไม่บอกล่วงหน้าว่าเรื่องอะไร ลืมไม่เป็นไร เราจะได้รู้ว่าต้องทวนตรงไหน</p>`,
       md.sweep?"":`<button class="btn" id="sweep-go">เริ่มย้อน</button>`):""}
   </section>
   ${p.goalToday?`<section class="card usebox" id="m-secret"><span class="eyebrow">🗝️ เส้นทางลับเปิดแล้ว · ภารกิจวันนี้ครบ ทางนี้ไม่บังคับ</span>
@@ -1342,7 +1373,7 @@ function renderHome(){
     <p style="margin:12px 0 0">แอปรุ่น ${esc(BUILD)}</p></details>`:""}`;
   bindDayPanel(p); bindBuddySetup(); bindBuddyHero(); bindLetter(); bindGoal(list); bindTeach(); buddyNote="";
   { const ce=document.getElementById("callme-edit"); if(ce) ce.onclick=()=>askName(true) }
-  setTimeout(()=>{ if(!askName()&&!guestPop(mine())&&STUDIO) studioTeaser() },700);
+  setTimeout(()=>{ if(!askName()&&!waveIntro()&&!guestPop(mine())&&STUDIO) studioTeaser() },700);
   $v.querySelectorAll("[data-wishclaim]").forEach(x=>x.onclick=()=>{ x.disabled=true; wishClaim(render) }); bindWishGo($v);
   wishMigrate();
   $v.querySelectorAll("[data-tile]").forEach(t=>t.onclick=()=>{ if(t.dataset.tile==="studio"){ studioOpen(); return } if(t.dataset.tile==="elem"){ homeOpen=null; EL=null; view="elem"; render(); window.scrollTo({top:0}); return } if(t.dataset.tile==="adv"){ homeOpen=null; advSel=advSel||"r1"; view="adv"; render(); window.scrollTo({top:0}); return } homeOpen=homeOpen===t.dataset.tile?null:t.dataset.tile; renderHome();
@@ -1352,8 +1383,9 @@ function renderHome(){
     buddyNote=moodReply(m.dataset.mood); renderHome() });
   { const sg=document.getElementById("sweep-go"); if(sg) sg.onclick=()=>startSweep() }
   { const cg=document.getElementById("comp-go"); if(cg) cg.onclick=()=>startComp() }
+  bindUnderstandHome(list,p);
   const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
-  on("exp-go",()=>{ const k=document.getElementById("exp-go").dataset.key, ids={lesson:["go-rec"],vocab:["vocab-go"],probe:["go-probe","go-extra2"],sweep:["sweep-go"]}[k]||[];
+  on("exp-go",()=>{ const k=document.getElementById("exp-go").dataset.key, ids={lesson:["go-rec"],vocab:["vocab-go"],probe:["go-probe","go-extra2"],sweep:["sweep-go"],mini:["mini-go"],checkpoint:["cp-go"]}[k]||[];
     const b=ids.map(x=>document.getElementById(x)).find(Boolean); if(b) b.click(); else { const t=document.getElementById("m-"+k); if(t) t.scrollIntoView({behavior:"smooth",block:"center"}) } });
   on("exp-adv",()=>{ view="adv"; render(); window.scrollTo({top:0}) });
   $v.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>{ const t=document.getElementById(b.dataset.goto); if(t) t.scrollIntoView({behavior:"smooth",block:"center"}) });
@@ -1439,7 +1471,7 @@ function renderIntro(){
       <li>ข้อที่ตอบถูกนับเข้าคาถาของเรื่องนั้นด้วย</li></ul>
     <div class="row"><button class="btn" id="go">เริ่มเลย</button></div>`:s.kind==="probe"?`<p><b>ด่านสำรวจ</b> เช็กว่าเรื่องนี้ที่เคยเรียนมา ยังแน่นอยู่ไหม</p>
     <ul style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px">
-      <li>${s.practice.length} ข้อ ไล่จากง่ายไปยาก ไม่มีการ์ดสรุปก่อน เพราะอยากรู้ว่าตอนนี้จำได้แค่ไหน</li>
+      <li>${s.practice.length} ข้อ ไล่จากง่ายไปยาก ไม่มีการ์ดสรุปก่อน เพราะอยากรู้ว่าความเข้าใจยังอยู่แค่ไหน</li>
       <li>คิดไม่ออกกด "ยังคิดไม่ออก" ได้เลย ไม่ต้องเดา ผลจะช่วยให้รู้ว่าต้องซ่อมตรงไหน</li>
       <li>ทำได้ดี คาถานี้ขึ้นขั้นทันที ทำพลาดเยอะ เรื่องนี้จะถูกใส่ในชุดซ่อมวันศุกร์</li></ul>
     <div class="row"><button class="btn" id="go">เข้าด่าน</button></div>`:`<p>วันนี้มีอะไรบ้าง</p>
@@ -1732,6 +1764,7 @@ window.addEventListener("resize",()=>padDraw(true));
 
 /* ---------- one question ---------- */
 function renderStep(){
+  if(S.mode==="cp") return renderCpStep();
   const st = S.steps[S.i];
   if(st.kind==="concept") return renderConcept();
   if(st.kind==="passage") return renderPassage();
@@ -1743,12 +1776,19 @@ function renderStep(){
   const tConf=(S.trial||[]).includes("confidence"), tWhy=!!st.explain, staged=tConf||tWhy;
   const sendBtns=tConf?`<button class="btn" id="send-sure">✓ มั่นใจ ส่งคำตอบ</button><button class="btn ghost" id="send-unsure">🤔 ไม่ชัวร์ ส่งคำตอบ</button>`:`<button class="btn" id="send-plain">ส่งคำตอบ</button>`;
   const panel = !ans&&staged&&(q.num||S.pick!=null)?`<div class="feedback trialbox">
-      ${tWhy?`<label class="small" for="whytext"><b>ก่อนดูเฉลย:</b> ทำไมถึงตอบแบบนี้ เขียนสั้นๆ 1–2 บรรทัด (หรือเขียนในกระดาษทดก็ได้)</label>
+      ${tWhy&&st.explain1?`<label class="small" for="whytext"><b>เหตุผลของเธอ 1 บรรทัด</b> (ไม่บังคับ เว้นว่างแล้วกดส่งได้เลย)</label>
+      <input id="whytext" maxlength="120" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)" placeholder="เช่น เพราะน้ำมากขึ้น เกลือก็ละลายได้มากขึ้นตาม" value="${esc(S.whyText||"")}">`:tWhy?`<label class="small" for="whytext"><b>ก่อนดูเฉลย:</b> ทำไมถึงตอบแบบนี้ เขียนสั้นๆ 1–2 บรรทัด (หรือเขียนในกระดาษทดก็ได้)</label>
       <textarea id="whytext" rows="2" maxlength="300" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)" placeholder="เช่น เพราะต้องเรียงข้อมูลก่อน ตัวตรงกลางคือ 7">${esc(S.whyText||"")}</textarea>`:""}
       ${tConf?`<span class="small muted">ตอบแล้วมั่นใจแค่ไหน ข้อที่ถูกแต่ไม่ชัวร์ ระบบจะเอามาให้ทวนอีกรอบ</span>`:""}
       <div class="row">${sendBtns}</div></div>`:"";
   let body;
-  if(q.cover&&!ans&&!S.uncovered){
+  const predWait=q.predict&&waveOn(1)&&!ans&&S.predictPick==null;
+  if(predWait){
+    S.predOrder=S.predOrder||q.predict.opts.map((_,i)=>i).sort(()=>Math.random()-.5);
+    body=`<div class="feedback usebox"><b>🔮 ทายก่อนคิด</b><span class="small">${esc(q.predict.q)}</span>
+      <div class="opts">${S.predOrder.map(k=>`<button class="opt ckopt" data-pred="${k}">${esc(q.predict.opts[k])}</button>`).join("")}</div>
+      <span class="small muted">ทายตามความรู้สึกก่อน ยังไม่ต้องคำนวณ ทายผิดไม่เสียอะไร แล้วค่อยมาเช็กว่าตรงไหม</span></div>`;
+  } else if(q.cover&&!ans&&!S.uncovered){
     body=`<div class="feedback trialbox"><b>🧠 ข้อนี้เคยเจอแล้ว</b><span class="small">ลองคิดคำตอบในใจหรือในกระดาษทดก่อน ว่าต้องใช้วิธีไหน ได้คำตอบอะไร แล้วค่อยกดดูตัวเลือก</span>
       <button class="btn" id="uncover" type="button">คิดแล้ว ขอดูตัวเลือก</button></div>`;
   } else if(q.num){
@@ -1767,21 +1807,28 @@ function renderStep(){
   const HL=hintList(q); S.hintKnown=S.hintKnown||[];
   let fb = "";
   /* reason check: right answer on a question that has q.check → ask how she got it before showing the explanation */
-  const ck=ans&&ans.correct&&q.check&&!S.checkDone?q.check:null;
-  if(ck&&S.checkPick==null){
+  const ck=ans&&q.check&&!S.checkDone&&(ans.correct||waveOn(2)&&!ans.dontknow)?q.check:null;
+  if(ck&&S.checkPick==null&&!ans.correct){
+    S.checkOrder=S.checkOrder||ck.opts.map((_,i)=>i).sort(()=>Math.random()-.5);
+    fb=`<div class="feedback"><b class="no">ยังไม่ใช่ · คำตอบที่ถูกคือ ${esc(q.num?(q.answerText||q.answer)+" "+(q.unit||""):q.opts[q.a])}</b><p><b>ก่อนอ่านเฉลย ลองเลือกดู:</b> เหตุผลข้อไหนพาไปถึงคำตอบนี้</p>
+      <div class="opts">${S.checkOrder.map(k=>`<button class="opt ckopt" data-ck="${k}">${esc(ck.opts[k])}</button>`).join("")}<button class="opt ckopt" data-ck="-1">ยังมองไม่ออก ขออ่านเฉลยเลย</button></div>
+      <span class="small muted">เลือกเหตุผลให้ถูก แปลว่าเริ่มเห็นทางแล้ว แม้คำตอบรอบนี้จะพลาด</span></div>`;
+  } else if(ck&&S.checkPick==null){
     S.checkOrder=S.checkOrder||ck.opts.map((_,i)=>i).sort(()=>Math.random()-.5);
     fb=`<div class="feedback"><b class="ok">✅ ถูกแล้ว!</b><p><b>ก่อนดูเฉลย ขอเช็กเหตุผลนิดนึง:</b> ${esc(ck.q||"เธอได้คำตอบนี้มาด้วยวิธีคิดแบบไหน")}</p>
       <div class="opts">${S.checkOrder.map(k=>`<button class="opt ckopt" data-ck="${k}">${esc(ck.opts[k])}</button>`).join("")}<button class="opt ckopt" data-ck="-1">🎲 เดามา / ยังไม่แน่ใจวิธีคิด</button></div>
       <span class="small muted">เลือกเหตุผลที่ใกล้กับที่เธอคิดจริงที่สุด เหตุผลถูกได้ +5 XP</span></div>`;
   } else if(ans){
-    const ckNote = q.check&&S.checkPick===-1?`<p class="small"><b>ขอบคุณที่บอกตรงๆ</b> เดาถูกไม่นับว่าเข้าใจ ข้อนี้จะกลับมาให้ทวนอีกรอบ อ่านเฉลยแล้วลองดูว่าวิธีคิดจริงคืออะไร</p>`
+    const ckNote = !ans.correct&&q.check&&S.checkPick!=null?(S.checkPick===q.check.a?`<p class="small"><b>เลือกเหตุผลถูก</b> เห็นทางแล้ว ลองอ่านเฉลยดูว่าพลาดตรงขั้นไหน</p>`:S.checkPick===-1?"":`<p class="small">เหตุผลที่ถูกคือ “${esc(q.check.opts[q.check.a])}” ${esc(q.check.ex||"")}</p>`)
+      :q.check&&S.checkPick===-1?`<p class="small"><b>ขอบคุณที่บอกตรงๆ</b> เดาถูกไม่นับว่าเข้าใจ ข้อนี้จะกลับมาให้ทวนอีกรอบ อ่านเฉลยแล้วลองดูว่าวิธีคิดจริงคืออะไร</p>`
       :q.check&&S.checkPick!=null?(S.checkPick===q.check.a?`<p class="small"><b>เหตุผลถูกด้วย +5 XP</b> เข้าใจจริง ไม่ได้ฟลุก</p>`
       :`<p class="small"><b>คำตอบถูก แต่เหตุผลยังไม่ใช่</b> เหตุผลที่ถูกคือ “${esc(q.check.opts[q.check.a])}” ${esc(q.check.ex||"")} ข้อนี้จะกลับมาให้ทวนอีกรอบนะ</p>`):"";
     const head = ans.dontknow?"ไม่เป็นไร มาดูวิธีคิดกัน (0 XP)":ans.correct?YAY[S.i%YAY.length]:OOPS[S.i%OOPS.length];
     const confNote = ans.dontknow||!ans.conf?"":ans.correct&&ans.conf==="unsure"?`<p class="small">ถูกแล้ว แต่ยังไม่ชัวร์ ระบบจะเอาข้อนี้มาให้ทวนอีกรอบ จะได้มั่นใจขึ้น</p>`
       :!ans.correct&&ans.conf==="sure"?`<p class="small"><b>มั่นใจแต่พลาด</b> ข้อแบบนี้ถ้าเข้าใจตอนนี้ จะจำได้แม่นที่สุด อ่านเฉลยช้าๆ นะ</p>`:"";
+    const predNote = q.predict&&S.predictPick!=null?(S.predictPick===q.predict.a?`<p class="small">🔮 <b>ทายไว้ตรง</b> “${esc(q.predict.opts[q.predict.a])}” ความรู้สึกเรื่องนี้เริ่มแม่นแล้ว</p>`:`<p class="small">🔮 ทายไว้ว่า “${esc(q.predict.opts[S.predictPick])}” ที่จริงคือ “${esc(q.predict.opts[q.predict.a])}” ${esc(q.predict.ex||"")}</p>`):"";
     const own = st.explain&&(ans.ownWhy||ans.ownWhyPad)?`<div class="feedback"><span class="small"><b>เหตุผลของเธอ:</b> ${ans.ownWhy?esc(ans.ownWhy):"(เขียนในกระดาษทด)"}</span><span class="small muted">ลองเทียบกับเฉลยด้านล่าง ตรงกันไหม ต่างกันตรงไหน</span></div>`:"";
-    fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answerText||q.answer} ${q.unit}`:""}</b>${ckNote}${confNote}${exHtml(q,ans)}
+    fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answerText||q.answer} ${q.unit}`:""}</b>${predNote}${ckNote}${confNote}${exHtml(q,ans)}
       ${q.en?"":`<div>${readBtn("ex","🔊 ฟังเฉลย")}</div>`}
       ${ans.correct||ans.dontknow?"":`<span class="small muted">พลาดเพราะอะไร เลือกได้หลายข้อ (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
       <div class="why">${Object.entries(ERR).filter(([k])=>k!=="dontknow"&&k!=="notTaught").map(([k,v])=>`<button data-why="${k}" aria-pressed="${(S.why||[]).includes(k)}">${v}</button>`).join("")}</div>
@@ -1795,7 +1842,8 @@ function renderStep(){
     <span class="row" style="gap:6px">${S.set.kind==="mixed"?`<span class="chip">${/^s/.test(q.spell||"")?"🔬 วิทย์":"📐 คณิต"}</span>`:""}<span class="chip l${q.level}">${LV[q.level]}${S.set.kind==="mixed"&&!ans?"":" · "+esc(q.topic)}</span>${q.en?`<span class="chip">English corner</span>`:""}</span>
     ${st.passage?passageDetails():""}
     <p class="prompt">${qLines(gloss(q.q))}</p>
-    ${figHtml(q.fig)}
+    ${figHtml(q.fig)}${friendHtml(q)}
+    ${q.predict&&S.predictPick!=null&&!ans?`<p class="small muted">🔮 ทายไว้ว่า: ${esc(q.predict.opts[S.predictPick])}</p>`:""}
     <div class="feedback" id="gloss-box" hidden></div>
     ${(canQ||q.parts&&S.set.kind!=="mixed"&&!S.partsShown)&&!ans?`<div class="row" style="gap:8px">${canQ?readBtn("q",waitMs?"🔊 ฟังโจทย์ (ลองอ่านเองก่อนนะ)":"🔊 ฟังโจทย์",waitMs>0):""}${q.parts&&S.set.kind!=="mixed"&&!S.partsShown?`<button class="btn ghost small" id="parts" type="button">🧩 ช่วยแบ่งโจทย์</button>`:""}</div>`:""}
     ${q.parts&&!ans&&S.set.kind!=="mixed"?(S.partsShown?`<div class="feedback usebox"><b>🧩 แบ่งโจทย์ให้ดูทีละส่วน</b>
@@ -1805,9 +1853,9 @@ function renderStep(){
     ${S.hints?`<div class="feedback">${HL.slice(0,S.hints).map((h,k)=>`<span class="small hintline"><span><b>คำใบ้ ${k+1}</b> ${esc(h)}</span>${ans?"":S.hintKnown.includes(k)?`<span class="muted">✓ รู้อยู่แล้ว <button class="linkbtn" data-hku="${k}" type="button">กดผิด ยกเลิก</button></span>`:`<button class="linkbtn" data-hk="${k}" type="button">รู้อยู่แล้ว</button>`}</span>`).join("")}
       ${!ans&&S.hints>=HL.length?`<span class="small muted">ใช้คำใบ้ครบแล้ว ลองเขียนสิ่งที่รู้ลงกระดาษทดก่อน ถ้ายังไปต่อไม่ได้ กด "ยังคิดไม่ออก ดูเฉลย" ได้เลย ไม่ผิดอะไร</span>`:""}</div>`:""}
     ${body}${fb}
-    <div class="row">${!ans&&S.hints<HL.length?`<button class="btn ghost" id="hint">${S.hints===HL.length-1&&HL.length>(q.hints||[]).length?"ขอดูขั้นแรกของวิธีทำ":"ขอคำใบ้"} (${S.hints}/${HL.length})</button>`:""}
-    ${!ans?`<div class="row" style="gap:8px"><button class="btn ghost" id="dontknow">🤔 ยังคิดไม่ออก ดูเฉลย</button>${["mixed","probe","sweep"].includes(S.set.kind)||S.set.type==="sweep"?`<button class="btn ghost" id="nottaught">📭 ยังไม่ได้เรียนเรื่องนี้</button>`:""}</div>`:""}
-    ${st.optional&&!ans?`<button class="btn ghost" id="skip">ข้ามข้อนี้</button>`:""}</div>
+    <div class="row">${!ans&&!predWait&&S.hints<HL.length?`<button class="btn ghost" id="hint">${S.hints===HL.length-1&&HL.length>(q.hints||[]).length?"ขอดูขั้นแรกของวิธีทำ":"ขอคำใบ้"} (${S.hints}/${HL.length})</button>`:""}
+    ${!ans&&!predWait?`<div class="row" style="gap:8px"><button class="btn ghost" id="dontknow">🤔 ยังคิดไม่ออก ดูเฉลย</button>${["mixed","probe","sweep"].includes(S.set.kind)||S.set.type==="sweep"?`<button class="btn ghost" id="nottaught">📭 ยังไม่ได้เรียนเรื่องนี้</button>`:""}</div>`:""}
+    ${st.optional&&!ans&&!predWait?`<button class="btn ghost" id="skip">ข้ามข้อนี้</button>`:""}</div>
     ${!ans&&q.recall?`<p class="small muted">🧠 ข้อนี้เคยเจอแล้ว รอบนี้ไม่มีตัวเลือก พิมพ์คำตอบเองเลย</p>`:""}
     ${!ans&&q.num&&!q.recall?`<p class="small muted">✍️ ข้อเติมคำตอบแบบข้อสอบจริง ไม่มีตัวเลือกให้เดา ตอบเป็นเศษส่วนได้ เช่น 2/3</p>`:""}
     ${!ans?askHtml("question"):""}
@@ -1822,7 +1870,8 @@ function renderStep(){
   if(RD.where&&RD.box&&!RD.box.isConnected){ const nb=$v.querySelector(`[data-read="${RD.where}"]`); if(nb){ (nb.closest(".row")||nb).insertAdjacentElement("afterend",RD.box); nb.textContent="⏹ หยุดอ่าน" } }
   const uc=document.getElementById("uncover"); if(uc) uc.onclick=()=>{ S.uncovered=true; S.coverSec=Math.round((Date.now()-S.qStart)/1000); const y=window.scrollY; renderStep(); window.scrollTo({top:y}) };
   const pb=document.getElementById("parts"); if(pb) pb.onclick=()=>{S.partsShown=true;const y=window.scrollY;renderStep();window.scrollTo({top:y})};
-  if(!ans){
+  $v.querySelectorAll("[data-pred]").forEach(b=>b.onclick=()=>{ S.predictPick=+b.dataset.pred; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) });
+  if(!ans&&!predWait){
     const wt=document.getElementById("whytext"); if(wt) wt.oninput=()=>{S.whyText=wt.value};
     const extra=conf=>({...(conf?{conf}:{}),...(st.explain?{ownWhy:(S.whyText||"").trim().slice(0,300),ownWhyPad:PAD.strokes.length>0}:{})});
     if(q.num){
@@ -1850,11 +1899,11 @@ function renderStep(){
     const hb=document.getElementById("hint"); if(hb) hb.onclick=()=>{S.hints++;const y=window.scrollY;renderStep();window.scrollTo({top:y})};
     $v.querySelectorAll("[data-hku]").forEach(b=>b.onclick=()=>{ const k=+b.dataset.hku; S.hintKnown=(S.hintKnown||[]).filter(x=>x!==k); const y=window.scrollY; renderStep(); window.scrollTo({top:y}) });
     $v.querySelectorAll("[data-hk]").forEach(b=>b.onclick=()=>{ const k=+b.dataset.hk; S.hintKnown=[...new Set([...(S.hintKnown||[]),k])]; if(k===S.hints-1&&S.hints<hintList(q).length) S.hints++; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) });
-    document.getElementById("dontknow").onclick=()=>{S.why=["dontknow"]; answer({choice:-1,raw:"",correct:false,dontknow:true})};
+    { const dk=document.getElementById("dontknow"); if(dk) dk.onclick=()=>{S.why=["dontknow"]; answer({choice:-1,raw:"",correct:false,dontknow:true})} }
     { const nt=document.getElementById("nottaught"); if(nt) nt.onclick=()=>{S.why=["notTaught"]; S.notTaught=true; answer({choice:-1,raw:"",correct:false,dontknow:true})} }
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
     const sk=document.getElementById("skip"); if(sk) sk.onclick=()=>{S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,skipped:true,timeSec:0});advance()};
-  } else {
+  } else if(ans){
     { const wo=document.getElementById("whyother"); if(wo) wo.oninput=()=>{ S.whyOther=wo.value.slice(0,200) } }
     { const gb=document.getElementById("guessed"); if(gb) gb.onclick=()=>{ S.guessed=!S.guessed; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) } }
     $v.querySelectorAll("[data-ck]").forEach(b=>b.onclick=()=>{ S.checkPick=+b.dataset.ck; S.checkDone=true; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) });
@@ -1863,13 +1912,13 @@ function renderStep(){
     const exn=document.getElementById("exnext"); if(exn) exn.onclick=()=>{ S.exStep=(S.exStep||1)+1; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) };
     const nx=document.getElementById("next"); if(nx) nx.onclick=()=>{
       S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,...(st.chk?{chk:1}:{}),...(st.leg!=null&&S.legs&&S.legs.length>=2?{leg:st.leg}:{}),...(S.hints&&S.hints>=(q.hints||[]).length+1?{hintStep:true}:{}),...(S.hintKnown&&S.hintKnown.length?{hintKnown:S.hintKnown}:{}),...(exStepped(q,ans)?{exSteps:Math.min(S.exStep||1,exSteps(q.ex).length),exTotal:exSteps(q.ex).length}:{}),struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
-        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(S.whyOther&&(S.why||[]).includes("other")?{whyOther:S.whyOther.trim()}:{}),...(ans.correct&&(S.guessed||S.checkPick===-1)?{guessed:true}:{}),...(S.notTaught?{notTaught:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0}:{}),...(q.check&&S.checkPick!=null&&S.checkPick!==-1?{checkOk:S.checkPick===q.check.a}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),len:q.q.length});
+        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(S.whyOther&&(S.why||[]).includes("other")?{whyOther:S.whyOther.trim()}:{}),...(ans.correct&&(S.guessed||S.checkPick===-1)?{guessed:true}:{}),...(S.notTaught?{notTaught:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0}:{}),...(q.check&&S.checkPick!=null&&S.checkPick!==-1?{checkOk:S.checkPick===q.check.a,...(ans.correct?{}:{checkAfterWrong:true})}:{}),...(q.predict&&S.predictPick!=null?{predict:S.predictPick,predictOk:S.predictPick===q.predict.a}:{}),...(q.friend?{friend:true}:{}),...(q.sit?{sit:q.sit}:{}),...(st.loop?{loop:st.loop}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),len:q.q.length});
       advance();
     };
   }
 }
 function answer(a){ readStop(); S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
-function advance(){ { const a=S.steps[S.i], b=S.steps[S.i+1]; if(S.legs&&S.legs.length>=2&&a&&b&&a.leg!=null&&b.leg!=null&&b.leg>a.leg&&b.kind!=="rate"&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>expCheckpoint(a.leg),120) } readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
+function advance(){ { const a=S.steps[S.i], b=S.steps[S.i+1]; if(S.legs&&S.legs.length>=2&&a&&b&&a.leg!=null&&b.leg!=null&&b.leg>a.leg&&b.kind!=="rate"&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>expCheckpoint(a.leg),120) } readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.predictPick=null; S.predOrder=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
 
 /* concept card, one idea per screen: (1) why this topic exists — a puzzle to guess first (c.hook) or the "use" line,
    (2) each point alone with "เข้าใจแล้ว" / "ขออธิบายอีกแบบ" (c.more[i], else the next whole alternative),
@@ -2001,6 +2050,9 @@ async function finishReview(){
   if(S.comp){ const sc=items.filter(x=>!x.skipped), c=sc.filter(x=>x.correct).length, read=sc.filter(x=>!x.exTotal||x.exSteps>=x.exTotal).length;
     return finishWith({type:"comp",setId:"comp",subject:"แนวแข่งขัน",topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
       durationSec:Math.round((Date.now()-S.start)/1000),correct:c,total:sc.length,xp:sc.length?(read?10:4)+c*5:0,confused:S.confused,items}) }
+  if(S.mini){ const sc=items.filter(x=>!x.skipped), c=sc.filter(x=>x.correct).length;
+    return finishWith({type:"mini",setId:"mini",subject:"ชุดขั้นต่ำ",topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
+      durationSec:Math.round((Date.now()-S.start)/1000),correct:c,total:sc.length,xp:itemXp(items)+10,confused:S.confused,items}) }
   if(S.recall){ const sc=items.filter(x=>!x.skipped), c=sc.filter(x=>x.correct).length;
     return finishWith({type:"recall",setId:"recall",subject:"ทบทวน",topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
       durationSec:Math.round((Date.now()-S.start)/1000),correct:c,total:sc.length,xp:c*5+5,confused:S.confused,items}) }
@@ -2043,7 +2095,7 @@ function renderDone(){
   const byL=lessonish?[1,2,3].map(l=>{const it=r.items.filter(x=>x.level===l&&!x.skipped);return it.length?`${LV[l].split(" · ")[0]}: ${it.filter(x=>x.correct).length}/${it.length}`:""}).filter(Boolean).join(" · "):"";
   const reached=!b.goalToday&&a.goalToday;
   const pool=reviewPool(S.list), vt=vocabToday();
-  const left=missionList(a).filter(m=>!m.done).map(m=>({lesson:"ชุดฝึก",vocab:"คำศัพท์วันนี้",probe:"ด่านสำรวจ",extra:"ชุดเพิ่มวันหยุด"})[m.key]);
+  const left=missionList(a).filter(m=>!m.done).map(m=>({lesson:"ชุดฝึก",vocab:"คำศัพท์วันนี้",probe:"ด่านสำรวจ",extra:"ชุดเพิ่มวันหยุด",sweep:"ย้อนคาถาเก่า",mini:"ชุดขั้นต่ำ",checkpoint:"ด่านประเมิน",paper:"ข้อสอบกระดาษ"})[m.key]);
   const sp=r.spell&&SPELLS.find(x=>x.id===r.spell), info=sp&&spellStats(S.list)[sp.id];
   const ce=S.cele&&S.ci<S.cele.length?celeHtml(S.cele[S.ci]):null;
   $v.innerHTML=`<section class="card"><span class="eyebrow">เสร็จแล้ว</span>
@@ -2051,6 +2103,7 @@ function renderDone(){
     ${(r.items||[]).some(x=>x.leg!=null)?`<p class="small">⚡ วันนี้ออกรบกับทีมกู้โลกได้ ${advEnergy(mine()).left} ครั้ง</p>`:""}
     <p>${r.type==="vocab"?`คำศัพท์ถูก ${r.correct} จาก ${r.total}`:`ทำได้ ${r.correct} จาก ${r.total} ข้อ`} ใน ${mins} นาที</p>
     ${byL?`<p class="small muted">${byL}</p>`:""}
+    ${r.type==="checkpoint"?cpReviewHtml(r):""}
     ${r.type!=="vocab"&&getBuddy()?buddyHtml([buddyAfter(r)].filter(Boolean)):""}
     ${flameHtml(a)}
     ${reached?`<p><b>ภารกิจวันนี้ครบแล้ว ไฟ ${a.streak} วันยังลุกอยู่ 🔥</b></p><p class="small">🧩 ได้ชิ้นส่วนแผนที่ 1 ชิ้น · ${(()=>{ const L=mine(); return piecesBar(mapPieces(L.some(x=>x===r||x.endedAt===r.endedAt&&x.setId===r.setId)?L:[r,...L])) })()}</p>`:left.length?`<p><b style="color:var(--beak)">เหลืออีก ${left.length} ภารกิจ: ${left.join(" · ")}</b> ทำให้ครบแล้วไฟจะติด</p>`:""}
@@ -2952,7 +3005,7 @@ function renderNotes(){
     <div class="feedback" id="gloss-box" hidden></div>
     <details><summary>ดูโจทย์และเฉลย (${qs.length} ข้อ)${wrong.size?` · ข้อที่พลาดอยู่บนสุด`:""}</summary>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">${qs.map(q=>`<div class="logi">${wrong.has(q.id)?`<span class="small" style="color:var(--bad)">ข้อนี้เคยพลาด</span>`:""}
-        <span class="small">${gloss(q.q)}</span>${figHtml(q.fig)}<span class="small"><b>คำตอบ:</b> ${esc(q.num?(q.answerText||q.answer)+" "+q.unit:q.opts[q.a])}</span><span class="small muted">${gloss(q.ex)}</span></div>`).join("")}</div></details>
+        <span class="small">${gloss(q.q)}</span>${figHtml(q.fig)}${friendHtml(q)}<span class="small"><b>คำตอบ:</b> ${esc(q.num?(q.answerText||q.answer)+" "+q.unit:q.opts[q.a])}</span><span class="small muted">${gloss(q.ex)}</span></div>`).join("")}</div></details>
     <button class="btn ghost" id="nback" style="border:0;padding-left:0">← กลับ</button></section>`;
   bindGloss();
   const nb=$v.querySelector('[data-read="notes"]'); if(nb) nb.onclick=()=>readAloud("notes",[c.title,...c.points,...(c.use?["เอาไปใช้ที่ไหน: "+c.use]:[])]);
@@ -3719,7 +3772,8 @@ function renderMapList(){
 /* ---------- parent view ---------- */
 let showExamples = true, analysisText = "", fbList = [];
 (async()=>{ const d=await (window.claude?.use?.("db")??Promise.resolve(null)).catch(()=>null); if(!d) return;
-  try{ d.collection("feedback").orderBy("at","desc").limit(30).onSnapshot(s=>{fbList=s.docs.map(x=>({id:x.id,...x.data()}));if(view==="parent")render()},()=>{}) }catch(e){} })();
+  try{ d.collection("feedback").orderBy("at","desc").limit(30).onSnapshot(s=>{fbList=s.docs.map(x=>({id:x.id,...x.data()}));if(view==="parent")render()},()=>{}) }catch(e){}
+  try{ d.collection("parentlog").orderBy("at","desc").limit(300).onSnapshot(s=>{plog=s.docs.map(x=>({id:x.id,...x.data()}));if(view==="parent")render()},()=>{}) }catch(e){} })();
 let lastImport="";   /* new data re-renders the page, so the import result is kept here and drawn again */
 /* thinking time (question shown → answer) and explanation time (answer → next question), last 14 days.
    fast/slow is relative to her own median time for that level, so it adapts as she gets quicker */
@@ -3739,7 +3793,7 @@ function groupParent(){
   let imp=null;
   secs.forEach(sec=>{ const h=(sec.querySelector("h2,h3")||{}).textContent||"";
     if(sec.id==="pimport"||/นำเข้าผล/.test(h)){ imp=sec; return }
-    const t=/ภาพรวม/.test(h)?"sum":sec.id==="readiness"?"rd":/เกม รางวัล/.test(h)?"learn":(PGROUPS.find(([,,,keys])=>keys.some(k=>h.includes(k)))||PGROUPS[3])[0];
+    const t=/ภาพรวม/.test(h)?"sum":sec.id==="readiness"||sec.id==="understand"?"rd":/เกม รางวัล/.test(h)?"learn":(PGROUPS.find(([,,,keys])=>keys.some(k=>h.includes(k)))||PGROUPS[3])[0];
     (groups[t]??=[]).push(sec) });
   const pend=document.querySelectorAll("[data-gsok],[data-mok],[data-gok]").length;
   if(!groups[ptab]) ptab="sum";
@@ -3791,7 +3845,7 @@ function readinessCard(list){ if(!list.length) return "";
     <details class="small"><summary>คิดคะแนนนี้อย่างไร</summary><p class="small">แต่ละย่านคิดจาก 3 ส่วน: ฝึกครบกี่เรื่อง (40% ถ่วงตามความสำคัญในข้อสอบ) ความแม่นข้อระดับ 3 ที่เป็นแนวข้อสอบใน 30 วันล่าสุด (40%) และความจำเรื่องเก่าจากย้อนคาถาเก่า (20%) 80 ขึ้นไปถือว่าใกล้ระดับข้อสอบรอบแรก ตัวเลขนี้เป็นค่าประมาณจากการฝึกในแอป ไม่ใช่คะแนนสอบ ผลสอบจำลองจากภายนอกจะช่วยยืนยันว่าตรงแค่ไหน ช่วงแรกตัวเลขจะต่ำเพราะยังฝึกไม่ครบทุกเรื่อง จุดสำคัญคือแนวโน้มรายเดือนที่ควรค่อยๆ ขึ้น</p></details></div>` }
 
 /* ---------- parent dashboard: what needs attention first, then this fortnight in charts ---------- */
-const DAY_GROUPS=[["lesson","บทเรียน/ด่าน","#2f6f8f",["set","probe","mixed","passage"]],["review","ทบทวน","#7fb6d6",["review","recall"]],["sweep","ย้อนคาถาเก่า","#f0a04b",["sweep"]],["vocab","คำศัพท์","#8fc98a",["vocab"]],["other","อื่นๆ","#c9a6ff",["lab","mission","teach"]]];
+const DAY_GROUPS=[["lesson","บทเรียน/ด่าน","#2f6f8f",["set","probe","mixed","passage","checkpoint"]],["review","ทบทวน","#7fb6d6",["review","recall","mini","loop"]],["sweep","ย้อนคาถาเก่า","#f0a04b",["sweep"]],["vocab","คำศัพท์","#8fc98a",["vocab"]],["other","อื่นๆ","#c9a6ff",["lab","mission","teach"]]];
 /* ---------- ภารกิจกู้โลก: a separate adventure map (father + daughter, 8 Nov 2026)
    Team = companion pets + animals bred in the dragon valley. XP trains them and buys gear. Battles never use lesson
    questions, so they cannot distort what lessons measure. Enemies are pollution, never animals; nobody gets hurt —
@@ -4609,6 +4663,7 @@ function parentDash(list){
   const tired=list.filter(a=>a.type==="mood"&&t-dayKey(a.endedAt)<3*DAY&&a.mood==="tired").length; if(tired>=2) A.push(["red","😪",`ลูกบอกว่าเหนื่อย ${tired} ครั้งใน 3 วัน ลองถามดูว่าเป็นอย่างไรบ้าง ระบบจะลดความหนักลง`]);
   const pendG=GUESTS.filter(g=>g.status!=="approved"&&!fbList.some(f=>f.kind==="guest"&&f.guestId===g.id)).length, pendM=MISSIONS.filter(m=>m.status!=="approved"&&!fbList.some(f=>f.kind==="mission"&&f.missionId===m.id)).length;
   const pendGoal=list.filter(a=>a.type==="goal"&&a.reward&&!fbList.some(f=>f.kind==="goal"&&f.goalId===a.setId)).length;
+  try{ const op=miscEps(list).filter(e=>!e.resolvedAt), old=op.filter(e=>t-e.openDay>21*DAY).length; if(op.length) A.push([old?"red":"amber","🔧",`ความเข้าใจผิดที่กลับมาซ้ำ เปิดอยู่ ${op.length} เรื่อง${old?` (เกิน 3 สัปดาห์ ${old} เรื่อง)`:""} ดูในแท็บ ความพร้อมสอบ`]) }catch(e){}
   if(pendG+pendM+pendGoal) A.push(["amber","✍️",`รอพ่อตัดสินใจ: ${[pendG?`แขกพิเศษ ${pendG}`:"",pendM?`ภารกิจโลกจริง ${pendM}`:"",pendGoal?`รางวัลเป้าหมายเดือน ${pendGoal}`:""].filter(Boolean).join(" · ")} (กดอนุมัติได้ที่แท็บ ✍️ รอพ่อ)`]);
   const schoolLow=last7.filter(x=>x.school&&x.tot>0&&x.tot<x.target[0]).length; if(schoolLow>=3) A.push(["amber","⏱️",`วันเรียน ${schoolLow} วันใน 7 วันใช้เวลาต่ำกว่าเป้า 45 นาที (เฉลี่ย ${avgMin} นาที) ระบบอัปเดตทุกเย็นจะเพิ่มเนื้อหา`]);
   const ex=it7.filter(x=>x.correct&&x.exSec!=null), skip=ex.filter(x=>x.exSec<3).length; if(ex.length>=8&&skip/ex.length>=0.5) A.push(["amber","👀",`ข้อที่ตอบถูก ลูกข้ามเฉลย ${skip}/${ex.length} ข้อ ถ้าตอบถูกแบบเดา จะไม่รู้ตัว ชวนลูกอ่านเฉลยข้อที่ไม่มั่นใจ`]);
@@ -4695,7 +4750,7 @@ function bankBySub(){ const b={}; Object.values(QBANK).forEach(o=>{ const q=o.q,
 /* readiness (father approved 11 Nov): practice only shows "เข้าใจ"; higher levels need checkpoint evidence =
    a question she had never seen, met in a mixed context (a lesson's checkpoint step, or a first-time question in
    ย้อนคาถาเก่า / ชุดผสม / ด่านสำรวจ) on a later day than she first practised that subtopic. Levels can drop. */
-const CHK_TYPES=["sweep","mixed","probe"];
+const CHK_TYPES=["sweep","mixed","probe","checkpoint"];
 function chkOk(x){ return !!(x.correct&&!x.guessed&&!x.hintStep&&!(x.hints>0)&&x.conf!=="unsure") }
 function subStats(list){ const st={}, seen=new Set();
   list.filter(a=>isLesson(a)||a.type==="recall"||a.type==="sweep").slice().sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt)).forEach(a=>(a.items||[]).forEach(x=>{
@@ -4709,7 +4764,7 @@ function subStats(list){ const st={}, seen=new Set();
     Object.assign(o,{okDays:okD,span:okD.length?okD[okD.length-1]-okD[0]:0,lastTwoOk:o.chk.length>=2&&o.chk.slice(-2).every(e=>e.ok),n3c:l3.length,c3c:l3.filter(e=>e.ok).length,
       lastChk:o.chk.length?o.chk[o.chk.length-1]:null}) });
   st._seen=seen; return st }
-const RD_STATUS=[["none","ยังไม่เริ่ม","#E3EEEA","#16302B"],["start","เริ่มแล้ว","#9CC9D3","#16302B"],["und","เข้าใจ","#1F7A8C","#fff"],["ret","จำได้","#2E8B57","#fff"],["use","ใช้เป็น","#16302B","#fff"]];
+const RD_STATUS=[["none","ยังไม่เริ่ม","#E3EEEA","#16302B"],["start","เริ่มแล้ว","#9CC9D3","#16302B"],["und","เข้าใจ","#1F7A8C","#fff"],["ret","คงทน","#2E8B57","#fff"],["use","ใช้เป็น","#16302B","#fff"]];
 function subStatus(o){ if(!o||!o.n) return 0;
   if(!(o.n12>=6&&o.c12/o.n12>=0.8)) return 1;
   if(!(o.okDays.length>=3&&o.span>=14*DAY&&o.lastTwoOk)) return 2;
@@ -4742,7 +4797,7 @@ function readinessSection(list){ if(!Object.keys(CUR).length) return ""; const s
   return `<section class="card" id="readiness"><h2>ความพร้อมสอบรอบแรก</h2>
     <p class="small muted">ขอบเขต ม.1–3 ตามรายการหัวข้อในประกาศ MWIT ปี 2570 แตกเป็น ${allSubs.length} เรื่องย่อย · เทียบกับโครงสร้างบทของหนังสือเรียน สสวท. ม.1–3 แล้ว (สีน้ำตาล = อยู่ในรายการสอบหรือพบบ่อยในข้อสอบ แต่ไม่อยู่ในหนังสือเรียนพื้นฐาน) · ระดับเกิน "เข้าใจ" นับจาก<b>ด่านตรวจ</b>เท่านั้น คือข้อที่น้องไม่เคยเห็น เจอแบบคละเรื่อง และทำคนละวันกับที่ฝึก · ระดับลดลงได้ถ้าด่านตรวจพลาดซ้ำ</p>
     <div class="rdkpi">${RD_STATUS.map(([,t],k)=>`<div><b>${cnt[k]}</b><span class="small">${rdChip(k)}</span></div>`).join("")}</div>
-    <div class="feedback"><b>พร้อมสอบ (วัดรายคาถา): ${ready} จาก ${Object.keys(CUR).length} คาถา</b><span class="small">ต้องมีครบ 3 อย่าง: ทุกเรื่องย่อยของคาถาถึงขั้น "จำได้" · ชุดคละจับเวลาของคาถานั้นอย่างน้อย 20 ข้อ ถูก 80% ขึ้นไป · ยืนยันด้วยข้อสอบเสมือนจริงจากภายนอก (ยังไม่มีทั้งชุดจับเวลาและข้อสอบภายนอก)</span></div>
+    <div class="feedback"><b>พร้อมสอบ (วัดรายคาถา): ${ready} จาก ${Object.keys(CUR).length} คาถา</b><span class="small">ต้องมีครบ 3 อย่าง: ทุกเรื่องย่อยของคาถาถึงขั้น "คงทน" · ชุดคละจับเวลาของคาถานั้นอย่างน้อย 20 ข้อ ถูก 80% ขึ้นไป · ยืนยันด้วยข้อสอบเสมือนจริงจากภายนอก (ยังไม่มีทั้งชุดจับเวลาและข้อสอบภายนอก)</span></div>
     ${(()=>{ const cs=list.filter(a=>a.type==="comp"), n=cs.reduce((m,a)=>m+(a.total||0),0), c=cs.reduce((m,a)=>m+(a.correct||0),0), ct=compToday(list);
       return `<div class="feedback"><b>โจทย์แนวแข่งขัน (ทางลับ วันละ 1 ข้อ ไม่นับในระดับ)</b><span class="small">ทำแล้ว ${n} ข้อ · ถูก ${c} ข้อ · เปิดให้แล้ว ${ct.open} คาถา (คาถาที่มีเรื่องย่อยถึงขั้น "เข้าใจ") · ข้อที่ยังรออยู่ ${ct.left} ข้อ จากคลัง ${COMP.length} ข้อ</span></div>` })()}
     ${(()=>{ const EF=CONTENT.examfreq; if(!EF) return ""; const bySp={}; Object.entries(CUR).forEach(([sp,subs])=>{ bySp[sp]=subs.reduce((n,s)=>n+((bank[s.id]||{}).n||0),0) });
@@ -4757,22 +4812,328 @@ function readinessSection(list){ if(!Object.keys(CUR).length) return ""; const s
     <div class="feedback"><b>คลังโจทย์ของระบบพร้อมแค่ไหน</b><span class="small">เรื่องย่อยที่ยังไม่มีโจทย์เลย ${thin} จาก ${allSubs.length} · มีโจทย์แต่ยังไม่มีระดับ 3 อีก ${thin3} เรื่อง · ด่านตรวจที่ถึงรอบวันนี้ ${cp.due} เรื่อง${short.size?` · <b style="color:#A8382E">ถึงรอบแล้วแต่ไม่มีข้อใหม่ให้ตรวจ ${short.size} เรื่อง</b> (ผมต้องเขียนเพิ่ม)`:""}</span></div>
     ${groups.map(([p,gt])=>{ const ids=Object.keys(CUR).filter(k=>k.startsWith(p)); if(!ids.length) return "";
       const gs=allSubs.filter(s=>ids.some(k=>CUR[k].includes(s))), gc=[0,0,0,0,0]; gs.forEach(s=>gc[subStatus(st[s.id])]++);
-      return `<details class="pfold rdsubj"><summary><h3 style="margin:.4em 0">${gt} <span class="small muted" style="font-weight:400">${ids.length} คาถา · เริ่มแล้ว ${gs.length-gc[0]}/${gs.length} เรื่องย่อย · จำได้ขึ้นไป ${gc[3]+gc[4]}</span></h3></summary>${ids.map(sp=>{ const subs=CUR[sp], ks=subs.map(s=>subStatus(st[s.id])), started=ks.filter(k=>k>0).length, bk=subs.reduce((n,s)=>n+((bank[s.id]||{}).n||0),0), sr=spellReady(sp);
-        return `<details class="rdspell"><summary><b>${esc(spellName(sp))}</b><span class="rdmeta"><span class="rdbar">${ks.map(k=>`<i style="background:${RD_STATUS[k][2]}"></i>`).join("")}</span><span class="small muted">เริ่มแล้ว ${started}/${subs.length} · จำได้ขึ้นไป ${sr.ret}/${sr.n} · คลัง ${bk} ข้อ</span></span></summary>
+      return `<details class="pfold rdsubj"><summary><h3 style="margin:.4em 0">${gt} <span class="small muted" style="font-weight:400">${ids.length} คาถา · เริ่มแล้ว ${gs.length-gc[0]}/${gs.length} เรื่องย่อย · คงทนขึ้นไป ${gc[3]+gc[4]}</span></h3></summary>${ids.map(sp=>{ const subs=CUR[sp], ks=subs.map(s=>subStatus(st[s.id])), started=ks.filter(k=>k>0).length, bk=subs.reduce((n,s)=>n+((bank[s.id]||{}).n||0),0), sr=spellReady(sp);
+        return `<details class="rdspell"><summary><b>${esc(spellName(sp))}</b><span class="rdmeta"><span class="rdbar">${ks.map(k=>`<i style="background:${RD_STATUS[k][2]}"></i>`).join("")}</span><span class="small muted">เริ่มแล้ว ${started}/${subs.length} · คงทนขึ้นไป ${sr.ret}/${sr.n} · คลัง ${bk} ข้อ</span></span></summary>
           <div class="rdtable"><table><thead><tr><th>เรื่องย่อย</th><th>ชั้น</th><th>สถานะ</th><th>ฝึก: ถูก ระดับ 1–2</th><th>ด่านตรวจ: ถูก/ทำ</th><th>วันที่ผ่านด่านตรวจ</th><th>ด่านตรวจ ระดับ 3</th><th>ล่าสุด</th><th>คลัง (1/2/3) · ข้อใหม่เหลือ</th></tr></thead><tbody>
           ${subs.map((s,i)=>{ const o=st[s.id], b=bank[s.id], k=ks[i];
             return `<tr><td>${esc(s.n)}</td><td class="small">${esc(s.g)}${s.b?`<br><span style="color:${/นอกหนังสือ/.test(s.b)?"#9A6A12":"var(--muted,#5B716B)"}">${esc(s.b)}</span>`:""}</td><td>${rdChip(k)}</td><td>${o&&o.n12?`${o.c12}/${o.n12} (${Math.round(o.c12/o.n12*100)}%)`:"–"}</td>
               <td>${o&&o.chk.length?`${o.chk.filter(e=>e.ok).length}/${o.chk.length}`:"–"}</td><td class="small">${o&&o.okDays.length?`${o.okDays.length} วัน · ห่าง ${Math.round(o.span/DAY)} วัน`:"–"}</td>
               <td>${o&&o.n3c?`${o.c3c}/${o.n3c}`:"–"}</td><td class="small">${o?fmtD(o.last):"–"}</td>
               <td class="small" style="color:${!b||short.has(s.id)?"#A8382E":b.l[3]?"inherit":"#9A6A12"}">${b?`${b.l[1]||0}/${b.l[2]||0}/${b.l[3]||0} · ${unseen[s.id]||0}`:"ยังไม่มี"}</td></tr>` }).join("")}</tbody></table></div></details>` }).join("")}</details>` }).join("")}
-    <details class="small"><summary>เกณฑ์สถานะ (พ่ออนุมัติ 11 พ.ย. 69)</summary><p class="small">
+    <details class="small"><summary>เกณฑ์สถานะ (พ่ออนุมัติ 11 พ.ย. 69 · ชื่อระดับปรับ 17 พ.ย.)</summary><p class="small">
       <b>เริ่มแล้ว</b>: เคยทำ · <b>เข้าใจ</b>: ระหว่างฝึก ระดับ 1–2 อย่างน้อย 6 ข้อ ถูก 80% ขึ้นไป ·
-      <b>จำได้</b>: ด่านตรวจถูกใน 3 วันที่ต่างกัน วันสุดท้ายห่างจากวันแรกอย่างน้อย 14 วัน และด่านตรวจ 2 ครั้งล่าสุดไม่พลาด ·
-      <b>ใช้เป็น</b>: จำได้ + ด่านตรวจระดับ 3 อย่างน้อย 5 ข้อ ถูก 70% ขึ้นไป ·
+      <b>คงทน</b> (เดิมเรียก "จำได้" เปลี่ยนชื่อ 17 พ.ย. เพราะเป้าคือความเข้าใจที่ยังอยู่ ไม่ใช่การท่องจำ): ด่านตรวจถูกใน 3 วันที่ต่างกัน วันสุดท้ายห่างจากวันแรกอย่างน้อย 14 วัน และด่านตรวจ 2 ครั้งล่าสุดไม่พลาด ·
+      <b>ใช้เป็น</b>: คงทน + ด่านตรวจระดับ 3 อย่างน้อย 5 ข้อ ถูก 70% ขึ้นไป ·
       <b>พร้อมสอบ</b> วัดรายคาถา (ดูกล่องด้านบน)</p>
-      <p class="small">"ถูก" ในด่านตรวจ = ตอบถูกโดยไม่ใช้คำใบ้ ไม่ได้กดว่าเดา และไม่ได้บอกว่าไม่ชัวร์ · ด่านตรวจมาจาก 2 ทาง: ข้อ "ด่านตรวจความจำ" ในช่วงอุ่นเครื่องของชุดฝึก (ไม่เกิน 2 ข้อ) และข้อที่น้องเห็นครั้งแรกใน ย้อนคาถาเก่า / ชุดผสม / ด่านสำรวจ หลังจากเคยฝึกเรื่องนั้นมาแล้ว ·
+      <p class="small">"ถูก" ในด่านตรวจ = ตอบถูกโดยไม่ใช้คำใบ้ ไม่ได้กดว่าเดา และไม่ได้บอกว่าไม่ชัวร์ · ด่านตรวจมาจาก 2 ทาง: ข้อ "ด่านตรวจความจำ" ในช่วงอุ่นเครื่องของชุดฝึก (ไม่เกิน 2 ข้อ) และข้อที่น้องเห็นครั้งแรกใน ย้อนคาถาเก่า / ชุดผสม / ด่านสำรวจ / ด่านประเมิน หลังจากเคยฝึกเรื่องนั้นมาแล้ว ·
       ทำไมต้องหลายข้อ: ถูก 4 จาก 4 ความแม่นจริงยังอาจต่ำได้ถึงราว 47% ถูก 16 จาก 20 ยังอาจราว 60%</p></details>
   </section>` }
+/* ================= understanding first (แชท 1, father approved 17 Nov 2026) =================
+   wave 1 (calendar.understand.wave1): spot-the-friend's-mistake items (q.friend), predict before computing (q.predict),
+   twins that change the situation (variant change:"situation", sit) come back first.
+   wave 2 (calendar.understand.wave2): the explain step = pick the right reason (q.check) after right AND wrong answers,
+   plus a one-line own reason on one question per lesson, optional.
+   Always on: the repeated-error loop and misconception list, the 15-minute minimum day, checkpoint mode. */
+function waveOn(n){ const d=(CAL.understand||{})["wave"+n]; return !!d&&isoDay(todayKey())>=d }
+function minDayOn(){ const d=(CAL.minDay||{}).from; return !!d&&isoDay(todayKey())>=d }
+const MIN_REASONS=["การบ้านหรืองานเยอะ","มีสอบ/ต้องอ่านวิชาอื่น","เหนื่อยมาก","ไม่สบายนิดหน่อย","มีธุระ/ไปข้างนอก","อื่นๆ"];
+const RETEACH=(CONTENT.reteach&&CONTENT.reteach.cards)||{};
+function subInfo(id){ for(const [sp,subs] of Object.entries(CUR)){ const s=subs.find(x=>x.id===id); if(s) return {...s,spell:sp} } return null }
+function subName(id){ const s=subInfo(id); return s?s.n:id }
+function friendHtml(q,plain){ if(!q||!q.friend||!Array.isArray(q.friend.work)) return "";
+  return `<div class="friendbox"><span class="small"><b>📝 ${esc(q.friend.who||"สมุดทดของเพื่อน")}</b></span><ol>${q.friend.work.map(l=>`<li>${plain?esc(l):gloss(l)}</li>`).join("")}</ol></div>` }
+function fmtDay(d){ return d?new Date(d).toLocaleDateString("th-TH",{day:"numeric",month:"short"}):"–" }
+
+/* ---------- checkpoints (calendar.checkpoints): short = our own timed set in the app, full = a printed recalled paper ---------- */
+function checkpointAt(dk){ const ds=isoDay(dk), c=(CAL.checkpoints||[]).find(x=>x.date===ds); if(!c) return null;
+  if(c.kind==="short"){ const set=SETS.find(s=>s.id===c.setId&&s.kind==="checkpoint"); return set?{...c,set}:null }
+  return c.kind==="full"?c:null }
+function cpRec(list,setId){ return list.find(a=>a.type==="checkpoint"&&a.setId===setId)||null }
+function cpState(){ const st=ls("fieldnote.cp",null); return st&&st.day===todayKey()?st:null }
+
+/* ---------- repeated-error loop (approved 17 Nov): the same idea (subtopic) missed on 2 different days opens an episode →
+   explanation in a different form + faded worked examples (content/reteach.json) → dad brief → her player's guide →
+   resolved only after 2 right answers in different situations ≥ 7 days apart with the right reason picked (q.check).
+   A new miss after opening clears the evidence. Everything is derived from records. ---------- */
+const NONCONCEPT=new Set(["slip","read","misopt","unclear","calc"]);
+function conceptMiss(x){ if(x.correct!==false||x.skipped||x.notTaught||x.timeout) return false; const t=x.errorTypes&&x.errorTypes.length?x.errorTypes:[x.errorType||"unspecified"]; return !t.every(k=>NONCONCEPT.has(k)) }
+function sitKey(qid){ const q=QBANK[qid]?.q; return q?(q.sit||q.of||q.id):qid }
+let _miscKey=null,_miscVal=null;
+function miscState(list){ const key=list.length+"|"+(list[0]&&list[0].endedAt)+"|"+(list[list.length-1]&&list[list.length-1].endedAt)+"|"+todayKey(); if(key===_miscKey) return _miscVal; _miscVal=miscState0(list); _miscKey=key; return _miscVal }
+function miscState0(list){ const ev=[];
+  list.forEach(a=>{ const at=+new Date(a.endedAt), d=dayKey(a.endedAt);
+    if(a.type==="loop"&&a.sub){ ev.push({at,d,loop:a}); return }
+    if(!(isLesson(a)||a.type==="recall")) return;
+    (a.items||[]).forEach((x,i)=>{ const sub=subOf(x.qid); if(sub) ev.push({at:at+i/1000,d,x,sub}) }) });
+  ev.sort((a,b)=>a.at-b.at); const M={};
+  for(const e of ev){ const sub=e.sub||e.loop.sub, m=M[sub]??={sub,eps:[],pend:[]}, last=m.eps[m.eps.length-1], cur=last&&!last.resolvedAt?last:null;
+    if(e.loop){ if(!cur) continue;
+      if(e.loop.act==="reteach"&&!cur.reteachAt){ cur.reteachAt=e.at; cur.reteachDay=e.d }
+      if(e.loop.act==="guide"&&cur.reteachAt){ cur.guideAt=e.at; cur.guideDay=e.d; cur.guide=e.loop.text||"" } continue }
+    const x=e.x;
+    if(conceptMiss(x)){ const miss={d:e.d,at:e.at,qid:x.qid,err:x.optErr||null,typed:x.typed||null,orig:x.orig};
+      if(cur){ cur.misses.push(miss); cur.ev=[] }
+      else { m.pend.push(miss); if(new Set(m.pend.map(z=>z.d)).size>=2){ m.eps.push({sub,openAt:e.at,openDay:e.d,misses:m.pend,ev:[],reteachAt:null,guideAt:null,resolvedAt:null}); m.pend=[] } } }
+    else if(cur&&x.correct&&!x.guessed&&!x.hintStep&&!(x.hints>0)&&x.checkOk===true){
+      cur.ev.push({d:e.d,at:e.at,sit:sitKey(x.qid),qid:x.qid});
+      if(cur.ev.some(a=>cur.ev.some(b=>a.sit!==b.sit&&b.d-a.d>=7*DAY))){ cur.resolvedAt=e.at; cur.resolvedDay=e.d } } }
+  return M }
+function miscEps(list){ return Object.values(miscState(list)).flatMap(m=>m.eps) }
+function miscStage(ep){ if(ep.resolvedAt) return "resolved"; if(!ep.reteachAt) return RETEACH[ep.sub]?"reteach":"needcard"; if(!ep.guideAt) return "guide"; return "check" }
+function loopTodo(list){ const t=todayKey(), eps=miscEps(list).filter(e=>!e.resolvedAt);
+  const reToday=list.some(a=>a.type==="loop"&&a.act==="reteach"&&dayKey(a.endedAt)===t);
+  const re=reToday?null:eps.filter(e=>miscStage(e)==="reteach").sort((a,b)=>a.openAt-b.openAt)[0]; if(re) return {act:"reteach",ep:re};
+  const gu=eps.filter(e=>miscStage(e)==="guide"&&e.reteachDay<t).sort((a,b)=>a.reteachAt-b.reteachAt)[0]; if(gu) return {act:"guide",ep:gu};
+  return null }
+/* resolution checks: a question with a reason step (q.check) on that subtopic, in a situation not used yet; 2 days after the
+   new explanation (or the last miss), then 7 days after the first right answer */
+function loopPool(e,avoid){ const used=new Set(e.ev.map(v=>v.sit)), av=avoid||new Set();
+  return Object.values(QBANK).map(o=>o.q).filter(q=>q.check&&!q.optional&&subOf(q.id)===e.sub&&!av.has(q.id)&&!used.has(sitKey(q.id))) }
+function loopChecks(list,n,avoid){ const t=todayKey(), out=[], av=new Set(avoid||[]);
+  const doneToday=new Set(list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===t).flatMap(a=>(a.items||[]).filter(x=>x.loop).map(x=>x.loop)));
+  const seen=new Set(list.filter(isLesson).flatMap(a=>(a.items||[]).map(x=>x.qid)));
+  for(const e of miscEps(list).filter(e=>!e.resolvedAt&&e.reteachAt&&!doneToday.has(e.sub))){ if(out.length>=n) break;
+    const last=e.ev[e.ev.length-1], lastMiss=e.misses[e.misses.length-1], from=last?last.d+7*DAY:Math.max(e.reteachDay,lastMiss.d)+2*DAY; if(t<from) continue;
+    const pool=loopPool(e,av).sort((a,b)=>(seen.has(a.id)?1:0)-(seen.has(b.id)?1:0)||(a.level||1)-(b.level||1)), q=pool[0]; if(!q) continue;
+    av.add(q.id); out.push({...(seen.has(q.id)?recallize(q):q),_loop:e.sub}) }
+  return out }
+
+/* ---------- loop session (view "loop"): the new explanation, then 3 worked examples that fade (full → last step blank →
+   last two steps blank); a blank step is picked from options when the card gives them, otherwise she thinks first and self-checks ---------- */
+let LP=null;
+function lpSteps(w){ return (w.steps||[]).map(s=>typeof s==="string"?{t:s}:s) }
+function startLoop(ep,act){ LP={sub:ep.sub,act,card:RETEACH[ep.sub]||null,stage:act==="guide"?"guide":"card",ex:0,rev:0,show:false,order:null,res:[],start:Date.now(),text:""}; view="loop"; render(); window.scrollTo({top:0}) }
+function renderLoop(){ if(!LP){ view="home"; return render() } const c=LP.card, nm=subName(LP.sub), back=`<button class="btn ghost" id="lp-home" style="border:0;padding-left:0">← กลับหน้าแรก</button>`;
+  const go=(f)=>{ f(); const y=0; renderLoop(); window.scrollTo({top:y}) };
+  if(LP.stage==="card"){
+    $v.innerHTML=`<section class="card concept"><span class="eyebrow">🔧 สอนใหม่อีกแบบ · ${esc(nm)}</span><h2>${esc(c.title)}</h2>
+      <p class="small muted">เรื่องนี้สะดุดมา 2 วันแล้ว ไม่แปลกเลย เรื่องนี้หลายคนก็สะดุด รอบนี้ลองดูจากอีกมุมหนึ่ง แล้วทำตามตัวอย่างทีละขั้น ราว 6 นาที</p>
+      ${(c.text||[]).map(t=>`<p>${gloss(t)}</p>`).join("")}
+      ${c.table?`<div class="lptable"><table>${c.table.caption?`<caption class="small">${esc(c.table.caption)}</caption>`:""}<thead><tr>${c.table.cols.map(x=>`<th>${esc(x)}</th>`).join("")}</tr></thead><tbody>${c.table.rows.map(r=>`<tr>${r.map(x=>`<td>${esc(x)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`:""}
+      ${c.contrast?`<div class="lpcontrast">${c.contrast.map(k=>`<div class="feedback"><b>${esc(k.title)}</b><span class="small">${gloss(k.text)}</span></div>`).join("")}</div>`:""}
+      ${figHtml(c.fig)}
+      <div class="feedback" id="gloss-box" hidden></div>
+      <div class="row">${readBtn("loop","🔊 ฟัง")}<button class="btn" id="lp-next">ดูตัวอย่างทีละขั้น →</button></div>${back}</section>`;
+    bindGloss(); const rb=$v.querySelector('[data-read="loop"]'); if(rb) rb.onclick=()=>readAloud("loop",[c.title,...(c.text||[]),...(c.contrast||[]).map(k=>k.title+". "+k.text)]);
+    document.getElementById("lp-next").onclick=()=>go(()=>{ readStop(); LP.stage="ex"; LP.ex=0; LP.rev=0; LP.show=false; LP.order=null });
+  } else if(LP.stage==="ex"){
+    const W=c.worked||[], w=W[LP.ex], st=lpSteps(w), hide=Math.min(LP.ex,st.length-1), first=st.length-hide, cur=first+LP.rev, allShown=LP.rev>=hide;
+    const curStep=!allShown?st[cur]:null;
+    if(curStep&&curStep.opts&&!LP.order) LP.order=curStep.opts.map((_,i)=>i).sort(()=>Math.random()-.5);
+    const lab=["ตัวอย่างที่ 1 · ดูวิธีทำครบทุกขั้น","ตัวอย่างที่ 2 · ขั้นสุดท้ายลองเองก่อน","ตัวอย่างที่ 3 · สองขั้นสุดท้ายลองเอง"][LP.ex]||"ตัวอย่าง";
+    const res=k=>LP.res.find(r=>r.ex===LP.ex&&r.step===k);
+    $v.innerHTML=`<section class="card"><span class="eyebrow">🔧 ${esc(nm)} · ${lab}</span>
+      <p class="prompt">${gloss(w.q)}</p>${figHtml(w.fig)}
+      <ol class="exsteps">${st.map((s,k)=>k<cur?`<li>${gloss(s.t)}${res(k)?` <span class="small" style="color:${res(k).ok?"var(--good)":"var(--beak)"}">${res(k).ok?"✓ ตรง":"✗ ดูขั้นนี้อีกที"}</span>`:""}</li>`
+        :k===cur&&!allShown?`<li class="now">${curStep.opts?`<b>ขั้นนี้คืออะไร</b><div class="opts">${LP.order.map(i=>`<button class="opt ckopt" data-lpo="${i}">${esc(curStep.opts[i])}</button>`).join("")}</div>`
+          :LP.show?`${gloss(s.t)}<div class="row"><span class="small">ตรงกับที่คิดไว้ไหม</span><button class="btn small" data-lps="1">ตรง</button><button class="btn ghost small" data-lps="0">ไม่ตรง</button></div>`
+          :`<b>ขั้นนี้ลองคิดเองก่อน</b> <span class="small muted">เขียนในกระดาษทดหรือคิดในใจ แล้วกดดู</span><div><button class="btn small" id="lp-show">คิดแล้ว ขอดูขั้นนี้</button></div>`}</li>`:"").join("")}</ol>
+      <div class="feedback" id="gloss-box" hidden></div>
+      ${allShown?`${w.answer?`<p><b>คำตอบ:</b> ${gloss(w.answer)}</p>`:""}<button class="btn" id="lp-next">${LP.ex+1<W.length?"ตัวอย่างต่อไป →":"เสร็จแล้ว"}</button>`:""}${back}</section>`;
+    bindGloss();
+    $v.querySelectorAll("[data-lpo]").forEach(b=>b.onclick=()=>go(()=>{ LP.res.push({ex:LP.ex,step:cur,ok:+b.dataset.lpo===0,pick:+b.dataset.lpo}); LP.rev++; LP.order=null }));
+    { const sb=document.getElementById("lp-show"); if(sb) sb.onclick=()=>go(()=>{ LP.show=true }) }
+    $v.querySelectorAll("[data-lps]").forEach(b=>b.onclick=()=>go(()=>{ LP.res.push({ex:LP.ex,step:cur,ok:b.dataset.lps==="1",self:true}); LP.rev++; LP.show=false }));
+    { const nb=document.getElementById("lp-next"); if(nb) nb.onclick=async()=>{ if(LP.ex+1<W.length) return go(()=>{ LP.ex++; LP.rev=0; LP.show=false; LP.order=null });
+      nb.disabled=true; const now=new Date().toISOString();
+      await saveAttempt({type:"loop",act:"reteach",sub:LP.sub,setId:"loop-"+LP.sub,topic:"สอนใหม่อีกแบบ: "+nm,startedAt:new Date(LP.start).toISOString(),endedAt:now,durationSec:Math.round((Date.now()-LP.start)/1000),
+        correct:LP.res.filter(r=>r.ok).length,total:LP.res.length,xp:20,items:[],steps:LP.res,form:c.form||""});
+      go(()=>{ LP.stage="redone" }) } }
+  } else if(LP.stage==="redone"){
+    $v.innerHTML=`<section class="card"><span class="eyebrow">🔧 ${esc(nm)}</span><h2>+20 XP ดูเรื่องนี้จากมุมใหม่แล้ว</h2>
+      <p class="small">พรุ่งนี้จะชวนเขียน <b>คู่มือผู้เล่น</b> เรื่องนี้ 2–3 ประโยค แล้วอีกไม่กี่วันจะมีข้อเช็กเรื่องนี้ในเรื่องราวใหม่ ถ้าถูกพร้อมเลือกเหตุผลถูก 2 ครั้ง ห่างกันอย่างน้อย 7 วัน เรื่องนี้ถือว่าแก้ได้แล้ว</p>
+      <button class="btn" id="lp-home">กลับหน้าแรก</button></section>`;
+  } else if(LP.stage==="guide"){
+    $v.innerHTML=`<section class="card"><span class="eyebrow">🔧 คู่มือผู้เล่น · ${esc(nm)}</span><h2>ถ้าเพื่อนเจอโจทย์เรื่องนี้ จะบอกเพื่อนว่าอะไร</h2>
+      ${c?`<p class="small muted">ที่ดูไปเมื่อวาน: ${esc(c.title)}</p>`:""}
+      <label class="small" for="lp-guide">เขียน 2–3 ประโยค: ต้องดูอะไรก่อน ทำอย่างไร และระวังอะไร</label>
+      <textarea id="lp-guide" rows="3" maxlength="400" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)" placeholder="เรื่องนี้ต้องดูว่า... แล้ว... ระวัง...">${esc(LP.text)}</textarea>
+      <div class="row"><button class="btn" id="lp-save" ${LP.text.trim().length>=15?"":"disabled"}>บันทึกคู่มือ (+15 XP)</button></div>${back}</section>`;
+    const ta=document.getElementById("lp-guide"), sv=document.getElementById("lp-save");
+    ta.oninput=()=>{ LP.text=ta.value; sv.disabled=LP.text.trim().length<15 };
+    sv.onclick=async()=>{ sv.disabled=true; const now=new Date().toISOString();
+      await saveAttempt({type:"loop",act:"guide",sub:LP.sub,setId:"loop-"+LP.sub,topic:"คู่มือผู้เล่น: "+nm,text:LP.text.trim().slice(0,400),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:15,items:[]});
+      go(()=>{ LP.stage="gdone" }) };
+  } else {
+    $v.innerHTML=`<section class="card"><span class="eyebrow">🔧 ${esc(nm)}</span><h2>+15 XP ขอบคุณสำหรับคู่มือ</h2>
+      <p class="small">การอธิบายให้คนอื่นฟังเป็นวิธีที่ทำให้เข้าใจลึกที่สุดวิธีหนึ่ง อีกไม่กี่วันจะมีข้อเช็กเรื่องนี้ในเรื่องราวใหม่นะ</p><button class="btn" id="lp-home">กลับหน้าแรก</button></section>`;
+  }
+  $v.querySelectorAll("#lp-home").forEach(b=>b.onclick=()=>{ readStop(); LP=null; view="home"; render(); window.scrollTo({top:0}) });
+}
+
+/* ---------- minimum day (approved 17 Nov): a short set of 6–8 questions that still counts as a full day ---------- */
+function miniQuestions(list){ const out=[], ids=new Set(), add=q=>{ if(q&&!ids.has(q.id)&&!ids.has(q.of||"")&&out.length<8){ ids.add(q.id); out.push(q) } }, t=todayKey();
+  loopChecks(list,1,[]).forEach(add);
+  const src=recallSource(list); if(src) src.ids.slice().sort(()=>Math.random()-.5).slice(0,2).forEach(id=>add(comeback(QBANK[id].q,list)));
+  const last={}; list.filter(isLesson).forEach(a=>(a.items||[]).forEach(x=>{last[x.qid]=Math.max(last[x.qid]||0,dayKey(a.endedAt))}));
+  reviewPool(list).filter(q=>t-(last[q.id]||0)>=2*DAY).slice(0,2).forEach(q=>add({...comeback(q,list),_retry:true}));
+  dueQuestions(list,2).forEach(q=>add(comeback(q,list)));
+  try{ checkPlan(list,1,[]).qs.forEach(q=>add({...q,_chk:true})) }catch(e){}
+  if(out.length<6) reviewPool(list).forEach(q=>add(comeback(q,list)));
+  if(out.length<6&&src) src.ids.forEach(id=>add(comeback(QBANK[id].q,list)));
+  if(out.length<6){ const l=recommend(list); if(l) l.practice.filter(q=>(q.level||1)<=2).forEach(add) }
+  return out }
+function startMini(){ const list=mine(), qs=miniQuestions(list); if(!qs.length) return;
+  const steps=[...qs.map(q=>({kind:"q",phase:q._loop?"เช็กเรื่องที่สอนใหม่อีกแบบ":q._chk?"ด่านตรวจความจำ":q._retry?"ลองใหม่ ข้อที่เคยพลาด":"ชุดขั้นต่ำ",q:shuffleQ(q),...(q._loop?{loop:q._loop}:{}),...(q._chk?{chk:true}:{}),...(q._retry?{retry:true}:{})})),{kind:"finish",phase:"เสร็จ"}];
+  S={mode:"review",mini:true,set:{id:"mini",subject:"ชุดขั้นต่ำ",topic:"ชุดขั้นต่ำ 15 นาที"},steps,trial:[],trialVote:{},active:true,i:0,start:Date.now(),qStart:Date.now(),items:[],answered:null,why:null,hints:0,struck:[],glossed:[],askOpen:null,confused:[],altShown:0,pick:null,whyText:""};
+  view="session"; render(); window.scrollTo({top:0}) }
+
+/* ---------- checkpoint mode (approved 17 Nov): timed, no hints, no explanations until the end, results to the parent page.
+   The clock counts only time on the checkpoint screen (a pause stops it); pauses are recorded. ---------- */
+let CPT=null;
+function cpQs(set,st){ return st.order.map(id=>{ const q=fillize(QBANK[id].q,true), s=shuffleQ(q,st.perm[id]); if(s.perm) st.perm[id]=s.perm; return s }) }
+function cpSave(){ if(S&&S.mode==="cp") lsSet("fieldnote.cp",S.cp) }
+function renderCpIntro(){ const c=checkpointAt(todayKey()); if(!c||c.kind!=="short"){ view="home"; return render() }
+  const set=c.set, n=set.practice.length, mins=c.mins||50, done=cpRec(mine(),set.id), st=cpState();
+  $v.innerHTML=`<section class="card"><span class="eyebrow">🏁 ด่านประเมิน · ${fmtDay(todayKey())}</span><h2>${esc(set.topic)}</h2>
+    ${done?`<p>ทำแล้ววันนี้ ✓ ทำได้ ${done.correct} จาก ${done.total} ข้อ</p>`:`<ul style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px">
+      <li>${n} ข้อ เวลา ${mins} นาที คละวิทย์กับคณิต เป็นเรื่องที่เรียนมาแล้วอย่างน้อย 7 วัน แต่เป็นโจทย์ที่ไม่เคยเห็น</li>
+      <li>ไม่มีคำใบ้ ไม่มีเฉลยระหว่างทำ ทำจบแล้วดูเฉลยได้ทุกข้อ</li>
+      <li>ข้อไหนยังคิดไม่ออก กด “ข้ามไปก่อน” แล้วจะวนกลับมาตอนท้าย</li>
+      <li>ด่านนี้ไม่ได้ตัดสินอะไร เป็นจุดเช็กว่าความเข้าใจยังอยู่ไหม และทำแทนชุดฝึกของวันนี้</li>
+      <li>เตรียมกระดาษทดกับดินสอ ถ้าต้องหยุดกลางคัน กด “พักก่อน” ได้ เวลาจะหยุดเดิน</li></ul>
+    <div class="row"><button class="btn" id="cp-start">${st?"ทำต่อ (เหลือ "+Math.max(0,Math.ceil((mins*60000-st.elapsed)/60000))+" นาที)":"เริ่มจับเวลา"}</button></div>`}
+    <button class="btn ghost" id="cp-back" style="border:0;padding-left:0">← กลับ</button></section>`;
+  document.getElementById("cp-back").onclick=()=>{ view="home"; render() };
+  const sb=document.getElementById("cp-start"); if(sb) sb.onclick=()=>startCp(set,c,st) }
+function startCp(set,c,resume){ const st=resume||{setId:set.id,day:todayKey(),order:mixOrder(set.practice).map(q=>q.id),perm:{},queue:null,skipped:[],elapsed:0,items:[],pauses:0,qsec:{},startedAt:new Date().toISOString()};
+  if(resume) st.pauses=(st.pauses||0)+1;
+  S={mode:"cp",active:true,set,c,cp:st,limit:(c.mins||50)*60000,pick:null,numDraft:"",steps:[],i:0,qStart:Date.now()};
+  S.qs=cpQs(set,st); if(!st.queue) st.queue=S.qs.map((_,k)=>k); cpSave();
+  clearInterval(CPT); let lastT=Date.now(), tick=0;
+  CPT=setInterval(()=>{ const now=Date.now(), dt=Math.min(5000,now-lastT); lastT=now;
+    if(!(S&&S.mode==="cp"&&S.active)){ clearInterval(CPT); return }
+    if(view!=="session"||document.visibilityState!=="visible") return;
+    S.cp.elapsed+=dt; const k=S.cp.queue[0]; if(k!=null){ const id=S.qs[k].id; S.cp.qsec[id]=(S.cp.qsec[id]||0)+dt/1000 }
+    if(++tick%5===0) cpSave();
+    const left=S.limit-S.cp.elapsed, el=document.getElementById("cptime"); if(el) el.textContent=cpClock(left);
+    if(left<=0){ clearInterval(CPT); finishCp(true) } },1000);
+  view="session"; render(); window.scrollTo({top:0}) }
+function cpClock(ms){ const s=Math.max(0,Math.ceil(ms/1000)); return "⏱ "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0") }
+function renderCpStep(){ const st=S.cp; if(!st.queue.length) return finishCp(false);
+  const k=st.queue[0], q=S.qs[k]; S.steps=[{kind:"q",q}]; S.i=0; const n=S.qs.length, done=st.items.length, again=st.skipped.includes(q.id);
+  const sci=/^s/.test(q.spell||""), ready=q.num?String(S.numDraft||"").trim()!=="":S.pick!=null;
+  $v.innerHTML=`<section class="card"><div class="row" style="justify-content:space-between;align-items:center"><span class="eyebrow">🏁 ด่านประเมิน · ตอบแล้ว ${done}/${n}</span><b id="cptime">${cpClock(S.limit-st.elapsed)}</b></div>
+    <div class="progress"><i style="width:${Math.round(done/n*100)}%"></i></div>
+    <span class="row" style="gap:6px"><span class="chip">${sci?"🔬 วิทย์":"📐 คณิต"}</span>${again?`<span class="chip">ข้อที่ข้ามไว้</span>`:""}</span>
+    <p class="prompt">${qLines(esc(q.q))}</p>${figHtml(q.fig)}${friendHtml(q,true)}
+    ${q.num?`<div class="num"><input id="numin" inputmode="${matchMedia("(pointer: coarse)").matches?"none":"decimal"}" aria-label="คำตอบ" value="${esc(S.numDraft||"")}"><span class="muted" style="align-self:center">${esc(q.unit||"")}</span></div>
+      <div class="numpad" role="group" aria-label="แป้นตัวเลข">${["7","8","9","4","5","6","1","2","3","−","0",".","/","⌫"].map(x=>`<button type="button" data-np="${x}">${x}</button>`).join("")}</div>`
+      :`<div class="opts">${q.opts.map((o,i)=>`<div class="optrow"><button class="opt ${S.pick===i?"picked":""}" data-k="${i}">${esc(o)}</button></div>`).join("")}</div>`}
+    <div class="row"><button class="btn" id="send-plain" ${ready?"":"disabled"}>ส่งคำตอบ</button><button class="btn ghost" id="cp-skip">${again?"ยังคิดไม่ออก ข้ามข้อนี้":"ข้ามไปก่อน"}</button></div>
+    <button class="btn ghost small" id="cp-pause" style="border:0;padding-left:0">⏸ พักก่อน (เวลาหยุดเดิน)</button></section>${padHtml()}`;
+  padSetup();
+  const rerender=()=>{ const y=window.scrollY; renderCpStep(); window.scrollTo({top:y}) };
+  const item=(extra)=>({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,timeSec:Math.round(st.qsec[q.id]||0),len:q.q.length,...(q.num?{fill:true}:{}),...extra});
+  const next=it=>{ st.items.push(it); st.queue.shift(); S.pick=null; S.numDraft=""; cpSave(); renderCpStep(); window.scrollTo({top:0}) };
+  if(q.num){ const ni=document.getElementById("numin"); ni.oninput=()=>{ S.numDraft=ni.value; document.getElementById("send-plain").disabled=!ni.value.trim() };
+    $v.querySelectorAll("[data-np]").forEach(b=>b.onclick=()=>{ const x=b.dataset.np; ni.value=x==="⌫"?ni.value.slice(0,-1):ni.value+(x==="−"?"-":x); S.numDraft=ni.value; document.getElementById("send-plain").disabled=!ni.value.trim() }) }
+  else $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{ S.pick=+b.dataset.k; rerender() });
+  document.getElementById("send-plain").onclick=()=>{ if(q.num){ const raw=document.getElementById("numin").value.trim(), v=parseAns(raw); if(raw===""||isNaN(v)) return;
+      const ok=Math.abs(v-q.answer)<=q.tol; next(item({correct:ok,typed:raw.slice(0,20),...(ok?{}:{errorType:"unspecified",errorTypes:["unspecified"]})})) }
+    else if(S.pick!=null){ const ok=S.pick===q.a; next(item({correct:ok,choice:S.pick,...(q.perm?{orig:q.perm[S.pick]}:{}),...(ok?{}:{errorType:"unspecified",errorTypes:["unspecified"],...(q.optErr&&q.optErr[S.pick]?{optErr:q.optErr[S.pick]}:{})})})) } };
+  document.getElementById("cp-skip").onclick=()=>{ if(!again){ st.skipped.push(q.id); st.queue.push(st.queue.shift()); S.pick=null; S.numDraft=""; cpSave(); renderCpStep(); window.scrollTo({top:0}); return }
+    next(item({correct:false,dontknow:true,errorType:"dontknow",errorTypes:["dontknow"]})) };
+  document.getElementById("cp-pause").onclick=()=>{ cpSave(); S.active=false; clearInterval(CPT); view="home"; render(); window.scrollTo({top:0}) } }
+async function finishCp(timedOut){ const st=S.cp; if(S.finishing) return; S.finishing=true; clearInterval(CPT);
+  const left=st.queue.map(k=>S.qs[k]).map(q=>({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,correct:false,skipped:true,timeout:true,timeSec:Math.round(st.qsec[q.id]||0)}));
+  const items=[...st.items,...left], ok=items.filter(x=>x.correct).length;
+  lsSet("fieldnote.cp",null);
+  await finishWith({type:"checkpoint",setId:S.set.id,cpDate:S.c.date,cpKind:"short",subject:"ด่านประเมิน",topic:S.set.topic,startedAt:st.startedAt,endedAt:new Date().toISOString(),
+    durationSec:Math.round(st.elapsed/1000),timeLimitSec:Math.round(S.limit/1000),timedOut:!!timedOut,pauses:st.pauses||0,answered:st.items.filter(x=>!x.dontknow).length,correct:ok,total:items.length,xp:60,items}) }
+function cpReviewHtml(r){ const its=r.items||[], sub=k=>its.filter(x=>k==="s"?/^s/.test(x.spell||""):!/^s/.test(x.spell||"")), sc=xs=>`${xs.filter(x=>x.correct).length}/${xs.length}`;
+  return `<div class="feedback"><b>คณิต ${sc(sub("m"))} · วิทย์ ${sc(sub("s"))}</b><span class="small">ใช้เวลา ${Math.round(r.durationSec/60)} จาก ${Math.round(r.timeLimitSec/60)} นาที${r.timedOut?" · หมดเวลาก่อนทำครบ":""} · ข้ามไว้/ยังคิดไม่ออก ${its.filter(x=>x.dontknow||x.timeout).length} ข้อ</span>
+    <span class="small muted">ด่านนี้เป็นจุดเช็กแนวโน้มของเธอเอง ข้อที่พลาดจะวนกลับมาให้ทวนตามรอบ</span></div>
+    <details><summary>ดูเฉลยทุกข้อ (${its.length})</summary><div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">${its.map((x,i)=>{ const q=QBANK[x.qid]?.q; if(!q) return "";
+      const right=q.num?(q.answerText||q.answer)+" "+(q.unit||""):q.opts[q.a], mine_=x.typed!=null?x.typed:x.orig!=null&&q.opts?q.opts[x.orig]:null;
+      return `<div class="logi"><span class="small">${i+1}. ${x.correct?"✅":x.dontknow||x.timeout?"⏭️":"❌"} ${esc(q.q)}</span>${friendHtml(q,true)}<span class="small"><b>คำตอบ:</b> ${esc(right)}${!x.correct&&mine_!=null?` · <span class="muted">เธอตอบ ${esc(mine_)}</span>`:""}</span><span class="small muted">${gloss(q.ex)}</span></div>` }).join("")}</div></details>` }
+
+/* ---------- home: today's special mission (minimum day, checkpoint, printed paper), the loop card, the wave intros ---------- */
+function specialMissions(p,ms,md,mission){
+  if(p.need.min){ const n=md.mini?0:miniQuestions(mine()).length;
+    return mission(1,"mini","วันขั้นต่ำ · ราว 15 นาที",md.mini?`<h2>ชุดขั้นต่ำ</h2><p class="small muted">ทำแล้ว ✓ ไฟวันนี้ติดแล้ว</p>`:`<h2>ชุดขั้นต่ำ ${n} ข้อ</h2><p class="small muted">ทวนเรื่องที่เพิ่งเรียน ข้อที่เคยพลาด และเรื่องที่ถึงรอบ ทำจบนับเป็นวันที่ทำครบ</p>`,
+      n?`<button class="btn" id="mini-go">เริ่มชุดขั้นต่ำ</button>`:"") }
+  if(p.need.cp){ const c=p.need.cp, r=cpRec(mine(),c.set.id), st=cpState();
+    return mission(1,"checkpoint",`ด่านประเมิน (แทนชุดฝึกวันนี้) · ${c.mins||50} นาที`,r?`<h2>ด่านประเมินวันนี้</h2><p class="small muted">ทำแล้ว ✓ ขอบคุณที่ตั้งใจ</p>`
+      :`<h2>${esc(c.set.topic)}</h2><p class="small muted">${md.checkpoint?"วันนี้ทำชุดฝึกแทนแล้ว ✓ ด่านยังเปิดให้ทำได้ถึงสิ้นวัน · ":""}${c.set.practice.length} ข้อ คละวิทย์กับคณิต จับเวลา ไม่มีคำใบ้ ทำจบแล้วดูเฉลยได้ทุกข้อ</p>`,
+      "",r?"":`<button class="btn" id="cp-go">${st?"ทำต่อ":"ดูกติกาแล้วเริ่ม"}</button>`) }
+  if(p.need.paper){ const c=p.need.paper, sj=c.subject?" "+esc(c.subject):"";
+    return mission(1,"paper","ข้อสอบจำลองบนกระดาษ (แทนชุดฝึกวันนี้) · ราว 90 นาที",md.paper?`<h2>ข้อสอบกระดาษ${sj}</h2><p class="small muted">ทำแล้ว ✓ ขอบคุณที่ตั้งใจ</p>`
+      :`<h2>ข้อสอบกระดาษ${sj}</h2><p class="small muted">ทำกับพ่อ จับเวลา 90 นาที เหมือนวันสอบจริง ทำเสร็จแล้วกดบันทึก พ่อจะกรอกคะแนนเอง</p>`,`<button class="btn" id="paper-go">ทำเสร็จแล้ว กดบันทึก</button>`) }
+  return "" }
+function loopCard(list){ let L=null; try{ L=loopTodo(list) }catch(e){} if(!L) return ""; const nm=subName(L.ep.sub), g=L.act==="guide";
+  return `<div class="mission next" id="m-loop"><span class="mcheck">🔧</span><div style="display:flex;flex-direction:column;gap:6px;flex:1"><span class="small muted">ไม่บังคับ แต่ช่วยได้มาก · ราว ${g?3:6} นาที</span>
+    <h2>${g?"เขียนคู่มือผู้เล่น":"สอนใหม่อีกแบบ"}: ${esc(nm)}</h2><p class="small muted">${g?"ดูเรื่องนี้จากมุมใหม่ไปแล้ว ลองเขียนบอกเพื่อนสั้นๆ ว่าเจอโจทย์แบบนี้ต้องดูอะไร":"เรื่องนี้สะดุดมา 2 วันแล้ว รอบนี้อธิบายอีกแบบ แล้วลองทำตามตัวอย่างทีละขั้น"}</p>
+    <div class="row"><button class="btn" id="loop-go" data-act="${L.act}" data-sub="${esc(L.ep.sub)}">${g?"เขียนคู่มือ":"เริ่ม"}</button></div></div></div>` }
+function bindUnderstandHome(list,p){ const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
+  on("mini-go",()=>startMini());
+  on("cp-go",()=>{ view="cpintro"; render(); window.scrollTo({top:0}) });
+  on("paper-go",async e=>{ const b=e.target; if(b.dataset.armed!=="1"){ b.dataset.armed="1"; b.textContent="ทำครบ 90 นาทีแล้ว กดอีกครั้งเพื่อบันทึก"; return } b.disabled=true; const c=p.need.paper, now=new Date().toISOString();
+    await saveAttempt({type:"paper",setId:"paper-"+(c&&c.date||isoDay(todayKey())),subject:c&&c.subject||"",topic:"ข้อสอบจำลองบนกระดาษ"+(c&&c.subject?" "+c.subject:""),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:60,items:[]}); renderHome() });
+  on("loop-go",e=>{ const b=e.currentTarget, ep=miscEps(list).find(x=>x.sub===b.dataset.sub&&!x.resolvedAt); if(ep) startLoop(ep,b.dataset.act) }) }
+function waveIntro(){ if(view!=="home"||document.getElementById("sheet")) return false; const seen=ls("fieldnote.waveSeen",[]);
+  const w=waveOn(2)&&!seen.includes(2)?2:waveOn(1)&&!seen.includes(1)?1:0; if(!w) return false;
+  lsSet("fieldnote.waveSeen",[...seen,w,...(w===2&&!seen.includes(1)?[1]:[])]);
+  sheet({icon:w===1?"🔮":"🧩",title:"ของใหม่ในสมุดคาถา",html:w===1?`<ul class="small" style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px">
+      <li><b>🔮 ทายก่อนคิด</b> บางข้อจะให้ทายก่อนว่าคำตอบจะมากขึ้นหรือน้อยลง ทายผิดไม่เสียอะไร</li>
+      <li><b>📝 สมุดทดของเพื่อน</b> บางข้อให้หาว่าเพื่อนคิดพลาดตรงไหน</li>
+      <li><b>🔁 ข้อแฝด</b> ข้อที่กลับมาให้ทวนจะเปลี่ยนเรื่องราว ไม่ได้เปลี่ยนแค่ตัวเลข</li>
+      <li><b>🔧 สอนใหม่อีกแบบ</b> เรื่องที่สะดุด 2 วัน จะมีคำอธิบายอีกมุมให้ ราว 6 นาที</li>
+      <li><b>⏱️ วันขั้นต่ำ</b> วันที่ยุ่งมาก กด “วันนี้ขอแบบขั้นต่ำ 15 นาที” ได้ ไฟก็ยังติด</li></ul>`
+    :`<p class="small">ช่องเขียนเหตุผลยาวๆ เปลี่ยนเป็น <b>เลือกเหตุผลที่ถูก</b> ทั้งตอนตอบถูกและตอนพลาด ข้อที่พลาดแต่เลือกเหตุผลถูก แปลว่าเริ่มเห็นทางแล้ว</p><p class="small">บางข้อจะมีช่องเหตุผลของเธอ 1 บรรทัด ไม่บังคับ เว้นว่างได้</p>`,
+    actions:[{label:"เข้าใจแล้ว",fn:closeSheet}]}); return true }
+
+/* ---------- parent page: misconceptions, the understanding features, minimum days, checkpoints and mock papers ---------- */
+let plog=[];
+function understandSection(list){ const t=todayKey(), eps=miscEps(list), open=eps.filter(e=>!e.resolvedAt).sort((a,b)=>a.openAt-b.openAt), solved=eps.filter(e=>e.resolvedAt);
+  const ST={reteach:"รอน้องเปิด “สอนใหม่อีกแบบ”",needcard:"<b style=\"color:#A8382E\">ยังไม่มีคำอธิบายแบบใหม่ในคลัง</b> (ผมต้องเขียน)",guide:"สอนใหม่แล้ว · รอน้องเขียนคู่มือผู้เล่น",check:"รอข้อเช็ก"};
+  const loopFrom=new Date(((CAL.understand||{}).wave1||"2026-11-17")+"T00:00:00").getTime(), dOpen=e=>Math.round((t-Math.max(e.openDay,loopFrom))/DAY), talked=sub=>plog.filter(x=>x.kind==="dadtalk"&&x.sub===sub);
+  const wrongs=e=>[...new Set(e.misses.map(m=>{ const q=QBANK[m.qid]?.q; return m.typed!=null?`พิมพ์ ${m.typed}`:q&&q.opts&&m.orig!=null?`เลือก “${q.opts[m.orig]}”`:m.err?m.err:"คิดไม่ออก/ไม่ระบุ" }))].slice(0,3);
+  const over=open.filter(e=>dOpen(e)>21).length;
+  const its=list.filter(isLesson).flatMap(a=>a.items||[]).filter(x=>!x.skipped), pc=xs=>xs.length?`${xs.filter(Boolean).length}/${xs.length}`:"–";
+  const pred=its.filter(x=>x.predict!=null), fr=its.filter(x=>x.friend), ckR=its.filter(x=>x.checkOk!=null&&!x.checkAfterWrong), ckW=its.filter(x=>x.checkAfterWrong), own=its.filter(x=>x.explain);
+  const modes=dayModes(list), mins=Object.values(modes).filter(m=>m.level==="min").sort((a,b)=>a.day<b.day?1:-1), wk=isoDay(weekStart(t)), minWk=mins.filter(m=>m.day>=wk).length;
+  const cps=CAL.checkpoints||[], mocks=plog.filter(x=>x.kind==="mock").sort((a,b)=>a.date<b.date?-1:1);
+  return `<section class="card" id="understand"><h2>🔧 ความเข้าใจผิดที่กลับมาซ้ำ</h2>
+    <p class="small muted">เปิดเรื่องเมื่อน้องพลาดเรื่องย่อยเดียวกันใน 2 วันที่ต่างกัน (ไม่นับพลาดเพราะกดผิด อ่านโจทย์พลาด คิดเลขผิด หรือโจทย์กำกวม) · ขั้นตอน: คำอธิบายแบบใหม่ + ตัวอย่างทำทีละขั้น → คุยกับพ่อ (บรีฟในโน๊ตสถานะ) → น้องเขียนคู่มือผู้เล่น → <b>แก้ได้แล้ว</b> เมื่อตอบถูก 2 ครั้งในสถานการณ์ต่างกัน ห่างกันอย่างน้อย 7 วัน และเลือกเหตุผลถูกทั้งสองครั้ง</p>
+    <div class="feedback"><b>เปิดอยู่ ${open.length} เรื่อง · แก้ได้แล้ว ${solved.length} เรื่อง${over?` · <span style="color:#A8382E">เปิดเกิน 3 สัปดาห์ ${over} เรื่อง</span>`:""}</b><span class="small">เรื่องที่เปิดเกิน 3 สัปดาห์ทั้งที่ผ่านขั้นตอนครบ คือหลักฐานสำหรับการตัดสินใจเดือน ก.พ. ว่าวิธีอธิบายแบบนี้ยังไม่พอ ควรมีคนช่วยอธิบาย</span></div>
+    ${open.length?`<div class="rdtable"><table><thead><tr><th>เรื่องย่อย</th><th>เปิดเมื่อ</th><th>เปิดมา</th><th>ขั้นตอนตอนนี้</th><th>ข้อเช็ก (ต้อง 2)</th><th>ที่น้องตอบพลาด</th><th>พ่อ</th></tr></thead><tbody>
+      ${open.map(e=>{ const sg=miscStage(e), tk=talked(e.sub), d=dOpen(e), np=sg==="check"||sg==="guide"?loopPool(e).length:null;
+        return `<tr><td>${esc(subName(e.sub))}<br><span class="small muted">${esc(e.sub)}</span></td><td class="small">${fmtDay(e.openDay)}</td><td style="color:${d>21?"#A8382E":"inherit"}">${d} วัน${e.openDay<loopFrom?`<br><span class="small muted">พลาดซ้ำตั้งแต่ก่อนมีวงจรนี้ นับจาก ${fmtDay(loopFrom)}</span>`:""}</td>
+          <td class="small">${ST[sg]}${e.guide?`<br><span class="muted">คู่มือ: “${esc(e.guide)}”</span>`:""}${np===0?`<br><b style="color:#A8382E">ไม่มีข้อที่มีตัวเลือกเหตุผลในเรื่องนี้ (ผมต้องเขียน)</b>`:""}</td>
+          <td class="small">${e.ev.length}/2${e.ev.length?` · ล่าสุด ${fmtDay(e.ev[e.ev.length-1].d)}`:""}</td><td class="small">${wrongs(e).map(esc).join("<br>")} <span class="muted">(${e.misses.length} ครั้ง)</span></td>
+          <td class="small">${tk.length?`✅ คุยแล้ว ${fmtDay(new Date(tk[0].at).getTime())}`:db?`<button class="btn ghost small" data-dadtalk="${esc(e.sub)}">คุยแล้ว</button>`:"–"}</td></tr>` }).join("")}</tbody></table></div>`:`<p class="small muted">ยังไม่มีเรื่องที่พลาดซ้ำข้ามวัน</p>`}
+    ${solved.length?`<details class="small"><summary>แก้ได้แล้ว (${solved.length})</summary>${solved.map(e=>`<div class="topic"><span>${esc(subName(e.sub))}</span><span class="muted">${fmtDay(e.openDay)} → ${fmtDay(e.resolvedDay)} · ${Math.round((e.resolvedDay-e.openDay)/DAY)} วัน</span></div>`).join("")}</details>`:""}
+    <h3>ปรับระบบให้เน้นความเข้าใจ (พ่ออนุมัติ 17 พ.ย.)</h3>
+    <p class="small">ช่วงที่ 1 เริ่ม ${esc((CAL.understand||{}).wave1||"–")}: ทายก่อนคิด ${pc(pred.map(x=>x.predictOk))} ข้อทายตรง · หาที่เพื่อนพลาด ${pc(fr.map(x=>x.correct))} ข้อถูก · ข้อแฝดแบบเปลี่ยนสถานการณ์ ${its.filter(x=>x.of&&x.sit).length} ข้อ<br>
+      ช่วงที่ 2 เริ่ม ${esc((CAL.understand||{}).wave2||"–")}: เลือกเหตุผลถูกหลังตอบถูก ${pc(ckR.map(x=>x.checkOk))} · หลังตอบพลาด ${pc(ckW.map(x=>x.checkOk))} · เหตุผล 1 บรรทัด เขียน ${own.filter(x=>(x.ownWhy||"").trim()).length} จาก ${own.length} ข้อ</p>
+    <p class="note">ข้อพวกนี้ต้องมีโจทย์รองรับ (ข้อทายก่อนคิด ข้อสมุดเพื่อน ข้อแฝดเปลี่ยนสถานการณ์ ข้อที่มีตัวเลือกเหตุผล) ผมจะเขียนเพิ่มในแชท 2 ทุกชุดผ่านการตรวจเฉลยแบบอิสระ</p>
+    <h3>⏱️ วันขั้นต่ำ 15 นาที</h3>
+    <p class="small">${mins.length?`ใช้ไป ${mins.length} วัน (สัปดาห์นี้ ${minWk}) · ${mins.slice(0,8).map(m=>`${esc(m.day.slice(5))} ${esc(m.reason||"")}`).join(" · ")}`:"ยังไม่เคยใช้"}</p>
+    <p class="note">ตามเกณฑ์ที่ตกลงกัน: ถ้าวันขั้นต่ำหรือเวลาน้อยเกิดบ่อยแต่ความจำข้ามวันยังดี แปลว่าเป็นเรื่องภาระงานหรือแรงจูงใจ ให้ปรับตารางก่อน ไม่ใช่เรื่องวิธีสอน</p>
+    <h3>🏁 ด่านประเมิน</h3>
+    <div class="rdtable"><table><thead><tr><th>วันที่</th><th>แบบ</th><th>ผล</th></tr></thead><tbody>${cps.map(c=>{ const r=c.kind==="short"?list.find(a=>a.type==="checkpoint"&&(a.cpDate===c.date||a.setId===c.setId)):null, set=c.kind==="short"?SETS.find(s=>s.id===c.setId):null, m=mocks.filter(x=>x.date===c.date);
+      const its_=r?r.items||[]:[], sc=f=>{ const xs=its_.filter(f); return `${xs.filter(x=>x.correct).length}/${xs.length}` };
+      return `<tr><td class="small">${esc(c.date)}</td><td class="small">${c.kind==="short"?`ด่านสั้นในแอป ${c.mins||50} นาที`:`ข้อสอบจำบนกระดาษ ${esc(c.subject||"")} 90 นาที`}</td><td class="small">${r?`คณิต ${sc(x=>!/^s/.test(x.spell||""))} · วิทย์ ${sc(x=>/^s/.test(x.spell||""))} · ${Math.round(r.durationSec/60)}/${Math.round((r.timeLimitSec||0)/60)} นาที${r.timedOut?" · หมดเวลา":""}${r.pauses?` · พัก ${r.pauses} ครั้ง`:""} · ข้าม/คิดไม่ออก ${its_.filter(x=>x.dontknow||x.timeout).length}`
+        :m.length?m.map(x=>`${esc(x.paper||"")} ${x.score}/${x.full}${x.notTaught!=null?` · เสียเพราะยังไม่เรียน ${x.notTaught} · เรียนแล้วแต่ผิด ${x.taughtWrong}`:""}`).join("<br>")
+        :c.kind==="short"&&!set?(c.date>=isoDay(t)?`<span style="color:#9A6A12">ยังไม่มีชุดโจทย์ (แชท 2)</span>`:"ไม่มีชุดโจทย์"):c.date<isoDay(t)?"ยังไม่มีผล":"รอถึงวัน"}</td></tr>` }).join("")}</tbody></table></div>
+    <p class="note">ด่านสั้นเป็นโจทย์ที่ผมเขียนเอง บอก<b>แนวโน้ม</b>ของน้องได้ แต่ยังไม่ใช่ความพร้อมสอบจริง · ข้อสอบจำบนกระดาษ: แยกคะแนนที่เสียเป็น “ยังไม่ได้เรียน” กับ “เรียนแล้วแต่ผิด” เพราะสองอย่างนี้แก้คนละวิธี</p>
+    ${db?`<details class="small" id="mockform"><summary>📝 กรอกคะแนนข้อสอบกระดาษ</summary><div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
+      <label>วันที่ <input id="mk-date" type="date" value="${esc((cps.find(c=>c.kind==="full"&&c.date>=isoDay(t-7*DAY))||{}).date||isoDay(t))}"></label>
+      <label>ฉบับ <input id="mk-paper" placeholder="เช่น ข้อสอบจำ คณิต ปี 2568" style="width:100%"></label>
+      <label>วิชา <select id="mk-subj"><option>คณิต</option><option>วิทย์</option></select></label>
+      <div class="row" style="gap:6px"><label>ได้ <input id="mk-score" type="number" min="0" style="width:5em"></label><label>เต็ม <input id="mk-full" type="number" min="1" style="width:5em"></label><label>ใช้เวลา (นาที) <input id="mk-mins" type="number" min="0" style="width:5em"></label></div>
+      <div class="row" style="gap:6px"><label>เสียเพราะยังไม่ได้เรียน <input id="mk-nt" type="number" min="0" style="width:5em"></label><label>เรียนแล้วแต่ผิด <input id="mk-tw" type="number" min="0" style="width:5em"></label></div>
+      <input id="mk-note" placeholder="บันทึกสั้นๆ (ไม่บังคับ)" maxlength="300">
+      <div class="row"><button class="btn small" id="mk-save">บันทึกคะแนน</button><span class="small" id="mk-msg"></span></div></div></details>`:""}
+  </section>` }
+function bindUnderstandParent(){
+  $v.querySelectorAll("[data-dadtalk]").forEach(b=>b.onclick=async()=>{ b.disabled=true; try{ await db.collection("parentlog").add({kind:"dadtalk",sub:b.dataset.dadtalk,at:new Date().toISOString()}); b.textContent="บันทึกแล้ว" }catch(e){ b.disabled=false; b.textContent="ลองใหม่" } });
+  const sv=document.getElementById("mk-save"); if(sv) sv.onclick=async()=>{ const g=id=>document.getElementById(id).value.trim(), n=id=>g(id)===""?null:Number(g(id)), m=document.getElementById("mk-msg");
+    const rec={kind:"mock",date:g("mk-date"),paper:g("mk-paper"),subject:g("mk-subj"),score:n("mk-score"),full:n("mk-full"),mins:n("mk-mins"),notTaught:n("mk-nt"),taughtWrong:n("mk-tw"),note:g("mk-note"),at:new Date().toISOString()};
+    if(!/^\d{4}-\d\d-\d\d$/.test(rec.date)||rec.score==null||!rec.full||rec.score>rec.full){ m.textContent="กรอกวันที่ คะแนนที่ได้ และคะแนนเต็มให้ครบก่อน"; return }
+    if(rec.notTaught!=null&&rec.taughtWrong!=null&&rec.notTaught+rec.taughtWrong>rec.full-rec.score){ m.textContent="คะแนนที่เสียสองช่องรวมกันเกินคะแนนที่เสียจริง"; return }
+    sv.disabled=true; m.textContent="กำลังบันทึก…"; try{ await db.collection("parentlog").add(rec); m.textContent="บันทึกแล้ว" }catch(e){ sv.disabled=false; m.textContent="บันทึกไม่สำเร็จ ลองใหม่" } } }
 function renderParent(){
   const pool = showExamples ? attempts : realAttempts();
   const all = pool.filter(isLesson), skips = pool.filter(isSkip), voc = pool.filter(a=>a.type==="vocab");
@@ -4809,6 +5170,7 @@ function renderParent(){
     <p class="note">เวลาคือช่วงที่เปิดหน้าเว็บ ใช้ดูแนวโน้ม ไม่ใช่เวลาที่ตั้งใจจริงทั้งหมด</p>`}
   </section>
   ${readinessSection(realAttempts())}
+  ${understandSection(realAttempts())}
   ${parentExtras(realAttempts())}
   ${db?`<section class="card" id="pimport"><h3>📥 นำเข้าผลจากเครื่องลูก</h3>
     <p class="small muted">ลูกส่งมาเป็นไฟล์ทาง LINE: บันทึกไฟล์ไว้ในเครื่อง แล้วกดเลือกไฟล์ (เลือกหลายไฟล์พร้อมกันได้) ส่งไฟล์เดิมซ้ำได้ ระบบไม่นับซ้ำ</p>
@@ -4999,6 +5361,7 @@ function renderParent(){
   $v.querySelectorAll("[data-gok]").forEach(b=>b.onclick=()=>gdec(b.dataset.gok,"ok"));
   $v.querySelectorAll("[data-gtalk]").forEach(b=>b.onclick=()=>gdec(b.dataset.gtalk,"talk"));
   $v.querySelectorAll("[data-mfix]").forEach(b=>b.onclick=()=>mdec(b.dataset.mfix,"change"));
+  bindUnderstandParent();
   setupAsk({all,lv,topics,errs,ratings,skips,conf});
   setupAnswers(conf);
 }
@@ -5040,7 +5403,7 @@ async function setupAsk(sum){ const skips=sum.skips||[], conf=sum.conf||[];
   };
 }
 
-function route(){ const h=location.hash.replace("#",""); if(h==="parent"){view="parent"} else if(h==="map"){view="map"} else if(h==="den"){view="den";denMsg=""} else if(!["session","intro","feedback","done","skip","send","vocab","mission","notes","words","adv","elem"].includes(view)){view="home"} else if(view==="done"){view="home"} render() }
+function route(){ const h=location.hash.replace("#",""); if(h==="parent"){view="parent"} else if(h==="map"){view="map"} else if(h==="den"){view="den";denMsg=""} else if(!["session","intro","feedback","done","skip","send","vocab","mission","notes","words","adv","elem","loop","cpintro"].includes(view)){view="home"} else if(view==="done"){view="home"} render() }
 /* thousands separators everywhere on screen (father, 11 Nov): 10000 → 10,000. Text nodes only; years (19xx/20xx/24xx–26xx),
    decimals' fractional parts, inputs, textareas and code are left alone. */
 const NUM_RE=/(?<![\d.,:\-])\d{4,}(?![\d,])/g;

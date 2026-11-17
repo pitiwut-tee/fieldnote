@@ -7,13 +7,20 @@ const errs=[], warn=m=>errs.push(m);
 
 /* ---- 1. content rules ---- */
 const spells=new Set(J("content/spells.json").spells.map(s=>s.id));
+const CAL0=J("content/calendar.json"), CPS=CAL0.checkpoints||[], WAVE1=(CAL0.understand||{}).wave1||"9999", WAVE2=(CAL0.understand||{}).wave2||"9999";
 const files=fs.readdirSync(path.join(ROOT,"content/sets")).filter(f=>f.endsWith(".json")).sort();
 const setIds=new Set(), qIds=new Set();
 for(const f of files){
   let s; try{ s=J("content/sets/"+f) }catch(e){ warn(`${f}: not valid JSON (${e.message})`); continue }
   const where=`${f} (${s.id})`;
   if(setIds.has(s.id)) warn(`${where}: duplicate set id`); setIds.add(s.id);
-  if(!["lesson","probe","mixed","passage","sweep"].includes(s.kind)) warn(`${where}: kind must be "lesson", "probe", "mixed" or "passage"`);
+  if(!["lesson","probe","mixed","passage","sweep","checkpoint"].includes(s.kind)) warn(`${where}: kind must be "lesson", "probe", "mixed", "passage", "sweep" or "checkpoint"`);
+  if(s.kind==="checkpoint"){ const pr=s.practice||[];
+    if(pr.some(q=>!q.spell)) warn(`${where}: every question in a checkpoint needs its own spell`);
+    if(pr.length<12) warn(`${where}: a checkpoint needs 12-30 questions (has ${pr.length})`);
+    if(!pr.some(q=>/^s/.test(q.spell||""))||!pr.some(q=>/^m/.test(q.spell||""))) warn(`${where}: a checkpoint mixes science and math`);
+    if(s.warm&&s.warm.length||s.challenge) warn(`${where}: a checkpoint has no warm-up and no challenge`);
+    if(!(CPS.some(c=>c.kind==="short"&&c.setId===s.id))) warn(`${where}: checkpoint set is not in calendar.json checkpoints`); }
   if(s.kind==="passage"&&!(s.passage&&s.passage.title&&Array.isArray(s.passage.paras)&&s.passage.paras.length)) warn(`${where}: passage needs passage.title and passage.paras`);
   if(s.kind==="mixed"){
     const sp=new Set((s.practice||[]).map(q=>q.spell));
@@ -21,7 +28,7 @@ for(const f of files){
     if(sp.size<4) warn(`${where}: a mixed set needs questions from at least 4 spells (has ${sp.size})`);
     if((s.practice||[]).length<10) warn(`${where}: a mixed set needs 10-15 questions`);
     if(s.challenge) warn(`${where}: a mixed set has no challenge`);
-  } else if(s.kind!=="sweep"&&!spells.has(s.spell)) warn(`${where}: unknown spell "${s.spell}"`);
+  } else if(s.kind!=="sweep"&&s.kind!=="checkpoint"&&!spells.has(s.spell)) warn(`${where}: unknown spell "${s.spell}"`);
   for(const k of ["subject","topic","grade","mins"]) if(!s[k]) warn(`${where}: missing ${k}`);
   if(s.kind==="lesson"&&(!s.concept||!(s.concept.points||[]).length)) warn(`${where}: lesson needs concept.points`);
   if(!Array.isArray(s.practice)||s.practice.length<6) warn(`${where}: practice needs at least 6 questions`);
@@ -43,9 +50,16 @@ for(const f of files){
       if(f.kind==="dot"&&!(typeof f.min==="number"&&typeof f.max==="number"&&f.counts)) warn(`${w}: dot fig needs min, max, counts`);
       if((f.kind==="hist"||f.kind==="bar")&&!(Array.isArray(f.values)&&f.values.length)) warn(`${w}: ${f.kind} fig needs values`);
       if((f.kind==="stem"||f.kind==="table")&&!Array.isArray(f.rows)) warn(`${w}: ${f.kind} fig needs rows`); }
-    const h=(s.hints||{})[q.id]; if(s.kind!=="sweep"&&(!Array.isArray(h)||!h.length)) warn(`${w}: needs at least one hint`);
+    const h=(s.hints||{})[q.id]; if(s.kind!=="sweep"&&s.kind!=="checkpoint"&&(!Array.isArray(h)||!h.length)) warn(`${w}: needs at least one hint`);
+    /* understanding-first fields (17 Nov 2026) */
+    if(q.friend!=null&&!(q.friend&&Array.isArray(q.friend.work)&&q.friend.work.length>=2&&q.friend.work.every(l=>typeof l==="string"&&l.trim()))) warn(`${w}: friend needs {who?, work:[2+ lines of the friend's working]}`);
+    if(q.friend&&q.num) warn(`${w}: a friend's-mistake item is a choice question (options describe the mistake)`);
+    if(q.predict!=null){ const pd=q.predict; if(!(pd&&pd.q&&Array.isArray(pd.opts)&&pd.opts.length>=2&&new Set(pd.opts).size===pd.opts.length&&pd.a===0)) warn(`${w}: predict needs {q, opts:[2+ distinct, right one first], a:0, ex?}`) }
+    if(q.sit!=null&&!(typeof q.sit==="string"&&q.sit.trim())) warn(`${w}: sit must be a short situation label`);
+    if(q.check&&s.added>=WAVE2&&q.check.opts.length!==3) warn(`${w}: from ${WAVE2} a reason check has exactly 3 reasons (pick the right one from 3)`);
+    if(q.check&&q.check.a!==0&&s.added>=WAVE1) warn(`${w}: write the right reason first (check.a = 0); the app shuffles`);
   }
-  if(s.kind!=="sweep"&&(lv[1]<2||lv[2]<2||lv[3]<1)) warn(`${where}: mix should have ≥2 level-1, ≥2 level-2, ≥1 level-3 (has ${JSON.stringify(lv)})`);
+  if(s.kind!=="sweep"&&s.kind!=="checkpoint"&&(lv[1]<2||lv[2]<2||lv[3]<1)) warn(`${where}: mix should have ≥2 level-1, ≥2 level-2, ≥1 level-3 (has ${JSON.stringify(lv)})`);
 }
 /* math sets written from 2026-11-08 on: at least half of level-2/3 questions answerable as a typed number (exam fill-in part) */
 { const R=/^\s*([−-]?[\d,]*\.?\d+(?:\s*\/\s*\d+)?)\s*(.*)$/;
@@ -58,7 +72,7 @@ for(const f of files){ let s; try{ s=J("content/sets/"+f) }catch(e){ continue } 
   const qs=[...(s.warm||[]),...(s.practice||[]),...(s.challenge?[s.challenge]:[])];
   for(const q of qs) if(!["life","earth","fun","pure"].includes(q.ctx)) warn(`${f} ${q.id}: ctx must be life, earth, fun or pure`);
   const pr=(s.practice||[]).filter(q=>!q.ctxAuto), n=k=>pr.filter(q=>q.ctx===k).length;
-  if(s.kind!=="probe"&&pr.length&&(n("life")+n("earth")<Math.ceil(pr.length*0.5)||(n("earth")<1&&!s.oneContext))) warn(`${f}: practice needs about half life/earth contexts and at least 1 earth (has life ${n("life")}, earth ${n("earth")})`);
+  if(s.kind!=="probe"&&s.kind!=="checkpoint"&&pr.length&&(n("life")+n("earth")<Math.ceil(pr.length*0.5)||(n("earth")<1&&!s.oneContext))) warn(`${f}: practice needs about half life/earth contexts and at least 1 earth (has life ${n("life")}, earth ${n("earth")})`);
   for(const q of qs) if(q.optErr&&!(Array.isArray(q.optErr)&&q.opts&&q.optErr.length===q.opts.length&&q.optErr[q.a]==null&&q.optErr.every((e,i)=>i===q.a||typeof e==="string"&&e))) warn(`${f} ${q.id}: optErr must match opts, null at the answer, a short code for each wrong option`);
   for(const q of qs) if(q.check&&!(Array.isArray(q.check.opts)&&q.check.opts.length>=2&&Number.isInteger(q.check.a)&&q.check.a>=0&&q.check.a<q.check.opts.length)) warn(`${f} ${q.id}: check needs {q?, opts:[2+], a:index, ex}`);
   for(const q of qs) if(q.level===3&&!(q.parts&&Array.isArray(q.parts.given)&&q.parts.given.length&&q.parts.ask)) warn(`${f} ${q.id}: level-3 question needs parts {given:[...], ask, watch?}`);
@@ -83,8 +97,34 @@ for(const [orig,vs] of Object.entries(VAR)){ if(!qIds.has(orig)) warn(`variants.
     if(!v.q||!v.ex||!Array.isArray(v.opts)||v.opts.length<3||!(v.a>=0&&v.a<v.opts.length)) warn(`${w}: needs q, ex, opts (3+), a`);
     if(new Set(v.opts||[]).size!==(v.opts||[]).length) warn(`${w}: options repeat`);
     if(!Array.isArray(v.hints)||!v.hints.length) warn(`${w}: needs hints`);
-    if(!["life","earth","fun","pure"].includes(v.ctx)) warn(`${w}: needs ctx`); } }
+    if(!["life","earth","fun","pure"].includes(v.ctx)) warn(`${w}: needs ctx`);
+    if(v.change!=null&&!["situation","numbers"].includes(v.change)) warn(`${w}: change must be "situation" or "numbers"`);
+    if(v.change==="situation"&&!(typeof v.sit==="string"&&v.sit.trim())) warn(`${w}: a situation-changing twin needs sit (a short label of its new situation)`);
+    if((v.added||"")>=WAVE1&&!v.change) warn(`${w}: twins added from ${WAVE1} say what they change (change: "situation" | "numbers"); prefer situation`);
+    if(v.check&&!(Array.isArray(v.check.opts)&&v.check.opts.length===3&&v.check.a===0)) warn(`${w}: check needs 3 reasons, right one first (a:0)`); } }
 const cal=J("content/calendar.json");
+/* understanding-first calendar fields and the reteach cards (17 Nov 2026) */
+for(const k of ["wave1","wave2"]) if(cal.understand&&!/^\d{4}-\d\d-\d\d$/.test(cal.understand[k]||"")) warn(`calendar.json understand.${k}: needs a YYYY-MM-DD date`);
+if(cal.minDay&&!/^\d{4}-\d\d-\d\d$/.test(cal.minDay.from||"")) warn("calendar.json minDay.from: needs a date");
+{ const today=new Date(Date.now()+7*3600000).toISOString().slice(0,10), soon=new Date(Date.now()+7*3600000+10*86400000).toISOString().slice(0,10);
+  for(const c of cal.checkpoints||[]){ const w=`calendar.json checkpoint ${c.date}`;
+    if(!/^\d{4}-\d\d-\d\d$/.test(c.date||"")||!["short","full"].includes(c.kind)) warn(`${w}: needs date and kind short|full`);
+    if(c.kind==="short"){ if(!c.setId) warn(`${w}: short checkpoint needs setId`);
+      else if(!setIds.has(c.setId)){ if(c.date>=today&&c.date<=soon) console.log(`WARNING: ${w} is in ≤ 10 days but set ${c.setId} does not exist yet (write it in chat 2, with the blind check)`) }
+      else if(J("content/sets/"+files.find(f=>{ try{ return J("content/sets/"+f).id===c.setId }catch(e){ return false } })).kind!=="checkpoint") warn(`${w}: set ${c.setId} must have kind "checkpoint"`) } } }
+{ let RT={cards:{}}; try{ RT=J("content/reteach.json") }catch(e){ warn("content/reteach.json: not valid JSON") }
+  const subs=new Set(Object.values(J("content/curriculum.json").spells||{}).flat().map(x=>x.id));
+  for(const [sub,c] of Object.entries(RT.cards||{})){ const w=`reteach.json ${sub}`;
+    if(!subs.has(sub)) warn(`${w}: not a curriculum subtopic id`);
+    if(!c.title||!Array.isArray(c.text)||!c.text.length) warn(`${w}: needs title and text [paras]`);
+    if(!["table","diagram","real","contrast"].includes(c.form)) warn(`${w}: form must be table, diagram, real or contrast (a different form from the lesson)`);
+    if(c.table&&!(Array.isArray(c.table.cols)&&Array.isArray(c.table.rows)&&c.table.rows.every(r=>r.length===c.table.cols.length))) warn(`${w}: table needs cols and rows of the same length`);
+    if(c.contrast&&!(Array.isArray(c.contrast)&&c.contrast.length===2&&c.contrast.every(k=>k.title&&k.text))) warn(`${w}: contrast needs exactly 2 cases {title, text}`);
+    if(!Array.isArray(c.worked)||c.worked.length!==3) warn(`${w}: needs exactly 3 worked examples (full, last step blank, last two blank)`);
+    else c.worked.forEach((x,i)=>{ const st=(x.steps||[]).map(s=>typeof s==="string"?{t:s}:s);
+      if(!x.q||st.length<3||st.some(s=>!s.t)) warn(`${w} worked ${i+1}: needs q and at least 3 steps`);
+      st.forEach((s,k)=>{ if(s.opts&&!(Array.isArray(s.opts)&&s.opts.length>=2&&s.opts[0]===s.t&&new Set(s.opts).size===s.opts.length)) warn(`${w} worked ${i+1} step ${k+1}: opts must start with the step's own text, then distinct wrong steps`) });
+      const hidden=st.slice(st.length-i); if(i>0&&hidden.some(s=>!s.opts)) console.log(`note: ${w} worked ${i+1}: a blank step without opts falls back to think-then-self-check`) }); } }
 for(const id of cal.lessonQueue||[]) if(!setIds.has(id)) warn(`calendar.json lessonQueue: unknown set ${id}`);
 for(const sp of cal.currentSpells||[]) if(!spells.has(sp)) warn(`calendar.json: unknown current spell ${sp}`);
 for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) warn(`calendar.json: bad date ${d}`);
@@ -97,40 +137,153 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
   const pageErr=[]; pg.on("pageerror",e=>pageErr.push(e.message));
   const url="file://"+path.join(ROOT,"index.html");
   await pg.clock.install({time:new Date(Date.now()+86400000)});
-  await pg.addInitScript(()=>{ try{ localStorage.setItem("fieldnote.studioTeaser2","true"); localStorage.setItem("fieldnote.callmeAsked","true"); localStorage.setItem("fieldnote.guestpop",JSON.stringify(["x"])); localStorage.setItem("fieldnote.quietSheets","true") }catch(e){} });
+  await pg.addInitScript(()=>{ try{ localStorage.setItem("fieldnote.studioTeaser2","true"); localStorage.setItem("fieldnote.callmeAsked","true"); localStorage.setItem("fieldnote.guestpop",JSON.stringify(["x"])); localStorage.setItem("fieldnote.quietSheets","true"); localStorage.setItem("fieldnote.waveSeen",JSON.stringify([1,2])) }catch(e){} });
   await pg.goto(url);
-  /* --since=YYYY-MM-DD plays only sets added on/after that date (content rules above still cover every set) */
-  const since=(process.argv.find(x=>x.startsWith("--since="))||"").slice(8);
-  const ids=await pg.evaluate(since=>SETS.filter(s=>s.kind!=="sweep"&&(!since||(s.added||"")>=since)).map(s=>s.id),since);
-  let n=0;
-  for(const id of ids){
-    /* every other set is played with this week's trial features on (confidence buttons + explain box) */
-    const trial=(n++)%2===0?["confidence","explain"]:[];
-    await pg.evaluate(([id,trial])=>{ localStorage.removeItem("fieldnote.inprogress"); CAL.trials={[isoDay(todayKey())]:trial}; introSet=SETS.find(s=>s.id===id); view="intro"; render() }, [id,trial]);
-    await pg.click("#go");
-    let ok=0, total=0;
-    for(let i=0;i<40;i++){
+  /* answer whatever session is open until it ends. wrong=true answers every question wrong (to test the paths after a miss) */
+  async function play(wrong){ let ok=0, total=0;
+    const pickWrong=async()=>pg.evaluate(()=>{ const q=S.steps[S.i].q; return q.opts.findIndex((_,k)=>k!==q.a) });
+    for(let i=0;i<60;i++){
       if(await pg.locator("[data-hk]").count()){ await pg.locator("[data-hk]").first().click(); continue }
+      if(await pg.locator("[data-pred]").count()){ await pg.click(`[data-pred="0"]`); continue }   /* the right prediction is written first */
       if(await pg.locator("#cnext").count()){ await pg.click("#cnext"); continue }
-      if(await pg.locator("#save").count()){ await pg.click('[data-r="พอดี"]'); await pg.click("#save"); break }
-      const afterAns=async()=>{ if(await pg.locator("[data-ck]").count()){ const a=await pg.evaluate(()=>S.steps[S.i].q.check.a); await pg.click(`[data-ck="${a}"]`) } await pg.click("#next") };
-      if(await pg.locator(".opt:not([disabled]):not(.ckopt)").count()){ const k=await pg.evaluate(()=>S.steps[S.i].q.a); await pg.locator(".opt").nth(k).click();
+      if(await pg.locator("#save").count()){ if(await pg.locator('[data-r="พอดี"]').count()) await pg.click('[data-r="พอดี"]'); await pg.click("#save"); break }
+      if(await pg.locator("[data-ck]").count()){ const a=await pg.evaluate(()=>S.steps[S.i].q.check.a); await pg.click(`[data-ck="${a}"]`); continue }
+      if(await pg.locator("#exnext").count()){ await pg.click("#exnext"); continue }
+      if(await pg.locator(".opt:not([disabled]):not(.ckopt)").count()){ const k=wrong?await pickWrong():await pg.evaluate(()=>S.steps[S.i].q.a); await pg.locator(".opt:not(.ckopt)").nth(k).click();
         if(await pg.locator("#whytext").count()) await pg.fill("#whytext","เพราะคิดตามสูตร");
         for(const b of ["#send-sure","#send-plain"]) if(await pg.locator(b).count()){ await pg.click(b); break }
-        total++; if(await pg.locator(".feedback b.ok").count()) ok++; await afterAns(); continue }
-      if(await pg.locator("#numin").count()){ const a=await pg.evaluate(()=>S.steps[S.i].q.answer); await pg.fill("#numin",String(a));
+        total++; if(await pg.locator(".feedback b.ok").count()) ok++; continue }
+      if(await pg.locator("#numin:not([disabled])").count()){ const a=await pg.evaluate(()=>S.steps[S.i].q.answer); await pg.fill("#numin",String(wrong?a+1000:a));
+        if(await pg.locator("#whytext").count()) await pg.fill("#whytext","เพราะคิดตามสูตร");
         if(await pg.locator("#check").count()) await pg.click("#check"); else for(const b of ["#send-unsure","#send-plain"]) if(await pg.locator(b).count()){ await pg.click(b); break }
-        total++; if(await pg.locator(".feedback b.ok").count()) ok++; await afterAns(); continue }
+        total++; if(await pg.locator(".feedback b.ok").count()) ok++; continue }
       if(await pg.locator("#uncover").count()){ await pg.click("#uncover"); continue }
       if(await pg.locator("#readdone").count()){ await pg.click("#readdone"); continue }
       if(await pg.locator("#next").count()){ await pg.click("#next"); continue }
     }
-    await pg.waitForTimeout(150);
-    const done=await pg.evaluate(()=>view==="done");
-    if(!done||ok!==total) warn(`${id}: played ${ok}/${total} correct, reached end: ${done}`);
-    else console.log(`ok  ${id}  (${total} questions)`);
+    await pg.waitForTimeout(150); return {ok,total,done:await pg.evaluate(()=>view==="done")} }
+  /* --since=YYYY-MM-DD plays only sets added on/after that date (content rules above still cover every set) */
+  const since=(process.argv.find(x=>x.startsWith("--since="))||"").slice(8);
+  const ids=await pg.evaluate(since=>SETS.filter(s=>s.kind!=="sweep"&&s.kind!=="checkpoint"&&(!since||(s.added||"")>=since)).map(s=>s.id),since);
+  let n=0;
+  const W2=await pg.evaluate(()=>JSON.stringify(CAL.understand||{}));
+  for(const id of ids){
+    /* every other set is played with this week's trial features on (confidence buttons + explain box); every third with wave 2 on */
+    const k=n++, trial=k%2===0?["confidence","explain"]:[], w2=k%3===1;
+    await pg.evaluate(([id,trial,w2,W2])=>{ localStorage.removeItem("fieldnote.inprogress"); CAL.trials={[isoDay(todayKey())]:trial}; CAL.understand={...JSON.parse(W2),...(w2?{wave2:"2000-01-01"}:{})}; introSet=SETS.find(s=>s.id===id); view="intro"; render() }, [id,trial,w2,W2]);
+    await pg.click("#go");
+    const r=await play(false);
+    if(!r.done||r.ok!==r.total) warn(`${id}: played ${r.ok}/${r.total} correct, reached end: ${r.done}`);
+    else console.log(`ok  ${id}  (${r.total} questions)`);
   }
+  await pg.evaluate(W2=>{ CAL.understand=JSON.parse(W2); CAL.trials={} },W2);
+
+  /* ---- 3. the understanding-first features (17 Nov 2026), on made-up test items that never reach content ---- */
+  const T=async(name,f)=>{ try{ const m=await f(); if(m) warn(`${name}: ${m}`); else console.log(`ok  feature: ${name}`) }catch(e){ warn(`${name}: ${e.message.split("\n")[0]}`) } };
+  const reset=async extra=>{ await pg.evaluate(extra=>{ attempts=extra||[]; lsWrite(attempts); localStorage.removeItem("fieldnote.inprogress"); localStorage.removeItem("fieldnote.cp"); S=null; LP=null; view="home"; render() },extra||[]);
+    await pg.waitForTimeout(800); await pg.evaluate(()=>{ if(document.getElementById("sheet")) closeSheet() }) };
+  const noToday=()=>pg.evaluate(()=>{ CAL.checkpoints=(CAL.checkpoints||[]).filter(c=>c.date!==isoDay(todayKey())) });
+  const FX=await pg.evaluate(()=>{
+    const mk=(id,lv,extra)=>({id,level:lv,topic:"ทดสอบ",ctx:"pure",q:"ข้อทดสอบ "+id,opts:["ถูก","ผิด ก","ผิด ข"],a:0,ex:"เฉลยทดสอบ ขั้นแรก แล้วขั้นต่อไป",hints:["คำใบ้ทดสอบ"],...extra});
+    const set={id:"zz-test",kind:"lesson",subject:"คณิตศาสตร์",topic:"ชุดทดสอบระบบ",grade:"ม.2",mins:"5 นาที",spell:SETS.find(s=>s.kind==="lesson").spell,warm:[],
+      concept:{title:"ทดสอบ",points:["จุดทดสอบ"],formulas:[],vocab:[],alts:[]},
+      practice:[mk("zz1",1,{predict:{q:"มากขึ้นหรือน้อยลง",opts:["มากขึ้น","น้อยลง","เท่าเดิม"],a:0,ex:"ทดสอบ"}}),mk("zz2",2,{friend:{work:["บรรทัด 1","บรรทัด 2"]}}),mk("zz3",3,{check:{q:"ทำไม",opts:["เหตุผลถูก","เหตุผลผิด ก","เหตุผลผิด ข"],a:0,ex:"ทดสอบ"}})],hints:{}};
+    set.practice.forEach(q=>QBANK[q.id]={q:{...q,spell:set.spell},set}); SETS.push(set);
+    const cp={id:"zz-cp",kind:"checkpoint",subject:"ด่านประเมิน",topic:"ด่านทดสอบระบบ",grade:"ม.2",mins:"50 นาที",warm:[],concept:{title:"",points:[],formulas:[],vocab:[],alts:[]},
+      practice:[mk("zc1",1,{spell:"m22"}),mk("zc2",2,{spell:"s4"}),mk("zc3",1,{spell:"m22",friend:{work:["ก","ข"]}}),{...mk("zc4",2,{spell:"s4"}),opts:["12 g","10 g","8 g"]}]};
+    cp.practice.forEach(q=>QBANK[q.id]={q,set:cp}); SETS.push(cp);
+    return {spell:set.spell} });
+
+  await T("predict + friend + reason after a wrong answer (wave 2)",async()=>{ await reset();
+    await pg.evaluate(()=>{ CAL.understand={...CAL.understand,wave2:"2000-01-01"}; startSet(SETS.find(s=>s.id==="zz-test"),false) });
+    const r=await play(true); const rec=await pg.evaluate(()=>mine().find(a=>a.setId==="zz-test"));
+    await pg.evaluate(W2=>{ CAL.understand=JSON.parse(W2) },W2);
+    if(!r.done||!rec) return "did not finish";
+    const it=id=>rec.items.find(x=>x.qid===id);
+    if(!(it("zz1")&&it("zz1").predict!=null&&it("zz1").predictOk===true)) return "prediction not recorded";
+    if(!(it("zz2")&&it("zz2").friend)) return "friend item not recorded";
+    if(!(it("zz3")&&it("zz3").checkAfterWrong&&it("zz3").checkOk===true)) return "reason pick after a wrong answer not recorded";
+    if(rec.items.some(x=>x.correct)) return "answered wrong but marked right";
+    if(!rec.items.some(x=>x.explain)) return "wave 2 one-line reason not offered on any lesson question" });
+
+  await T("repeated-error loop opens, reteaches, takes a guide and resolves",async()=>{
+    const sub="m22.8", qs=await pg.evaluate(sub=>Object.values(QBANK).map(o=>o.q).filter(q=>q.check&&subOf(q.id)===sub&&!q.of).map(q=>q.id),sub);
+    if(qs.length<2) return "need 2 check questions in "+sub;
+    const day=n=>new Date(Date.now()+86400000-n*86400000).toISOString();
+    const miss=(n,qid)=>({type:"set",setId:"x",topic:"x",startedAt:day(n),endedAt:day(n),durationSec:60,correct:0,total:1,items:[{qid,level:2,correct:false,errorType:"concept",errorTypes:["concept"]}]});
+    await reset([miss(3,qs[0]),miss(5,qs[1])]);
+    await pg.evaluate(sub=>{ RETEACH[sub]={title:"การ์ดทดสอบ",form:"contrast",text:["ย่อหน้าทดสอบ"],contrast:[{title:"กรณี ก",text:"ทดสอบ"},{title:"กรณี ข",text:"ทดสอบ"}],
+      worked:[{q:"ตัวอย่าง 1",steps:["ขั้น 1","ขั้น 2","ขั้น 3"],answer:"ทดสอบ"},{q:"ตัวอย่าง 2",steps:["ขั้น 1","ขั้น 2",{t:"ขั้น 3",opts:["ขั้น 3","ขั้นผิด"]}]},{q:"ตัวอย่าง 3",steps:["ขั้น 1","ขั้น 2","ขั้น 3"]}]}; render() },sub);
+    if(!await pg.locator("#loop-go").count()) return "loop card not on the home page";
+    await pg.click("#loop-go"); await pg.click("#lp-next");
+    for(let i=0;i<20;i++){ if(await pg.locator("[data-lpo]").count()){ await pg.click('[data-lpo="0"]'); continue } if(await pg.locator("#lp-show").count()){ await pg.click("#lp-show"); continue }
+      if(await pg.locator('[data-lps="1"]').count()){ await pg.click('[data-lps="1"]'); continue } if(await pg.locator("#lp-next").count()){ await pg.click("#lp-next"); continue } break }
+    await pg.waitForTimeout(150);
+    const st1=await pg.evaluate(sub=>{ const e=miscEps(mine()).find(x=>x.sub===sub); return e&&miscStage(e) },sub); if(st1!=="guide") return "after the reteach the stage is "+st1;
+    /* the guide is offered from the next day; the evidence: 2 right answers with the right reason, different situations, 8 days apart */
+    const re=await pg.evaluate(()=>mine().find(a=>a.type==="loop"&&a.act==="reteach")); re.endedAt=day(12); re.startedAt=day(12);
+    const ok=(n,qid)=>({type:"set",setId:"x",topic:"x",startedAt:day(n),endedAt:day(n),durationSec:60,correct:1,total:1,items:[{qid,level:2,correct:true,checkOk:true,hints:0}]});
+    await reset([miss(13,qs[0]),miss(15,qs[1]),re]);
+    if(!await pg.locator("#loop-go").count()) return "guide card not offered the day after";
+    await pg.click("#loop-go"); await pg.fill("#lp-guide","ต้องดูว่าโจทย์ถามอะไร แล้วระวังหน่วย"); await pg.dispatchEvent("#lp-guide","input"); await pg.click("#lp-save"); await pg.waitForTimeout(100);
+    const g=await pg.evaluate(()=>mine().find(a=>a.type==="loop"&&a.act==="guide")); g.endedAt=day(11); g.startedAt=day(11);
+    await reset([miss(13,qs[0]),miss(15,qs[1]),re,g,ok(10,qs[0]),ok(1,qs[1])]);
+    const st2=await pg.evaluate(sub=>{ const e=miscEps(mine()).find(x=>x.sub===sub); return e&&miscStage(e) },sub); if(st2!=="resolved") return "with 2 right answers 9 days apart the stage is "+st2;
+    await reset([miss(13,qs[0]),miss(15,qs[1]),re,g,ok(10,qs[0]),ok(8,qs[0])]);
+    const st3=await pg.evaluate(sub=>{ const e=miscEps(mine()).find(x=>x.sub===sub); return e&&miscStage(e) },sub); if(st3==="resolved") return "the same situation twice must not resolve";
+    await pg.evaluate(sub=>{ delete RETEACH[sub] },sub) });
+
+  await T("minimum day counts as a full day",async()=>{
+    const day=n=>new Date(Date.now()+86400000-n*86400000).toISOString(), q=await pg.evaluate(()=>SETS.find(s=>s.kind==="lesson").practice.slice(0,4).map(x=>x.id));
+    await reset([{type:"set",setId:"x",topic:"x",startedAt:day(1),endedAt:day(1),durationSec:600,correct:2,total:4,items:q.map((id,i)=>({qid:id,level:1,correct:i%2===0,errorType:i%2?"concept":null}))}]);
+    if(!await pg.locator("#dm-min").count()) return "no minimum-day button";
+    await pg.click("#dm-min"); await pg.locator("[data-rs]").first().click(); await pg.click("#dm-minsave"); await pg.waitForTimeout(100);
+    if(!await pg.locator("#mini-go").count()) return "no minimum-day mission";
+    await pg.click("#mini-go"); const r=await play(false); if(!r.done) return "mini set did not finish";
+    const met=await pg.evaluate(()=>progressOf(mine()).goalToday); if(!met) return "the day is not counted as met" });
+
+  await T("checkpoint mode (timed, skip, no hints, review at the end)",async()=>{ await noToday(); await reset();
+    await pg.evaluate(()=>{ CAL.checkpoints=[...(CAL.checkpoints||[]),{date:isoDay(todayKey()),kind:"short",setId:"zz-cp",mins:50}]; render() });
+    if(!await pg.locator("#cp-go").count()) return "no checkpoint mission today";
+    await pg.click("#cp-go"); await pg.click("#cp-start");
+    if(await pg.locator("#hint,#dontknow,#parts").count()) return "hints are visible in checkpoint mode";
+    await pg.click("#cp-skip");
+    for(let i=0;i<12&&await pg.evaluate(()=>S.mode==="cp"&&view==="session");i++){
+      if(await pg.locator("#numin").count()){ const a=await pg.evaluate(()=>S.qs[S.cp.queue[0]].answer); await pg.fill("#numin",String(a)); await pg.dispatchEvent("#numin","input") }
+      else { const k=await pg.evaluate(()=>S.qs[S.cp.queue[0]].a); await pg.locator(".opt").nth(k).click() }
+      await pg.click("#send-plain") }
+    await pg.waitForTimeout(150);
+    const rec=await pg.evaluate(()=>mine().find(a=>a.type==="checkpoint"));
+    if(!rec) return "no checkpoint record"; if(rec.correct!==4||rec.total!==4) return `scored ${rec.correct}/${rec.total}, expected 4/4`;
+    if(!await pg.locator("details summary").filter({hasText:"ดูเฉลยทุกข้อ"}).count()) return "no review after the checkpoint";
+    /* time-out path */
+    await reset(); await pg.evaluate(()=>{ startCp(SETS.find(s=>s.id==="zz-cp"),{date:isoDay(todayKey()),kind:"short",mins:50},null); S.limit=1500 });
+    await pg.clock.runFor(4000); await pg.waitForTimeout(300);
+    const r2=await pg.evaluate(()=>mine().find(a=>a.type==="checkpoint"));
+    if(!(r2&&r2.timedOut&&r2.items.every(x=>x.timeout))) return "time-out did not finish the checkpoint";
+    await pg.evaluate(W2=>{ CAL.checkpoints=CAL.checkpoints.filter(c=>c.setId!=="zz-cp") },W2) });
+
+  await T("home renders on special days and wave intros",async()=>{ await noToday(); await reset();
+    await pg.evaluate(()=>{ localStorage.removeItem("fieldnote.waveSeen"); CAL.checkpoints=[...(CAL.checkpoints||[]),{date:isoDay(todayKey()),kind:"full",subject:"คณิต"}]; render() });
+    await pg.waitForTimeout(900);
+    if(!await pg.evaluate(()=>!!document.getElementById("sheet"))) return "wave intro sheet did not open";
+    await pg.evaluate(()=>closeSheet());
+    if(!await pg.locator("#paper-go").count()) return "no paper mission on a full-checkpoint day";
+    await pg.click("#paper-go"); await pg.click("#paper-go"); await pg.waitForTimeout(100);
+    if(!await pg.evaluate(()=>progressOf(mine()).paperToday)) return "paper day not recorded";
+    await noToday(); await pg.evaluate(()=>localStorage.setItem("fieldnote.waveSeen","[1,2]")) });
+
+  const testAttempts=await pg.evaluate(()=>{ const x=JSON.parse(JSON.stringify(mine())); return x });
   await b.close();
+
+  /* ---- 4. the parent page renders with the new sections ---- */
+  { const b2=await chromium.launch(); const p2=await b2.newPage({viewport:{width:1000,height:900}}); const e2=[]; p2.on("pageerror",e=>e2.push(e.message));
+    await p2.clock.install({time:new Date(Date.now()+86400000)});
+    await p2.goto("file://"+path.join(ROOT,"dist","parent.html"));
+    await p2.evaluate(a=>{ attempts=a.map(x=>({...x,test:false})); view="parent"; render() },testAttempts);
+    if(!await p2.locator("#understand").count()) warn("parent page: misconception section missing"); else console.log("ok  feature: parent page sections");
+    if(e2.length) warn("parent page errors: "+e2.join(" | "));
+    await b2.close() }
   if(pageErr.length) warn("page errors: "+pageErr.join(" | "));
   if(errs.length){ console.log("PROBLEMS:\n- "+errs.join("\n- ")); process.exit(1) }
   console.log("all checks passed");

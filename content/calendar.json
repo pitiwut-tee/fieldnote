@@ -137,5 +137,51 @@
    "before": "2026-11-10T15:00:00Z",
    "why": "รางวัลภารกิจวิจัย 'ไขปริศนายีนให้ถูก 2 ตัว' (+100) มาจากคำตัดสินที่กดมั่ววันที่ 10 พ.ย. ซึ่ง reset ไปแล้ว ได้ใหม่เมื่อตัดสินใหม่ถูก 2 ตัว"
   }
- ]
+ ],
+ "understand": {
+  "wave1": "2026-11-17",
+  "wave2": "2026-11-24",
+  "note": "Understanding-first rollout (father approved 17 Nov 2026). wave1: friend's-mistake items (q.friend), predict-before-computing (q.predict), situation-changing twins come back first. wave2: explain step = pick the right reason (q.check) after right AND wrong answers + one-line own reason on one lesson question."
+ },
+ "minDay": {
+  "from": "2026-11-17",
+  "mins": 15,
+  "note": "Minimum day: she picks it on the home day panel; a 6-8 question set counts as a full day (flame, map piece). Shown to the father on the parent page."
+ },
+ "checkpoints": [
+  {
+   "date": "2026-12-06",
+   "kind": "short",
+   "setId": "cp-1",
+   "mins": 50
+  },
+  {
+   "date": "2027-01-02",
+   "kind": "full",
+   "subject": "คณิต"
+  },
+  {
+   "date": "2027-01-17",
+   "kind": "short",
+   "setId": "cp-2",
+   "mins": 50
+  },
+  {
+   "date": "2027-01-31",
+   "kind": "short",
+   "setId": "cp-3",
+   "mins": 50
+  },
+  {
+   "date": "2027-02-06",
+   "kind": "full",
+   "subject": "วิทย์"
+  },
+  {
+   "date": "2027-02-07",
+   "kind": "full",
+   "subject": "คณิต"
+  }
+ ],
+ "checkpointsNote": "Approved 17 Nov 2026. short = our own unseen timed mixed set (content/sets kind 'checkpoint', ~24 items, topics taught >= 7 days earlier) in place of the lesson; full = a recalled paper printed at home, 90 min, father enters the score on the parent page. Decision on tutoring ~8-10 Feb 2027."
 }

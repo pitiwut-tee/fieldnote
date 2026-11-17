@@ -119,11 +119,51 @@ She often skips the explanation when she is right, so a lucky or wrong-method ri
 - Give **every level-3 question** (and any level-2 question where a wrong method can still land on the right
   option) a `check`: `{"q"?: "…", "opts": [right reason, 1–2 tempting wrong reasons], "a": 0, "ex": "one line"}`.
   Wrong reasons are real shortcuts that happen to work here (guessing the middle value, averaging without weights,
-  "the longest option", reading a number off the table). The app shuffles them, shows the check only after a right
-  answer, gives +5 XP for the right reason, and a wrong reason sends the question back to review.
+  "the longest option", reading a number off the table). The app shuffles them, shows the check after a right
+  answer (and from wave 2, 24 Nov, also after a wrong one), gives +5 XP for the right reason on a right answer, and a
+  wrong reason sends the question back to review. From 17 Nov write exactly 3 reasons.
 - Item fields: `checkOk` (true/false). A `checkOk:false` counts like a mistake when you pick twins and plan.
 - `exSec` = seconds from answering to the next question (time on the explanation). Below 3 s on a right answer
   means she did not read it.
+
+
+## Understanding first: new item fields (built 17 Nov 2026, chat "แชท 1"; content comes in chat 2)
+
+Rolled out in two waves by `calendar.json` `understand` (wave1 2026-11-17, wave2 2026-11-24). `tools/verify.js`
+checks every field below.
+- **Spot the friend's mistake** (`friend`): `{"who"?: "สมุดทดของเพื่อน", "work": ["line 1", "line 2", ...]}` on a
+  choice question. The app shows the friend's working in a dashed box; `q` asks where/why it went wrong and the
+  options describe the mistake (right one first, `a:0`). Build them from **her own** wrong answers (`typed`,
+  `optErr`, `orig` in her records): the friend makes the mistake she made, in a new situation. Item field: `friend:true`.
+- **Predict before computing** (`predict`): `{"q": "มากขึ้นหรือน้อยลงกว่าเดิม", "opts": [right, ...], "a": 0, "ex"?: "one line"}`.
+  Shown before the options from wave 1; she taps a guess, then solves. Use it where a sense of direction or size
+  catches the error (scaling by amount, density, dilution, mean vs median after adding a value). Item fields:
+  `predict` (index in file order), `predictOk`.
+- **Twins change the situation, not only the numbers**: in `variants.json` add `"change": "situation"` and
+  `"sit": "short label of the new situation"` (e.g. "ทำน้ำเชื่อม", "ตู้ปลา"); `"change": "numbers"` only when a new
+  situation is impossible. Twins written from 17 Nov carry `"added": "YYYY-MM-DD"` and must say `change`. From
+  wave 1 the app brings back situation twins first. Lesson questions may also carry `sit`.
+- **Pick the right reason** (`check`, wave 2): from 24 Nov the reason step also appears **after a wrong answer**
+  (before the explanation: "which reason leads to the right answer?"), so every new level-2/3 question that has a
+  real tempting shortcut needs `check` with **exactly 3 reasons, right one first** (`a:0`). Item fields: `checkOk`,
+  `checkAfterWrong:true` when it followed a wrong answer (XP for the reason only on right answers). One question per
+  lesson (level 3 without `check` first) gets an optional one-line own reason (`explain:true`, `ownWhy`).
+- **Repeated-error loop cards** (`content/reteach.json`, keyed by subtopic id): when she misses the same subtopic on
+  2 different days (not slips, misreads, calculation or unclear-question misses), the parent page lists it and the
+  app offers "สอนใหม่อีกแบบ" once a card exists. A card = `title`, `form` (table | diagram | real | contrast: a
+  different form from the lesson), `text` [paras], optional `table`, `contrast` (2 cases side by side), `fig`, and
+  exactly 3 `worked` examples (≥ 3 steps each; example 2 hides its last step, example 3 its last two, so give those
+  steps `opts` = [the step's own text, 2 wrong steps from real mistakes]). Blind-check every card (hard rule 5).
+  Records: `type:"loop"`, `act:"reteach"` (`steps` with ok per blank) and `act:"guide"` (`text` = her player's guide).
+  **Resolved** only after 2 right answers with the right reason picked, in different situations (`sit`, else the
+  question root), ≥ 7 days apart; the app serves those checks itself in the lesson warm-up, so each open subtopic
+  needs at least 2 questions with `check` in different situations. The parent page flags "ไม่มีข้อที่มีตัวเลือกเหตุผล".
+- **Checkpoint sets** (`kind: "checkpoint"`, id = `calendar.checkpoints[].setId`, e.g. `cp-1`): 24 items (science
+  12 + math 12), every item with its own `spell`, no warm-up, no challenge, no hints needed; unseen questions on
+  topics taught ≥ 7 days earlier, new contexts not new numbers, some "which reasoning is right" items. Timed
+  (`mins`, default 50), no hints and no explanation until the end. Record `type:"checkpoint"` (`timedOut`, `pauses`,
+  `timeLimitSec`, items with `timeout`/`dontknow`). Scores show trend, never readiness (hard rule 6).
+- Minimum day: `daymode` record with `level:"min"`; the day's mission is one `type:"mini"` set (6–8 questions).
 
 
 ## Why she chose a wrong option (optErr)

@@ -1,0 +1,4 @@
+{
+ "note": "Repeated-error loop cards (approved 17 Nov 2026), keyed by curriculum subtopic id (e.g. \"s4.2\"). Each card: title, form (table|diagram|real|contrast), text [paras], optional table {caption?, cols, rows}, contrast [{title,text},{title,text}] (two cases side by side), fig (same kinds as questions), worked: exactly 3 worked examples {q, steps:[string or {t, opts:[right, wrong, wrong]}], answer} with >= 3 steps each; example 2 hides its last step, example 3 its last two, so give those steps opts. Every card needs the independent blind check before commit (hard rule 5). Written in chat 2 from her open misconceptions on the parent page.",
+ "cards": {}
+}

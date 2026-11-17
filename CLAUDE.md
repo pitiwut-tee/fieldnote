@@ -39,7 +39,8 @@ This file is the long-term memory. Chats are disposable; this repo and the statu
 - `src/app.html` the app (only edit when the father asks for an app change; the nightly run never edits it)
 - `content/` everything the app teaches: `sets/*.json` (lessons, sweeps, mixed, passages, probes), `vocab.json`,
   `phonics.json`, `challenges.json`, `variants.json` (twin questions), `calendar.json` (`lessonQueue`, exam dates),
-  `curriculum.json` (51 spells, ~243 subtopics) + `qtags.json` (every question id → subtopic; keep complete)
+  `curriculum.json` (51 spells, ~243 subtopics) + `qtags.json` (every question id → subtopic; keep complete),
+  `reteach.json` (repeated-error loop cards by subtopic; empty until chat 2)
 - `tools/` build and verify (nightly run never edits)
 - `AUTOMATION.md` the lean nightly runbook; `docs/*.md` topic notes it points to (read only when needed)
 - `content/school-plan.md`, `content/exam-analysis.md` what the school teaches now and what the real exam asks
@@ -77,7 +78,8 @@ This file is the long-term memory. Chats are disposable; this repo and the statu
   under ~60% = teaching method (add a human explainer) · time and retention fine but exam-style points lost on
   taught topics = depth/technique (targeted tutoring). Split external-mock points into "not taught yet" vs
   "taught but wrong".
-- Agreed: a minimum day of ~15 min that still counts (app change; not built yet, needs an Opus session).
+- Agreed: a minimum day of ~15 min that still counts. Built 17 Nov (she picks "วันนี้ขอแบบขั้นต่ำ 15 นาที" with a
+  reason; a 6–8 question `mini` set lights the flame; the parent page lists minimum days).
 - Agreed: "10 minutes with dad" once a week. Each week write a brief in the status doc tab "10 นาทีกับพ่อ":
   at most 3 error patterns (evidence from repeated cross-day mistakes and `optErr`, a hypothesis, a hands-on
   or ask-her-to-explain activity, one check question with its answer), plus what NOT to discuss (untaught topics,
@@ -91,7 +93,8 @@ This file is the long-term memory. Chats are disposable; this repo and the statu
   Short checkpoints show trend, not readiness (hard rule 6). Science recalled papers: only 2; ask the father for
   more external science papers (O-NET ม.3 science re-send; commercial วมว./MWIT science mock books).
 - Level names (approved 17 Nov): เริ่มแล้ว / เข้าใจ / **คงทน** (was "จำได้": understanding still there after
-  ≥ 7 days) / ใช้เป็น / พร้อมสอบ. The goal is lasting understanding, never rote memory.
+  ≥ 7 days) / ใช้เป็น / พร้อมสอบ. The goal is lasting understanding, never rote memory. Renamed in the app 17 Nov;
+  the rule itself was NOT loosened (still checkpoint-right on 3 different days spanning ≥ 14 days, last 2 not missed).
 - Understanding over drilling (approved 17 Nov, build all four): (1) "spot the friend's mistake" items built from
   her own wrong answers; (2) predict before computing ("bigger or smaller than before?"); (3) twin questions change
   the situation, not only the numbers; (4) the explain step becomes "pick the right reason from 3" plus a one-line
@@ -107,12 +110,21 @@ the February decision). (c) the **ratio table** as one tool reused in science an
 ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/w vs %w/v, mean vs median, …).
 (e) a **monthly home experiment** sheet for the father (predict → try → explain), first: saturate salt in 50 g vs
 100 g water, and density with a measuring jug.
-1. **Chat "แชท 1" (app):** the four understanding-first changes, (a) loop logic, (b) list, 15-min minimum day,
+1. **DONE 17 Nov — Chat "แชท 1" (app):** the four understanding-first changes, (a) loop logic, (b) list, 15-min minimum day,
    checkpoint mode (timed, no hints, results to the parent page), level rename จำได้ → คงทน. Roll out in two waves
    by a date in `calendar.json`: wave 1 at deploy (friend's-mistake, predict, situation-changing twins), wave 2 seven
    days later (pick-the-reason explain step). Update `tools/verify.js` for every new item field. Publish parent page.
+   Built as: `calendar.json` `understand` {wave1 2026-11-17, wave2 2026-11-24}, `minDay`, `checkpoints` (setIds
+   cp-1..cp-3); item fields `friend`, `predict`, `sit`, variant `change`/`sit`, `check` after wrong answers (wave 2);
+   loop logic `miscState` (misses on 2 days, ignoring slip/read/misopt/calc/unclear) and the parent list (tab
+   ความพร้อมสอบ); checkpoint mode (clock stops on pause, pauses recorded); parent form for printed-paper scores
+   (db collection `parentlog`, kinds `mock`, `dadtalk`). Field reference: `docs/writing-content.md` "Understanding first".
+   `tools/verify.js` now also plays each new feature on made-up test items in the browser (~4 min in total).
 2. **Chat "แชท 2" (content):** ratio-table concept card, friend's-mistake and which-method items from her current
    repeated errors, home experiment sheet 1, checkpoint 1 (24 items, Sun 6 Dec) — all with the blind answer check.
+   Also, because the loop needs content to run: a `reteach.json` card for each open misconception on the parent page
+   (they show "ยังไม่มีคำอธิบายแบบใหม่ในคลัง"), ≥ 2 questions with a 3-reason `check` in different situations (`sit`)
+   for each open subtopic, situation twins (`change:"situation"`) for her repeated misses, a few `predict` items.
 3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
 4. **Sonnet chat after his first dad talk (~Sun 22 Nov):** read his notes in the "10 นาทีกับพ่อ" tab, twin questions
    for those patterns, week-2 brief, then add the Sunday dad-brief step to AUTOMATION.md.

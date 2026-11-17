@@ -58,6 +58,12 @@ the next 3 days is enough, do just the small tasks (apply approvals, answer new 
    ("sure"/"unsure", trial), `explain`/`ownWhy`/`ownWhyPad` (her written reason, trial), `checkOk`, `exSec`,
    `timeSec` (question shown → answer, includes listening).
    Record fields: `reflect`, `readSec`/`readChars` (passages), `trial:{on, vote}`, `rating`, `memo`, `confused`.
+   From 17 Nov 2026 (understanding first, see `docs/writing-content.md` "Understanding first"): record types
+   `mini` (minimum-day set; `daymode` with `level:"min"`), `checkpoint` (timed, `timedOut`, `pauses`), `paper`
+   (she did a printed paper; the father's score is in collection `parentlog`, `kind:"mock"`), `loop` (`act`
+   "reteach"/"guide", `sub`, her guide `text`). Item fields `predict`/`predictOk`, `friend`, `sit`,
+   `checkAfterWrong`, `loop` (a resolution check of that subtopic). Collection `parentlog` also holds
+   `kind:"dadtalk"` (father talked with her about subtopic `sub`).
 
 
 ## 2. Look at the data (write short notes for yourself)
@@ -79,6 +85,10 @@ the next 3 days is enough, do just the small tasks (apply approvals, answer new 
 - Also: reading data (see "Reading"), `reflect`, `teach` records rated "ยังงงอยู่บ้าง", `mission` results,
   `feedback` docs with `kind`.
 - Vocabulary: words wrong on spelling repeatedly.
+- Misconceptions (parent page, tab ความพร้อมสอบ, "ความเข้าใจผิดที่กลับมาซ้ำ"; the same logic as `miscState` in
+  `src/app.html`): list the open ones in your notes for the father. Writing a `reteach.json` card or friend's-mistake
+  items is Opus content work: leave it for the father's Opus chat unless he says otherwise, and say which subtopics
+  wait for a card. A twin with `change:"situation"` and `check` for an open subtopic is fine in a normal run.
 
 
 ## 3. Decide what to write
