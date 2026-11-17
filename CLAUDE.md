@@ -33,7 +33,8 @@ This file is the long-term memory. Chats are disposable; this repo and the statu
 - Push: `git fetch -q origin main && (git rebase -q origin/main || (python3 tools/build.py && git add index.html dist && git -c core.editor=true rebase --continue)); git push -q origin HEAD:main`
 - Publish parent page: Artifact publish of `dist/parent.html` to https://claude.ai/artifact/59fiBfcRgbyEEC7mhXwqVR
   (read it first in a new session; if refused because the nightly run published a newer version, check that our build
-  contains its content, then publish again).
+  contains its content, then publish again). Its db may only use the collections declared on the artifact
+  (`attempts`, `feedback`, `parentlog` since 17 Nov): a new collection needs `declare_capabilities` first, or writes fail.
 
 ## Map of the repo
 - `src/app.html` the app (only edit when the father asks for an app change; the nightly run never edits it)
