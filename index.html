@@ -687,7 +687,7 @@ async function importCode(raw, asTest){
 }
 
 /* ---------- updates: GitHub Pages lets the browser keep an old copy for a while, so check for a newer build ---------- */
-const BUILD="2026-11-17 21:14";
+const BUILD="2026-11-17 21:28";
 async function checkUpdate(){ if(!/^https?:/.test(location.protocol)||typeof db!=="undefined"&&db) return;
   try{ const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text(); const m=t.match(/const BUILD="(\d{4}-\d\d-\d\d \d\d:\d\d)"/);
     if(m&&m[1]!==BUILD&&!m[1].includes("@@")&&!document.getElementById("updbar")){ const d=document.createElement("button"); d.id="updbar"; d.className="btn";
@@ -758,6 +758,20 @@ function mine(){ return TEST ? attempts.filter(a=>!a.example) : realAttempts() }
 function isSkip(a){ return a.type==="skip" }
 const LESSON_TYPES=["set","probe","mixed","passage","review","sweep","checkpoint","mini"];
 function isLesson(a){ return LESSON_TYPES.includes(a.type||"set") }
+/* 17 Nov fix (student's note: "ยังไม่ได้กดตอบ แค่เลื่อนหน้าจอมันก็ตอบเอง"): one tap on an answer option submits it, so
+   a thumb that starts a scroll on an option could answer by accident. A tap on .opt now counts only if the finger
+   did not move more than 10 px and the page did not scroll while the finger was down (or was still gliding from a
+   flick when the finger landed). Mouse clicks and normal taps are unchanged. */
+(()=>{ let lastScroll=0, t0=null, moved=false, down=false;
+  window.addEventListener("scroll",()=>{ lastScroll=Date.now(); if(down) moved=true },{passive:true});
+  document.addEventListener("touchstart",e=>{ const t=e.touches[0]; t0=t?{x:t.clientX,y:t.clientY}:null; down=true; moved=Date.now()-lastScroll<120 },{passive:true,capture:true});
+  document.addEventListener("touchmove",e=>{ const t=e.touches[0]; if(t0&&t&&(Math.abs(t.clientX-t0.x)>10||Math.abs(t.clientY-t0.y)>10)) moved=true },{passive:true,capture:true});
+  const up=()=>{ setTimeout(()=>{ down=false },0) };
+  document.addEventListener("touchend",up,{passive:true,capture:true}); document.addEventListener("touchcancel",()=>{ down=false; moved=true },{passive:true,capture:true});
+  document.addEventListener("click",e=>{ const b=e.target&&e.target.closest&&e.target.closest(".opt"); if(!b||b.disabled||!t0) return;
+    const bad=moved; t0=null; moved=false; if(bad){ e.preventDefault(); e.stopImmediatePropagation() } },true); })();
+const REVIEW_RULE_FROM=dayKey("2026-11-18T12:00:00+07:00");
+function plainReview(a){ return a.type==="review"&&(a.setId||"review")==="review" }
 function dayKey(iso){ const d=new Date(iso); d.setHours(0,0,0,0); return d.getTime() }
 function todayKey(){ return dayKey(new Date().toISOString()) }
 function nextDay(d){ const t=new Date(d); t.setDate(t.getDate()+1); t.setHours(0,0,0,0); return t.getTime() }
@@ -846,6 +860,10 @@ function progressOf(list){
     if(a.type==="lab"||a.type==="labverdict"||a.type==="labquest"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
     if(a.type==="sweep"){ sweepDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
     if(a.type==="recall"||a.type==="comp"||a.type==="loop"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
+    /* 17 Nov fix (father + student): a plain "ทบทวนข้อที่เคยพลาด" set ticked mission 1 (ชุดฝึก), so on 17 Nov the day
+       showed only review and the new lesson vanished. From 18 Nov a plain review gives XP but is not the day's lesson.
+       Friday repair ("repair") and pre-exam review ("exam-review") still fill the slot. Days before stay as they were. */
+    if(plainReview(a)&&k>=REVIEW_RULE_FROM){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
     if(a.type==="mini"){ miniDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* minimum day (15 min): its own daily step */
     if(a.type==="checkpoint") cpDays.add(k); if(a.type==="paper") paperDays.add(k);   /* 🧠 3-question recall tile: XP, not a lesson unit */   /* old-topic sweep: its own daily step, not a lesson unit */
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
@@ -1319,7 +1337,7 @@ function renderHome(){
     return `<div class="mission ${st}" id="m-${key}"><span class="mcheck">${md[key]?"✅":n}</span>
       <div style="display:flex;flex-direction:column;gap:6px;flex:1"><span class="small muted">${label}</span>${title}${st==="done"?"":btn}${st==="done"&&/data-notes/.test(btn)?btn:""}${extraHtml||""}</div></div>` };
   const doneToday=list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===today).sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt));
-  const doneNP=doneToday.filter(a=>!["probe","mixed","passage"].includes(a.type)), doneProbe=doneToday.find(a=>a.type==="mixed"||a.type==="passage")||doneToday.find(a=>a.type==="probe");
+  const doneNP=doneToday.filter(a=>!["probe","mixed","passage"].includes(a.type)&&!(plainReview(a)&&today>=REVIEW_RULE_FROM)), doneProbe=doneToday.find(a=>a.type==="mixed"||a.type==="passage")||doneToday.find(a=>a.type==="probe");
   const tr=trialsToday();
   const doneTitle=a=>`<h2>${esc(a.topic)}</h2><p class="small muted">ทำแล้ว ✓</p>`;
   const lessonTitle=md.lesson&&(doneNP[0]||doneToday[0])?doneTitle(doneNP[0]||doneToday[0]):plan.exam?`<h2>ทบทวนก่อน${plan.exam.name}</h2><p class="small muted">10 ข้อจากเรื่องที่จะสอบ เน้นข้อที่เคยพลาด</p>`:plan.repair?`<h2>ชุดซ่อมจุดอ่อน</h2><p class="small muted">8 ข้อจากที่เคยพลาด ตัวเลือกสลับที่ใหม่</p>`
