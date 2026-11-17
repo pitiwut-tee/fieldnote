@@ -163,6 +163,9 @@ checks every field below.
   topics taught ≥ 7 days earlier, new contexts not new numbers, some "which reasoning is right" items. Timed
   (`mins`, default 50), no hints and no explanation until the end. Record `type:"checkpoint"` (`timedOut`, `pauses`,
   `timeLimitSec`, items with `timeout`/`dontknow`). Scores show trend, never readiness (hard rule 6).
+  Never give checkpoint items a `check`: the loop serves any question with `check` on an open subtopic (`loopPool`),
+  so a checkpoint item with one could appear in a warm-up before the checkpoint day. Put "which reasoning is right"
+  inside the options instead (as in `047-checkpoint-1.json`).
 - Minimum day: `daymode` record with `level:"min"`; the day's mission is one `type:"mini"` set (6–8 questions).
 
 

@@ -121,7 +121,12 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    ความพร้อมสอบ); checkpoint mode (clock stops on pause, pauses recorded); parent form for printed-paper scores
    (db collection `parentlog`, kinds `mock`, `dadtalk`). Field reference: `docs/writing-content.md` "Understanding first".
    `tools/verify.js` now also plays each new feature on made-up test items in the browser (~4 min in total).
-2. **Chat "แชท 2" (content):** ratio-table concept card, friend's-mistake and which-method items from her current
+2. **DONE 17 Nov — Chat "แชท 2" (content):** built as: sets `044 tool-ratio-table-1` (ratio-table lesson, spell m3),
+   `045 fix-sci-1`, `046 fix-math-1` (repair lessons: friend's-mistake, which-method, predict, 3-reason `check` with `sit`
+   for every open subtopic), `047 cp-1` (checkpoint, 24 items, no `check`/hints so the loop never serves them early);
+   `reteach.json` cards for the 9 subtopics open on 17 Nov (s4.2 s4.6 s4.1 s2.3 s2.2 s14.5 m22.7 m22.11 m15.2);
+   12 situation twins (`added` 2026-11-17); home experiment sheet 1 = tab "ทดลองที่บ้าน 1" in the status doc (monthly
+   sheets live there as new tabs, one per month). Original plan text: ratio-table concept card, friend's-mistake and which-method items from her current
    repeated errors, home experiment sheet 1, checkpoint 1 (24 items, Sun 6 Dec) — all with the blind answer check.
    Also, because the loop needs content to run: a `reteach.json` card for each open misconception on the parent page
    (they show "ยังไม่มีคำอธิบายแบบใหม่ในคลัง"), ≥ 2 questions with a 3-reason `check` in different situations (`sit`)
