@@ -215,4 +215,10 @@ and that the content followed the calendar only.
 - Doc: https://claude.ai/artifact/4kHsdKcNKfudfYGiyqbRQx ("สมุดคาถา · สิ่งที่ต้องการจากพ่อ และสถานะล่าสุด"), Claude Docs project id 1e56cbde-7272-43ad-9beb-270fb7f5f0dd. Written in Thai.
 - Sections: สิ่งที่ต้องการจากพ่อ (table with a สถานะ dropdown the father changes himself) · รอพ่อตัดสินใจ (checklist) · สถานะระบบตอนนี้ (numbers table) · งานถัดไปของผม · ทำเสร็จล่าสุด (newest first).
 - Every run, if the Claude Docs tools are available: read the doc first with sinceRev (the father edits it — his edits win), update the as-of date chip, the numbers table (bank size, subtopics with questions, with L3, spells without questions, her status counts) and add one row to ทำเสร็จล่าสุด. Add a row to the needs table only when a new need appears; never flip a status the father set.
+- **Front page (tab "หน้าแรกของพ่อ", from 17 Nov; rules in CLAUDE.md "Father's front page")**: every run add one row
+  at the top of ③ for the day's data: ≤ 3 points (time spent, anything surprising: a card finished too fast, a
+  misconception opened or resolved, her messages, a sure-but-wrong pattern), and in the last column exactly one of
+  **พ่อควรทำ** / ผมจัดการแล้ว / แค่รู้ไว้; delete rows older than 7 days; drop past dates from ⑤; update the date chip.
+  If something needs him, also add a dated item to ①. Do not reorder or edit ② (only chats with him change the queue),
+  except to add a row for Opus work you left for him (e.g. a reteach card a new misconception waits for).
 - If the Docs tools are not available in the run, say so in the evening report instead of skipping silently.

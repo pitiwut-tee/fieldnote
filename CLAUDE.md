@@ -54,16 +54,32 @@ This file is the long-term memory. Chats are disposable; this repo and the statu
 - Father's status doc (Claude Docs, Thai): https://claude.ai/artifact/4kHsdKcNKfudfYGiyqbRQx
   (project id `1e56cbde-7272-43ad-9beb-270fb7f5f0dd`). Read it at the start of any session: it holds what the father
   must provide, decisions waiting, current numbers and the log of recent work. He edits it; his edits win.
+  Tabs (17 Nov): **หน้าแรกของพ่อ** (first; his one-page dashboard, see "Father's front page" below) · สถานะและบันทึกงาน
+  (needs table, numbers, decisions, log) · 10 นาทีกับพ่อ · ทดลองที่บ้าน N.
 - Parent page (private artifact): https://claude.ai/artifact/59fiBfcRgbyEEC7mhXwqVR holds her results and his approvals.
 - Student page: GitHub Pages of the repo `pitiwut-tee/fieldnote`.
 
 ## Starting a new chat (for any session that is not the nightly run)
 1. Attach the repo (`add_repo pitiwut-tee/fieldnote`, access push), clone it, register it, read this file.
 2. Read the status doc above. Do the task the father names. Do not re-explain the project to him.
+   "ทำคิวที่ N ในหน้าแรกของพ่อ" = the row N of ② in tab หน้าแรกของพ่อ; its details are in "Build plan" below.
 3. His folders on `D:\Krunee` and `D:\เตรียมม.ปลาย` are reachable only if the chat is linked to his computer.
    Most PDFs there are scans; view them as images. Staged copies are snapshots.
-4. At the end: update the status doc (date chip, numbers, one row of "ทำเสร็จล่าสุด"), and if you learned a new
-   standing rule, write it into the right file here, not just into the chat.
+4. At the end: update the status doc (date chip, numbers, one row of "ทำเสร็จล่าสุด"), **and the front page**
+   (rules below), and if you learned a new standing rule, write it into the right file here, not just into the chat.
+
+## Father's front page (tab "หน้าแรกของพ่อ", made 17 Nov 2026 because he could no longer track work across chats)
+One page he reads in ~2 minutes a day. Keep it short; history goes to the other tab, never here.
+- ① สัปดาห์นี้พ่อทำ: checklist of what HE must do this week (≤ 5 items, each with a date and the tab to use).
+- ② คิวงานที่พ่อสั่งผม: one table, the ORDER he should open chats in (คิว · งาน · model · เปิดจากคอม · เมื่อไร) and ONE
+  standard opener ending "ทำคิวที่ 1 ในหน้าแรกของพ่อ"; he changes only the number. When a chat finishes its queue item:
+  delete that row and renumber; new work found in a chat is added as a row where it belongs and said in the reply.
+  Never leave work only in a chat. Plain questions/discussion chats need no queue item.
+- ③ ประเด็นน้องรายวัน: table วันที่ · เกิดอะไร · ใครต้องทำ (one of: **พ่อควรทำ** / ผมจัดการแล้ว / แค่รู้ไว้), newest
+  first, ≤ 3 points a day, keep 7 days. The nightly run writes it. "พ่อควรทำ" rows also add an item to ①.
+- ④ รอพ่อตัดสินใจ (or "ไม่มีเรื่องค้าง") · ⑤ วันสำคัญข้างหน้า (drop past dates) · ⑥ ของที่พ่อหามาให้ (one line; the
+  full needs table stays in the other tab).
+- Every chat and every nightly run updates the date chip at the top.
 
 ## Figures in questions (father approved 16 Nov 2026)
 - Plan, in this order: (1) add a declarative geometry `fig` kind to `src/app.html` (points by coordinates,
@@ -160,7 +176,11 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    a "meaning" item and a "which method" item per formula subtopic, `ex` opens with what the number means; retrofit
    the 19 old lessons (hook, meaning point before the formula, `more`) by error priority; pair compute + meaning
    items so the parent page can flag "ใช้สูตรได้แต่ไม่เข้าใจ"; flag cards finished faster than they can be read;
-   a "อธิบายโดยไม่ใช้สูตร" question in every dad brief.
+   a "อธิบายโดยไม่ใช้สูตร" question in every dad brief. **Father approved all six, 17 Nov.** Mapped to the front-page
+   queue: คิว 1 = (1) option lengths + verify rule, (2) meaning + which-method items, `ex` meaning-first, plus 2c ·
+   คิว 2 = item 4 below (after his first dad talk; keep the "อธิบายโดยไม่ใช้สูตร" questions in every brief — week 1
+   already has two) · คิว 3 = app: (3) compute/meaning pair flag + (5) too-fast card flag · คิว 4 = item 3 (รอบ 2) ·
+   คิว 5 = (4) retrofit the 19 old lessons by error priority · คิว 6 = read checkpoint 1 results (6–7 Dec, Sonnet).
 3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
 4. **Sonnet chat after his first dad talk (~Sun 22 Nov):** read his notes in the "10 นาทีกับพ่อ" tab, twin questions
    for those patterns, week-2 brief, then add the Sunday dad-brief step to AUTOMATION.md.
