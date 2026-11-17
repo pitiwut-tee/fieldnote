@@ -35,6 +35,9 @@ This file is the long-term memory. Chats are disposable; this repo and the statu
   (read it first in a new session; if refused because the nightly run published a newer version, check that our build
   contains its content, then publish again). Its db may only use the collections declared on the artifact
   (`attempts`, `feedback`, `parentlog` since 17 Nov): a new collection needs `declare_capabilities` first, or writes fail.
+  A db query's `limit()` must be 1..1000: above that the listener dies silently with `invalid_argument` and the page
+  shows no history (happened 17 Nov with `limit(2000)`; the data was safe). The parent page now reads the newest 1000
+  live and pages older records in 1000s; never raise a single limit above 1000.
 
 ## Map of the repo
 - `src/app.html` the app (only edit when the father asks for an app change; the nightly run never edits it)
