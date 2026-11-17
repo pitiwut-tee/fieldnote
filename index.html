@@ -562,7 +562,7 @@ try{
 }catch(e){}
 
 /* ---------- storage: shared db when available, otherwise this browser only ---------- */
-let db = null, store = "local", attempts = [], unsub = null;
+let db = null, store = "local", attempts = [], unsub = null, dbErr = "";
 const LS = "fieldnote.attempts";
 function lsRead(){ try{ return JSON.parse(localStorage.getItem(LS)||"[]") }catch(e){ return [] } }
 function lsWrite(a){ try{ localStorage.setItem(LS, JSON.stringify(a)) }catch(e){} }
@@ -575,11 +575,23 @@ setTimeout(()=>{ try{ migrateBuddy() }catch(e){} },0);
   if(!db) return;
   const t = setTimeout(()=>{}, 10000);
   try{
-    unsub = db.collection("attempts").orderBy("endedAt","desc").limit(2000).onSnapshot(s=>{
-      clearTimeout(t); store="db";
-      attempts = s.docs.map(d=>({id:d.id,...d.data()}));
+    /* 17 Nov fix: the db accepts limit 1..1000 only. limit(2000) made the listener die with invalid_argument and the
+       parent page showed no history at all (the data itself was safe). Now: a live window of the newest 1000, and
+       when it is full, older records are read once in pages of 1000 (never a limit above 1000). Errors are shown. */
+    const ATT=db.collection("attempts"), PAGE=1000; let live=[], older=[], olderFrom=null;
+    const merge=()=>{ const seen=new Set(live.map(a=>a.id)); attempts=[...live,...older.filter(a=>!seen.has(a.id))] };
+    async function loadOlder(){ const last=live[live.length-1]; if(!last||olderFrom===last.endedAt) return; olderFrom=last.endedAt;
+      const acc=[]; let before=last.endedAt;
+      try{ for(let i=0;i<30;i++){ const s=await ATT.where("endedAt","<",before).orderBy("endedAt","desc").limit(PAGE).get();
+          s.docs.forEach(d=>acc.push({id:d.id,...d.data()})); if(s.size<PAGE) break; before=acc[acc.length-1].endedAt }
+        older=acc; merge(); if(view==="parent"||view==="home") render();
+      }catch(e){ dbErr="อ่านข้อมูลเก่าไม่ครบ ("+(e&&e.code||"error")+")"; if(view==="parent") render() } }
+    unsub = ATT.orderBy("endedAt","desc").limit(PAGE).onSnapshot(s=>{
+      clearTimeout(t); store="db"; dbErr="";
+      live = s.docs.map(d=>({id:d.id,...d.data()})); merge();
+      if(s.size>=PAGE) loadOlder();
       if(view==="parent"||view==="home") render();
-    }, ()=>{ clearTimeout(t) });
+    }, e=>{ clearTimeout(t); dbErr="โหลดข้อมูลจากฐานข้อมูลไม่ได้ ("+(e&&e.code||"error")+")"; if(view==="parent"||view==="home") render() });
   }catch(e){ clearTimeout(t) }
 })();
 async function saveAttempt(rec){
@@ -675,7 +687,7 @@ async function importCode(raw, asTest){
 }
 
 /* ---------- updates: GitHub Pages lets the browser keep an old copy for a while, so check for a newer build ---------- */
-const BUILD="2026-11-17 12:47";
+const BUILD="2026-11-17 21:14";
 async function checkUpdate(){ if(!/^https?:/.test(location.protocol)||typeof db!=="undefined"&&db) return;
   try{ const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text(); const m=t.match(/const BUILD="(\d{4}-\d\d-\d\d \d\d:\d\d)"/);
     if(m&&m[1]!==BUILD&&!m[1].includes("@@")&&!document.getElementById("updbar")){ const d=document.createElement("button"); d.id="updbar"; d.className="btn";
@@ -5156,6 +5168,7 @@ function renderParent(){
     <div class="row" style="justify-content:space-between"><h2>ภาพรวม</h2>
       ${hasEx?`<label class="small row" style="gap:6px"><input type="checkbox" id="ex" ${showExamples?"checked":""}> แสดงข้อมูลตัวอย่างและทดสอบ</label>`:""}</div>
     ${db&&nTest?`<div class="row"><button class="btn ghost" id="deltest">ลบข้อมูลทดสอบ (${nTest} รายการ)</button><span class="small" id="delmsg"></span></div>`:""}
+    ${dbErr?`<div class="feedback" style="border-left:4px solid #c62828"><b>⚠️ ${esc(dbErr)}</b><br><span class="small">ข้อมูลยังอยู่ครบในฐานข้อมูล แต่หน้านี้อ่านไม่ได้ ลองเปิดหน้าใหม่ ถ้ายังเป็นอยู่ แจ้ง Claude พร้อมข้อความนี้</span></div>`:""}
     ${empty?`<p class="muted">ยังไม่มีการฝึก เมื่อลูกทำชุดแรกเสร็จ หรือนำเข้ารหัสจากเครื่องลูก สรุปจะขึ้นที่นี่</p>`:`
     ${parentDash(realAttempts())}
     <details class="small"><summary>ตัวเลขสะสมทั้งหมดตั้งแต่เริ่ม</summary>
