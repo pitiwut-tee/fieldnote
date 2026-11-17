@@ -687,7 +687,7 @@ async function importCode(raw, asTest){
 }
 
 /* ---------- updates: GitHub Pages lets the browser keep an old copy for a while, so check for a newer build ---------- */
-const BUILD="2026-11-17 21:28";
+const BUILD="2026-11-17 21:39";
 async function checkUpdate(){ if(!/^https?:/.test(location.protocol)||typeof db!=="undefined"&&db) return;
   try{ const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text(); const m=t.match(/const BUILD="(\d{4}-\d\d-\d\d \d\d:\d\d)"/);
     if(m&&m[1]!==BUILD&&!m[1].includes("@@")&&!document.getElementById("updbar")){ const d=document.createElement("button"); d.id="updbar"; d.className="btn";
@@ -1803,7 +1803,8 @@ function renderStep(){
   const q = st.q, ans = S.answered;
   const canQ=!q.en&&S.set.kind!=="mixed"&&CAL.listenQuestions!==false, waitMs=Math.max(0,(CAL.listenDelaySec??20)*1000-(Date.now()-S.qStart));
   /* trials: confidence buttons and/or a reason before the answer is shown, so choosing and sending are two taps */
-  const tConf=(S.trial||[]).includes("confidence"), tWhy=!!st.explain, staged=tConf||tWhy;
+  /* 17 Nov (father): every multiple-choice answer is two taps, choose then "ส่งคำตอบ", so a scroll can never answer */
+  const tConf=(S.trial||[]).includes("confidence"), tWhy=!!st.explain, staged=tConf||tWhy||!q.num;
   const sendBtns=tConf?`<button class="btn" id="send-sure">✓ มั่นใจ ส่งคำตอบ</button><button class="btn ghost" id="send-unsure">🤔 ไม่ชัวร์ ส่งคำตอบ</button>`:`<button class="btn" id="send-plain">ส่งคำตอบ</button>`;
   const panel = !ans&&staged&&(q.num||S.pick!=null)?`<div class="feedback trialbox">
       ${tWhy&&st.explain1?`<label class="small" for="whytext"><b>เหตุผลของเธอ 1 บรรทัด</b> (ไม่บังคับ เว้นว่างแล้วกดส่งได้เลย)</label>
@@ -3226,6 +3227,10 @@ function startVocab(){
 }
 const sayBtn=(id,label)=>`<button class="btn ghost" id="${id}" type="button">🔊 ${label}</button>`;
 function bindSay(id,text,slow,after){ const b=document.getElementById(id); if(b) b.onclick=()=>{speak(text,slow); if(after) after()} }
+/* vocab multiple choice: choose, then "ส่งคำตอบ" (17 Nov, father) */
+function vocabPickBind(a){
+  $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{ V.pick=+b.dataset.k; const y=window.scrollY; renderVocab(); window.scrollTo({top:y}) });
+  const sb=document.getElementById("vsend"); if(sb) sb.onclick=()=>{ const k=V.pick; if(k==null) return; V.pick=null; V.ans={choice:k,correct:k===a}; renderVocab() } }
 function renderVocab(){
   const top=`<div class="stage"><span>คำศัพท์วันนี้</span><span>${V.phase==="learn"?`คำใหม่ ${V.li+1}/${V.fresh.length}`:V.phase==="quiz"?`ทดสอบ ${V.qi+1}/${V.quiz.length}`:V.phase==="card"?"หลักเสียง":V.phase==="probe"?"เช็คประจำเดือน":`อ่านสั้นๆ`}</span></div>${voicePicker()}`;
   setTimeout(bindVoicePicker,0);
@@ -3323,12 +3328,12 @@ function renderVocab(){
     $v.innerHTML=`<section class="card">${top}
       <p class="small muted">${it.dir==="en"?"คำนี้แปลว่าอะไร":"คำภาษาอังกฤษของคำนี้คืออะไร"}${it.fresh?" · คำใหม่":" · ทบทวน"}</p>
       <div class="row"><span class="vword">${esc(it.dir==="en"?it.w.w:it.w.th)}</span>${it.dir==="en"?sayBtn("say-w","ฟัง"):""}</div><div id="speech-slot"></div>
-      <div class="opts">${it.opts.map((o,k)=>{let c="";if(ans){if(k===it.a)c="right";else if(k===ans.choice)c="wrong"}return `<button class="opt ${c}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>`}).join("")}</div>
+      <div class="opts">${it.opts.map((o,k)=>{let c="";if(ans){if(k===it.a)c="right";else if(k===ans.choice)c="wrong"}else if(V.pick===k)c="picked";return `<button class="opt ${c}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>`}).join("")}</div>${!ans&&V.pick!=null?`<div class="row"><button class="btn" id="vsend">ส่งคำตอบ</button></div>`:""}
       ${ans?`<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?"ถูก +5 XP":"ยังไม่ใช่ +2 XP"}</b><p><b>${esc(it.w.w)}</b> = ${esc(it.w.th)}</p><p class="vex small">“${esc(it.w.ex)}”</p><p class="small muted">${esc(it.w.exTh)}</p>
         <div class="row">${sayBtn("say-a","ฟังคำนี้")}</div></div>
       <button class="btn" id="vn">ต่อไป</button>`:""}</section>`;
     bindSay("say-w",it.w.w,false); bindSay("say-a",it.w.w,false);
-    if(!ans) $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{V.ans={choice:+b.dataset.k,correct:+b.dataset.k===it.a};renderVocab()});
+    if(!ans) vocabPickBind(it.a);
     else document.getElementById("vn").onclick=next;
     return;
   }
@@ -3338,14 +3343,14 @@ function renderVocab(){
       <div class="reading">${esc(V.read.text)}</div>
       <div class="row">${sayBtn("say-r","ฟังทั้งเรื่อง")}</div><div id="speech-slot"></div>
       <p class="prompt">${esc(q.q)}</p>
-      <div class="opts">${q.opts.map((o,k)=>{let c="";if(ans){if(k===q.a)c="right";else if(k===ans.choice)c="wrong"}return `<button class="opt ${c}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>`}).join("")}</div>
+      <div class="opts">${q.opts.map((o,k)=>{let c="";if(ans){if(k===q.a)c="right";else if(k===ans.choice)c="wrong"}else if(V.pick===k)c="picked";return `<button class="opt ${c}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>`}).join("")}</div>${!ans&&V.pick!=null?`<div class="row"><button class="btn" id="vsend">ส่งคำตอบ</button></div>`:""}
       ${ans?`<div class="feedback"><b class="${ans.correct?"ok":"no"}">${ans.correct?"ถูก +5 XP":"ยังไม่ใช่ ลองอ่านอีกรอบ +2 XP"}</b>
         <p class="small"><b>คำถาม:</b> ${esc(q.qth)}</p>
         <ul class="small" style="margin:0;padding-left:1.2em">${q.opts.map((o,k)=>`<li>${k===q.a?"✅ ":""}${esc(o)} = ${esc(q.optsTh[k])}</li>`).join("")}</ul>
         <details class="small"><summary>ดูคำแปลทั้งเรื่อง</summary><p>${esc(V.read.th.text)}</p></details></div>
         <button class="btn" id="vn">ต่อไป</button>`:""}</section>`;
     bindSay("say-r",V.read.text,true);
-    if(!ans) $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{V.ans={choice:+b.dataset.k,correct:+b.dataset.k===q.a};renderVocab()});
+    if(!ans) vocabPickBind(q.a);
     else document.getElementById("vn").onclick=()=>{ V.rres.push(ans.correct); V.ans=null; if(V.ri+1<V.read.qs.length){V.ri++;renderVocab()} else finishVocab() };
   }
 }

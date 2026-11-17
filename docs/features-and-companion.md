@@ -167,3 +167,8 @@ things a normal family has. **Her father must approve every mission before she s
   student did only reviews, mission 1 showed "ทบทวนข้อที่เคยพลาด ทำแล้ว" and the new lesson vanished. Never let a
   review-type record stand in for new learning. (2) Taps on `.opt` are ignored when the finger moved > 10 px or the
   page scrolled while it was down (she reported a scroll answering a question; not reproducible in desktop Chromium).
+- **17 Nov (father): choose, then send.** Every multiple-choice answer in lessons, reviews, sweeps, mini days and
+  vocabulary (word quiz and reading) is two taps: tap an option (outlined, `.opt.picked`), then "ส่งคำตอบ". Typed-number
+  questions keep their own check button. Small unscored picks (predict, hook guess, reasons, daily card) stay one tap
+  behind the scroll guard. If the student dislikes it, the father will say; revert = `staged=tConf||tWhy` and the
+  old vocab `.opt` onclick.
