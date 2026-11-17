@@ -158,6 +158,28 @@ checks every field below.
   **Resolved** only after 2 right answers with the right reason picked, in different situations (`sit`, else the
   question root), ≥ 7 days apart; the app serves those checks itself in the lesson warm-up, so each open subtopic
   needs at least 2 questions with `check` in different situations. The parent page flags "ไม่มีข้อที่มีตัวเลือกเหตุผล".
+  Since 17 Nov 2026 (chat 3) the card is shown **one paragraph per screen** (then the table, the contrast, the fig,
+  each on its own screen) and ends with the whole card on one page. A paragraph may be `{t, tap}` instead of a string:
+  `tap` = `{q, opts:[right one FIRST, 1–3 wrong], ex}`, a quick check at the end of that screen (without one she gets
+  "เข้าใจแล้ว / ยังงงตรงนี้"). Add a tap to every paragraph that carries the idea. Every blank worked step should have
+  `opts` (she asked for something to do, not more reading). After the worked examples the app gives 2 **try-it**
+  questions from the bank on that subtopic (`tryPick`: prefers no `check`, unseen, not a twin) and shows her the
+  score at once: record `type:"loop"`, `act:"try"`, `tries:[{qid,ok}]`. So each open subtopic also needs ≥ 2 plain
+  bank questions besides the `check` ones.
+- **สมุดคาถา cards** (`content/library.json`, keyed by subtopic id; built 17 Nov 2026, chat 3): opened from every
+  wrong answer ("📖 ไปอ่านเรื่องนี้") and from home. A card = `title`, `what` (what it is and what it is for, in 1–2
+  plain sentences, BEFORE any formula; this was the gap: she knew the Rf formula but not what Rf means), `steps`
+  (≤ 8; string or `{t, tap?, fig?}`, one idea each), optional `formula` [lines], `trap` (the mistakes she really
+  makes), `whatTap`/`trapTap`. Taps as above; tap questions are shown as plain text (no glossary), so they must not
+  give away a bank question. Without a card the app falls back to the summary card of the lesson with the most
+  questions on that subtopic, and the parent page lists "เรื่องที่น้องเปิดแต่ยังไม่มีการ์ดเฉพาะ" = what to write next.
+  `terms` adds glossary words (tap a dotted word anywhere); check that a term's meaning fits every place it appears
+  (the old "ตำแหน่ง" entry is the statistics meaning). Blind-check every card: the checker answers the taps without
+  the key and fact-checks every sentence. Record: `type:"lib"` (`sub`, `src` lib | concept:setId | reteach, `from` =
+  the question she missed, `read`, `reached`/`screens`, `taps`, `stuck`, `tries`); items she missed and then opened
+  the card for carry `lib: n`.
+- **Not chunked on purpose:** exam-style questions and the reading passages stay long. Chunking is for learning an
+  idea; reading stamina is trained separately (passages, timed). Father and Claude agreed this on 17 Nov 2026.
 - **Checkpoint sets** (`kind: "checkpoint"`, id = `calendar.checkpoints[].setId`, e.g. `cp-1`): 24 items (science
   12 + math 12), every item with its own `spell`, no warm-up, no challenge, no hints needed; unseen questions on
   topics taught ≥ 7 days earlier, new contexts not new numbers, some "which reasoning is right" items. Timed

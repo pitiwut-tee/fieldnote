@@ -125,6 +125,20 @@ if(cal.minDay&&!/^\d{4}-\d\d-\d\d$/.test(cal.minDay.from||"")) warn("calendar.js
       if(!x.q||st.length<3||st.some(s=>!s.t)) warn(`${w} worked ${i+1}: needs q and at least 3 steps`);
       st.forEach((s,k)=>{ if(s.opts&&!(Array.isArray(s.opts)&&s.opts.length>=2&&s.opts[0]===s.t&&new Set(s.opts).size===s.opts.length)) warn(`${w} worked ${i+1} step ${k+1}: opts must start with the step's own text, then distinct wrong steps`) });
       const hidden=st.slice(st.length-i); if(i>0&&hidden.some(s=>!s.opts)) console.log(`note: ${w} worked ${i+1}: a blank step without opts falls back to think-then-self-check`) }); } }
+/* สมุดคาถา cards and glossary terms (17 Nov 2026); a tap = a quick check at the end of one screen, right option first */
+const tapOk=(t,w)=>{ if(t==null) return; if(!(t&&t.q&&Array.isArray(t.opts)&&t.opts.length>=2&&t.opts.length<=4&&new Set(t.opts).size===t.opts.length&&t.opts.every(o=>typeof o==="string"&&o.trim()))) warn(`${w}: tap needs {q, opts:[2-4 distinct, the right one FIRST], ex?}`) };
+{ let LBJ={cards:{},terms:{}}; try{ LBJ=J("content/library.json") }catch(e){ warn("content/library.json: not valid JSON") }
+  const subs=new Set(Object.values(J("content/curriculum.json").spells||{}).flat().map(x=>x.id));
+  for(const [k,v] of Object.entries(LBJ.terms||{})) if(typeof v!=="string"||!v.trim()||!k.trim()) warn(`library.json term "${k}": needs a definition`);
+  for(const [sub,c] of Object.entries(LBJ.cards||{})){ const w=`library.json ${sub}`;
+    if(!subs.has(sub)) warn(`${w}: not a curriculum subtopic id`);
+    if(!c.title||!c.what) warn(`${w}: needs title and what (what it is and what it is for, before any formula)`);
+    if(!Array.isArray(c.steps)||!c.steps.length) warn(`${w}: needs steps`);
+    else { if(c.steps.length>8) warn(`${w}: at most 8 steps (one screen each)`);
+      c.steps.forEach((x,i)=>{ const t=typeof x==="string"?{t:x}:x; if(!t||!t.t) warn(`${w} step ${i+1}: needs text`); tapOk(t&&t.tap,`${w} step ${i+1}`) }) }
+    tapOk(c.whatTap,`${w} what`); tapOk(c.trapTap,`${w} trap`);
+    if(c.formula!=null&&!Array.isArray(c.formula)) warn(`${w}: formula is a list of lines`) }
+  for(const [sub,c] of Object.entries((J("content/reteach.json").cards)||{})) (c.text||[]).forEach((x,i)=>{ if(typeof x!=="string"){ if(!x||!x.t) warn(`reteach.json ${sub} text ${i+1}: string or {t, tap?}`); else tapOk(x.tap,`reteach.json ${sub} text ${i+1}`) } }) }
 for(const id of cal.lessonQueue||[]) if(!setIds.has(id)) warn(`calendar.json lessonQueue: unknown set ${id}`);
 for(const sp of cal.currentSpells||[]) if(!spells.has(sp)) warn(`calendar.json: unknown current spell ${sp}`);
 for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) warn(`calendar.json: bad date ${d}`);
@@ -215,10 +229,17 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     await pg.evaluate(sub=>{ RETEACH[sub]={title:"การ์ดทดสอบ",form:"contrast",text:["ย่อหน้าทดสอบ"],contrast:[{title:"กรณี ก",text:"ทดสอบ"},{title:"กรณี ข",text:"ทดสอบ"}],
       worked:[{q:"ตัวอย่าง 1",steps:["ขั้น 1","ขั้น 2","ขั้น 3"],answer:"ทดสอบ"},{q:"ตัวอย่าง 2",steps:["ขั้น 1","ขั้น 2",{t:"ขั้น 3",opts:["ขั้น 3","ขั้นผิด"]}]},{q:"ตัวอย่าง 3",steps:["ขั้น 1","ขั้น 2","ขั้น 3"]}]}; render() },sub);
     if(!await pg.locator("#loop-go").count()) return "loop card not on the home page";
-    await pg.click("#loop-go"); await pg.click("#lp-next");
-    for(let i=0;i<20;i++){ if(await pg.locator("[data-lpo]").count()){ await pg.click('[data-lpo="0"]'); continue } if(await pg.locator("#lp-show").count()){ await pg.click("#lp-show"); continue }
+    await pg.click("#loop-go");
+    let dk=0; for(let i=0;i<40;i++){ if(await pg.locator("[data-dkt]").count()){ await pg.locator("[data-dkt]").first().click(); continue } if(await pg.locator("#dk-next").count()){ dk++; await pg.click("#dk-next"); continue }
+      if(await pg.locator("#dk-done").count()){ await pg.click("#dk-done"); continue }
+      if(await pg.locator("[data-tro]").count()){ await pg.locator("[data-tro]").first().click(); continue } if(await pg.locator("#tr-num").count()){ await pg.fill("#tr-num","1"); await pg.click("#tr-check"); continue }
+      if(await pg.locator("#tr-next").count()){ await pg.click("#tr-next"); continue }
+      if(await pg.locator("[data-lpo]").count()){ await pg.click('[data-lpo="0"]'); continue } if(await pg.locator("#lp-show").count()){ await pg.click("#lp-show"); continue }
       if(await pg.locator('[data-lps="1"]').count()){ await pg.click('[data-lps="1"]'); continue } if(await pg.locator("#lp-next").count()){ await pg.click("#lp-next"); continue } break }
     await pg.waitForTimeout(150);
+    if(dk!==2) return `reteach card should show 2 screens (1 paragraph + the contrast) before the summary, showed ${dk}`;
+    const tr=await pg.evaluate(sub=>({pool:tryPick(sub,2,[]).length,rec:mine().find(a=>a.type==="loop"&&a.act==="try")}),sub);
+    if(tr.pool&&!(tr.rec&&tr.rec.tries.length===Math.min(2,tr.pool))) return "try-it questions after the reteach were not recorded";
     const st1=await pg.evaluate(sub=>{ const e=miscEps(mine()).find(x=>x.sub===sub); return e&&miscStage(e) },sub); if(st1!=="guide") return "after the reteach the stage is "+st1;
     /* the guide is offered from the next day; the evidence: 2 right answers with the right reason, different situations, 8 days apart */
     const re=await pg.evaluate(()=>mine().find(a=>a.type==="loop"&&a.act==="reteach")); re.endedAt=day(12); re.startedAt=day(12);
@@ -232,6 +253,41 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     await reset([miss(13,qs[0]),miss(15,qs[1]),re,g,ok(10,qs[0]),ok(8,qs[0])]);
     const st3=await pg.evaluate(sub=>{ const e=miscEps(mine()).find(x=>x.sub===sub); return e&&miscStage(e) },sub); if(st3==="resolved") return "the same situation twice must not resolve";
     await pg.evaluate(sub=>{ delete RETEACH[sub] },sub) });
+
+  await T("สมุดคาถา: wrong answer → read in chunks → try 2 → back to the same question",async()=>{ await reset();
+    const info=await pg.evaluate(()=>{ const o=Object.values(QBANK).find(o=>subOf(o.q.id)==="s3.3"&&o.set.kind==="lesson"&&!o.q.num&&!o.q.of&&!o.q.check&&!o.q.predict&&!o.q.friend);
+      const set={...o.set,id:"zz-lib",warm:[],practice:[o.q],challenge:null}; SETS.push(set); startSet(set,false); const c=LIB["s3.3"];
+      return {qid:o.q.id,screens:c?1+c.steps.length+(c.trap?1:0):0,taps:c?c.steps.filter(x=>x.tap).length+(c.whatTap?1:0)+(c.trapTap?1:0):0} });
+    for(let i=0;i<15&&!await pg.locator("#go-lib-q").count();i++){
+      if(await pg.locator("[data-hk]").count()){ await pg.locator("[data-hk]").first().click(); continue }
+      if(await pg.locator("#cnext").count()){ await pg.click("#cnext"); continue }
+      if(await pg.locator(".opt:not([disabled]):not(.ckopt)").count()){ const k=await pg.evaluate(()=>{ const q=S.steps[S.i].q; return q.opts.findIndex((_,k)=>k!==q.a) }); await pg.locator(".opt:not(.ckopt)").nth(k).click();
+        for(const b of ["#send-sure","#send-plain"]) if(await pg.locator(b).count()){ await pg.click(b); break } continue }
+      if(await pg.locator("#next").count()){ await pg.click("#next"); continue } }
+    if(!await pg.locator("#go-lib-q").count()) return "no 'ไปอ่านเรื่องนี้' button after a wrong answer";
+    await pg.click("#go-lib-q");
+    let screens=0; for(let i=0;i<20;i++){ if(await pg.locator("[data-dkt]").count()){ await pg.locator("[data-dkt]").first().click(); continue } if(await pg.locator("#dk-next").count()){ screens++; await pg.click("#dk-next"); continue } break }
+    if(screens!==info.screens) return `card s3.3 should show ${info.screens} screens, showed ${screens}`;
+    if(!await pg.locator("#dk-done").count()) return "no one-page summary at the end";
+    await pg.click("#dk-done");
+    for(let i=0;i<6;i++){ if(await pg.locator("[data-tro]").count()){ await pg.locator("[data-tro]").first().click(); continue } if(await pg.locator("#tr-num").count()){ await pg.fill("#tr-num","1"); await pg.click("#tr-check"); continue }
+      if(await pg.locator("#tr-next").count()){ await pg.click("#tr-next"); continue } break }
+    const rec=await pg.evaluate(()=>mine().find(a=>a.type==="lib"));
+    if(!rec||!rec.read||rec.tries.length!==2||rec.taps.length!==info.taps||rec.from!==info.qid) return "lib record wrong: "+JSON.stringify(rec&&{read:rec.read,tries:rec.tries,taps:rec.taps,from:rec.from});
+    if(rec.tries.some(t=>t.qid===info.qid)) return "the question she just missed came back as a try question";
+    if(!rec.xp) return "first reading of the day earned no XP";
+    await pg.click("#lb-back2");
+    if(!await pg.evaluate(qid=>view==="session"&&S.steps[S.i].q&&S.steps[S.i].q.id===qid&&!!S.answered,info.qid)) return "did not come back to the same answered question";
+    await play(false);
+    const it=await pg.evaluate(qid=>((mine().find(a=>a.setId==="zz-lib")||{}).items||[]).find(x=>x.qid===qid),info.qid);
+    if(!(it&&it.lib===1&&it.correct===false)) return "the library visit is not recorded on the item: "+JSON.stringify(it);
+    await reset(); if(!await pg.locator("#go-lib").count()) return "no สมุดคาถา entry on the home page";
+    await pg.click("#go-lib"); await pg.fill("#lb-q","rf");
+    const vis=await pg.evaluate(()=>[...document.querySelectorAll("[data-lbs]")].filter(b=>!b.hidden&&!b.closest("[hidden]")).map(b=>b.dataset.lbs));
+    if(!vis.includes("s3.3")||vis.length>3) return "search 'rf' shows: "+vis.join(",");
+    await pg.locator('[data-lbs="s3.3"]').first().click(); if(!await pg.locator("#dk-next").count()) return "card did not open from the list";
+    await pg.click("#lb-back"); if(!await pg.locator("#lb-q").count()) return "back from a card did not return to the list";
+    await pg.evaluate(()=>{ SETS.splice(SETS.findIndex(s=>s.id==="zz-lib"),1); LB=null }) });
 
   await T("minimum day counts as a full day",async()=>{
     const day=n=>new Date(Date.now()+86400000-n*86400000).toISOString(), q=await pg.evaluate(()=>SETS.find(s=>s.kind==="lesson").practice.slice(0,4).map(x=>x.id));
@@ -282,6 +338,7 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     await p2.goto("file://"+path.join(ROOT,"dist","parent.html"));
     await p2.evaluate(a=>{ attempts=a.map(x=>({...x,test:false})); view="parent"; render() },testAttempts);
     if(!await p2.locator("#understand").count()) warn("parent page: misconception section missing"); else console.log("ok  feature: parent page sections");
+    if(!await p2.locator("h3",{hasText:"สมุดคาถา: น้องเปิดอ่านเอง"}).count()) warn("parent page: library log missing");
     if(e2.length) warn("parent page errors: "+e2.join(" | "));
     await b2.close() }
   if(pageErr.length) warn("page errors: "+pageErr.join(" | "));

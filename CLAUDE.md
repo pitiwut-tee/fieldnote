@@ -44,7 +44,8 @@ This file is the long-term memory. Chats are disposable; this repo and the statu
 - `content/` everything the app teaches: `sets/*.json` (lessons, sweeps, mixed, passages, probes), `vocab.json`,
   `phonics.json`, `challenges.json`, `variants.json` (twin questions), `calendar.json` (`lessonQueue`, exam dates),
   `curriculum.json` (51 spells, ~243 subtopics) + `qtags.json` (every question id → subtopic; keep complete),
-  `reteach.json` (repeated-error loop cards by subtopic; empty until chat 2)
+  `reteach.json` (repeated-error loop cards by subtopic), `library.json` (สมุดคาถา reading cards by subtopic + extra
+  glossary `terms`)
 - `tools/` build and verify (nightly run never edits)
 - `AUTOMATION.md` the lean nightly runbook; `docs/*.md` topic notes it points to (read only when needed)
 - `content/school-plan.md`, `content/exam-analysis.md` what the school teaches now and what the real exam asks
@@ -134,6 +135,19 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    Also, because the loop needs content to run: a `reteach.json` card for each open misconception on the parent page
    (they show "ยังไม่มีคำอธิบายแบบใหม่ในคลัง"), ≥ 2 questions with a 3-reason `check` in different situations (`sit`)
    for each open subtopic, situation twins (`change:"situation"`) for her repeated misses, a few `predict` items.
+2b. **DONE 17 Nov — Chat "แชท 3" (app, from her feedback that day):** (i) **สมุดคาถา** library: "📖 ไปอ่านเรื่องนี้"
+   on every wrong answer and a home entry; a card per subtopic in `content/library.json` (first: s3.3 Rf), fallback =
+   the lesson's summary card; parent page logs what she opened and which subtopics still lack a card. (ii) "สอนใหม่อีกแบบ"
+   shown one paragraph per screen with a tap per screen, then the whole card on one page. (iii) 2 **try-it** questions
+   after every explanation (loop and library), score shown to her at once. Field reference: `docs/writing-content.md`.
+   Agreed reasoning: chunk explanations (the goal is understanding), but never chunk exam-style questions or passages;
+   train long reading separately and measure it (passage sets are still undone; item `len` is logged, so compare
+   accuracy on long vs short items of the same topic before calling it a reading problem). Immediate try-it success
+   is short-term; it never resolves a misconception (the ≥ 7-day checks still do).
+2c. **Next content chat (Opus, no computer needed):** library cards for the subtopics she has missed (start from the
+   parent page list "เรื่องที่น้องเปิดแต่ยังไม่มีการ์ดเฉพาะ" and the misconception list), `tap` on the paragraphs of the 9
+   reteach cards, `opts` on every blank worked step, fix the glossary entry "ตำแหน่ง" (statistics meaning shows in
+   science text); blind check for all of it.
 3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
 4. **Sonnet chat after his first dad talk (~Sun 22 Nov):** read his notes in the "10 นาทีกับพ่อ" tab, twin questions
    for those patterns, week-2 brief, then add the Sunday dad-brief step to AUTOMATION.md.

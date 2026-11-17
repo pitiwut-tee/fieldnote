@@ -1209,6 +1209,7 @@ function render(){
   if(view==="skip") return renderSkip();
   if(view==="session") return renderStep();
   if(view==="loop") return renderLoop();
+  if(view==="lib") return renderLib();
   if(view==="cpintro") return renderCpIntro();
   if(view==="vocab") return renderVocab();
   if(view==="done") return renderDone();
@@ -1364,6 +1365,7 @@ function renderHome(){
     ${tr.length?`<div class="daypanel trialbox"><p class="small"><b>🧪 ทดลองของใหม่วันนี้:</b> ${tr.map(k=>TRIAL_NAMES[k]).join(" และ ")} · ลองสัปดาห์นี้แล้วบอกหน่อยว่าชอบไหม</p></div>`:""}
     ${specialMissions(p,ms,md,mission)}
     ${loopCard(list)}
+    ${libEntry()}
     ${!ms.some(x=>x.key==="lesson")?"":mission(1,"lesson",(examAt(todayKey())||{}).phase==="during"?"ไม่บังคับช่วงสอบ":plan.exam?"โหมดเตรียมสอบ · ราว 25 นาที":plan.repair?"ชุดซ่อมจุดอ่อน (วันศุกร์) · ราว 20 นาที":"ชุดฝึก"+(md.lesson?" · ทำแล้ว":" · ราว 30 นาที"),lessonTitle,
       md.lesson&&doneLesson?`<div class="row">${notesBtn(doneLesson)}<button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"เลือกชุดอื่น"}</button></div>`
       :`<div class="row"><button class="btn" id="go-rec">${plan.exam?"เริ่มทบทวน":plan.repair?"เริ่มซ่อม":"เริ่มชุดนี้"}</button><button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"อยากทำเรื่องอื่น"}</button></div>`,
@@ -1665,6 +1667,7 @@ const GLOSS={
  "cm³":"ลูกบาศก์เซนติเมตร หน่วยปริมาตร 1 cm³ เท่ากับ 1 มิลลิลิตร",
  "% w/v":"ร้อยละโดยมวลต่อปริมาตร คือ มีตัวละลายกี่กรัม ในสารละลายทุก 100 cm³"
 };
+Object.assign(GLOSS,(CONTENT.library&&CONTENT.library.terms)||{});   /* more terms live in content/library.json */
 const GLOSS_KEYS=Object.keys(GLOSS).sort((a,b)=>b.length-a.length);
 /* question data written as "a → b · c → d · ..." is shown one item per line (father, 10 Nov: the dots were hard to read) */
 function qLines(h){ if(!h||h.indexOf(" · ")<0||/English corner/.test(h)) return h; const parts=h.split(" · ");
@@ -1859,7 +1862,7 @@ function renderStep(){
       :!ans.correct&&ans.conf==="sure"?`<p class="small"><b>มั่นใจแต่พลาด</b> ข้อแบบนี้ถ้าเข้าใจตอนนี้ จะจำได้แม่นที่สุด อ่านเฉลยช้าๆ นะ</p>`:"";
     const predNote = q.predict&&S.predictPick!=null?(S.predictPick===q.predict.a?`<p class="small">🔮 <b>ทายไว้ตรง</b> “${esc(q.predict.opts[q.predict.a])}” ความรู้สึกเรื่องนี้เริ่มแม่นแล้ว</p>`:`<p class="small">🔮 ทายไว้ว่า “${esc(q.predict.opts[S.predictPick])}” ที่จริงคือ “${esc(q.predict.opts[q.predict.a])}” ${esc(q.predict.ex||"")}</p>`):"";
     const own = st.explain&&(ans.ownWhy||ans.ownWhyPad)?`<div class="feedback"><span class="small"><b>เหตุผลของเธอ:</b> ${ans.ownWhy?esc(ans.ownWhy):"(เขียนในกระดาษทด)"}</span><span class="small muted">ลองเทียบกับเฉลยด้านล่าง ตรงกันไหม ต่างกันตรงไหน</span></div>`:"";
-    fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answerText||q.answer} ${q.unit}`:""}</b>${predNote}${ckNote}${confNote}${exHtml(q,ans)}
+    fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answerText||q.answer} ${q.unit}`:""}</b>${predNote}${ckNote}${confNote}${exHtml(q,ans)}${ans.correct?"":libLink(q)}
       ${q.en?"":`<div>${readBtn("ex","🔊 ฟังเฉลย")}</div>`}
       ${ans.correct||ans.dontknow?"":`<span class="small muted">พลาดเพราะอะไร เลือกได้หลายข้อ (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
       <div class="why">${Object.entries(ERR).filter(([k])=>k!=="dontknow"&&k!=="notTaught").map(([k,v])=>`<button data-why="${k}" aria-pressed="${(S.why||[]).includes(k)}">${v}</button>`).join("")}</div>
@@ -1941,15 +1944,16 @@ function renderStep(){
     $v.querySelectorAll("[data-why]").forEach(b=>b.onclick=()=>{const k=b.dataset.why; S.why=(S.why||[]).includes(k)?S.why.filter(x=>x!==k):[...(S.why||[]),k];const y=window.scrollY;renderStep();window.scrollTo({top:y})});
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
     const exn=document.getElementById("exnext"); if(exn) exn.onclick=()=>{ S.exStep=(S.exStep||1)+1; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) };
+    { const lq=document.getElementById("go-lib-q"); if(lq) lq.onclick=()=>{ readStop(); S.libOpen=(S.libOpen||0)+1; openLib(lq.dataset.sub,{qid:q.id},"session") } }
     const nx=document.getElementById("next"); if(nx) nx.onclick=()=>{
       S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,...(st.chk?{chk:1}:{}),...(st.leg!=null&&S.legs&&S.legs.length>=2?{leg:st.leg}:{}),...(S.hints&&S.hints>=(q.hints||[]).length+1?{hintStep:true}:{}),...(S.hintKnown&&S.hintKnown.length?{hintKnown:S.hintKnown}:{}),...(exStepped(q,ans)?{exSteps:Math.min(S.exStep||1,exSteps(q.ex).length),exTotal:exSteps(q.ex).length}:{}),struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
-        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(S.whyOther&&(S.why||[]).includes("other")?{whyOther:S.whyOther.trim()}:{}),...(ans.correct&&(S.guessed||S.checkPick===-1)?{guessed:true}:{}),...(S.notTaught?{notTaught:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0}:{}),...(q.check&&S.checkPick!=null&&S.checkPick!==-1?{checkOk:S.checkPick===q.check.a,...(ans.correct?{}:{checkAfterWrong:true})}:{}),...(q.predict&&S.predictPick!=null?{predict:S.predictPick,predictOk:S.predictPick===q.predict.a}:{}),...(q.friend?{friend:true}:{}),...(q.sit?{sit:q.sit}:{}),...(st.loop?{loop:st.loop}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),len:q.q.length});
+        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(S.libOpen?{lib:S.libOpen}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(S.whyOther&&(S.why||[]).includes("other")?{whyOther:S.whyOther.trim()}:{}),...(ans.correct&&(S.guessed||S.checkPick===-1)?{guessed:true}:{}),...(S.notTaught?{notTaught:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0}:{}),...(q.check&&S.checkPick!=null&&S.checkPick!==-1?{checkOk:S.checkPick===q.check.a,...(ans.correct?{}:{checkAfterWrong:true})}:{}),...(q.predict&&S.predictPick!=null?{predict:S.predictPick,predictOk:S.predictPick===q.predict.a}:{}),...(q.friend?{friend:true}:{}),...(q.sit?{sit:q.sit}:{}),...(st.loop?{loop:st.loop}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),len:q.q.length});
       advance();
     };
   }
 }
 function answer(a){ readStop(); S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
-function advance(){ { const a=S.steps[S.i], b=S.steps[S.i+1]; if(S.legs&&S.legs.length>=2&&a&&b&&a.leg!=null&&b.leg!=null&&b.leg>a.leg&&b.kind!=="rate"&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>expCheckpoint(a.leg),120) } readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.predictPick=null; S.predOrder=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
+function advance(){ { const a=S.steps[S.i], b=S.steps[S.i+1]; if(S.legs&&S.legs.length>=2&&a&&b&&a.leg!=null&&b.leg!=null&&b.leg>a.leg&&b.kind!=="rate"&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>expCheckpoint(a.leg),120) } readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.libOpen=0; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.predictPick=null; S.predOrder=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
 
 /* concept card, one idea per screen: (1) why this topic exists — a puzzle to guess first (c.hook) or the "use" line,
    (2) each point alone with "เข้าใจแล้ว" / "ขออธิบายอีกแบบ" (c.more[i], else the next whole alternative),
@@ -4937,20 +4941,14 @@ function loopChecks(list,n,avoid){ const t=todayKey(), out=[], av=new Set(avoid|
    last two steps blank); a blank step is picked from options when the card gives them, otherwise she thinks first and self-checks ---------- */
 let LP=null;
 function lpSteps(w){ return (w.steps||[]).map(s=>typeof s==="string"?{t:s}:s) }
-function startLoop(ep,act){ LP={sub:ep.sub,act,card:RETEACH[ep.sub]||null,stage:act==="guide"?"guide":"card",ex:0,rev:0,show:false,order:null,res:[],start:Date.now(),text:""}; view="loop"; render(); window.scrollTo({top:0}) }
+function startLoop(ep,act){ const card=RETEACH[ep.sub]||null; LP={sub:ep.sub,act,card,stage:act==="guide"?"guide":"card",ex:0,rev:0,show:false,order:null,res:[],start:Date.now(),text:"",
+    K:card?newDeck(deckOf("reteach",card)):null,miss:(ep.misses||[]).map(m=>m.qid),missDays:new Set((ep.misses||[]).map(m=>m.d)).size,T:null}; view="loop"; render(); window.scrollTo({top:0}) }
 function renderLoop(){ if(!LP){ view="home"; return render() } const c=LP.card, nm=subName(LP.sub), back=`<button class="btn ghost" id="lp-home" style="border:0;padding-left:0">← กลับหน้าแรก</button>`;
   const go=(f)=>{ f(); const y=0; renderLoop(); window.scrollTo({top:y}) };
   if(LP.stage==="card"){
-    $v.innerHTML=`<section class="card concept"><span class="eyebrow">🔧 สอนใหม่อีกแบบ · ${esc(nm)}</span><h2>${esc(c.title)}</h2>
-      <p class="small muted">เรื่องนี้สะดุดมา 2 วันแล้ว ไม่แปลกเลย เรื่องนี้หลายคนก็สะดุด รอบนี้ลองดูจากอีกมุมหนึ่ง แล้วทำตามตัวอย่างทีละขั้น ราว 6 นาที</p>
-      ${(c.text||[]).map(t=>`<p>${gloss(t)}</p>`).join("")}
-      ${c.table?`<div class="lptable"><table>${c.table.caption?`<caption class="small">${esc(c.table.caption)}</caption>`:""}<thead><tr>${c.table.cols.map(x=>`<th>${esc(x)}</th>`).join("")}</tr></thead><tbody>${c.table.rows.map(r=>`<tr>${r.map(x=>`<td>${esc(x)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`:""}
-      ${c.contrast?`<div class="lpcontrast">${c.contrast.map(k=>`<div class="feedback"><b>${esc(k.title)}</b><span class="small">${gloss(k.text)}</span></div>`).join("")}</div>`:""}
-      ${figHtml(c.fig)}
-      <div class="feedback" id="gloss-box" hidden></div>
-      <div class="row">${readBtn("loop","🔊 ฟัง")}<button class="btn" id="lp-next">ดูตัวอย่างทีละขั้น →</button></div>${back}</section>`;
-    bindGloss(); const rb=$v.querySelector('[data-read="loop"]'); if(rb) rb.onclick=()=>readAloud("loop",[c.title,...(c.text||[]),...(c.contrast||[]).map(k=>k.title+". "+k.text)]);
-    document.getElementById("lp-next").onclick=()=>go(()=>{ readStop(); LP.stage="ex"; LP.ex=0; LP.rev=0; LP.show=false; LP.order=null });
+    /* one idea per screen, then everything on one page (father, 17 Nov 2026) */
+    $v.innerHTML=`<section class="card concept">${deckHtml(LP.K,"🔧 สอนใหม่อีกแบบ · "+esc(nm),"เรื่องนี้สะดุดมา 2 วันแล้ว ไม่แปลกเลย หลายคนก็สะดุดเรื่องนี้ รอบนี้ดูจากอีกมุมหนึ่งทีละส่วน แล้วทำตามตัวอย่าง และลองทำเองท้ายสุด ราว 8 นาที","ดูตัวอย่างทีละขั้น →")}${back}</section>`;
+    bindDeck(LP.K,()=>renderLoop(),()=>go(()=>{ LP.stage="ex"; LP.ex=0; LP.rev=0; LP.show=false; LP.order=null }));
   } else if(LP.stage==="ex"){
     const W=c.worked||[], w=W[LP.ex], st=lpSteps(w), hide=Math.min(LP.ex,st.length-1), first=st.length-hide, cur=first+LP.rev, allShown=LP.rev>=hide;
     const curStep=!allShown?st[cur]:null;
@@ -4972,10 +4970,20 @@ function renderLoop(){ if(!LP){ view="home"; return render() } const c=LP.card, 
     { const nb=document.getElementById("lp-next"); if(nb) nb.onclick=async()=>{ if(LP.ex+1<W.length) return go(()=>{ LP.ex++; LP.rev=0; LP.show=false; LP.order=null });
       nb.disabled=true; const now=new Date().toISOString();
       await saveAttempt({type:"loop",act:"reteach",sub:LP.sub,setId:"loop-"+LP.sub,topic:"สอนใหม่อีกแบบ: "+nm,startedAt:new Date(LP.start).toISOString(),endedAt:now,durationSec:Math.round((Date.now()-LP.start)/1000),
-        correct:LP.res.filter(r=>r.ok).length,total:LP.res.length,xp:20,items:[],steps:LP.res,form:c.form||""});
-      go(()=>{ LP.stage="redone" }) } }
+        correct:LP.res.filter(r=>r.ok).length,total:LP.res.length,xp:20,items:[],steps:LP.res,form:c.form||"",taps:LP.K?LP.K.taps:[],stuck:LP.K?LP.K.stuck:[]});
+      const tq=tryPick(LP.sub,2,LP.miss); go(()=>{ if(tq.length){ LP.T=newTry(tq); LP.stage="try" } else LP.stage="redone" }) } }
+  } else if(LP.stage==="try"){
+    /* try it yourself right after the new explanation; the result is shown to her at once (father, 17 Nov 2026) */
+    $v.innerHTML=`<section class="card">${tryHtml(LP.T,"🔧 "+esc(nm))}${back}</section>`;
+    bindTry(LP.T,()=>renderLoop(),async()=>{ const r=LP.T.res, now=new Date().toISOString();
+      await saveAttempt({type:"loop",act:"try",sub:LP.sub,setId:"loop-"+LP.sub,topic:"ลองเองหลังสอนใหม่: "+nm,startedAt:new Date(LP.T.start).toISOString(),endedAt:now,
+        durationSec:Math.round((Date.now()-LP.T.start)/1000),tries:r,correct:0,total:0,xp:tryScore(r),items:[]});
+      go(()=>{ LP.stage="redone" }) });
   } else if(LP.stage==="redone"){
-    $v.innerHTML=`<section class="card"><span class="eyebrow">🔧 ${esc(nm)}</span><h2>+20 XP ดูเรื่องนี้จากมุมใหม่แล้ว</h2>
+    const tr=LP.T?LP.T.res:[], tok=tr.filter(x=>x.ok).length;
+    $v.innerHTML=`<section class="card"><span class="eyebrow">🔧 ${esc(nm)}</span><h2>+${20+tryScore(tr)} XP ดูเรื่องนี้จากมุมใหม่แล้ว</h2>
+      ${tr.length?`<div class="feedback"><b>ก่อนหน้านี้: เรื่องนี้พลาดมา ${LP.missDays} วัน · วันนี้ลองเอง: ถูก ${tok} จาก ${tr.length}</b>
+        <span class="small">${tok===tr.length?"คำอธิบายแบบนี้น่าจะช่วยได้ แต่ถูกทันทีหลังอ่านยังเป็นความจำระยะสั้น ข้อเช็กอีกไม่กี่วันข้างหน้าจะบอกว่าคงทนไหม":"ยังพลาดอยู่ ไม่เป็นไร แปลว่าคำอธิบายนี้ยังไม่พอ พ่อกับ Claude จะเห็นผลนี้ และเรื่องนี้จะอยู่ในการคุยกับพ่อสัปดาห์นี้"}</span></div>`:""}
       <p class="small">พรุ่งนี้จะชวนเขียน <b>คู่มือผู้เล่น</b> เรื่องนี้ 2–3 ประโยค แล้วอีกไม่กี่วันจะมีข้อเช็กเรื่องนี้ในเรื่องราวใหม่ ถ้าถูกพร้อมเลือกเหตุผลถูก 2 ครั้ง ห่างกันอย่างน้อย 7 วัน เรื่องนี้ถือว่าแก้ได้แล้ว</p>
       <button class="btn" id="lp-home">กลับหน้าแรก</button></section>`;
   } else if(LP.stage==="guide"){
@@ -4994,6 +5002,155 @@ function renderLoop(){ if(!LP){ view="home"; return render() } const c=LP.card, 
       <p class="small">การอธิบายให้คนอื่นฟังเป็นวิธีที่ทำให้เข้าใจลึกที่สุดวิธีหนึ่ง อีกไม่กี่วันจะมีข้อเช็กเรื่องนี้ในเรื่องราวใหม่นะ</p><button class="btn" id="lp-home">กลับหน้าแรก</button></section>`;
   }
   $v.querySelectorAll("#lp-home").forEach(b=>b.onclick=()=>{ readStop(); LP=null; view="home"; render(); window.scrollTo({top:0}) });
+}
+
+/* ---------- chunked reading (father, 17 Nov 2026: she skips lines in long blocks of explanation): one idea per screen; each
+   screen ends with one tap — a quick pick when the card has one (tap: {q, opts:[right one first, ...], ex}; the app shuffles),
+   otherwise "เข้าใจแล้ว" / "ยังงงตรงนี้" — and a last screen shows it all on one page, so it is also read whole once.
+   Exam-style questions and the reading passages are NOT chunked: reading long text is trained there on purpose.
+   Used by สมุดคาถา (the library) and by สอนใหม่อีกแบบ (the repeated-error loop). ---------- */
+const LIBRARY=CONTENT.library||{}, LIB=LIBRARY.cards||{};
+function pText(x){ return typeof x==="string"?{t:x}:(x||{t:""}) }
+const BIGP=t=>`<p style="font-size:1.08rem;line-height:1.7">${gloss(t)}</p>`;
+function tableHtml(tb){ return `<div class="lptable"><table>${tb.caption?`<caption class="small">${esc(tb.caption)}</caption>`:""}<thead><tr>${tb.cols.map(x=>`<th>${esc(x)}</th>`).join("")}</tr></thead><tbody>${tb.rows.map(r=>`<tr>${r.map(x=>`<td>${esc(x)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` }
+function contrastHtml(cs){ return `<div class="lpcontrast">${cs.map(k=>`<div class="feedback"><b>${esc(k.title)}</b><span class="small">${gloss(k.text)}</span></div>`).join("")}</div>` }
+/* a deck = {title, screens:[{b: html, say:[text to read aloud], tap?}], all: the one-page summary, sayAll} */
+function deckOf(src,c,title){ const sc=[], all=[], sayAll=[title||c.title||""];
+  const add=(b,say,tap)=>{ sc.push({b,say,tap}); all.push(b); sayAll.push(...say) };
+  if(src==="lib"){ add(BIGP(c.what),[c.what],c.whatTap);
+    (c.steps||[]).map(pText).forEach(s=>add(BIGP(s.t)+figHtml(s.fig),[s.t],s.tap));
+    if(c.trap) add(`<div class="feedback"><b>⚠️ กับดักที่เจอบ่อย</b><p>${gloss(c.trap)}</p></div>`,["กับดักที่เจอบ่อย. "+c.trap],c.trapTap) }
+  else if(src==="reteach"){ (c.text||[]).map(pText).forEach(s=>add(BIGP(s.t),[s.t],s.tap));
+    if(c.table) add(`<p class="small muted">ดูเป็นตาราง</p>${tableHtml(c.table)}`,[]);
+    if(c.contrast) add(`<p class="small muted">วางสองกรณีไว้ข้างกัน ดูว่าต่างกันตรงไหน</p>${contrastHtml(c.contrast)}`,c.contrast.map(k=>k.title+". "+k.text));
+    if(c.fig) add(figHtml(c.fig),[]) }
+  else (c.points||[]).forEach((p,i)=>add(BIGP(p)+((c.more||[])[i]?`<details class="small"><summary>ขออธิบายอีกแบบ</summary><p>${gloss(c.more[i])}</p></details>`:""),[p]));
+  const f=src==="lib"?(c.formula||[]):src==="concept"?(c.formulas||[]):[];
+  return {title:title||c.title||"",screens:sc,all:all.join("")+f.map(x=>`<div class="formula">${esc(x)}</div>`).join(""),sayAll:[...sayAll,...f]} }
+function newDeck(d){ return {d,i:0,pick:null,order:null,taps:[],stuck:[],stuckNow:false} }
+function deckHtml(K,eyebrow,intro,doneLabel){ const n=K.d.screens.length, s=K.d.screens[K.i];
+  const dots=`<div class="row" style="gap:4px;margin:4px 0">${K.d.screens.concat([0]).map((_,k)=>`<span style="width:${k===K.i?18:8}px;height:8px;border-radius:4px;background:${k<=K.i?"var(--accent)":"var(--line)"};display:inline-block;transition:width .2s"></span>`).join("")}</div>`;
+  if(!s) return `<span class="eyebrow" style="text-transform:none">${eyebrow} · อ่านรวดเดียวอีกรอบ</span>${dots}<h2>${esc(K.d.title)}</h2>
+    <p class="small muted">ทุกส่วนที่เพิ่งอ่านอยู่ในหน้าเดียวแล้ว ลองอ่านต่อกันอีกรอบ จะเห็นว่าแต่ละส่วนต่อกันยังไง</p>
+    <div>${readBtn("deck","🔊 ฟังทั้งหมด")}</div>${K.d.all}<div class="feedback" id="gloss-box" hidden></div>
+    <div class="row"><button class="btn ghost small" id="dk-back" style="border:0">← ย้อน</button><button class="btn" id="dk-done">${doneLabel}</button></div>`;
+  const t=s.tap; if(t&&!K.order) K.order=t.opts.map((_,i)=>i).sort(()=>Math.random()-.5);
+  const tapPart=t?(K.pick==null?`<p><b>เช็กนิดนึง:</b> ${esc(t.q)}</p><div class="opts">${K.order.map(k=>`<button class="opt ckopt" data-dkt="${k}">${esc(t.opts[k])}</button>`).join("")}</div>`
+      :`<div class="feedback"><b class="${K.pick===0?"ok":"no"}">${K.pick===0?"✓ ใช่เลย":`ยังไม่ใช่ · ที่ถูกคือ “${esc(t.opts[0])}”`}</b>${t.ex?`<p class="small">${gloss(t.ex)}</p>`:""}</div><div class="row"><button class="btn" id="dk-next">ไปต่อ →</button></div>`)
+    :K.stuckNow?`<div class="feedback"><span class="small">บันทึกไว้แล้วว่าตรงนี้ยังงง พ่อกับ Claude จะเห็น ลองกด 🔊 ฟัง หรืออ่านช้าๆ อีกรอบ แล้วค่อยไปต่อ</span></div><div class="row"><button class="btn" id="dk-next">ไปต่อ →</button></div>`
+    :`<div class="row"><button class="btn" id="dk-next">เข้าใจแล้ว ไปต่อ →</button><button class="btn ghost" id="dk-stuck">ยังงงตรงนี้</button></div>`;
+  return `<span class="eyebrow" style="text-transform:none">${eyebrow} · ส่วนที่ ${K.i+1} จาก ${n}</span>${dots}<h3 style="margin:0">${esc(K.d.title)}</h3>
+    ${K.i===0&&intro?`<p class="small muted">${intro}</p>`:""}<div>${readBtn("deck","🔊 ฟังส่วนนี้")}</div>${s.b}<div class="feedback" id="gloss-box" hidden></div>${tapPart}
+    ${K.i>0&&!(t&&K.pick!=null)?`<button class="btn ghost small" id="dk-back" style="border:0;padding-left:0">← ย้อน</button>`:""}` }
+function bindDeck(K,re,onDone){ bindGloss(); const s=K.d.screens[K.i];
+  const rb=$v.querySelector('[data-read="deck"]'); if(rb) rb.onclick=()=>readAloud("deck",(s?s.say:K.d.sayAll).filter(Boolean));
+  const mv=k=>{ readStop(); K.i=Math.max(0,k); K.pick=null; K.order=null; K.stuckNow=false; re(); window.scrollTo({top:0}) };
+  $v.querySelectorAll("[data-dkt]").forEach(b=>b.onclick=()=>{ K.pick=+b.dataset.dkt; if(!K.taps.some(x=>x.i===K.i)) K.taps.push({i:K.i,ok:K.pick===0}); const y=window.scrollY; re(); window.scrollTo({top:y}) });
+  const nx=document.getElementById("dk-next"); if(nx) nx.onclick=()=>mv(K.i+1);
+  const bk=document.getElementById("dk-back"); if(bk) bk.onclick=()=>mv(K.i-1);
+  const st=document.getElementById("dk-stuck"); if(st) st.onclick=()=>{ if(!K.stuck.includes(K.i)) K.stuck.push(K.i); K.stuckNow=true; const y=window.scrollY; re(); window.scrollTo({top:y}) };
+  const dn=document.getElementById("dk-done"); if(dn) dn.onclick=()=>{ readStop(); onDone() } }
+
+/* ---------- try it yourself (father, 17 Nov 2026 — she said "ไม่รู้ว่าช่วยไหม เพราะไม่มีอะไรให้ลอง"): right after an explanation,
+   2 questions from the bank on the same subtopic, no hints or steps, the result shown at once. Right-here-and-now is short-term
+   memory: the loop's own checks days later still decide "resolved". Order of preference: no reason check (q.check items are
+   kept for those later checks), not seen yet, not a twin (twins are kept for review), easier first. Checkpoint and passage
+   questions are never used. ---------- */
+function tryPick(sub,n,avoid){ const seen=new Set(mine().filter(isLesson).flatMap(a=>(a.items||[]).map(x=>x.qid)));
+  const root=q=>q.of||q.id, avR=new Set((avoid||[]).map(id=>{ const q=QBANK[id]&&QBANK[id].q; return q?root(q):id }));
+  const pool=Object.values(QBANK).filter(o=>{ const q=o.q; return subOf(q.id)===sub&&!q.optional&&!avR.has(root(q))&&o.set.kind!=="checkpoint"&&o.set.kind!=="passage"
+    &&(q.num?typeof q.answer==="number":Array.isArray(q.opts)&&q.opts.length>=2) }).map(o=>o.q);
+  const sc=q=>(q.check?4:0)+(seen.has(q.id)?2:0)+(q.of?1:0);
+  pool.sort((a,b)=>sc(a)-sc(b)||(a.level||1)-(b.level||1)||Math.random()-.5);
+  const out=[], used=new Set(); for(const q of pool){ if(out.length>=n) break; if(used.has(root(q))) continue; used.add(root(q)); out.push(q) } return out }
+function newTry(qs){ return {qs,i:0,ans:null,order:null,res:[],raw:"",start:Date.now()} }
+function tryHtml(T,eyebrow){ const q=T.qs[T.i], n=T.qs.length, a=T.ans;
+  if(!q.num&&!T.order) T.order=q.opts.map((_,i)=>i).sort(()=>Math.random()-.5);
+  const right=q.num?`${q.answerText||q.answer} ${q.unit||""}`:q.opts[q.a];
+  return `<span class="eyebrow" style="text-transform:none">${eyebrow} · ลองเองข้อ ${T.i+1} จาก ${n}</span>
+    ${T.i===0&&a==null?`<p class="small muted">ไม่มีคำใบ้ ไม่มีขั้นตอนให้ดู ลองคิดเองเต็มที่ ผิดได้ ข้อนี้ไว้ดูว่าคำอธิบายช่วยไหม</p>`:""}
+    <p class="prompt">${qLines(gloss(q.q))}</p>${figHtml(q.fig)}${friendHtml(q)}<div class="feedback" id="gloss-box" hidden></div>
+    ${a==null?(q.num?`<div class="row" style="gap:8px"><input id="tr-num" class="numin" inputmode="decimal" autocomplete="off" value="${esc(T.raw)}" placeholder="พิมพ์คำตอบ">${q.unit?`<span>${esc(q.unit)}</span>`:""}<button class="btn" id="tr-check">ตรวจ</button></div>`
+        :`<div class="opts">${T.order.map(k=>`<button class="opt" data-tro="${k}">${esc(q.opts[k])}</button>`).join("")}</div>`)
+      :`<div class="feedback"><b class="${a.ok?"ok":"no"}">${a.ok?"✅ ถูกแล้ว":"ยังไม่ใช่ · คำตอบคือ "+esc(right)}</b><p>${gloss(q.ex)}</p></div><button class="btn" id="tr-next">${T.i+1<n?"ข้อต่อไป →":"ดูผล"}</button>`}` }
+function bindTry(T,re,onDone){ bindGloss(); const q=T.qs[T.i];
+  const set=ok=>{ T.ans={ok}; T.res.push({qid:q.id,ok}); const y=window.scrollY; re(); window.scrollTo({top:y}) };
+  $v.querySelectorAll("[data-tro]").forEach(b=>b.onclick=()=>set(+b.dataset.tro===q.a));
+  const ni=document.getElementById("tr-num");
+  if(ni){ ni.oninput=()=>{ T.raw=ni.value }; const go=()=>{ const raw=ni.value.trim(), v=parseAns(raw); if(raw===""||isNaN(v)){ ni.focus(); return } set(Math.abs(v-q.answer)<=(q.tol||0)) };
+    document.getElementById("tr-check").onclick=go; ni.onkeydown=e=>{ if(e.key==="Enter") go() } }
+  const nx=document.getElementById("tr-next"); if(nx) nx.onclick=()=>{ if(T.i+1<T.qs.length){ T.i++; T.ans=null; T.order=null; T.raw=""; re(); window.scrollTo({top:0}) } else onDone() } }
+const tryScore=r=>r.reduce((s,x)=>s+(x.ok?10:5),0);
+
+/* ---------- สมุดคาถา, the library (father, 17 Nov 2026: after a wrong answer she had nowhere to go back and learn the idea,
+   e.g. "Rf คืออะไร"): read any subtopic again, opened from every wrong answer ("📖 ไปอ่านเรื่องนี้") or from home.
+   Source per subtopic, in order: its own card (content/library.json, opens with "what is it" before any formula) → the
+   summary card of the lesson that teaches it (until a card is written) → the loop's reteach card. Reading ends with 2
+   try-it questions. Saved as type "lib" (no items, so it never counts as practice or as a miss). ---------- */
+let LB=null;
+function libConceptSet(sub){ const n={}; Object.values(QBANK).forEach(o=>{ if(subOf(o.q.id)===sub&&o.set.kind==="lesson"&&o.set.concept&&(o.set.concept.points||[]).length) n[o.set.id]=(n[o.set.id]||0)+1 });
+  const top=Object.entries(n).sort((a,b)=>b[1]-a[1])[0]; return top?SETS.find(s=>s.id===top[0]):null }
+function libSource(sub){ if(LIB[sub]) return {src:"lib",c:LIB[sub]}; const s=libConceptSet(sub); if(s) return {src:"concept",c:s.concept,set:s}; if(RETEACH[sub]) return {src:"reteach",c:RETEACH[sub]}; return null }
+function libGuides(sub){ return mine().filter(a=>a.type==="loop"&&a.act==="guide"&&a.sub===sub&&a.text).map(a=>a.text) }
+function libMissed(list){ const m={}; list.filter(a=>isLesson(a)||a.type==="recall").forEach(a=>(a.items||[]).forEach(x=>{ if(x.correct===false&&!x.skipped&&!x.notTaught&&!x.timeout){ const s=subOf(x.qid); if(s&&libSource(s)) m[s]=(m[s]||0)+1 } }));
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([s,k])=>({s,k})) }
+function openLib(sub,from,ret){ LB={mode:"list",sub:null,from:from||null,ret:ret||(from?"session":view),fromList:!sub}; if(sub) libStart(sub); view="lib"; render(); window.scrollTo({top:0}) }
+function libStart(sub){ const so=libSource(sub); Object.assign(LB,{sub,so,mode:so?"deck":"none",saved:false,xp:0,start:Date.now(),T:null,
+  K:so?newDeck(deckOf(so.src,so.c,so.src==="lib"?so.c.title:subName(sub))):null,
+  tq:so?tryPick(sub,2,LB.from?[LB.from.qid]:[]):[]}) }
+function libSave(){ if(!LB||LB.saved||!LB.so) return; const K=LB.K, sec=Math.round((Date.now()-LB.start)/1000), read=K.i>=K.d.screens.length;
+  if(!read&&sec<8&&!K.taps.length) return; LB.saved=true;
+  const tries=LB.T?LB.T.res:[], first=!mine().some(a=>a.type==="lib"&&a.sub===LB.sub&&dayKey(a.endedAt)===todayKey());
+  LB.xp=first&&read?10+tryScore(tries):0;
+  saveAttempt({type:"lib",sub:LB.sub,setId:"lib-"+LB.sub,topic:"สมุดคาถา: "+subName(LB.sub),src:LB.so.src+(LB.so.set?":"+LB.so.set.id:""),from:LB.from&&LB.from.qid||null,
+    startedAt:new Date(LB.start).toISOString(),endedAt:new Date().toISOString(),durationSec:sec,read,screens:K.d.screens.length,reached:Math.min(K.i+1,K.d.screens.length),
+    taps:K.taps,stuck:K.stuck,tries,correct:0,total:0,xp:LB.xp,items:[]}) }
+function libLink(q){ const s=subOf(q.id); if(!s||!libSource(s)) return ""; return `<button class="btn ghost small" id="go-lib-q" data-sub="${esc(s)}" type="button">📖 ไปอ่านเรื่องนี้: ${esc(subName(s))}</button>` }
+function libEntry(){ return `<div class="row" style="justify-content:space-between;align-items:center;gap:8px;margin:4px 2px"><span class="small muted">📚 สมุดคาถา: กลับไปอ่านเรื่องไหนก็ได้ เช่น ค่า Rf</span><button class="btn ghost small" id="go-lib" type="button">เปิดสมุด</button></div>` }
+function renderLib(){ if(!LB){ view="home"; return render() } const re=()=>renderLib();
+  const back=`<button class="btn ghost" id="lb-back" style="border:0;padding-left:0">${LB.from?"← กลับไปที่ข้อเดิม":LB.mode!=="list"&&LB.fromList?"← กลับไปที่สมุด":"← กลับหน้าแรก"}</button>`;
+  if(LB.mode==="list"){ const miss=libMissed(mine()).slice(0,8);
+    const key=s=>{ const c=LIB[s]; return [subName(s),c&&c.title,c&&c.what].filter(Boolean).join(" ").toLowerCase() };
+    const btn=(s,extra)=>`<button class="btn ghost small" data-lbs="${esc(s)}" data-k="${esc(key(s))}" type="button" style="text-align:left">${LIB[s]?"📖":"📄"} ${esc(subName(s))}${extra||""}</button>`;
+    const groups=((CONTENT.spells&&CONTENT.spells.spells)||[]).map(sp=>({sp,subs:(CUR[sp.id]||[]).filter(s=>libSource(s.id))})).filter(g=>g.subs.length);
+    $v.innerHTML=`<section class="card"><span class="eyebrow">📚 สมุดคาถา</span><h2>อ่านทบทวนทีละเรื่อง</h2>
+      <p class="small muted">เลือกเรื่องที่อยากเข้าใจอีกรอบ อ่านทีละส่วน แล้วลองทำเอง 2 ข้อ · 📖 มีการ์ดเฉพาะเรื่องนี้ · 📄 ใช้สรุปของบทเรียนไปก่อน</p>
+      <input id="lb-q" class="numin" style="font-size:1rem;text-align:left;width:100%" placeholder="ค้นเรื่อง เช่น Rf มัธยฐาน ความหนาแน่น" autocomplete="off">
+      ${miss.length?`<div id="lb-miss"><h3>เรื่องที่เคยพลาด</h3><div class="row" style="gap:6px;flex-wrap:wrap">${miss.map(m=>btn(m.s,` <span class="muted">(${m.k})</span>`)).join("")}</div></div>`:""}
+      <h3 id="lb-allh">ทุกคาถา</h3>
+      ${groups.map(g=>`<details class="lbg"><summary>${esc(g.sp.name)} <span class="small muted">· ${esc(g.sp.topic||"")} (${g.subs.length})</span></summary><div class="row" style="gap:6px;flex-wrap:wrap;margin:6px 0">${g.subs.map(s=>btn(s.id)).join("")}</div></details>`).join("")}
+      <p class="small muted" id="lb-none" hidden>ไม่เจอเรื่องนี้ ลองคำอื่น หรือพิมพ์ถามพ่อกับ Claude ตรงช่อง “พิมพ์ถามตรงจุดที่งง” ในชุดฝึก</p>
+      ${back}</section>`;
+    /* filter in place (no re-render), so Thai typing is not interrupted */
+    const inp=document.getElementById("lb-q"); inp.oninput=()=>{ const q=inp.value.trim().toLowerCase(); let any=false;
+      const mi=document.getElementById("lb-miss"); if(mi) mi.hidden=!!q; document.getElementById("lb-allh").textContent=q?"ผลการค้น":"ทุกคาถา";
+      $v.querySelectorAll("details.lbg").forEach(d=>{ let n=0; d.querySelectorAll("[data-lbs]").forEach(b=>{ const ok=!q||b.dataset.k.includes(q); b.hidden=!ok; if(ok) n++ }); d.hidden=!n; d.open=!!q&&n>0; if(n) any=true });
+      document.getElementById("lb-none").hidden=any };
+    $v.querySelectorAll("[data-lbs]").forEach(b=>b.onclick=()=>{ libStart(b.dataset.lbs); re(); window.scrollTo({top:0}) });
+  } else if(LB.mode==="deck"){ const so=LB.so, n=LB.tq.length;
+    const intro=so.src==="concept"?`ยังไม่มีการ์ดเฉพาะเรื่องนี้ ใช้สรุปของบทเรียน “${esc(so.set.topic)}” ไปก่อน เรื่องนี้อยู่ในบางส่วนของสรุป`
+      :`อ่านทีละส่วน${n?` จบแล้วลองทำเอง ${n} ข้อ`:""}${LB.from?" แล้วค่อยกลับไปที่ข้อเดิม":""}`;
+    $v.innerHTML=`<section class="card concept">${deckHtml(LB.K,"📚 สมุดคาถา",intro,n?`ลองทำเอง ${n} ข้อ →`:"อ่านจบแล้ว")}${back}</section>`;
+    bindDeck(LB.K,re,()=>{ if(n){ LB.T=newTry(LB.tq); LB.mode="try" } else { LB.mode="done"; libSave() } re(); window.scrollTo({top:0}) });
+  } else if(LB.mode==="try"){
+    $v.innerHTML=`<section class="card">${tryHtml(LB.T,"📚 "+esc(subName(LB.sub)))}${back}</section>`;
+    bindTry(LB.T,re,()=>{ LB.mode="done"; libSave(); re(); window.scrollTo({top:0}) });
+  } else if(LB.mode==="done"){ const r=LB.T?LB.T.res:[], ok=r.filter(x=>x.ok).length, g=libGuides(LB.sub);
+    $v.innerHTML=`<section class="card"><span class="eyebrow" style="text-transform:none">📚 ${esc(subName(LB.sub))}</span>
+      <h2>${r.length?`ลองเองถูก ${ok} จาก ${r.length}`:"อ่านจบแล้ว"}${LB.xp?` · +${LB.xp} XP`:""}</h2>
+      ${r.length?`<p class="small">${ok===r.length?"ดีมาก คำอธิบายนี้น่าจะช่วยได้ แต่ถูกทันทีหลังอ่านยังเป็นความจำระยะสั้น อีกไม่กี่วันระบบจะเอาเรื่องนี้กลับมาในเรื่องราวใหม่ ถ้ายังทำได้ แปลว่าคงทนจริง"
+        :"ยังพลาดอยู่ ไม่เป็นไรเลย แปลว่าเรื่องนี้ต้องมีคำอธิบายแบบอื่น พ่อกับ Claude จะเห็นผลนี้ และจะหาวิธีอธิบายใหม่ให้"}</p>`:""}
+      ${g.length?`<div class="feedback"><b>คู่มือผู้เล่นที่เธอเคยเขียนเรื่องนี้</b>${g.map(t=>`<p class="small">“${esc(t)}”</p>`).join("")}</div>`:""}
+      <div class="row">${LB.from?`<button class="btn" id="lb-back2" type="button">กลับไปที่ข้อเดิม</button>`:`<button class="btn" id="lb-list" type="button">เลือกเรื่องอื่น</button>`}</div>
+      ${LB.from?"":back}</section>`;
+  } else {
+    $v.innerHTML=`<section class="card"><span class="eyebrow">📚 สมุดคาถา</span><p>เรื่องนี้ยังไม่มีคำอธิบายในสมุด พ่อกับ Claude จะเขียนเพิ่ม</p>${back}</section>`;
+  }
+  const leave=()=>{ readStop(); libSave(); if(!LB.from&&LB.fromList&&LB.mode!=="list"){ LB.mode="list"; LB.sub=null; re(); window.scrollTo({top:0}); return }
+    const r=LB.ret; LB=null; view=r==="session"&&S&&S.active?"session":r==="map"?"map":"home"; render();
+    if(view==="session"){ const t=document.getElementById("next")||document.getElementById("go-lib-q"); if(t) t.scrollIntoView({block:"center"}) } else window.scrollTo({top:0}) };
+  $v.querySelectorAll("#lb-back,#lb-back2").forEach(b=>b.onclick=leave);
+  const ls2=document.getElementById("lb-list"); if(ls2) ls2.onclick=()=>{ LB.mode="list"; LB.sub=null; re(); window.scrollTo({top:0}) };
 }
 
 /* ---------- minimum day (approved 17 Nov): a short set of 6–8 questions that still counts as a full day ---------- */
@@ -5102,6 +5259,7 @@ function loopCard(list){ let L=null; try{ L=loopTodo(list) }catch(e){} if(!L) re
     <div class="row"><button class="btn" id="loop-go" data-act="${L.act}" data-sub="${esc(L.ep.sub)}">${g?"เขียนคู่มือ":"เริ่ม"}</button></div></div></div>` }
 function bindUnderstandHome(list,p){ const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
   on("mini-go",()=>startMini());
+  on("go-lib",()=>openLib(null,null,"home"));
   on("cp-go",()=>{ view="cpintro"; render(); window.scrollTo({top:0}) });
   on("paper-go",async e=>{ const b=e.target; if(b.dataset.armed!=="1"){ b.dataset.armed="1"; b.textContent="ทำครบ 90 นาทีแล้ว กดอีกครั้งเพื่อบันทึก"; return } b.disabled=true; const c=p.need.paper, now=new Date().toISOString();
     await saveAttempt({type:"paper",setId:"paper-"+(c&&c.date||isoDay(todayKey())),subject:c&&c.subject||"",topic:"ข้อสอบจำลองบนกระดาษ"+(c&&c.subject?" "+c.subject:""),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:60,items:[]}); renderHome() });
@@ -5118,6 +5276,16 @@ function waveIntro(){ if(view!=="home"||document.getElementById("sheet")) return
     :`<p class="small">ช่องเขียนเหตุผลยาวๆ เปลี่ยนเป็น <b>เลือกเหตุผลที่ถูก</b> ทั้งตอนตอบถูกและตอนพลาด ข้อที่พลาดแต่เลือกเหตุผลถูก แปลว่าเริ่มเห็นทางแล้ว</p><p class="small">บางข้อจะมีช่องเหตุผลของเธอ 1 บรรทัด ไม่บังคับ เว้นว่างได้</p>`,
     actions:[{label:"เข้าใจแล้ว",fn:closeSheet}]}); return true }
 
+/* parent page: what she opened in สมุดคาถา, and which subtopics she opened that have no card of their own yet (= what to write next) */
+function libSection(list){ const L=list.filter(a=>a.type==="lib").sort((a,b)=>new Date(b.endedAt)-new Date(a.endedAt)), noCard=[...new Set(L.filter(a=>!LIB[a.sub]).map(a=>a.sub))];
+  const pc=xs=>xs&&xs.length?`${xs.filter(x=>x.ok).length}/${xs.length}`:"–";
+  return `<h3>📚 สมุดคาถา: น้องเปิดอ่านเอง</h3>
+    <p class="small muted">เปิดจากข้อที่ตอบผิด (ปุ่ม “ไปอ่านเรื่องนี้”) หรือจากหน้าแรก · อ่านทีละส่วน มีเช็กสั้นๆ ระหว่างอ่าน แล้วลองทำเอง 2 ข้อ · ลองเองถูกทันทีเป็นความจำระยะสั้น ยังไม่ใช่หลักฐานว่าเข้าใจคงทน</p>
+    ${L.length?`<div class="rdtable"><table><thead><tr><th>วันที่</th><th>เรื่อง</th><th>เปิดจาก</th><th>อ่าน</th><th>เช็กระหว่างอ่าน</th><th>ลองเอง</th></tr></thead><tbody>${L.slice(0,15).map(a=>`<tr>
+      <td class="small">${fmtDay(new Date(a.endedAt).getTime())}</td><td class="small">${esc(subName(a.sub))}${LIB[a.sub]?"":`<br><span class="muted">ยังไม่มีการ์ดเฉพาะ</span>`}</td><td class="small">${a.from?"ข้อที่ตอบผิด":"หน้าแรก"}</td>
+      <td class="small">${a.read?"จบ":`ถึงส่วนที่ ${a.reached||0}/${a.screens||"?"}`} · ${Math.max(1,Math.round((a.durationSec||0)/60))} นาที${(a.stuck||[]).length?`<br>กด “ยังงง” ${a.stuck.length} ส่วน`:""}</td>
+      <td class="small">${pc(a.taps)}</td><td class="small">${pc(a.tries)}</td></tr>`).join("")}</tbody></table></div>`:`<p class="small muted">ยังไม่เคยเปิด</p>`}
+    ${noCard.length?`<p class="small"><b>เรื่องที่น้องเปิดแต่ยังไม่มีการ์ดเฉพาะ</b> (ผมจะเขียนการ์ดเรื่องเหล่านี้ก่อน): ${noCard.map(x=>esc(subName(x))).join(" · ")}</p>`:""}` }
 /* ---------- parent page: misconceptions, the understanding features, minimum days, checkpoints and mock papers ---------- */
 let plog=[];
 function understandSection(list){ const t=todayKey(), eps=miscEps(list), open=eps.filter(e=>!e.resolvedAt).sort((a,b)=>a.openAt-b.openAt), solved=eps.filter(e=>e.resolvedAt);
@@ -5135,10 +5303,12 @@ function understandSection(list){ const t=todayKey(), eps=miscEps(list), open=ep
     ${open.length?`<div class="rdtable"><table><thead><tr><th>เรื่องย่อย</th><th>เปิดเมื่อ</th><th>เปิดมา</th><th>ขั้นตอนตอนนี้</th><th>ข้อเช็ก (ต้อง 2)</th><th>ที่น้องตอบพลาด</th><th>พ่อ</th></tr></thead><tbody>
       ${open.map(e=>{ const sg=miscStage(e), tk=talked(e.sub), d=dOpen(e), np=sg==="check"||sg==="guide"?loopPool(e).length:null;
         return `<tr><td>${esc(subName(e.sub))}<br><span class="small muted">${esc(e.sub)}</span></td><td class="small">${fmtDay(e.openDay)}</td><td style="color:${d>21?"#A8382E":"inherit"}">${d} วัน${e.openDay<loopFrom?`<br><span class="small muted">พลาดซ้ำตั้งแต่ก่อนมีวงจรนี้ นับจาก ${fmtDay(loopFrom)}</span>`:""}</td>
-          <td class="small">${ST[sg]}${e.guide?`<br><span class="muted">คู่มือ: “${esc(e.guide)}”</span>`:""}${np===0?`<br><b style="color:#A8382E">ไม่มีข้อที่มีตัวเลือกเหตุผลในเรื่องนี้ (ผมต้องเขียน)</b>`:""}</td>
+          <td class="small">${ST[sg]}${(()=>{ const t=list.filter(a=>a.type==="loop"&&a.act==="try"&&a.sub===e.sub&&+new Date(a.endedAt)>=(e.reteachAt||0)).slice(-1)[0], rt=list.find(a=>a.type==="loop"&&a.act==="reteach"&&a.sub===e.sub&&+new Date(a.endedAt)>=(e.reteachAt||0)-1000);
+            return (t?`<br>ลองเองทันทีหลังสอนใหม่: ถูก ${t.tries.filter(x=>x.ok).length}/${t.tries.length}`:"")+(rt&&(rt.stuck||[]).length?`<br>กด “ยังงง” ${rt.stuck.length} ส่วน`:"") })()}${e.guide?`<br><span class="muted">คู่มือ: “${esc(e.guide)}”</span>`:""}${np===0?`<br><b style="color:#A8382E">ไม่มีข้อที่มีตัวเลือกเหตุผลในเรื่องนี้ (ผมต้องเขียน)</b>`:""}</td>
           <td class="small">${e.ev.length}/2${e.ev.length?` · ล่าสุด ${fmtDay(e.ev[e.ev.length-1].d)}`:""}</td><td class="small">${wrongs(e).map(esc).join("<br>")} <span class="muted">(${e.misses.length} ครั้ง)</span></td>
           <td class="small">${tk.length?`✅ คุยแล้ว ${fmtDay(new Date(tk[0].at).getTime())}`:db?`<button class="btn ghost small" data-dadtalk="${esc(e.sub)}">คุยแล้ว</button>`:"–"}</td></tr>` }).join("")}</tbody></table></div>`:`<p class="small muted">ยังไม่มีเรื่องที่พลาดซ้ำข้ามวัน</p>`}
     ${solved.length?`<details class="small"><summary>แก้ได้แล้ว (${solved.length})</summary>${solved.map(e=>`<div class="topic"><span>${esc(subName(e.sub))}</span><span class="muted">${fmtDay(e.openDay)} → ${fmtDay(e.resolvedDay)} · ${Math.round((e.resolvedDay-e.openDay)/DAY)} วัน</span></div>`).join("")}</details>`:""}
+    ${libSection(list)}
     <h3>ปรับระบบให้เน้นความเข้าใจ (พ่ออนุมัติ 17 พ.ย.)</h3>
     <p class="small">ช่วงที่ 1 เริ่ม ${esc((CAL.understand||{}).wave1||"–")}: ทายก่อนคิด ${pc(pred.map(x=>x.predictOk))} ข้อทายตรง · หาที่เพื่อนพลาด ${pc(fr.map(x=>x.correct))} ข้อถูก · ข้อแฝดแบบเปลี่ยนสถานการณ์ ${its.filter(x=>x.of&&x.sit).length} ข้อ<br>
       ช่วงที่ 2 เริ่ม ${esc((CAL.understand||{}).wave2||"–")}: เลือกเหตุผลถูกหลังตอบถูก ${pc(ckR.map(x=>x.checkOk))} · หลังตอบพลาด ${pc(ckW.map(x=>x.checkOk))} · เหตุผล 1 บรรทัด เขียน ${own.filter(x=>(x.ownWhy||"").trim()).length} จาก ${own.length} ข้อ</p>
@@ -5439,7 +5609,7 @@ async function setupAsk(sum){ const skips=sum.skips||[], conf=sum.conf||[];
   };
 }
 
-function route(){ const h=location.hash.replace("#",""); if(h==="parent"){view="parent"} else if(h==="map"){view="map"} else if(h==="den"){view="den";denMsg=""} else if(!["session","intro","feedback","done","skip","send","vocab","mission","notes","words","adv","elem","loop","cpintro"].includes(view)){view="home"} else if(view==="done"){view="home"} render() }
+function route(){ const h=location.hash.replace("#",""); if(h==="parent"){view="parent"} else if(h==="map"){view="map"} else if(h==="den"){view="den";denMsg=""} else if(!["session","intro","feedback","done","skip","send","vocab","mission","notes","words","adv","elem","loop","cpintro","lib"].includes(view)){view="home"} else if(view==="done"){view="home"} render() }
 /* thousands separators everywhere on screen (father, 11 Nov): 10000 → 10,000. Text nodes only; years (19xx/20xx/24xx–26xx),
    decimals' fractional parts, inputs, textareas and code are left alone. */
 const NUM_RE=/(?<![\d.,:\-])\d{4,}(?![\d,])/g;
