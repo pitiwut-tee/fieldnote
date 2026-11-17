@@ -191,6 +191,31 @@ checks every field below.
 - Minimum day: `daymode` record with `level:"min"`; the day's mission is one `type:"mini"` set (6–8 questions).
 
 
+## Option length gives nothing away (teaching audit, 17 Nov 2026)
+
+The audit found the right reason was the longest option in 92–95% of `check`s, so "pick the longest" scored
+without understanding (and the misconception "resolved" rule relies on picking the right reason). Rebalanced late on
+17 Nov (queue 1); `tools/verify.js` now enforces, over every choice in `content/` (questions, `check`, `predict`,
+reteach taps and blank steps, library taps):
+- per item: a right option of 20+ characters may not be more than 15% longer than the longest wrong one;
+- per kind: the right option may be the strictly longest in at most 40% of items and the strictly shortest in at
+  most 45% (so "pick the shortest" does not work either). The verify output prints the current counts.
+How to write so it passes: write the right option plainly and give each wrong option its own full (wrong) reason
+("…เพราะ…"), so all options read like real reasoning of similar length. Vary which one is longest. Never write a
+distractor about test-taking ("เลือกข้อที่ยาวที่สุด"); every wrong option is a real mistake in the subject.
+
+## "What does this number mean" and "which method" items (`ask`, 17 Nov 2026)
+
+Most of the bank asks to compute; she can follow a formula without knowing what the result means (the Rf case).
+Every formula subtopic gets at least one `ask:"meaning"` item (what the number/result tells us, what the unit
+says, which statement must be true) and one `ask:"method"` item ("ยังไม่ต้องคำนวณ": which formula, which base, which
+steps). Both need `sub`. Their `ex` opens with what the quantity means, before any formula, then names the most
+tempting wrong option and the mistake behind it. They are excluded from the "half of level-2/3 math answerable as a
+number" rule. First sets: `048-meaning-sci-1` (s2.3 s14.5 s4.4 s4.2 s4.6 s3.3 s14.3 s16.1) and `049-meaning-math-1`
+(m22.6 m22.7 m22.9 m22.11 m3.4 m3.5 m17.1 m5.2 m8.2). Still without: s4.5 ppm, s12.2 Q = mcΔt, m2.4, m3.3, m4.2,
+m19.3 — write them when those lessons are retrofitted (queue "retrofit the 19 old lessons"). The app change that
+pairs a compute item with a meaning item on the same `sub` ("ใช้สูตรได้แต่ไม่เข้าใจ") reads `ask`.
+
 ## Why she chose a wrong option (optErr)
 
 Her own "why I got it wrong" taps are often unreliable, so the content itself says what each wrong option means.

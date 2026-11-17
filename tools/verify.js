@@ -56,6 +56,8 @@ for(const f of files){
     if(q.friend&&q.num) warn(`${w}: a friend's-mistake item is a choice question (options describe the mistake)`);
     if(q.predict!=null){ const pd=q.predict; if(!(pd&&pd.q&&Array.isArray(pd.opts)&&pd.opts.length>=2&&new Set(pd.opts).size===pd.opts.length&&pd.a===0)) warn(`${w}: predict needs {q, opts:[2+ distinct, right one first], a:0, ex?}`) }
     if(q.sit!=null&&!(typeof q.sit==="string"&&q.sit.trim())) warn(`${w}: sit must be a short situation label`);
+    /* "what does this number mean" / "which method" items (teaching audit 17 Nov 2026): ask = meaning | method, with its subtopic */
+    if(q.ask!=null&&!(["meaning","method"].includes(q.ask)&&q.sub)) warn(`${w}: ask must be "meaning" or "method", and the item needs sub (its subtopic)`);
     if(q.check&&s.added>=WAVE2&&q.check.opts.length!==3) warn(`${w}: from ${WAVE2} a reason check has exactly 3 reasons (pick the right one from 3)`);
     if(q.check&&q.check.a!==0&&s.added>=WAVE1) warn(`${w}: write the right reason first (check.a = 0); the app shuffles`);
   }
@@ -65,7 +67,7 @@ for(const f of files){
 { const R=/^\s*([−-]?[\d,]*\.?\d+(?:\s*\/\s*\d+)?)\s*(.*)$/;
   const numable=q=>q.num||Array.isArray(q.opts)&&q.opts.every(o=>R.test(String(o)))&&new Set(q.opts.map(o=>String(o).match(R)[2].trim())).size===1;
   for(const f of files){ let s; try{ s=J("content/sets/"+f) }catch(e){ continue } if(!(s.added>="2026-11-08")||s.subject!=="คณิตศาสตร์"||s.kind==="passage") continue;
-    const qs=[...(s.practice||[]),...(s.challenge?[s.challenge]:[])].filter(q=>q.level>=2), n=qs.filter(numable).length;
+    const qs=[...(s.practice||[]),...(s.challenge?[s.challenge]:[])].filter(q=>q.level>=2&&!q.ask), n=qs.filter(numable).length;   /* meaning/method items are about choosing, not computing: not counted */
     if(qs.length&&n<Math.ceil(qs.length/2)) warn(`${f}: at least half of level-2/3 math questions should be answerable as a number (has ${n}/${qs.length})`); } }
 /* lessons and mixed sets written from 2026-11-05 on: every question has a context tag, lessons have a real-life "use" line */
 for(const f of files){ let s; try{ s=J("content/sets/"+f) }catch(e){ continue } if(!(s.added>="2026-11-05")) continue;
@@ -139,6 +141,33 @@ const tapOk=(t,w)=>{ if(t==null) return; if(!(t&&t.q&&Array.isArray(t.opts)&&t.o
     tapOk(c.whatTap,`${w} what`); tapOk(c.trapTap,`${w} trap`);
     if(c.formula!=null&&!Array.isArray(c.formula)) warn(`${w}: formula is a list of lines`) }
   for(const [sub,c] of Object.entries((J("content/reteach.json").cards)||{})) (c.text||[]).forEach((x,i)=>{ if(typeof x!=="string"){ if(!x||!x.t) warn(`reteach.json ${sub} text ${i+1}: string or {t, tap?}`); else tapOk(x.tap,`reteach.json ${sub} text ${i+1}`) } }) }
+/* option-length cue (teaching audit 17 Nov 2026, father approved): the right option was the longest in 92-95% of reason
+   checks, so "pick the longest" scored without understanding. Two rules over every choice in content/:
+   (1) per item: a right option of 20+ characters may not be more than 15% longer than the longest wrong one;
+   (2) per kind (question options / reasons / card taps and blank steps): the right option may be the strictly longest
+       in at most 40% of items and the strictly shortest in at most 45% (so "pick the shortest" does not work either).
+   Length = characters without Thai combining marks. All-number options (e.g. "12 g", "3.5") are skipped. */
+{ const L=s=>[...String(s)].filter(c=>!/\p{M}/u.test(c)).length, numOpt=s=>/^[\s\d.,\-−+×÷/:%°^()=<>a-zA-Z²³]*$/.test(String(s))&&String(s).length<14;
+  const kinds={question:[0,0,0],reason:[0,0,0],card:[0,0,0]};
+  const one=(kind,w,opts,a)=>{ if(!Array.isArray(opts)||opts.length<2||!(a>=0&&a<opts.length)||opts.every(numOpt)) return;
+    const ls=opts.map(L), r=ls[a], wr=ls.filter((_,j)=>j!==a), mx=Math.max(...wr), mn=Math.min(...wr);
+    if(r>=20&&r>1.15*mx) warn(`${w}: the right option is much longer than every wrong one (${r} vs ${mx} characters); shorten it or give a wrong option a fuller wrong reason`);
+    const k=kinds[kind]; k[0]++; if(r>mx) k[1]++; if(r<mn) k[2]++ };
+  const qAll=(w,q)=>{ if(!q||typeof q!=="object") return; if(Array.isArray(q.opts)&&q.q) one("question",`${w} ${q.id}`,q.opts,q.a);
+    if(q.check) one("reason",`${w} ${q.id} check`,q.check.opts,q.check.a); if(q.predict) one("reason",`${w} ${q.id} predict`,q.predict.opts,q.predict.a) };
+  for(const f of files){ let s; try{ s=J("content/sets/"+f) }catch(e){ continue } [...(s.warm||[]),...(s.practice||[]),...(s.challenge?[s.challenge]:[])].forEach(q=>qAll(f,q)) }
+  for(const [k,arr] of Object.entries((J("content/variants.json").variants)||{})) (arr||[]).forEach(v=>qAll("variants.json",v));
+  const tap=(w,t)=>{ if(t&&Array.isArray(t.opts)) one("card",w,t.opts,0) };
+  for(const [sub,c] of Object.entries((J("content/reteach.json").cards)||{})){ (c.text||[]).forEach((x,i)=>tap(`reteach.json ${sub} text ${i+1}`,x&&x.tap));
+    tap(`reteach.json ${sub} contrast`,c.contrastTap); tap(`reteach.json ${sub} table`,c.tableTap);
+    (c.worked||[]).forEach((x,i)=>(x.steps||[]).forEach((s,k)=>{ if(s&&s.opts) one("card",`reteach.json ${sub} worked ${i+1} step ${k+1}`,s.opts,0) })) }
+  { const LB=J("content/library.json"); for(const [sub,c] of Object.entries(LB.cards||{})){ tap(`library.json ${sub} what`,c.whatTap); tap(`library.json ${sub} trap`,c.trapTap);
+    (c.steps||[]).forEach((x,i)=>tap(`library.json ${sub} step ${i+1}`,x&&x.tap)) } }
+  for(const [kind,[n,lo,sh]] of Object.entries(kinds)) if(n>=10){
+    if(lo>0.4*n) warn(`option length (${kind}): the right option is the longest in ${lo} of ${n} items (max 40%); rebalance so length gives nothing away`);
+    if(sh>0.45*n) warn(`option length (${kind}): the right option is the shortest in ${sh} of ${n} items (max 45%)`) }
+  console.log(`option length: right option longest / shortest — ${Object.entries(kinds).map(([k,[n,lo,sh]])=>`${k} ${lo}/${sh} of ${n}`).join(" · ")}`) }
+
 for(const id of cal.lessonQueue||[]) if(!setIds.has(id)) warn(`calendar.json lessonQueue: unknown set ${id}`);
 for(const sp of cal.currentSpells||[]) if(!spells.has(sp)) warn(`calendar.json: unknown current spell ${sp}`);
 for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) warn(`calendar.json: bad date ${d}`);

@@ -176,11 +176,16 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    a "meaning" item and a "which method" item per formula subtopic, `ex` opens with what the number means; retrofit
    the 19 old lessons (hook, meaning point before the formula, `more`) by error priority; pair compute + meaning
    items so the parent page can flag "ใช้สูตรได้แต่ไม่เข้าใจ"; flag cards finished faster than they can be read;
-   a "อธิบายโดยไม่ใช้สูตร" question in every dad brief. **Father approved all six, 17 Nov.** Mapped to the front-page
-   queue: คิว 1 = (1) option lengths + verify rule, (2) meaning + which-method items, `ex` meaning-first, plus 2c ·
-   คิว 2 = item 4 below (after his first dad talk; keep the "อธิบายโดยไม่ใช้สูตร" questions in every brief — week 1
-   already has two) · คิว 3 = app: (3) compute/meaning pair flag + (5) too-fast card flag · คิว 4 = item 3 (รอบ 2) ·
-   คิว 5 = (4) retrofit the 19 old lessons by error priority · คิว 6 = read checkpoint 1 results (6–7 Dec, Sonnet).
+   a "อธิบายโดยไม่ใช้สูตร" question in every dad brief. **Father approved all six, 17 Nov.**
+   **DONE 17 Nov late (old คิว 1):** (1) option lengths rebalanced in all content + verify rule (docs/writing-content.md
+   "Option length"); (2) `ask:"meaning"|"method"` items, sets 048 `meaning-sci-1` and 049 `meaning-math-1` (in
+   `lessonQueue` after fix-math-1 and math-congruence-1); 2c: library cards for the 9 open subtopics, a `tap` on every
+   reteach paragraph (blank steps already had `opts`), glossary "ตำแหน่ง" overridden in `library.json` terms.
+   Front-page queue after that (renumbered 17 Nov): คิว 1 = item 4 below (after his first dad talk; keep the
+   "อธิบายโดยไม่ใช้สูตร" questions in every brief) · คิว 2 = app: (3) compute/meaning pair flag (pair by `sub`, meaning
+   items carry `ask`) + (5) too-fast card flag · คิว 3 = item 3 (รอบ 2) · คิว 4 = (4) retrofit the 19 old lessons by
+   error priority, adding meaning/method items for the formula subtopics still without them · คิว 5 = read
+   checkpoint 1 results (6–7 Dec, Sonnet).
 3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
 4. **Sonnet chat after his first dad talk (~Sun 22 Nov):** read his notes in the "10 นาทีกับพ่อ" tab, twin questions
    for those patterns, week-2 brief, then add the Sunday dad-brief step to AUTOMATION.md.
