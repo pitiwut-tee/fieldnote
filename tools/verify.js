@@ -259,7 +259,7 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
       worked:[{q:"ตัวอย่าง 1",steps:["ขั้น 1","ขั้น 2","ขั้น 3"],answer:"ทดสอบ"},{q:"ตัวอย่าง 2",steps:["ขั้น 1","ขั้น 2",{t:"ขั้น 3",opts:["ขั้น 3","ขั้นผิด"]}]},{q:"ตัวอย่าง 3",steps:["ขั้น 1","ขั้น 2","ขั้น 3"]}]}; render() },sub);
     if(!await pg.locator("#loop-go").count()) return "loop card not on the home page";
     await pg.click("#loop-go");
-    let dk=0; for(let i=0;i<40;i++){ if(await pg.locator("[data-dkt]").count()){ await pg.locator("[data-dkt]").first().click(); continue } if(await pg.locator("#dk-next").count()){ dk++; await pg.click("#dk-next"); continue }
+    let dk=0; for(let i=0;i<40;i++){ if(await pg.locator("#sheet [data-sh]").count()) return "a tiny card (floor under 10 s) must never show the 'too fast' sheet"; if(await pg.locator("[data-dkt]").count()){ await pg.locator("[data-dkt]").first().click(); continue } if(await pg.locator("#dk-next").count()){ dk++; await pg.click("#dk-next"); continue }
       if(await pg.locator("#dk-done").count()){ await pg.click("#dk-done"); continue }
       if(await pg.locator("[data-tro]").count()){ await pg.locator("[data-tro]").first().click(); continue } if(await pg.locator("#tr-num").count()){ await pg.fill("#tr-num","1"); await pg.click("#tr-check"); continue }
       if(await pg.locator("#tr-next").count()){ await pg.click("#tr-next"); continue }
@@ -299,12 +299,15 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     if(screens!==info.screens) return `card s3.3 should show ${info.screens} screens, showed ${screens}`;
     if(!await pg.locator("#dk-done").count()) return "no one-page summary at the end";
     await pg.click("#dk-done");
+    const fastSheet=await pg.locator("#sheet [data-sh]").count(); if(!fastSheet) return "no 'too fast' sheet after clicking through a long card in a few seconds";
+    await pg.click('#sheet [data-sh="1"]');
     for(let i=0;i<6;i++){ if(await pg.locator("[data-tro]").count()){ await pg.locator("[data-tro]").first().click(); continue } if(await pg.locator("#tr-num").count()){ await pg.fill("#tr-num","1"); await pg.click("#tr-check"); continue }
       if(await pg.locator("#tr-next").count()){ await pg.click("#tr-next"); continue } break }
     const rec=await pg.evaluate(()=>mine().find(a=>a.type==="lib"));
     if(!rec||!rec.read||rec.tries.length!==2||rec.taps.length!==info.taps||rec.from!==info.qid) return "lib record wrong: "+JSON.stringify(rec&&{read:rec.read,tries:rec.tries,taps:rec.taps,from:rec.from});
     if(rec.tries.some(t=>t.qid===info.qid)) return "the question she just missed came back as a try question";
     if(!rec.xp) return "first reading of the day earned no XP";
+    if(!(rec.fast===true&&rec.floorSec>=10&&rec.xp===rec.tries.reduce((s,x)=>s+(x.ok?10:5),0))) return "a too-fast reading must be recorded as fast and earn only its try-it XP: "+JSON.stringify({fast:rec.fast,floor:rec.floorSec,xp:rec.xp});
     await pg.click("#lb-back2");
     if(!await pg.evaluate(qid=>view==="session"&&S.steps[S.i].q&&S.steps[S.i].q.id===qid&&!!S.answered,info.qid)) return "did not come back to the same answered question";
     await play(false);
@@ -348,6 +351,48 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     if(!(r2&&r2.timedOut&&r2.items.every(x=>x.timeout))) return "time-out did not finish the checkpoint";
     await pg.evaluate(W2=>{ CAL.checkpoints=CAL.checkpoints.filter(c=>c.setId!=="zz-cp") },W2) });
 
+  await T("too-fast reteach card is flagged and does not move the loop on",async()=>{
+    const sub="m22.8", qs=await pg.evaluate(sub=>Object.values(QBANK).map(o=>o.q).filter(q=>q.check&&subOf(q.id)===sub&&!q.of).map(q=>q.id),sub);
+    const day=n=>new Date(Date.now()+86400000-n*86400000).toISOString();
+    const miss=(n,qid)=>({type:"set",setId:"x",topic:"x",startedAt:day(n),endedAt:day(n),durationSec:60,correct:0,total:1,items:[{qid,level:2,correct:false,errorType:"concept",errorTypes:["concept"]}]});
+    await reset([miss(3,qs[0]),miss(5,qs[1])]);
+    const long="ย่อหน้ายาวสำหรับทดสอบการอ่าน ".repeat(12);
+    await pg.evaluate(([sub,long])=>{ RETEACH[sub]={title:"การ์ดยาวทดสอบ",form:"table",text:[long,long,long],worked:[{q:"ตัวอย่าง 1",steps:["ขั้น 1","ขั้น 2"]},{q:"ตัวอย่าง 2",steps:["ขั้น 1","ขั้น 2"]},{q:"ตัวอย่าง 3",steps:["ขั้น 1","ขั้น 2"]}]}; render() },[sub,long]);
+    await pg.click("#loop-go"); let warned=0;
+    for(let i=0;i<40;i++){ if(await pg.locator("#sheet [data-sh]").count()){ warned++; await pg.click('#sheet [data-sh="1"]'); continue }
+      if(await pg.locator("[data-dkt]").count()){ await pg.locator("[data-dkt]").first().click(); continue } if(await pg.locator("#dk-next").count()){ await pg.click("#dk-next"); continue }
+      if(await pg.locator("#dk-done").count()){ await pg.click("#dk-done"); continue }
+      if(await pg.locator("[data-tro]").count()){ await pg.locator("[data-tro]").first().click(); continue } if(await pg.locator("#tr-num").count()){ await pg.fill("#tr-num","1"); await pg.click("#tr-check"); continue }
+      if(await pg.locator("#tr-next").count()){ await pg.click("#tr-next"); continue }
+      if(await pg.locator("[data-lpo]").count()){ await pg.click('[data-lpo="0"]'); continue } if(await pg.locator("#lp-show").count()){ await pg.click("#lp-show"); continue }
+      if(await pg.locator('[data-lps="1"]').count()){ await pg.click('[data-lps="1"]'); continue } if(await pg.locator("#lp-next").count()){ await pg.click("#lp-next"); continue } break }
+    if(warned!==1) return "the 'too fast' sheet should show once, showed "+warned;
+    const rec=await pg.evaluate(()=>mine().find(a=>a.type==="loop"&&a.act==="reteach"));
+    if(!(rec&&rec.fast===true&&rec.xp===0&&rec.cardFloor>=10)) return "fast reteach record wrong: "+JSON.stringify(rec&&{fast:rec.fast,xp:rec.xp,cardSec:rec.cardSec,cardFloor:rec.cardFloor});
+    const st=await pg.evaluate(sub=>{ const e=miscEps(mine()).find(x=>x.sub===sub); return e&&{stage:miscStage(e),fast:(e.fastReads||[]).length} },sub);
+    if(!(st&&st.stage==="reteach"&&st.fast===1)) return "a fast reteach must leave the stage at reteach: "+JSON.stringify(st);
+    /* read at a real pace → counted; an old record (no timing fields) is judged on its whole duration */
+    const slow={...rec,fast:false,cardSec:200,durationSec:300,xp:20};
+    await reset([miss(3,qs[0]),miss(5,qs[1]),slow]);
+    if(await pg.evaluate(sub=>miscStage(miscEps(mine()).find(x=>x.sub===sub)),sub)!=="guide") return "a reteach read at a real pace did not count";
+    const old={type:"loop",act:"reteach",sub,setId:"loop-"+sub,topic:"x",startedAt:day(1),endedAt:day(1),durationSec:6,correct:0,total:0,xp:20,items:[]};
+    await reset([miss(3,qs[0]),miss(5,qs[1]),old]);
+    if(await pg.evaluate(sub=>miscStage(miscEps(mine()).find(x=>x.sub===sub)),sub)!=="reteach") return "an old 6-second reteach record still counted";
+    await pg.evaluate(sub=>{ delete RETEACH[sub] },sub) });
+
+  await T("compute vs meaning pairs (ใช้สูตรได้แต่ไม่เข้าใจ)",async()=>{
+    const P=await pg.evaluate(()=>{ const bySub={}; Object.values(QBANK).forEach(({q,set})=>{ if(q.of||set.kind==="checkpoint") return; const s=subOf(q.id); if(!s) return; const o=bySub[s]??={c:[],m:[],h:[]}; (q.ask==="meaning"?o.m:q.ask==="method"?o.h:o.c).push(q.id) });
+      const s=Object.keys(bySub).find(k=>bySub[k].m.length&&bySub[k].c.length>=3); return s?{s,...bySub[s]}:null });
+    if(!P) return "no subtopic with a meaning item and 3 compute items";
+    const day=n=>new Date(Date.now()+86400000-n*86400000).toISOString();
+    const rec=(n,items)=>({type:"set",setId:"x",topic:"x",startedAt:day(n),endedAt:day(n),durationSec:60,correct:0,total:items.length,items});
+    const list=[rec(3,P.c.slice(0,3).map(qid=>({qid,level:2,correct:true}))),rec(2,[{qid:P.m[0],level:2,correct:false}]),rec(1,[{qid:"r:"+P.c[0],level:2,correct:true,guessed:true}])];
+    const v=await pg.evaluate(([list,s])=>{ const r=meaningPairs(list).find(x=>x.sub===s); return r&&{v:r.v,c:r.c,m:r.m} },[list,P.s]);
+    if(!(v&&v.v==="gap"&&v.c.n===4&&v.c.ok===3&&v.m.n===1&&v.m.ok===0)) return "expected the gap flag (compute 3/4, meaning 0/1): "+JSON.stringify(v);
+    list.push(rec(0,[{qid:P.m[0],level:2,correct:true},{qid:P.m[0],level:2,correct:true}]));
+    const v2=await pg.evaluate(([list,s])=>meaningPairs(list).find(x=>x.sub===s).v,[list,P.s]);
+    if(v2!=="ok") return "after 2 of 3 meaning answers right the flag should clear, got "+v2 });
+
   await T("home renders on special days and wave intros",async()=>{ await noToday(); await reset();
     await pg.evaluate(()=>{ localStorage.removeItem("fieldnote.waveSeen"); CAL.checkpoints=[...(CAL.checkpoints||[]),{date:isoDay(todayKey()),kind:"full",subject:"คณิต"}]; render() });
     await pg.waitForTimeout(900);
@@ -365,9 +410,11 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
   { const b2=await chromium.launch(); const p2=await b2.newPage({viewport:{width:1000,height:900}}); const e2=[]; p2.on("pageerror",e=>e2.push(e.message));
     await p2.clock.install({time:new Date(Date.now()+86400000)});
     await p2.goto("file://"+path.join(ROOT,"dist","parent.html"));
-    await p2.evaluate(a=>{ attempts=a.map(x=>({...x,test:false})); view="parent"; render() },testAttempts);
+    await p2.evaluate(a=>{ const at=new Date(Date.now()-3600000).toISOString(); attempts=[...a.map(x=>({...x,test:false})),{type:"lib",sub:"s3.3",setId:"lib-s3.3",topic:"สมุดคาถา",src:"lib",from:null,startedAt:at,endedAt:at,durationSec:4,read:true,screens:4,reached:4,taps:[],stuck:[],tries:[],correct:0,total:0,xp:10,items:[]}]; view="parent"; render() },testAttempts);
     if(!await p2.locator("#understand").count()) warn("parent page: misconception section missing"); else console.log("ok  feature: parent page sections");
     if(!await p2.locator("h3",{hasText:"สมุดคาถา: น้องเปิดอ่านเอง"}).count()) warn("parent page: library log missing");
+    if(!await p2.locator("h3",{hasText:"ใช้สูตรได้ แต่รู้ไหมว่าตัวเลขบอกอะไร"}).count()) warn("parent page: compute/meaning section missing");
+    if(!await p2.locator("#understand",{hasText:"เร็วเกินอ่านทัน"}).count()) warn("parent page: the too-fast library reading is not flagged");
     if(e2.length) warn("parent page errors: "+e2.join(" | "));
     await b2.close() }
   if(pageErr.length) warn("page errors: "+pageErr.join(" | "));

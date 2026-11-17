@@ -4703,6 +4703,8 @@ function parentDash(list){
   const pendG=GUESTS.filter(g=>g.status!=="approved"&&!fbList.some(f=>f.kind==="guest"&&f.guestId===g.id)).length, pendM=MISSIONS.filter(m=>m.status!=="approved"&&!fbList.some(f=>f.kind==="mission"&&f.missionId===m.id)).length;
   const pendGoal=list.filter(a=>a.type==="goal"&&a.reward&&!fbList.some(f=>f.kind==="goal"&&f.goalId===a.setId)).length;
   try{ const op=miscEps(list).filter(e=>!e.resolvedAt), old=op.filter(e=>t-e.openDay>21*DAY).length; if(op.length) A.push([old?"red":"amber","🔧",`ความเข้าใจผิดที่กลับมาซ้ำ เปิดอยู่ ${op.length} เรื่อง${old?` (เกิน 3 สัปดาห์ ${old} เรื่อง)`:""} ดูในแท็บ ความพร้อมสอบ`]) }catch(e){}
+  try{ const g=meaningPairs(list).filter(r=>r.v==="gap"); if(g.length) A.push(["amber","🧮",`ใช้สูตรได้แต่ไม่เข้าใจ ${g.length} เรื่อง: ${g.slice(0,3).map(r=>esc(subName(r.sub))).join(", ")} (ดูในแท็บ ความพร้อมสอบ)`]) }catch(e){}
+  try{ const f=list.filter(a=>(a.type==="lib"||(a.type==="loop"&&a.act==="reteach"))&&t-dayKey(a.endedAt)<7*DAY).filter(a=>{ const r=cardRead(a); return r&&r.fast }); if(f.length) A.push(["amber","⚡",`อ่านการ์ดเร็วเกินกว่าจะอ่านทัน ${f.length} ครั้งใน 7 วัน ไม่นับ การ์ดสอนใหม่อีกแบบจะกลับมาให้อ่านอีกรอบ (ดูในแท็บ ความพร้อมสอบ)`]) }catch(e){}
   if(pendG+pendM+pendGoal) A.push(["amber","✍️",`รอพ่อตัดสินใจ: ${[pendG?`แขกพิเศษ ${pendG}`:"",pendM?`ภารกิจโลกจริง ${pendM}`:"",pendGoal?`รางวัลเป้าหมายเดือน ${pendGoal}`:""].filter(Boolean).join(" · ")} (กดอนุมัติได้ที่แท็บ ✍️ รอพ่อ)`]);
   const schoolLow=last7.filter(x=>x.school&&x.tot>0&&x.tot<x.target[0]).length; if(schoolLow>=3) A.push(["amber","⏱️",`วันเรียน ${schoolLow} วันใน 7 วันใช้เวลาต่ำกว่าเป้า 45 นาที (เฉลี่ย ${avgMin} นาที) ระบบอัปเดตทุกเย็นจะเพิ่มเนื้อหา`]);
   const ex=it7.filter(x=>x.correct&&x.exSec!=null), skip=ex.filter(x=>x.exSec<3).length; if(ex.length>=8&&skip/ex.length>=0.5) A.push(["amber","👀",`ข้อที่ตอบถูก ลูกข้ามเฉลย ${skip}/${ex.length} ข้อ ถ้าตอบถูกแบบเดา จะไม่รู้ตัว ชวนลูกอ่านเฉลยข้อที่ไม่มั่นใจ`]);
@@ -4907,7 +4909,7 @@ function miscState0(list){ const ev=[];
   ev.sort((a,b)=>a.at-b.at); const M={};
   for(const e of ev){ const sub=e.sub||e.loop.sub, m=M[sub]??={sub,eps:[],pend:[]}, last=m.eps[m.eps.length-1], cur=last&&!last.resolvedAt?last:null;
     if(e.loop){ if(!cur) continue;
-      if(e.loop.act==="reteach"&&!cur.reteachAt){ cur.reteachAt=e.at; cur.reteachDay=e.d }
+      if(e.loop.act==="reteach"&&!cur.reteachAt){ const rd=cardRead(e.loop); if(rd&&rd.fast) (cur.fastReads??=[]).push({d:e.d,...rd}); else { cur.reteachAt=e.at; cur.reteachDay=e.d } }
       if(e.loop.act==="guide"&&cur.reteachAt){ cur.guideAt=e.at; cur.guideDay=e.d; cur.guide=e.loop.text||"" } continue }
     const x=e.x;
     if(conceptMiss(x)){ const miss={d:e.d,at:e.at,qid:x.qid,err:x.optErr||null,typed:x.typed||null,orig:x.orig};
@@ -4942,13 +4944,13 @@ function loopChecks(list,n,avoid){ const t=todayKey(), out=[], av=new Set(avoid|
 let LP=null;
 function lpSteps(w){ return (w.steps||[]).map(s=>typeof s==="string"?{t:s}:s) }
 function startLoop(ep,act){ const card=RETEACH[ep.sub]||null; LP={sub:ep.sub,act,card,stage:act==="guide"?"guide":"card",ex:0,rev:0,show:false,order:null,res:[],start:Date.now(),text:"",
-    K:card?newDeck(deckOf("reteach",card)):null,miss:(ep.misses||[]).map(m=>m.qid),missDays:new Set((ep.misses||[]).map(m=>m.d)).size,T:null}; view="loop"; render(); window.scrollTo({top:0}) }
+    K:card?newDeck(deckOf("reteach",card),true):null,miss:(ep.misses||[]).map(m=>m.qid),missDays:new Set((ep.misses||[]).map(m=>m.d)).size,T:null}; view="loop"; render(); window.scrollTo({top:0}) }
 function renderLoop(){ if(!LP){ view="home"; return render() } const c=LP.card, nm=subName(LP.sub), back=`<button class="btn ghost" id="lp-home" style="border:0;padding-left:0">← กลับหน้าแรก</button>`;
   const go=(f)=>{ f(); const y=0; renderLoop(); window.scrollTo({top:y}) };
   if(LP.stage==="card"){
     /* one idea per screen, then everything on one page (father, 17 Nov 2026) */
     $v.innerHTML=`<section class="card concept">${deckHtml(LP.K,"🔧 สอนใหม่อีกแบบ · "+esc(nm),"เรื่องนี้สะดุดมา 2 วันแล้ว ไม่แปลกเลย หลายคนก็สะดุดเรื่องนี้ รอบนี้ดูจากอีกมุมหนึ่งทีละส่วน แล้วทำตามตัวอย่าง และลองทำเองท้ายสุด ราว 8 นาที","ดูตัวอย่างทีละขั้น →")}${back}</section>`;
-    bindDeck(LP.K,()=>renderLoop(),()=>go(()=>{ LP.stage="ex"; LP.ex=0; LP.rev=0; LP.show=false; LP.order=null }));
+    bindDeck(LP.K,()=>renderLoop(),()=>go(()=>{ LP.cardEnd=Date.now(); LP.stage="ex"; LP.ex=0; LP.rev=0; LP.show=false; LP.order=null }));
   } else if(LP.stage==="ex"){
     const W=c.worked||[], w=W[LP.ex], st=lpSteps(w), hide=Math.min(LP.ex,st.length-1), first=st.length-hide, cur=first+LP.rev, allShown=LP.rev>=hide;
     const curStep=!allShown?st[cur]:null;
@@ -4968,9 +4970,11 @@ function renderLoop(){ if(!LP){ view="home"; return render() } const c=LP.card, 
     { const sb=document.getElementById("lp-show"); if(sb) sb.onclick=()=>go(()=>{ LP.show=true }) }
     $v.querySelectorAll("[data-lps]").forEach(b=>b.onclick=()=>go(()=>{ LP.res.push({ex:LP.ex,step:cur,ok:b.dataset.lps==="1",self:true}); LP.rev++; LP.show=false }));
     { const nb=document.getElementById("lp-next"); if(nb) nb.onclick=async()=>{ if(LP.ex+1<W.length) return go(()=>{ LP.ex++; LP.rev=0; LP.show=false; LP.order=null });
-      nb.disabled=true; const now=new Date().toISOString();
-      await saveAttempt({type:"loop",act:"reteach",sub:LP.sub,setId:"loop-"+LP.sub,topic:"สอนใหม่อีกแบบ: "+nm,startedAt:new Date(LP.start).toISOString(),endedAt:now,durationSec:Math.round((Date.now()-LP.start)/1000),
-        correct:LP.res.filter(r=>r.ok).length,total:LP.res.length,xp:20,items:[],steps:LP.res,form:c.form||"",taps:LP.K?LP.K.taps:[],stuck:LP.K?LP.K.stuck:[]});
+      nb.disabled=true; const now=new Date().toISOString(), dur=Math.round((Date.now()-LP.start)/1000), K=LP.K;
+      const floorSec=readFloor((K?plainLen(K.d.all):0)+workedChars(c)), fast=!!(K&&K.fast)||tooFast(dur,floorSec); LP.fast=fast;
+      await saveAttempt({type:"loop",act:"reteach",sub:LP.sub,setId:"loop-"+LP.sub,topic:"สอนใหม่อีกแบบ: "+nm,startedAt:new Date(LP.start).toISOString(),endedAt:now,durationSec:dur,
+        cardSec:K?K.sec:null,cardFloor:K?K.floor:null,floorSec,fast,
+        correct:LP.res.filter(r=>r.ok).length,total:LP.res.length,xp:fast?0:20,items:[],steps:LP.res,form:c.form||"",taps:LP.K?LP.K.taps:[],stuck:LP.K?LP.K.stuck:[]});
       const tq=tryPick(LP.sub,2,LP.miss); go(()=>{ if(tq.length){ LP.T=newTry(tq); LP.stage="try" } else LP.stage="redone" }) } }
   } else if(LP.stage==="try"){
     /* try it yourself right after the new explanation; the result is shown to her at once (father, 17 Nov 2026) */
@@ -4980,11 +4984,11 @@ function renderLoop(){ if(!LP){ view="home"; return render() } const c=LP.card, 
         durationSec:Math.round((Date.now()-LP.T.start)/1000),tries:r,correct:0,total:0,xp:tryScore(r),items:[]});
       go(()=>{ LP.stage="redone" }) });
   } else if(LP.stage==="redone"){
-    const tr=LP.T?LP.T.res:[], tok=tr.filter(x=>x.ok).length;
-    $v.innerHTML=`<section class="card"><span class="eyebrow">🔧 ${esc(nm)}</span><h2>+${20+tryScore(tr)} XP ดูเรื่องนี้จากมุมใหม่แล้ว</h2>
+    const tr=LP.T?LP.T.res:[], tok=tr.filter(x=>x.ok).length, xp=(LP.fast?0:20)+tryScore(tr);
+    $v.innerHTML=`<section class="card"><span class="eyebrow">🔧 ${esc(nm)}</span><h2>${LP.fast?`ดูการ์ดจบแล้ว${xp?` · +${xp} XP`:""}`:`+${xp} XP ดูเรื่องนี้จากมุมใหม่แล้ว`}</h2>
       ${tr.length?`<div class="feedback"><b>ก่อนหน้านี้: เรื่องนี้พลาดมา ${LP.missDays} วัน · วันนี้ลองเอง: ถูก ${tok} จาก ${tr.length}</b>
         <span class="small">${tok===tr.length?"คำอธิบายแบบนี้น่าจะช่วยได้ แต่ถูกทันทีหลังอ่านยังเป็นความจำระยะสั้น ข้อเช็กอีกไม่กี่วันข้างหน้าจะบอกว่าคงทนไหม":"ยังพลาดอยู่ ไม่เป็นไร แปลว่าคำอธิบายนี้ยังไม่พอ พ่อกับ Claude จะเห็นผลนี้ และเรื่องนี้จะอยู่ในการคุยกับพ่อสัปดาห์นี้"}</span></div>`:""}
-      <p class="small">พรุ่งนี้จะชวนเขียน <b>คู่มือผู้เล่น</b> เรื่องนี้ 2–3 ประโยค แล้วอีกไม่กี่วันจะมีข้อเช็กเรื่องนี้ในเรื่องราวใหม่ ถ้าถูกพร้อมเลือกเหตุผลถูก 2 ครั้ง ห่างกันอย่างน้อย 7 วัน เรื่องนี้ถือว่าแก้ได้แล้ว</p>
+      ${LP.fast?`<p class="small">การ์ดรอบนี้ผ่านไปเร็วกว่าที่อ่านทัน จึงยังไม่นับว่าได้ดูเรื่องนี้จากมุมใหม่ วันหลังการ์ดนี้จะกลับมาให้อ่านอีกรอบ ค่อยๆ อ่านทีละส่วน หรือกด 🔊 ฟังก็ได้</p>`:`<p class="small">พรุ่งนี้จะชวนเขียน <b>คู่มือผู้เล่น</b> เรื่องนี้ 2–3 ประโยค แล้วอีกไม่กี่วันจะมีข้อเช็กเรื่องนี้ในเรื่องราวใหม่ ถ้าถูกพร้อมเลือกเหตุผลถูก 2 ครั้ง ห่างกันอย่างน้อย 7 วัน เรื่องนี้ถือว่าแก้ได้แล้ว</p>`}
       <button class="btn" id="lp-home">กลับหน้าแรก</button></section>`;
   } else if(LP.stage==="guide"){
     $v.innerHTML=`<section class="card"><span class="eyebrow">🔧 คู่มือผู้เล่น · ${esc(nm)}</span><h2>ถ้าเพื่อนเจอโจทย์เรื่องนี้ จะบอกเพื่อนว่าอะไร</h2>
@@ -5027,7 +5031,25 @@ function deckOf(src,c,title){ const sc=[], all=[], sayAll=[title||c.title||""];
   else (c.points||[]).forEach((p,i)=>add(BIGP(p)+((c.more||[])[i]?`<details class="small"><summary>ขออธิบายอีกแบบ</summary><p>${gloss(c.more[i])}</p></details>`:""),[p]));
   const f=src==="lib"?(c.formula||[]):src==="concept"?(c.formulas||[]):[];
   return {title:title||c.title||"",screens:sc,all:all.join("")+f.map(x=>`<div class="formula">${esc(x)}</div>`).join(""),sayAll:[...sayAll,...f]} }
-function newDeck(d){ return {d,i:0,pick:null,order:null,taps:[],stuck:[],stuckNow:false} }
+function newDeck(d,watch){ return {d,i:0,pick:null,order:null,taps:[],stuck:[],stuckNow:false,t0:Date.now(),watch:!!watch,warned:false,sec:null,floor:null,fast:null} }
+/* reading floor (teaching audit item 5, father approved 17 Nov 2026; built 18 Nov): a card finished faster than its text can
+   be read is not counted. READ_CPS Thai characters a second is roughly twice a careful reading pace, so only a clear skip falls
+   under it; cards whose floor is under 10 s are never flagged. A fast reteach card does not move the repeated-error loop on
+   (it comes back another day) and earns no reading XP; a fast library card earns only its try-it XP. Old records (before
+   18 Nov) carry no timing of their own and are judged on their whole duration against the card as it is now. */
+const READ_CPS=25;
+function plainLen(h){ return String(h||"").replace(/<details[\s\S]*?<\/details>/g,"").replace(/<[^>]*>/g," ").replace(/&[#a-z0-9]+;/gi,"x").replace(/\s+/g,"").length }
+function readFloor(chars){ return Math.round(chars/READ_CPS) }
+const tooFast=(sec,floor)=>floor>=10&&sec<floor;
+function workedChars(c){ return ((c&&c.worked)||[]).reduce((s,w)=>s+plainLen(w.q)+lpSteps(w).reduce((t,x)=>t+plainLen(x.t),0)+plainLen(w.answer),0) }
+function cardRead(a){ if(!a) return null;
+  if(a.fast!=null){ const card=a.cardFloor!=null&&tooFast(a.cardSec,a.cardFloor); return {sec:card?a.cardSec:a.durationSec,floor:card?a.cardFloor:a.floorSec,fast:!!a.fast,card} }
+  let ch=0;
+  if(a.type==="loop"&&a.act==="reteach"){ const c=RETEACH[a.sub]; if(!c) return null; ch=plainLen(deckOf("reteach",c).all)+workedChars(c) }
+  else if(a.type==="lib"){ if(!a.read) return null; const so=libSource(a.sub); if(!so) return null; ch=plainLen(deckOf(so.src,so.c).all) }
+  else return null;
+  const floor=readFloor(ch), sec=a.durationSec||0; return {sec,floor,fast:tooFast(sec,floor),old:true} }
+function fastHtml(r){ return r&&r.fast?`<br><b style="color:#A8382E">⚡ เร็วเกินอ่านทัน</b> <span class="muted">(${r.sec} วิ · อ่านทันต้องราว ${r.floor} วิขึ้นไป${r.card?" เฉพาะการ์ด":""}) ไม่นับ</span>`:"" }
 function deckHtml(K,eyebrow,intro,doneLabel){ const n=K.d.screens.length, s=K.d.screens[K.i];
   const dots=`<div class="row" style="gap:4px;margin:4px 0">${K.d.screens.concat([0]).map((_,k)=>`<span style="width:${k===K.i?18:8}px;height:8px;border-radius:4px;background:${k<=K.i?"var(--accent)":"var(--line)"};display:inline-block;transition:width .2s"></span>`).join("")}</div>`;
   if(!s) return `<span class="eyebrow" style="text-transform:none">${eyebrow} · อ่านรวดเดียวอีกรอบ</span>${dots}<h2>${esc(K.d.title)}</h2>
@@ -5049,7 +5071,11 @@ function bindDeck(K,re,onDone){ bindGloss(); const s=K.d.screens[K.i];
   const nx=document.getElementById("dk-next"); if(nx) nx.onclick=()=>mv(K.i+1);
   const bk=document.getElementById("dk-back"); if(bk) bk.onclick=()=>mv(K.i-1);
   const st=document.getElementById("dk-stuck"); if(st) st.onclick=()=>{ if(!K.stuck.includes(K.i)) K.stuck.push(K.i); K.stuckNow=true; const y=window.scrollY; re(); window.scrollTo({top:y}) };
-  const dn=document.getElementById("dk-done"); if(dn) dn.onclick=()=>{ readStop(); onDone() } }
+  const dn=document.getElementById("dk-done"); if(dn) dn.onclick=()=>{ readStop(); K.sec=Math.round((Date.now()-K.t0)/1000); K.floor=readFloor(plainLen(K.d.all)); K.fast=tooFast(K.sec,K.floor);
+    if(K.watch&&K.fast&&!K.warned){ K.warned=true;
+      sheet({icon:"👀",title:"ผ่านไปเร็วมากเลย",html:`<p>การ์ดนี้ปกติใช้เวลาอ่านราว ${K.floor} วินาทีขึ้นไป แต่ผ่านไปใน ${K.sec} วินาที</p><p class="small">ถ้ายังไม่ได้อ่านจริง ลองอ่านหน้ารวมนี้อีกรอบช้าๆ หรือกด 🔊 ฟังก็ได้ ถ้าอ่านทันแล้วจริงๆ ก็ไปต่อได้</p>`,
+        actions:[{label:"อ่านอีกรอบ",fn:closeSheet},{label:"ไปต่อ",ghost:true,fn:()=>{ closeSheet(); onDone() }}]}); return }
+    onDone() } }
 
 /* ---------- try it yourself (father, 17 Nov 2026 — she said "ไม่รู้ว่าช่วยไหม เพราะไม่มีอะไรให้ลอง"): right after an explanation,
    2 questions from the bank on the same subtopic, no hints or steps, the result shown at once. Right-here-and-now is short-term
@@ -5096,15 +5122,15 @@ function libMissed(list){ const m={}; list.filter(a=>isLesson(a)||a.type==="reca
   return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([s,k])=>({s,k})) }
 function openLib(sub,from,ret){ LB={mode:"list",sub:null,from:from||null,ret:ret||(from?"session":view),fromList:!sub}; if(sub) libStart(sub); view="lib"; render(); window.scrollTo({top:0}) }
 function libStart(sub){ const so=libSource(sub); Object.assign(LB,{sub,so,mode:so?"deck":"none",saved:false,xp:0,start:Date.now(),T:null,
-  K:so?newDeck(deckOf(so.src,so.c,so.src==="lib"?so.c.title:subName(sub))):null,
+  K:so?newDeck(deckOf(so.src,so.c,so.src==="lib"?so.c.title:subName(sub)),true):null,
   tq:so?tryPick(sub,2,LB.from?[LB.from.qid]:[]):[]}) }
 function libSave(){ if(!LB||LB.saved||!LB.so) return; const K=LB.K, sec=Math.round((Date.now()-LB.start)/1000), read=K.i>=K.d.screens.length;
   if(!read&&sec<8&&!K.taps.length) return; LB.saved=true;
-  const tries=LB.T?LB.T.res:[], first=!mine().some(a=>a.type==="lib"&&a.sub===LB.sub&&dayKey(a.endedAt)===todayKey());
-  LB.xp=first&&read?10+tryScore(tries):0;
+  const tries=LB.T?LB.T.res:[], first=!mine().some(a=>a.type==="lib"&&a.sub===LB.sub&&dayKey(a.endedAt)===todayKey()&&!a.fast), fast=read&&K.fast===true; LB.fast=fast;
+  LB.xp=first&&read?(fast?0:10)+tryScore(tries):0;
   saveAttempt({type:"lib",sub:LB.sub,setId:"lib-"+LB.sub,topic:"สมุดคาถา: "+subName(LB.sub),src:LB.so.src+(LB.so.set?":"+LB.so.set.id:""),from:LB.from&&LB.from.qid||null,
     startedAt:new Date(LB.start).toISOString(),endedAt:new Date().toISOString(),durationSec:sec,read,screens:K.d.screens.length,reached:Math.min(K.i+1,K.d.screens.length),
-    taps:K.taps,stuck:K.stuck,tries,correct:0,total:0,xp:LB.xp,items:[]}) }
+    cardSec:K.sec,floorSec:K.floor,fast,taps:K.taps,stuck:K.stuck,tries,correct:0,total:0,xp:LB.xp,items:[]}) }
 function libLink(q){ const s=subOf(q.id); if(!s||!libSource(s)) return ""; return `<button class="btn ghost small" id="go-lib-q" data-sub="${esc(s)}" type="button">📖 ไปอ่านเรื่องนี้: ${esc(subName(s))}</button>` }
 function libEntry(){ return `<div class="row" style="justify-content:space-between;align-items:center;gap:8px;margin:4px 2px"><span class="small muted">📚 สมุดคาถา: กลับไปอ่านเรื่องไหนก็ได้ เช่น ค่า Rf</span><button class="btn ghost small" id="go-lib" type="button">เปิดสมุด</button></div>` }
 function renderLib(){ if(!LB){ view="home"; return render() } const re=()=>renderLib();
@@ -5140,6 +5166,7 @@ function renderLib(){ if(!LB){ view="home"; return render() } const re=()=>rende
       <h2>${r.length?`ลองเองถูก ${ok} จาก ${r.length}`:"อ่านจบแล้ว"}${LB.xp?` · +${LB.xp} XP`:""}</h2>
       ${r.length?`<p class="small">${ok===r.length?"ดีมาก คำอธิบายนี้น่าจะช่วยได้ แต่ถูกทันทีหลังอ่านยังเป็นความจำระยะสั้น อีกไม่กี่วันระบบจะเอาเรื่องนี้กลับมาในเรื่องราวใหม่ ถ้ายังทำได้ แปลว่าคงทนจริง"
         :"ยังพลาดอยู่ ไม่เป็นไรเลย แปลว่าเรื่องนี้ต้องมีคำอธิบายแบบอื่น พ่อกับ Claude จะเห็นผลนี้ และจะหาวิธีอธิบายใหม่ให้"}</p>`:""}
+      ${LB.fast?`<p class="small muted">รอบนี้อ่านผ่านไปเร็ว ไว้กลับมาอ่านช้าๆ อีกรอบได้เสมอ</p>`:""}
       ${g.length?`<div class="feedback"><b>คู่มือผู้เล่นที่เธอเคยเขียนเรื่องนี้</b>${g.map(t=>`<p class="small">“${esc(t)}”</p>`).join("")}</div>`:""}
       <div class="row">${LB.from?`<button class="btn" id="lb-back2" type="button">กลับไปที่ข้อเดิม</button>`:`<button class="btn" id="lb-list" type="button">เลือกเรื่องอื่น</button>`}</div>
       ${LB.from?"":back}</section>`;
@@ -5283,9 +5310,35 @@ function libSection(list){ const L=list.filter(a=>a.type==="lib").sort((a,b)=>ne
     <p class="small muted">เปิดจากข้อที่ตอบผิด (ปุ่ม “ไปอ่านเรื่องนี้”) หรือจากหน้าแรก · อ่านทีละส่วน มีเช็กสั้นๆ ระหว่างอ่าน แล้วลองทำเอง 2 ข้อ · ลองเองถูกทันทีเป็นความจำระยะสั้น ยังไม่ใช่หลักฐานว่าเข้าใจคงทน</p>
     ${L.length?`<div class="rdtable"><table><thead><tr><th>วันที่</th><th>เรื่อง</th><th>เปิดจาก</th><th>อ่าน</th><th>เช็กระหว่างอ่าน</th><th>ลองเอง</th></tr></thead><tbody>${L.slice(0,15).map(a=>`<tr>
       <td class="small">${fmtDay(new Date(a.endedAt).getTime())}</td><td class="small">${esc(subName(a.sub))}${LIB[a.sub]?"":`<br><span class="muted">ยังไม่มีการ์ดเฉพาะ</span>`}</td><td class="small">${a.from?"ข้อที่ตอบผิด":"หน้าแรก"}</td>
-      <td class="small">${a.read?"จบ":`ถึงส่วนที่ ${a.reached||0}/${a.screens||"?"}`} · ${Math.max(1,Math.round((a.durationSec||0)/60))} นาที${(a.stuck||[]).length?`<br>กด “ยังงง” ${a.stuck.length} ส่วน`:""}</td>
+      <td class="small">${a.read?"จบ":`ถึงส่วนที่ ${a.reached||0}/${a.screens||"?"}`} · ${Math.max(1,Math.round((a.durationSec||0)/60))} นาที${fastHtml(cardRead(a))}${(a.stuck||[]).length?`<br>กด “ยังงง” ${a.stuck.length} ส่วน`:""}</td>
       <td class="small">${pc(a.taps)}</td><td class="small">${pc(a.tries)}</td></tr>`).join("")}</tbody></table></div>`:`<p class="small muted">ยังไม่เคยเปิด</p>`}
     ${noCard.length?`<p class="small"><b>เรื่องที่น้องเปิดแต่ยังไม่มีการ์ดเฉพาะ</b> (ผมจะเขียนการ์ดเรื่องเหล่านี้ก่อน): ${noCard.map(x=>esc(subName(x))).join(" · ")}</p>`:""}` }
+/* ---------- compute vs meaning (teaching audit item 3, father approved 17 Nov 2026; built 18 Nov): for every subtopic that has
+   ask:"meaning"/"method" items, her compute answers sit beside her meaning and method answers on the same sub.
+   "ใช้สูตรได้แต่ไม่เข้าใจ" = compute mostly right (≥ 3 answered, ≥ 70%) while meaning answers are mostly wrong (< 60%).
+   Only the last 8 of each kind count, so the flag follows what she does now; answers she said she guessed count as wrong.
+   Few items = a signal to look at with her, never a verdict (hard rule 6). ---------- */
+function askOf(qid){ const base=String(qid||"").replace(/^r:/,""), o=QBANK[base]||QBANK[base.split("~")[0]]; if(!o) return null; const q=o.q;
+  return q.ask||(q.of&&QBANK[q.of]&&QBANK[q.of].q.ask)||null }
+function askSubs(){ const out=new Set(); Object.values(QBANK).forEach(({q})=>{ if(q.ask==="meaning"||q.ask==="method"){ const s=subOf(q.id); if(s) out.add(s) } }); return out }
+const MP_V={gap:["ใช้สูตรได้แต่ไม่เข้าใจ","#A8382E"],method:["คำนวณได้ แต่เลือกวิธีเองยังพลาด","#9A6A12"],both:["ยังไม่มั่นคงทั้งคำนวณและความหมาย","#9A6A12"],
+  calc:["เข้าใจความหมาย แต่คำนวณยังพลาด","#9A6A12"],ok:["คำนวณได้และเข้าใจความหมาย","#2E8B57"],few:["ข้อคำนวณยังน้อย","inherit"],wait:["ยังไม่ได้ทำข้อความหมาย","inherit"]};
+function meaningPairs(list){ const subs=askSubs(), P={};
+  list.filter(isLesson).slice().sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt)).forEach(a=>(a.items||[]).forEach(x=>{
+    if(x.skipped||x.notTaught) return; const s=subOf(x.qid); if(!s||!subs.has(s)) return;
+    const o=P[s]??={compute:[],meaning:[],method:[]}; o[askOf(x.qid)||"compute"].push(!!(x.correct&&!x.guessed)) }));
+  const st=xs=>{ const r=xs.slice(-8); return {n:r.length,ok:r.filter(Boolean).length} }, good=s=>s.n>=3&&s.ok/s.n>=0.7, weak=s=>s.n>0&&s.ok/s.n<0.6;
+  return [...subs].map(sub=>{ const o=P[sub]||{compute:[],meaning:[],method:[]}, c=st(o.compute), m=st(o.meaning), h=st(o.method);
+    const v=!m.n&&!h.n?"wait":c.n<3?"few":good(c)?(weak(m)?"gap":weak(h)?"method":"ok"):!weak(m)&&!weak(h)?"calc":"both";
+    return {sub,c,m,h,v} }) }
+function meaningHtml(list){ const rows=meaningPairs(list), ord={gap:0,method:1,both:2,calc:3,few:4,ok:5}, act=rows.filter(r=>r.v!=="wait").sort((a,b)=>ord[a.v]-ord[b.v]), wait=rows.filter(r=>r.v==="wait"), f=s=>s.n?`${s.ok}/${s.n}`:"–";
+  return `<h3>🧮 ใช้สูตรได้ แต่รู้ไหมว่าตัวเลขบอกอะไร</h3>
+    <p class="small muted">จับคู่ตามเรื่องย่อย: ข้อคำนวณ กับข้อ “ตัวเลขนี้บอกอะไร” และข้อ “เลือกวิธี ยังไม่ต้องคำนวณ” · นับ 8 ข้อล่าสุดของแต่ละแบบ ข้อที่น้องบอกว่าเดานับเป็นผิด · <b>ใช้สูตรได้แต่ไม่เข้าใจ</b> = ข้อคำนวณถูกอย่างน้อย 70% (ทำแล้วอย่างน้อย 3 ข้อ) แต่ข้อความหมายถูกไม่ถึง 60%</p>
+    ${act.length?`<div class="rdtable"><table><thead><tr><th>เรื่องย่อย</th><th>คำนวณ</th><th>ความหมาย</th><th>เลือกวิธี</th><th>อ่านผล</th></tr></thead><tbody>${act.map(r=>`<tr><td>${esc(subName(r.sub))}<br><span class="small muted">${esc(r.sub)}</span></td>
+      <td class="small">${f(r.c)}</td><td class="small">${f(r.m)}</td><td class="small">${f(r.h)}</td><td class="small" style="color:${MP_V[r.v][1]}">${r.v==="gap"?`<b>${MP_V[r.v][0]}</b>`:MP_V[r.v][0]}${(r.v==="gap"||r.v==="method")&&r.m.n+r.h.n<3?`<br><span class="muted">ข้อความหมายและข้อเลือกวิธีรวมยังมีแค่ ${r.m.n+r.h.n} ข้อ ดูต่ออีกหน่อยก่อนสรุป</span>`:""}</td></tr>`).join("")}</tbody></table></div>`
+      :`<p class="small muted">ยังไม่มีข้อมูล ข้อความหมายชุดแรกคือชุด 048 และ 049 ตามคิวบทเรียน</p>`}
+    ${wait.length?`<details class="small"><summary>มีข้อความหมายในคลังแล้ว แต่น้องยังไม่ได้ทำ (${wait.length} เรื่อง)</summary><p class="small muted">${wait.map(r=>esc(subName(r.sub))).join(" · ")}</p></details>`:""}
+    <p class="note">เรื่องที่ขึ้นว่า “ใช้สูตรได้แต่ไม่เข้าใจ” ผมจะใส่ในบรีฟ 10 นาทีกับพ่อ (ให้น้องอธิบายโดยไม่ใช้สูตร) ผลนี้มาจากโจทย์ที่ผมเขียนเอง ใช้เลือกเรื่องที่จะคุย ไม่ใช่คะแนนความพร้อมสอบ</p>` }
 /* ---------- parent page: misconceptions, the understanding features, minimum days, checkpoints and mock papers ---------- */
 let plog=[];
 function understandSection(list){ const t=todayKey(), eps=miscEps(list), open=eps.filter(e=>!e.resolvedAt).sort((a,b)=>a.openAt-b.openAt), solved=eps.filter(e=>e.resolvedAt);
@@ -5303,11 +5356,12 @@ function understandSection(list){ const t=todayKey(), eps=miscEps(list), open=ep
     ${open.length?`<div class="rdtable"><table><thead><tr><th>เรื่องย่อย</th><th>เปิดเมื่อ</th><th>เปิดมา</th><th>ขั้นตอนตอนนี้</th><th>ข้อเช็ก (ต้อง 2)</th><th>ที่น้องตอบพลาด</th><th>พ่อ</th></tr></thead><tbody>
       ${open.map(e=>{ const sg=miscStage(e), tk=talked(e.sub), d=dOpen(e), np=sg==="check"||sg==="guide"?loopPool(e).length:null;
         return `<tr><td>${esc(subName(e.sub))}<br><span class="small muted">${esc(e.sub)}</span></td><td class="small">${fmtDay(e.openDay)}</td><td style="color:${d>21?"#A8382E":"inherit"}">${d} วัน${e.openDay<loopFrom?`<br><span class="small muted">พลาดซ้ำตั้งแต่ก่อนมีวงจรนี้ นับจาก ${fmtDay(loopFrom)}</span>`:""}</td>
-          <td class="small">${ST[sg]}${(()=>{ const t=list.filter(a=>a.type==="loop"&&a.act==="try"&&a.sub===e.sub&&+new Date(a.endedAt)>=(e.reteachAt||0)).slice(-1)[0], rt=list.find(a=>a.type==="loop"&&a.act==="reteach"&&a.sub===e.sub&&+new Date(a.endedAt)>=(e.reteachAt||0)-1000);
+          <td class="small">${ST[sg]}${sg==="reteach"&&(e.fastReads||[]).length?(()=>{ const f=e.fastReads[e.fastReads.length-1]; return `<br><b style="color:#A8382E">⚡ เปิดการ์ดแล้ว ${e.fastReads.length} ครั้ง แต่ผ่านเร็วเกินอ่านทัน</b> <span class="muted">(ล่าสุด ${fmtDay(f.d)} ${f.sec} วิ · อ่านทันต้องราว ${f.floor} วิขึ้นไป) ไม่นับ การ์ดจะกลับมาให้อ่านอีกรอบ</span>` })():""}${(()=>{ const t=list.filter(a=>a.type==="loop"&&a.act==="try"&&a.sub===e.sub&&+new Date(a.endedAt)>=(e.reteachAt||0)).slice(-1)[0], rt=list.find(a=>a.type==="loop"&&a.act==="reteach"&&a.sub===e.sub&&+new Date(a.endedAt)>=(e.reteachAt||0)-1000);
             return (t?`<br>ลองเองทันทีหลังสอนใหม่: ถูก ${t.tries.filter(x=>x.ok).length}/${t.tries.length}`:"")+(rt&&(rt.stuck||[]).length?`<br>กด “ยังงง” ${rt.stuck.length} ส่วน`:"") })()}${e.guide?`<br><span class="muted">คู่มือ: “${esc(e.guide)}”</span>`:""}${np===0?`<br><b style="color:#A8382E">ไม่มีข้อที่มีตัวเลือกเหตุผลในเรื่องนี้ (ผมต้องเขียน)</b>`:""}</td>
           <td class="small">${e.ev.length}/2${e.ev.length?` · ล่าสุด ${fmtDay(e.ev[e.ev.length-1].d)}`:""}</td><td class="small">${wrongs(e).map(esc).join("<br>")} <span class="muted">(${e.misses.length} ครั้ง)</span></td>
           <td class="small">${tk.length?`✅ คุยแล้ว ${fmtDay(new Date(tk[0].at).getTime())}`:db?`<button class="btn ghost small" data-dadtalk="${esc(e.sub)}">คุยแล้ว</button>`:"–"}</td></tr>` }).join("")}</tbody></table></div>`:`<p class="small muted">ยังไม่มีเรื่องที่พลาดซ้ำข้ามวัน</p>`}
     ${solved.length?`<details class="small"><summary>แก้ได้แล้ว (${solved.length})</summary>${solved.map(e=>`<div class="topic"><span>${esc(subName(e.sub))}</span><span class="muted">${fmtDay(e.openDay)} → ${fmtDay(e.resolvedDay)} · ${Math.round((e.resolvedDay-e.openDay)/DAY)} วัน</span></div>`).join("")}</details>`:""}
+    ${meaningHtml(list)}
     ${libSection(list)}
     <h3>ปรับระบบให้เน้นความเข้าใจ (พ่ออนุมัติ 17 พ.ย.)</h3>
     <p class="small">ช่วงที่ 1 เริ่ม ${esc((CAL.understand||{}).wave1||"–")}: ทายก่อนคิด ${pc(pred.map(x=>x.predictOk))} ข้อทายตรง · หาที่เพื่อนพลาด ${pc(fr.map(x=>x.correct))} ข้อถูก · ข้อแฝดแบบเปลี่ยนสถานการณ์ ${its.filter(x=>x.of&&x.sit).length} ข้อ<br>

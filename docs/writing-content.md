@@ -214,7 +214,17 @@ tempting wrong option and the mistake behind it. They are excluded from the "hal
 number" rule. First sets: `048-meaning-sci-1` (s2.3 s14.5 s4.4 s4.2 s4.6 s3.3 s14.3 s16.1) and `049-meaning-math-1`
 (m22.6 m22.7 m22.9 m22.11 m3.4 m3.5 m17.1 m5.2 m8.2). Still without: s4.5 ppm, s12.2 Q = mcΔt, m2.4, m3.3, m4.2,
 m19.3 — write them when those lessons are retrofitted (queue "retrofit the 19 old lessons"). The app change that
-pairs a compute item with a meaning item on the same `sub` ("ใช้สูตรได้แต่ไม่เข้าใจ") reads `ask`.
+pairs a compute item with a meaning item on the same `sub` ("ใช้สูตรได้แต่ไม่เข้าใจ") reads `ask` (built 18 Nov: parent page tab
+ความพร้อมสอบ, `meaningPairs` in `src/app.html`; last 8 answers of each kind, flag = compute ≥ 70% on ≥ 3 and meaning
+< 60%). So a meaning/method item must carry the same `sub` as the compute items it pairs with; a subtopic with meaning
+items but fewer than 3 compute items shows "ข้อคำนวณยังน้อย". Put every flagged subtopic into the next dad brief.
+
+## Reading floor for cards (built 18 Nov 2026)
+
+Library and reteach cards are timed: finishing faster than `READ_CPS` (25) Thai characters a second, with a floor of
+at least 10 s, is "too fast". She gets one neutral sheet ("อ่านอีกรอบ" / "ไปต่อ"); a fast reteach does not move the
+loop on (it comes back another day) and earns no reading XP; a fast library read earns only its try-it XP. Long cards
+therefore cost her more time; keep each paragraph to what the idea needs.
 
 ## Why she chose a wrong option (optErr)
 

@@ -181,7 +181,11 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    "Option length"); (2) `ask:"meaning"|"method"` items, sets 048 `meaning-sci-1` and 049 `meaning-math-1` (in
    `lessonQueue` after fix-math-1 and math-congruence-1); 2c: library cards for the 9 open subtopics, a `tap` on every
    reteach paragraph (blank steps already had `opts`), glossary "ตำแหน่ง" overridden in `library.json` terms.
-   Front-page queue after that (renumbered 17 Nov): คิว 1 = item 4 below (after his first dad talk; keep the
+   **DONE 18 Nov (old คิว 2, app):** (3) compute/meaning pair flag and (5) too-fast card flag; details in
+   docs/writing-content.md ("ask" section and "Reading floor for cards"). Old reteach/library records are judged on
+   their whole duration, so the 24 s s2.2 card of 17 Nov no longer counts (that episode is back at "reteach").
+   Front-page queue after that (renumbered 18 Nov: คิว 1 dad-talk follow-up · คิว 2 รอบ 2 · คิว 3 retrofit · คิว 4 checkpoint 1 results).
+   Old numbering, 17 Nov: คิว 1 = item 4 below (after his first dad talk; keep the
    "อธิบายโดยไม่ใช้สูตร" questions in every brief) · คิว 2 = app: (3) compute/meaning pair flag (pair by `sub`, meaning
    items carry `ask`) + (5) too-fast card flag · คิว 3 = item 3 (รอบ 2) · คิว 4 = (4) retrofit the 19 old lessons by
    error priority, adding meaning/method items for the formula subtopics still without them · คิว 5 = read
