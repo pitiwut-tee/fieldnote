@@ -162,3 +162,8 @@ things a normal family has. **Her father must approve every mission before she s
 - content/phonics.json: `cards` (one shown per day at the start of the vocab session; `re` links a misspelling to a card; TIP_ORDER in app.html decides which card wins) and `probe` (20 held-out words for the monthly transfer check, halves A/B alternate by month, answers never shown). NEVER add a probe word (or a derivative like predict→prediction) to vocab.json.
 - New words: spelling is typed chunk by chunk; review words have a "แบ่งเป็นส่วนให้ดู" hint (recorded as hintLv). Wrong spellings show highlighted letters + the matching card tip.
 - Parent page (ผลละเอียด › คำศัพท์อังกฤษ) shows the monthly probe score. Compare A with A, B with B (every 2 months). Report it honestly in the February evaluation.
+- **17 Nov fixes**: (1) a plain review set (`type:"review"`, `setId:"review"`) no longer fills mission 1 (ชุดฝึก) from
+  18 Nov (`REVIEW_RULE_FROM`); it gives XP only. Friday `repair` and `exam-review` still fill it. Reason: on 17 Nov the
+  student did only reviews, mission 1 showed "ทบทวนข้อที่เคยพลาด ทำแล้ว" and the new lesson vanished. Never let a
+  review-type record stand in for new learning. (2) Taps on `.opt` are ignored when the finger moved > 10 px or the
+  page scrolled while it was down (she reported a scroll answering a question; not reproducible in desktop Chromium).
