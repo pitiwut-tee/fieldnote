@@ -148,6 +148,19 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    parent page list "เรื่องที่น้องเปิดแต่ยังไม่มีการ์ดเฉพาะ" and the misconception list), `tap` on the paragraphs of the 9
    reteach cards, `opts` on every blank worked step, fix the glossary entry "ตำแหน่ง" (statistics meaning shows in
    science text); blind check for all of it.
+2d. **Teaching audit, 17 Nov late (father asked after the Rf case; proposals WAIT for his choice in the status doc):**
+   measured by scripts over `content/`: (1) the right option is the longest one in 92% of `check`
+   reasons in sets and 95% in `variants.json` (chance 33%), 61% of text-option questions (chance 25%), 63% of reteach
+   taps/blank steps, so "picked the right reason" (which the misconception "resolved" rule relies on) can be gamed by
+   length; (2) 19 of 32 lessons (all written 4–12 Nov, no `hook`, no `more`) open with a formula or procedure before
+   saying what the idea is for (e.g. 001 starts with "ตำแหน่งมัธยฐาน = (n+1)÷2"); density never had its own lesson;
+   Rf was one clause of a 5-point card; (3) only ~1 in 10 question stems asks what a number means, why, or which
+   method; (4) a reteach card (s2.2) was finished in 24 s with 3/3 blanks right: speed shows it was not read, and the
+   blanks are recognisable. Proposed fixes (see the chat of 17 Nov late): balance option lengths + a verify.js rule;
+   a "meaning" item and a "which method" item per formula subtopic, `ex` opens with what the number means; retrofit
+   the 19 old lessons (hook, meaning point before the formula, `more`) by error priority; pair compute + meaning
+   items so the parent page can flag "ใช้สูตรได้แต่ไม่เข้าใจ"; flag cards finished faster than they can be read;
+   a "อธิบายโดยไม่ใช้สูตร" question in every dad brief.
 3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
 4. **Sonnet chat after his first dad talk (~Sun 22 Nov):** read his notes in the "10 นาทีกับพ่อ" tab, twin questions
    for those patterns, week-2 brief, then add the Sunday dad-brief step to AUTOMATION.md.
