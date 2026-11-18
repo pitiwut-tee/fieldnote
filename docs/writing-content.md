@@ -283,3 +283,23 @@ The father noticed she follows formulas without knowing what a topic is for ("�
   `hookPick`. If she asked for help on the same kind of point twice, rewrite that point in the next lesson.
 - Daily check-in: `type:"mood"` records (`ready` / `ok` / `tired`). Two "tired" in three days → lighter content
   (more level 1–2, shorter sets) and tell the father.
+
+## Figures (`geo` and `svg`, built 18 Nov 2026, queue 2 "รอบ 2")
+
+Any `fig` (question, reteach/library step, or `concept.figs[i]` = a figure under lesson point i, same length as
+`points` or shorter, `null` for none) may now be a geometry figure. Never copy a figure from a book.
+- `{"kind":"geo","pts":{"A":[x,y],...},"seg":[["A","B"] | {"p":["A","B"],"dash","ext":[px,px]|true,"tick":1-3,"par":1-3,"label","lpos":0-1,"side":1|-1,"w"}],
+  "ang":[{"v":"B","a":"A","b":"C","label","arcs":1-3,"right":true}],"txt":[{"at":[x,y],"t"}],"hide":["P"],"at":{"A":"ne"},"lab":{"A":"text"},
+  "nodot":true,"scale":false|"scaleOk":true,"desc":"…","caption"}`. Coordinates are maths coordinates (y up); the app
+  scales them, places point labels away from their lines, and draws equal-length ticks (`tick`), parallel arrows
+  (`par`), angle arcs (the smaller angle between rays v→a and v→b), right-angle marks, dashed and extended lines.
+  A label starting with "?" is drawn in the accent colour (the asked quantity). `lpos` moves a side label off a
+  midpoint dot.
+- `{"kind":"svg","svg":"<svg …>","desc":"…"}` for science pictures: only drawing tags survive (no script, image,
+  foreignObject, event handlers or links; verify.js refuses them and the app strips them).
+- Rules (verify.js): every geo/svg figure has `desc` (one sentence, read aloud after the question); a geo figure says
+  `"scale":false` (shows "รูปไม่ได้วาดตามสเกล") unless you computed it to scale and set `"scaleOk":true`.
+- Build coordinates in code (trig, intersections; see the generator approach used for sets 050–052: compute
+  points from the angles, then assert the drawn angles equal the stated ones). Render every figure to an image
+  (playwright, using `geoFig`/`svgFig` from `src/app.html`) and look at it before committing; give the rendered
+  images to the blind checker too.

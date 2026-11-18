@@ -119,10 +119,25 @@ sets 024, 037). The book adds lab technique the bank lacked: evaporation vs crys
 purifies), crystal size vs cooling rate, condenser water in at the bottom, thermometer bulb at the vapour outlet,
 reading the temperature plateau to change receivers. Written: sci-separation-4 (fills s3.1 and s3.2).
 
-**Round 2 (not yet read, ~89 pages):** math ch.3 เส้นขนาน (21), ch.4 การให้เหตุผลทางเรขาคณิต (29), ch.5 การแยก
-ตัวประกอบ (13); science unit 5 งานและพลังงาน (26, the corrected file). Also compare unit 5 with the school's
-final-term "หน่วย 3 การเคลื่อนที่" document, which has never been read (60 MB scan: read only its contents and
-exercise pages). Geometry chapters need figures; the app has no geometry `fig` kind yet (father to decide).
+**Round 2, part 1 (read 18 Nov 2026, 50 scanned pages):** math ch.3 เส้นขนาน (21 pp., the file is a selection:
+book pp. 140–177, mostly exercises) and ch.4 การให้เหตุผลทางเรขาคณิต (29 pp., pp. 185–239, selection). Nothing copied.
+- Ch.3 asks: name the angle pairs a transversal makes; use them both ways (parallel → alternate equal / co-interior
+  180°, and the converse to prove lines parallel); bent "zigzag" paths between parallels (auxiliary parallel line);
+  algebra in angle expressions (often two unknowns); triangle angle sum and the exterior-angle theorem; polygon
+  interior and exterior sums; applied items (stairs whose steps must be parallel to the ground, a laser between two
+  parallel mirrors, a five-point star); short proofs that mix parallel lines with congruence (ม.ม.ด., ด.ม.ด.).
+- Ch.4 asks: conditional statements, converse, "ก็ต่อเมื่อ", inductive vs deductive reasoning, counterexamples;
+  constructions with compass and straightedge (the app cannot test these; skip); reasoning about isosceles
+  triangles, parallelograms (opposite sides/angles, diagonals bisect, converse tests), kites/rhombus diagonals,
+  the midpoint theorem (incl. the midpoint quadrilateral = parallelogram, perimeter = sum of diagonals), paper
+  folding, and mechanisms (a scissor lift, a parallelogram arm that keeps a glass upright, guy wires).
+Written: `050 math-parallel-1`, `051 math-parallel-2`, `052 math-georeason-1` (all with geo figures; blind-checked),
+queued after math-congruence-2 (the school also goes congruence → geometric reasoning).
+
+**Round 2, part 2 (not yet read, 39 pages):** math ch.5 การแยกตัวประกอบ (13) and science unit 5 งานและพลังงาน (26,
+the corrected file). Also compare unit 5 with the school's final-term "หน่วย 3 การเคลื่อนที่" document, which has
+never been read (60 MB scan: read only its contents and exercise pages). Science figures (pulleys, inclined
+planes, energy bars) can use the `svg` fig kind.
 
 ## Pilot: reading a whole IPST chapter (12 Nov 2026) — VERDICT: worth it, do it again
 

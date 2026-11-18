@@ -5,6 +5,25 @@ const fs=require("fs"), path=require("path");
 const ROOT=path.join(__dirname,".."), J=p=>JSON.parse(fs.readFileSync(path.join(ROOT,p),"utf8"));
 const errs=[], warn=m=>errs.push(m);
 
+/* geometry (geo) and hand-written (svg) figures, anywhere in content/ (18 Nov 2026; rules in docs/writing-content.md "Figures") */
+function checkFig(f,w){
+  if(!f||typeof f!=="object") return;
+  if(f.kind==="geo"||f.kind==="svg"){ if(!f.desc||String(f.desc).length<15) warn(`${w}: ${f.kind} fig needs desc (a sentence for read-aloud)`); }
+  if(f.kind==="geo"){ const P=f.pts||{}, has=n=>Object.prototype.hasOwnProperty.call(P,n);
+    if(Object.keys(P).length<2) warn(`${w}: geo fig needs pts`);
+    for(const [n,c] of Object.entries(P)) if(!(Array.isArray(c)&&c.length===2&&c.every(Number.isFinite))) warn(`${w}: geo point ${n} needs [x,y]`);
+    for(const s of f.seg||[]){ const p=Array.isArray(s)?s:s.p; if(!(Array.isArray(p)&&p.length===2&&has(p[0])&&has(p[1]))) warn(`${w}: geo seg ${JSON.stringify(s)} names unknown points`);
+      else if(P[p[0]][0]===P[p[1]][0]&&P[p[0]][1]===P[p[1]][1]) warn(`${w}: geo seg ${p.join("")} has zero length`); }
+    for(const a of f.ang||[]) if(!(has(a.v)&&has(a.a)&&has(a.b))) warn(`${w}: geo ang ${JSON.stringify(a)} names unknown points`);
+    for(const n of [...(f.hide||[]),...Object.keys(f.at||{}),...Object.keys(f.lab||{})]) if(!has(n)) warn(`${w}: geo fig names unknown point ${n}`);
+    if(f.scale!==false&&!f.scaleOk) warn(`${w}: geo fig: set "scale":false (shows "รูปไม่ได้วาดตามสเกล") or "scaleOk":true after checking the drawing is to scale`); }
+  if(f.kind==="svg"){ const t=String(f.svg||""); if(!/^\s*<svg[\s>]/.test(t)) warn(`${w}: svg fig must start with <svg`);
+    if(/<script|<foreignObject|<image|\son\w+\s*=|href\s*=|javascript:/i.test(t)) warn(`${w}: svg fig contains a forbidden tag or attribute`); }
+}
+function walkFigs(o,w){ if(Array.isArray(o)) o.forEach((x,i)=>walkFigs(x,w)); else if(o&&typeof o==="object"){ if(o.fig) checkFig(o.fig,`${w}${o.id?" "+o.id:""}`); if(Array.isArray(o.figs)){ if(o.points&&o.figs.length>o.points.length) warn(`${w}: concept.figs has more entries than points`); o.figs.forEach((f,i)=>f&&checkFig(f,`${w} figs[${i}]`)) } for(const k in o) if(k!=="fig"&&k!=="figs") walkFigs(o[k],w) } }
+for(const f of fs.readdirSync(path.join(ROOT,"content")).filter(f=>f.endsWith(".json"))) { try{ walkFigs(J("content/"+f),f) }catch(e){} }
+for(const f of fs.readdirSync(path.join(ROOT,"content/sets")).filter(f=>f.endsWith(".json"))) { try{ walkFigs(J("content/sets/"+f),f) }catch(e){} }
+
 /* ---- 1. content rules ---- */
 const spells=new Set(J("content/spells.json").spells.map(s=>s.id));
 const CAL0=J("content/calendar.json"), CPS=CAL0.checkpoints||[], WAVE1=(CAL0.understand||{}).wave1||"9999", WAVE2=(CAL0.understand||{}).wave2||"9999";
@@ -46,7 +65,7 @@ for(const f of files){
       else { if(new Set(q.opts).size!==q.opts.length) warn(`${w}: options repeat`);
         if(!(q.a>=0&&q.a<q.opts.length)) warn(`${w}: answer index out of range`); }
     }
-    if(q.fig){ const f=q.fig; if(!["dot","stem","hist","bar","table","line"].includes(f.kind)) warn(`${w}: fig.kind must be dot, stem, hist, bar, table or line`);
+    if(q.fig){ const f=q.fig; if(!["dot","stem","hist","bar","table","line","geo","svg"].includes(f.kind)) warn(`${w}: fig.kind must be dot, stem, hist, bar, table, line, geo or svg`);
       if(f.kind==="dot"&&!(typeof f.min==="number"&&typeof f.max==="number"&&f.counts)) warn(`${w}: dot fig needs min, max, counts`);
       if((f.kind==="hist"||f.kind==="bar")&&!(Array.isArray(f.values)&&f.values.length)) warn(`${w}: ${f.kind} fig needs values`);
       if((f.kind==="stem"||f.kind==="table")&&!Array.isArray(f.rows)) warn(`${w}: ${f.kind} fig needs rows`); }

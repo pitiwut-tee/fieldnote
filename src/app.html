@@ -1612,10 +1612,71 @@ function alertRead(where,msg){ const b=document.querySelector(`[data-read="${whe
 const readBtn=(where,label,disabled)=>`<button class="btn ghost small" type="button" data-read="${where}" data-label="${label}" ${disabled?"disabled":""}>${label}</button>`;
 
 
+/* geometry figure (kind "geo", 18 Nov 2026): points by coordinates (y up), the app scales, places labels and draws marks.
+   {kind:"geo", pts:{A:[0,0],..}, seg:[["A","B"] | {p:["A","B"],dash,ext:[px,px]|true,tick:1-3,par:1-3,label,lpos:0-1 (label position along the segment),side:1|-1,w}],
+    ang:[{v:"B",a:"A",b:"C",label,arcs:1-3,right:true}], txt:[{at:[x,y],t}], hide:["P"], at:{A:"ne"}, nodot:true,
+    scale:false (adds "รูปไม่ได้วาดตามสเกล"), desc:"read-aloud description", caption} */
+function geoFig(f){
+  const P=f.pts||{}, names=Object.keys(P), xs=names.map(n=>P[n][0]), ys=names.map(n=>P[n][1]);
+  const segs=(f.seg||[]).map(s=>Array.isArray(s)?{p:s}:s), angs=f.ang||[], hide=new Set(f.hide||[]);
+  const minx=Math.min(...xs), maxx=Math.max(...xs), miny=Math.min(...ys), maxy=Math.max(...ys);
+  const spanx=Math.max(maxx-minx,1e-6), spany=Math.max(maxy-miny,1e-6), pad=34;
+  const k=Math.min(260/spanx, 200/spany), W=Math.round(spanx*k+2*pad), H=Math.round(spany*k+2*pad);
+  const S=n=>[pad+(P[n][0]-minx)*k, pad+(maxy-P[n][1])*k], SX=p=>[pad+(p[0]-minx)*k, pad+(maxy-p[1])*k];
+  const cx=W/2, cy=H/2, u=(a,b)=>{const dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1;return [dx/l,dy/l]};
+  const R=v=>+v.toFixed(1), ink="currentColor", acc="var(--accent)";
+  const lab=t=>{ const q=/^\?/.test(t); return {q, fill:q?acc:ink, w:q?"800":"600"} };
+  let g="", top="";
+  segs.forEach(s=>{ let a=S(s.p[0]), b=S(s.p[1]); const d=u(a,b);
+    let e=s.ext===true?[18,18]:(s.ext||[0,0]); const A=[a[0]-d[0]*e[0],a[1]-d[1]*e[0]], B=[b[0]+d[0]*e[1],b[1]+d[1]*e[1]];
+    g+=`<line x1="${R(A[0])}" y1="${R(A[1])}" x2="${R(B[0])}" y2="${R(B[1])}" stroke="${ink}" stroke-width="${s.w||1.6}" stroke-linecap="round"${s.dash?' stroke-dasharray="5 4"':""}/>`;
+    const m=[(a[0]+b[0])/2,(a[1]+b[1])/2], nrm=[-d[1],d[0]];
+    for(let i=0;i<(s.tick||0);i++){ const o=(i-((s.tick||0)-1)/2)*5, c=[m[0]+d[0]*o,m[1]+d[1]*o];
+      g+=`<line x1="${R(c[0]+nrm[0]*6)}" y1="${R(c[1]+nrm[1]*6)}" x2="${R(c[0]-nrm[0]*6)}" y2="${R(c[1]-nrm[1]*6)}" stroke="${ink}" stroke-width="1.5"/>` }
+    for(let i=0;i<(s.par||0);i++){ const o=(i-((s.par||0)-1)/2)*7+(s.tick?14:0), c=[m[0]+d[0]*o,m[1]+d[1]*o];
+      g+=`<polyline points="${R(c[0]-d[0]*6+nrm[0]*5)},${R(c[1]-d[1]*6+nrm[1]*5)} ${R(c[0])},${R(c[1])} ${R(c[0]-d[0]*6-nrm[0]*5)},${R(c[1]-d[1]*6-nrm[1]*5)}" fill="none" stroke="${ink}" stroke-width="1.6"/>` }
+    if(s.label){ const lp=s.lpos!=null?s.lpos:.5, m=[a[0]+(b[0]-a[0])*lp,a[1]+(b[1]-a[1])*lp]; let side=(cx-m[0])*nrm[0]+(cy-m[1])*nrm[1]>0?-1:1; if(s.side) side=s.side; const L=lab(s.label), off=s.tick||s.par?16:12;
+      top+=`<text x="${R(m[0]+nrm[0]*off*side)}" y="${R(m[1]+nrm[1]*off*side+4)}" font-size="12.5" font-weight="${L.w}" text-anchor="middle" fill="${L.fill}" paint-order="stroke" stroke="var(--card,#fff)" stroke-width="3">${esc(s.label)}</text>` } });
+  angs.forEach(an=>{ const v=S(an.v), a=u(v,S(an.a)), b=u(v,S(an.b));
+    let t1=Math.atan2(a[1],a[0]), t2=Math.atan2(b[1],b[0]), dt=t2-t1; while(dt<=-Math.PI) dt+=2*Math.PI; while(dt>Math.PI) dt-=2*Math.PI;
+    const deg=Math.abs(dt)*180/Math.PI, r0=deg<35?26:deg<70?20:16, mid=t1+dt/2, bis=[Math.cos(mid),Math.sin(mid)];
+    if(an.right){ const s=10, p1=[v[0]+a[0]*s,v[1]+a[1]*s], p2=[v[0]+(a[0]+b[0])*s,v[1]+(a[1]+b[1])*s], p3=[v[0]+b[0]*s,v[1]+b[1]*s];
+      g+=`<polyline points="${R(p1[0])},${R(p1[1])} ${R(p2[0])},${R(p2[1])} ${R(p3[0])},${R(p3[1])}" fill="none" stroke="${ink}" stroke-width="1.3"/>` }
+    else for(let i=0;i<(an.arcs||1);i++){ const r=r0+i*4, p1=[v[0]+Math.cos(t1)*r,v[1]+Math.sin(t1)*r], p2=[v[0]+Math.cos(t2)*r,v[1]+Math.sin(t2)*r];
+      g+=`<path d="M${R(p1[0])} ${R(p1[1])} A${r} ${r} 0 0 ${dt>0?1:0} ${R(p2[0])} ${R(p2[1])}" fill="none" stroke="${an.label&&/^\?/.test(an.label)?acc:ink}" stroke-width="1.4"/>` }
+    if(an.label){ const L=lab(an.label), rr=(an.right?14:r0+((an.arcs||1)-1)*4)+(deg<35?16:13);
+      top+=`<text x="${R(v[0]+bis[0]*rr)}" y="${R(v[1]+bis[1]*rr+4)}" font-size="12" font-weight="${L.w}" text-anchor="middle" fill="${L.fill}" paint-order="stroke" stroke="var(--card,#fff)" stroke-width="3">${esc(an.label)}</text>` } });
+  const DIR={n:[0,-1],s:[0,1],e:[1,0],w:[-1,0],ne:[.71,-.71],nw:[-.71,-.71],se:[.71,.71],sw:[-.71,.71]};
+  names.forEach(n=>{ const p=S(n); if(!f.nodot&&!hide.has(n)) g+=`<circle cx="${R(p[0])}" cy="${R(p[1])}" r="2.4" fill="${ink}"/>`;
+    if(hide.has(n)) return; let d;
+    if(f.at&&DIR[f.at[n]]) d=DIR[f.at[n]];
+    else { let sx=0,sy=0,c=0; segs.forEach(s=>{ const i=s.p.indexOf(n); if(i<0) return; const o=S(s.p[1-i]), w=u(p,o); sx+=w[0]; sy+=w[1]; c++;
+        if(s.ext===true||(s.ext&&s.ext[i])) { sx-=w[0]; sy-=w[1]; } });
+      angs.forEach(an=>{ if(an.v===n){ [an.a,an.b].forEach(o=>{ const w=u(p,S(o)); sx+=w[0]*.5; sy+=w[1]*.5 }) } });
+      if(Math.hypot(sx,sy)<.3){ d=p[1]>cy+8?[0,1]:[0,-1] } else { const l=Math.hypot(sx,sy); d=[-sx/l,-sy/l] } }
+    const t=f.lab&&f.lab[n]!=null?f.lab[n]:n;
+    top+=`<text x="${R(p[0]+d[0]*13)}" y="${R(p[1]+d[1]*13+4.5)}" font-size="13.5" font-weight="700" font-style="italic" text-anchor="middle" fill="${ink}" paint-order="stroke" stroke="var(--card,#fff)" stroke-width="3">${esc(t)}</text>` });
+  (f.txt||[]).forEach(x=>{ const p=SX(x.at), L=lab(x.t); top+=`<text x="${R(p[0])}" y="${R(p[1]+4)}" font-size="12" font-weight="${L.w}" text-anchor="middle" fill="${L.fill}" paint-order="stroke" stroke="var(--card,#fff)" stroke-width="3">${esc(x.t)}</text>` });
+  const note=[f.caption?esc(f.caption):"", f.scale===false?"รูปไม่ได้วาดตามสเกล":""].filter(Boolean).join(" · ");
+  return `<figure class="qfig geo"><svg viewBox="0 0 ${W} ${H}" style="max-width:${Math.min(W,340)}px;margin:0 auto" role="img" aria-label="${esc(f.desc||"รูปเรขาคณิต")}">${g}${top}</svg>${note?`<figcaption class="small muted" style="text-align:center">${note}</figcaption>`:""}</figure>`;
+}
+/* hand-written SVG for science (kind "svg"): only drawing tags and attributes survive */
+const SVG_OK=new Set("svg g line polyline polygon path rect circle ellipse text tspan defs marker title".split(" "));
+const SVG_ATTR=/^(viewBox|width|height|x|y|x1|y1|x2|y2|cx|cy|r|rx|ry|d|points|fill|stroke|stroke-width|stroke-dasharray|stroke-linecap|stroke-linejoin|font-size|font-weight|font-style|text-anchor|transform|opacity|fill-opacity|stroke-opacity|marker-end|marker-start|markerWidth|markerHeight|refX|refY|orient|id|paint-order|dominant-baseline|xmlns)$/;
+function svgFig(f){
+  try{ const doc=new DOMParser().parseFromString(f.svg,"image/svg+xml"), root=doc.documentElement; if(root.nodeName!=="svg") return "";
+    const walk=el=>{ [...el.children].forEach(c=>{ if(!SVG_OK.has(c.nodeName)){ c.remove(); return } [...c.attributes].forEach(a=>{ if(!SVG_ATTR.test(a.name)||/url\((?!#)|javascript:/i.test(a.value)) c.removeAttribute(a.name) }); walk(c) }) };
+    [...root.attributes].forEach(a=>{ if(!SVG_ATTR.test(a.name)) root.removeAttribute(a.name) }); walk(root);
+    root.setAttribute("role","img"); root.setAttribute("aria-label",f.desc||"รูป"); root.setAttribute("style","max-width:340px;width:100%;height:auto;margin:0 auto");
+    const note=[f.caption?esc(f.caption):"", f.scale===false?"รูปไม่ได้วาดตามสเกล":""].filter(Boolean).join(" · ");
+    return `<figure class="qfig">${new XMLSerializer().serializeToString(root)}${note?`<figcaption class="small muted" style="text-align:center">${note}</figcaption>`:""}</figure>` }catch(e){ return "" }
+}
 /* ---------- figures inside questions (q.fig): dot plot, stem-and-leaf (one or two sided), histogram/bar chart, table ---------- */
 function figHtml(f){
   if(!f) return "";
   try{
+  if(f.kind==="geo") return geoFig(f);
+  if(f.kind==="svg") return svgFig(f);
   if(f.kind==="dot"){ const step=f.step||1, n=Math.round((f.max-f.min)/step), W=Math.max(260,n*26+40), maxc=Math.max(1,...Object.values(f.counts||{})), H=maxc*13+46, x=v=>20+(v-f.min)/step*((W-40)/n);
     const tick=f.tick||(n>14?2:1); let g="";
     for(let i=0;i<=n;i++){ const v=+(f.min+i*step).toFixed(4); g+=`<line x1="${x(v)}" y1="${H-26}" x2="${x(v)}" y2="${H-20}" stroke="currentColor"/>`+(i%tick===0?`<text x="${x(v)}" y="${H-6}" font-size="11" text-anchor="middle" fill="currentColor">${v}</text>`:"") }
@@ -1900,7 +1961,7 @@ function renderStep(){
   clearTimeout(RD.timer);
   const qb=$v.querySelector('[data-read="q"]');
   if(qb){ if(qb.disabled) RD.timer=setTimeout(()=>{ qb.disabled=false; qb.dataset.label="🔊 ฟังโจทย์"; if(RD.where!=="q") qb.textContent="🔊 ฟังโจทย์" },waitMs);
-    qb.onclick=()=>readAloud("q",[q.q,...(q.num||(q.cover&&!S.uncovered)?[]:q.opts.map((o,k)=>`ตัวเลือกที่ ${k+1}. ${o}`))],()=>{S.listenQ=(S.listenQ||0)+1}) }
+    qb.onclick=()=>readAloud("q",[q.q,...(q.fig&&q.fig.desc?["รูป: "+q.fig.desc]:[]),...(q.num||(q.cover&&!S.uncovered)?[]:q.opts.map((o,k)=>`ตัวเลือกที่ ${k+1}. ${o}`))],()=>{S.listenQ=(S.listenQ||0)+1}) }
   const eb=$v.querySelector('[data-read="ex"]'); if(eb) eb.onclick=()=>readAloud("ex",[q.ex],()=>{S.listenEx=(S.listenEx||0)+1});
   bindPassage();
   if(RD.where&&RD.box&&!RD.box.isConnected){ const nb=$v.querySelector(`[data-read="${RD.where}"]`); if(nb){ (nb.closest(".row")||nb).insertAdjacentElement("afterend",RD.box); nb.textContent="⏹ หยุดอ่าน" } }
@@ -1972,7 +2033,7 @@ function renderConcept(){
       :`<span class="eyebrow">🌏 เรื่องนี้ใช้ทำอะไร</span><h2>${esc(c.title)}</h2>${c.use?`<p>${gloss(c.use)}</p>`:""}<p class="small muted">มี ${n} ส่วน อ่านทีละส่วน ส่วนไหนยังงง กด "ขออธิบายอีกแบบ" ได้เลย</p>`;
     btns=h&&h.opts&&S.hookPick==null?"":`<button class="btn" id="cnext">ไปเรียนกันเลย</button>`;
   } else if(cur.t==="pt"){ const i=cur.i, more=(c.more||[])[i], helped=(S.conceptHelp||[]).filter(x=>x===i).length;
-    body=`<span class="eyebrow">ส่วนที่ ${i+1} จาก ${n}</span><p style="font-size:1.08rem;line-height:1.7">${gloss(c.points[i])}</p>
+    body=`<span class="eyebrow">ส่วนที่ ${i+1} จาก ${n}</span><p style="font-size:1.08rem;line-height:1.7">${gloss(c.points[i])}</p>${figHtml((c.figs||[])[i])}
       ${helped&&more?`<div class="feedback"><b>อธิบายอีกแบบ</b><p class="small">${gloss(more)}</p></div>`:""}
       ${helped&&!more?c.alts.slice(0,S.altShown).map(a=>`<div class="feedback"><b>${esc(a.label)}</b>${a.lines.map(l=>`<p class="small">${gloss(l)}</p>`).join("")}</div>`).join(""):""}`;
     const canMore=more?!helped:S.altShown<(c.alts||[]).length;

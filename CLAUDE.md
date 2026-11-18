@@ -82,12 +82,11 @@ One page he reads in ~2 minutes a day. Keep it short; history goes to the other 
 - Every chat and every nightly run updates the date chip at the top.
 
 ## Figures in questions (father approved 16 Nov 2026)
-- Plan, in this order: (1) add a declarative geometry `fig` kind to `src/app.html` (points by coordinates,
-  segments, labels, equal-length ticks, angle arcs, right-angle marks, parallel arrows, dashed lines, "?" marker;
-  the app places labels) and teach it to `tools/verify.js`; (2) add figures to sets 040–041 (congruence);
-  (3) use it for IPST ม.2 เล่ม 2 ch.3–4 in round 2. Science: hand-written SVG for now (an `svg` fig kind, sanitised),
-  a circuit/optics kind later when those chapters come. Do (1) in the same Opus session as round 2 when the
-  father says "ทำรอบ 2 หนังสือ ม.2 เล่ม 2"; he does not need to repeat this plan.
+- **(1) DONE 18 Nov:** `geo` and `svg` fig kinds in `src/app.html` (`geoFig`, `svgFig`), `concept.figs` (a figure
+  under a lesson point), checks in `tools/verify.js`; field reference in docs/writing-content.md "Figures".
+  **(3) DONE 18 Nov:** sets 050–052 from IPST ม.2 เล่ม 2 ch.3–4, every question with a figure.
+  **(2) still to do:** add figures to sets 040–041 (congruence), in the next round-2 chat.
+  A circuit/optics kind may come later when those chapters come; until then science uses `svg`.
 - Standing rules for every figure: render it to an image (playwright screenshot) and look at it before
   committing; the independent blind check gets the rendered figures too; write "รูปไม่ได้วาดตามสเกล" when it is
   not to scale; every figure has a short text description for read-aloud. Never copy a figure from a book.
@@ -195,6 +194,10 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    error priority, adding meaning/method items for the formula subtopics still without them · คิว 5 = read
    checkpoint 1 results (6–7 Dec, Sonnet).
 3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
+   **Part 1 DONE 18 Nov:** fig kinds + ch.3 เส้นขนาน + ch.4 ให้เหตุผลทางเรขาคณิต read (50 pp.) → sets 050–052 (blind-checked).
+   **Part 2 = front-page queue item "รอบ 2 ส่วนที่ 2" (Opus, computer):** ch.5 แยกตัวประกอบ (13 pp.) + science unit 5
+   งานและพลังงาน (26 pp.) + the school's "หน่วย 3 การเคลื่อนที่" contents/exercise pages, then figures for 040–041.
+   Notes of what part 1 found: content/school-plan.md "Round 2".
 4. **Sonnet chat after his first dad talk (~Sun 22 Nov):** read his notes in the "10 นาทีกับพ่อ" tab, twin questions
    for those patterns, week-2 brief, then add the Sunday dad-brief step to AUTOMATION.md.
 
