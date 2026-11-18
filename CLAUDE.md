@@ -201,6 +201,12 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    are served · 4 construction-reasoning lesson + proof sheets (before 3 Dec) · 5 read checkpoint 1 · 6 mock-midterm set of
    ~28 items for 12 Dec (before 10 Dec) · 7 read the mock · 8 "รอบ 2 ส่วนที่ 2" in prep week 14–18 Dec · 9 retrofit the rest
    after the midterm · 10 the father's check of the missing science unit 2. Every new set still needs the blind check.
+2f. **Sweep plan, 18 Nov (read the last section of `content/midterm-plan.md`):** sweep size follows the day's time gap (5/8/10,
+   holiday up to 15), sweep locked until the other missions are done, items picked for information, bank refilled in 4 rounds
+   (r1 ~60 new by 30 Nov, r2 twins + 30 by 20 Dec, r3 ~60 by 10 Jan, r4 30–50 by 31 Jan), each blind-checked. Front-page queue
+   (18 Nov, final): 1 figures 040–041 · 2 dad-talk follow-up · 3 retrofit · 4 refill r1 · 5 construction lesson + proof sheets ·
+   6 app: adaptive sweep + lock + info-based picking · 7 read cp-1 · 8 mock-midterm set · 9 read mock · 10 รอบ 2 ส่วนที่ 2 ·
+   11 refill r2 · 12 retrofit the rest · 13 refill r3 · 14 refill r4 · 15 father's science unit 2 check.
 3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
    **Part 1 DONE 18 Nov:** fig kinds + ch.3 เส้นขนาน + ch.4 ให้เหตุผลทางเรขาคณิต read (50 pp.) → sets 050–052 (blind-checked).
    **Part 2 = front-page queue item "รอบ 2 ส่วนที่ 2" (Opus, computer):** ch.5 แยกตัวประกอบ (13 pp.) + science unit 5
