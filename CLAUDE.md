@@ -233,7 +233,11 @@ It is for grouping chats, not for memory: **this file and the status doc stay th
 upload copies of repo files into the project's knowledge (they go stale), and do not use the project's GitHub
 sync (it copies a snapshot); every chat attaches the repo itself with `add_repo`. The nightly scheduled task
 ("สมุดคาถา: เตรียมเนื้อหาทุกเย็น", 22:57 Bangkok) is an account-level task that starts a fresh session and attaches
-the repo itself; it was NOT moved into the project and does not depend on it.
+the repo itself; it was NOT moved into the project and does not depend on it. Its prompt lives in the scheduled
+task, not in this repo. Since 18 Nov (night) its step 1 says: if `add_repo` is unavailable or a clone already exists,
+use that clone but first `git fetch origin main` and make sure HEAD matches origin/main (never write on a stale
+checkout), and report which case happened (the 18 Nov run said "add_repo not found, repo already cloned"; it was a
+quiet run that wrote nothing). If the task is ever recreated, keep that sentence.
 
 ## When the father should open a new chat
 Not by topic. Every chat here is the same project, so open new chats from the Project page. Open a new one at a **handoff point**: the last thing he asked
