@@ -977,8 +977,9 @@ function reviewPool(list){
   list.filter(isLesson).slice().sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt)).forEach(a=>(a.items||[]).forEach(x=>{
     if(x.skipped||!QBANK[x.qid]) return; const id=QBANK[x.qid].q.of||x.qid;
     /* a right answer only clears a mistake if she had to think: a twin, a typed answer, hidden options, or a fresh set.
-       Re-tapping the same remembered option in a review does not count. */
-    const thought=a.type!=="review"&&!x.retry||x.of||x.recall||x.cover;
+       Re-tapping the same remembered option in a review does not count, and neither do hidden options uncovered faster
+       than she could read the stem and think (coverFast, 18 Nov). */
+    const thought=a.type!=="review"&&!x.retry||x.of||x.recall||(x.cover&&!coverFast(x));
     if(x.notTaught) return; if(x.correct===false||(x.correct&&(x.conf==="unsure"||x.checkOk===false||x.guessed||x.hintStep))) wrong.set(id,+new Date(a.endedAt)); else if(x.correct&&thought) wrong.delete(id);
   }));
   return [...wrong.entries()].sort((a,b)=>a[1]-b[1]).map(([qid])=>QBANK[qid].q);
@@ -1831,7 +1832,8 @@ function renderStep(){
       ${ans||staged?"":`<button class="btn" id="check">ตรวจคำตอบ</button>`}</div>
       ${ans?"":`<div class="numpad" role="group" aria-label="แป้นตัวเลข">${["7","8","9","4","5","6","1","2","3","−","0",".","/","⌫"].map(k=>`<button type="button" data-np="${k}" ${k==="⌫"?'aria-label="ลบ"':""}>${k}</button>`).join("")}</div>`}${panel}`;
   } else {
-    body = `<div class="opts">${q.opts.map((o,k)=>{
+    const fastUc=q.cover&&S.uncovered&&!ans&&S.coverSec<S.coverFloor;
+    body = `${fastUc?`<p class="small muted">⏩ เปิดตัวเลือกเร็วไปนิด ตอบได้ตามปกติเลย ข้อนี้จะวนกลับมาให้ลองคิดก่อนดูตัวเลือกอีกรอบวันหลัง</p>`:""}<div class="opts">${q.opts.map((o,k)=>{
       let c=""; if(ans){ if(k===q.a) c="right"; else if(k===ans.choice) c="wrong"; } else if(staged&&S.pick===k) c="picked";
       const struck=!ans&&S.struck.includes(k);
       return `<div class="optrow"><button class="opt ${c} ${struck?"struck":""}" data-k="${k}" ${ans?"disabled":""}>${esc(o)}</button>
@@ -1902,7 +1904,7 @@ function renderStep(){
   const eb=$v.querySelector('[data-read="ex"]'); if(eb) eb.onclick=()=>readAloud("ex",[q.ex],()=>{S.listenEx=(S.listenEx||0)+1});
   bindPassage();
   if(RD.where&&RD.box&&!RD.box.isConnected){ const nb=$v.querySelector(`[data-read="${RD.where}"]`); if(nb){ (nb.closest(".row")||nb).insertAdjacentElement("afterend",RD.box); nb.textContent="⏹ หยุดอ่าน" } }
-  const uc=document.getElementById("uncover"); if(uc) uc.onclick=()=>{ S.uncovered=true; S.coverSec=Math.round((Date.now()-S.qStart)/1000); const y=window.scrollY; renderStep(); window.scrollTo({top:y}) };
+  const uc=document.getElementById("uncover"); if(uc) uc.onclick=()=>{ S.uncovered=true; S.coverSec=Math.round((Date.now()-S.qStart)/1000); S.coverFloor=coverFloor(q); const y=window.scrollY; renderStep(); window.scrollTo({top:y}) };
   const pb=document.getElementById("parts"); if(pb) pb.onclick=()=>{S.partsShown=true;const y=window.scrollY;renderStep();window.scrollTo({top:y})};
   $v.querySelectorAll("[data-pred]").forEach(b=>b.onclick=()=>{ S.predictPick=+b.dataset.pred; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) });
   if(!ans&&!predWait){
@@ -1947,13 +1949,13 @@ function renderStep(){
     { const lq=document.getElementById("go-lib-q"); if(lq) lq.onclick=()=>{ readStop(); S.libOpen=(S.libOpen||0)+1; openLib(lq.dataset.sub,{qid:q.id},"session") } }
     const nx=document.getElementById("next"); if(nx) nx.onclick=()=>{
       S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,...(st.chk?{chk:1}:{}),...(st.leg!=null&&S.legs&&S.legs.length>=2?{leg:st.leg}:{}),...(S.hints&&S.hints>=(q.hints||[]).length+1?{hintStep:true}:{}),...(S.hintKnown&&S.hintKnown.length?{hintKnown:S.hintKnown}:{}),...(exStepped(q,ans)?{exSteps:Math.min(S.exStep||1,exSteps(q.ex).length),exTotal:exSteps(q.ex).length}:{}),struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
-        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(S.libOpen?{lib:S.libOpen}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(S.whyOther&&(S.why||[]).includes("other")?{whyOther:S.whyOther.trim()}:{}),...(ans.correct&&(S.guessed||S.checkPick===-1)?{guessed:true}:{}),...(S.notTaught?{notTaught:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0}:{}),...(q.check&&S.checkPick!=null&&S.checkPick!==-1?{checkOk:S.checkPick===q.check.a,...(ans.correct?{}:{checkAfterWrong:true})}:{}),...(q.predict&&S.predictPick!=null?{predict:S.predictPick,predictOk:S.predictPick===q.predict.a}:{}),...(q.friend?{friend:true}:{}),...(q.sit?{sit:q.sit}:{}),...(st.loop?{loop:st.loop}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),len:q.q.length});
+        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(S.libOpen?{lib:S.libOpen}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(S.whyOther&&(S.why||[]).includes("other")?{whyOther:S.whyOther.trim()}:{}),...(ans.correct&&(S.guessed||S.checkPick===-1)?{guessed:true}:{}),...(S.notTaught?{notTaught:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0,coverFloor:S.coverFloor||coverFloor(q)}:{}),...(q.check&&S.checkPick!=null&&S.checkPick!==-1?{checkOk:S.checkPick===q.check.a,...(ans.correct?{}:{checkAfterWrong:true})}:{}),...(q.predict&&S.predictPick!=null?{predict:S.predictPick,predictOk:S.predictPick===q.predict.a}:{}),...(q.friend?{friend:true}:{}),...(q.sit?{sit:q.sit}:{}),...(st.loop?{loop:st.loop}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),len:q.q.length});
       advance();
     };
   }
 }
 function answer(a){ readStop(); S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
-function advance(){ { const a=S.steps[S.i], b=S.steps[S.i+1]; if(S.legs&&S.legs.length>=2&&a&&b&&a.leg!=null&&b.leg!=null&&b.leg>a.leg&&b.kind!=="rate"&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>expCheckpoint(a.leg),120) } readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.libOpen=0; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.predictPick=null; S.predOrder=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
+function advance(){ { const a=S.steps[S.i], b=S.steps[S.i+1]; if(S.legs&&S.legs.length>=2&&a&&b&&a.leg!=null&&b.leg!=null&&b.leg>a.leg&&b.kind!=="rate"&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>expCheckpoint(a.leg),120) } readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.libOpen=0; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.coverFloor=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.predictPick=null; S.predOrder=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
 
 /* concept card, one idea per screen: (1) why this topic exists — a puzzle to guess first (c.hook) or the "use" line,
    (2) each point alone with "เข้าใจแล้ว" / "ขออธิบายอีกแบบ" (c.more[i], else the next whole alternative),
@@ -4712,6 +4714,7 @@ function parentDash(list){
   { const x=examNext(); if(x){ const d=Math.round((new Date(x.from+"T12:00:00")-new Date(isoDay(todayKey())+"T12:00:00"))/DAY);
       if(d<=30) A.push(["green","📅",`${x.name} ${examFmt(x)} · ${d>0?`อีก ${d} วัน · 7 วันก่อนสอบแอปเปลี่ยนเป็นโหมดทบทวนเรื่องที่จะสอบเอง`:"อยู่ในช่วงสอบ ภารกิจเหลือแค่คำศัพท์"}${x.estimated?" (วันที่ประมาณจากปีก่อน ถ้าโรงเรียนประกาศแล้ว ส่งวันจริงมาได้)":""}`]) } }
   { const nt=it7.filter(x=>x.notTaught); if(nt.length){ const tp=[...new Set(nt.map(x=>x.topic).filter(Boolean))].slice(0,3).join(", "); A.push(["amber","📭",`น้องบอกว่ายังไม่ได้เรียน ${nt.length} ข้อ (${esc(tp)}) ไม่นับเป็นผิด ระบบประจำวันจะเช็กกับแผนของโรงเรียน`]) } }
+  { const cv=it7.filter(x=>x.cover&&!x.skipped), fs=cv.filter(x=>coverFast(x)); if(fs.length) A.push([fs.length>=3&&fs.length/cv.length>=0.5?"amber":"green","⏩",`ข้อที่ซ่อนตัวเลือกให้คิดก่อน น้องกดเปิดเร็วกว่าเวลาอ่านโจทย์และคิด ${fs.length}/${cv.length} ครั้งใน 7 วัน (เร็วสุด ${Math.min(...fs.map(x=>x.coverSec||0))} วิ) ข้อเหล่านี้ตอบถูกก็ยังไม่นับว่าแก้แล้ว ระบบจะวนกลับมาอีก`]) }
   { const gs=it7.filter(x=>x.guessed).length; if(gs>=2) A.push(["amber","🎲",`น้องบอกเองว่าตอบถูกเพราะเดา ${gs} ข้อในสัปดาห์นี้ ไม่นับเป็นความชำนาญ และส่งกลับไปทวนแล้ว`]) }
   { const ot=it7.filter(x=>x.whyOther); if(ot.length) A.push(["green","✍️",`เหตุผลที่น้องพิมพ์เอง: ${ot.slice(-3).map(x=>"“"+esc(x.whyOther)+"”").join(" · ")}`]) }
   const sw={}; list.filter(a=>a.type==="sweep").forEach(a=>(a.items||[]).forEach(x=>{ const sp=QBANK[x.qid]?.q.spell; if(!sp) return; (sw[sp]??=[0,0]); sw[sp][0]++; if(x.correct) sw[sp][1]++ }));
@@ -5041,6 +5044,14 @@ const READ_CPS=25;
 function plainLen(h){ return String(h||"").replace(/<details[\s\S]*?<\/details>/g,"").replace(/<[^>]*>/g," ").replace(/&[#a-z0-9]+;/gi,"x").replace(/\s+/g,"").length }
 function readFloor(chars){ return Math.round(chars/READ_CPS) }
 const tooFast=(sec,floor)=>floor>=10&&sec<floor;
+/* Hidden options ("คิดแล้ว ขอดูตัวเลือก", built 18 Nov): the button is a nudge, not a lock. Uncovering faster than reading
+   the stem at READ_CPS plus COVER_THINK seconds to think (at least 10 s) is "fast": a right answer then does not clear the
+   mistake from the review pool (the question comes back), and the parent page counts it. Nothing is shown to her as a
+   penalty; the sheet after a fast uncover only says the question will come back. Records before 18 Nov have no
+   coverFloor and are judged against the stem as it is now. */
+const COVER_THINK=8;
+function coverFloor(q){ return Math.max(10,Math.round(plainLen(q&&q.q)/25)+COVER_THINK) }
+function coverFast(x){ if(!x||!x.cover) return false; const f=x.coverFloor!=null?x.coverFloor:coverFloor(QBANK[x.qid]&&QBANK[x.qid].q); return (x.coverSec||0)<f }
 function workedChars(c){ return ((c&&c.worked)||[]).reduce((s,w)=>s+plainLen(w.q)+lpSteps(w).reduce((t,x)=>t+plainLen(x.t),0)+plainLen(w.answer),0) }
 function cardRead(a){ if(!a) return null;
   if(a.fast!=null){ const card=a.cardFloor!=null&&tooFast(a.cardSec,a.cardFloor); return {sec:card?a.cardSec:a.durationSec,floor:card?a.cardFloor:a.floorSec,fast:!!a.fast,card} }

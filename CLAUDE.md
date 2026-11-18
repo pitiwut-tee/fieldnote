@@ -184,6 +184,10 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    **DONE 18 Nov (old คิว 2, app):** (3) compute/meaning pair flag and (5) too-fast card flag; details in
    docs/writing-content.md ("ask" section and "Reading floor for cards"). Old reteach/library records are judged on
    their whole duration, so the 24 s s2.2 card of 17 Nov no longer counts (that episode is back at "reteach").
+   **DONE 18 Nov (father's question about "คิดแล้ว ขอดูตัวเลือก"):** hidden options are the weakest review path (she
+   can uncover at once; most past uncovers took 1–4 s), so an uncover faster than `coverFloor` no longer clears the
+   mistake, she sees one neutral line, the parent page counts fast uncovers; and 15 situation twins were written for
+   every question that had reached that path without a twin (blind-checked). Keep twins complete so the path is rare.
    Front-page queue after that (renumbered 18 Nov: คิว 1 dad-talk follow-up · คิว 2 รอบ 2 · คิว 3 retrofit · คิว 4 checkpoint 1 results).
    Old numbering, 17 Nov: คิว 1 = item 4 below (after his first dad talk; keep the
    "อธิบายโดยไม่ใช้สูตร" questions in every brief) · คิว 2 = app: (3) compute/meaning pair flag (pair by `sub`, meaning

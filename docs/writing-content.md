@@ -105,7 +105,11 @@ original with options hidden until she has thought ("คิดแล้ว ข�
   Same idea and level, new numbers and a new situation (follow the context mix), new distractors from real
   mistakes, `ex` in the companion voice, `hints`, `ctx`, and `parts` if level 3. Re-solve twins in code and include
   them in the subagent review. Twins do not count toward the 6-set cap.
-- Item fields: `of` (answered a twin of this id), `recall:true` (typed answer), `cover:true` + `coverSec`.
+- Hidden options are the weakest of the three (she can uncover at once), so the twin rule below matters. Since 18 Nov
+  an uncover faster than `coverFloor` (stem read at 25 chars/s + 8 s to think, at least 10 s) is "fast": a right
+  answer then does not clear the mistake from the review pool, she sees one neutral line saying it will come back,
+  and the parent page counts fast uncovers over 7 days.
+- Item fields: `of` (answered a twin of this id), `recall:true` (typed answer), `cover:true` + `coverSec` + `coverFloor`.
   A wrong answer on a twin means the idea, not the memory of one question, is still weak: give that spell a lesson.
 - Mistake reason `forgot` ("เข้าใจ แต่จำสูตรหรือวิธีคิดไม่ได้"): the idea is fine, recall is weak. Do not re-teach;
   add the formula or method to the letter as a short memory tip and rely on spacing.

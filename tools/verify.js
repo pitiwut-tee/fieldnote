@@ -393,6 +393,29 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     const v2=await pg.evaluate(([list,s])=>meaningPairs(list).find(x=>x.sub===s).v,[list,P.s]);
     if(v2!=="ok") return "after 2 of 3 meaning answers right the flag should clear, got "+v2 });
 
+  await T("hidden options: a fast uncover does not clear the mistake",async()=>{ await noToday();
+    /* a text-option question without twins, so the review serves it with options hidden */
+    const qid=await pg.evaluate(()=>Object.values(QBANK).map(o=>o.q).find(q=>!q.of&&!(VARIANTS[q.id]||[]).length&&q.opts&&!numify(q)&&QBANK[q.id].set.kind==="lesson")?.id);
+    if(!qid) return "no text-option question without twins";
+    const day=n=>new Date(Date.now()+86400000-n*86400000).toISOString();
+    const miss={type:"set",setId:"x",topic:"x",startedAt:day(3),endedAt:day(3),durationSec:60,correct:0,total:1,items:[{qid,level:2,correct:false}]};
+    const one=async wait=>{ await reset([miss]); await pg.evaluate(()=>startReview(1)); await pg.waitForTimeout(200);
+      if(!await pg.locator("#uncover").count()) return "the review did not hide the options";
+      if(wait) await pg.clock.runFor(wait*1000);
+      await pg.click("#uncover"); await pg.waitForTimeout(100);
+      const note=await pg.locator("p.small",{hasText:"เปิดตัวเลือกเร็วไปนิด"}).count();
+      const r=await play(false); const rec=await pg.evaluate(()=>mine().filter(a=>a.type==="review").pop());
+      const it=rec&&rec.items.find(x=>x.qid===qid);
+      const inPool=await pg.evaluate(qid=>reviewPool(mine()).some(q=>q.id===qid),qid);
+      return {note,it,inPool,ok:r.ok} };
+    const f=await one(0); if(typeof f==="string") return f;
+    if(!f.it||!f.it.cover||f.it.coverFloor<10) return "the record lacks cover/coverFloor: "+JSON.stringify(f.it);
+    if(!f.note) return "no note after a fast uncover";
+    if(!f.inPool) return "a right answer after a fast uncover cleared the mistake";
+    const fl=f.it.coverFloor, sl=await one(fl+1); if(typeof sl==="string") return sl;
+    if(sl.note) return "the fast note showed after waiting "+(fl+1)+" s";
+    if(sl.inPool) return "a right answer after thinking "+(fl+1)+" s did not clear the mistake" });
+
   await T("home renders on special days and wave intros",async()=>{ await noToday(); await reset();
     await pg.evaluate(()=>{ localStorage.removeItem("fieldnote.waveSeen"); CAL.checkpoints=[...(CAL.checkpoints||[]),{date:isoDay(todayKey()),kind:"full",subject:"คณิต"}]; render() });
     await pg.waitForTimeout(900);
@@ -415,6 +438,9 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     if(!await p2.locator("h3",{hasText:"สมุดคาถา: น้องเปิดอ่านเอง"}).count()) warn("parent page: library log missing");
     if(!await p2.locator("h3",{hasText:"ใช้สูตรได้ แต่รู้ไหมว่าตัวเลขบอกอะไร"}).count()) warn("parent page: compute/meaning section missing");
     if(!await p2.locator("#understand",{hasText:"เร็วเกินอ่านทัน"}).count()) warn("parent page: the too-fast library reading is not flagged");
+    { const at=new Date(Date.now()-3600000).toISOString(), q=await p2.evaluate(()=>Object.values(QBANK).find(o=>o.set.kind==="lesson").q.id);
+      await p2.evaluate(([at,q])=>{ attempts=[...attempts,{type:"review",setId:"review",topic:"ทบทวน",startedAt:at,endedAt:at,durationSec:20,correct:1,total:1,items:[{qid:q,level:2,correct:true,cover:true,coverSec:1,coverFloor:14}]}]; render() },[at,q]);
+      if(!await p2.locator("text=กดเปิดเร็วกว่าเวลาอ่านโจทย์").count()) warn("parent page: the fast uncover is not flagged"); else console.log("ok  feature: parent page fast-uncover flag") }
     if(e2.length) warn("parent page errors: "+e2.join(" | "));
     await b2.close() }
   if(pageErr.length) warn("page errors: "+pageErr.join(" | "));
