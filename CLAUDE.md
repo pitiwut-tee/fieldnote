@@ -85,7 +85,9 @@ One page he reads in ~2 minutes a day. Keep it short; history goes to the other 
 - **(1) DONE 18 Nov:** `geo` and `svg` fig kinds in `src/app.html` (`geoFig`, `svgFig`), `concept.figs` (a figure
   under a lesson point), checks in `tools/verify.js`; field reference in docs/writing-content.md "Figures".
   **(3) DONE 18 Nov:** sets 050–052 from IPST ม.2 เล่ม 2 ch.3–4, every question with a figure.
-  **(2) still to do:** add figures to sets 040–041 (congruence), in the next round-2 chat.
+  **(2) DONE 18 Nov (front-page queue 1):** sets 040–041 have a figure on 19 questions and concept figs on 8 lesson
+  points, plus a new trap-pair item `cg2p9` ("เท่ากันจริงไหม": equal-looking triangles, 7 cm side not corresponding;
+  midterm-plan impact (4)). Generator kept outside the repo; approach = compute points, assert the stated angles.
   A circuit/optics kind may come later when those chapters come; until then science uses `svg`.
 - Standing rules for every figure: render it to an image (playwright screenshot) and look at it before
   committing; the independent blind check gets the rendered figures too; write "รูปไม่ได้วาดตามสเกล" when it is
@@ -204,7 +206,7 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
 2f. **Sweep plan, 18 Nov (read the last section of `content/midterm-plan.md`):** sweep size follows the day's time gap (5/8/10,
    holiday up to 15), sweep locked until the other missions are done, items picked for information, bank refilled in 4 rounds
    (r1 ~60 new by 30 Nov, r2 twins + 30 by 20 Dec, r3 ~60 by 10 Jan, r4 30–50 by 31 Jan), each blind-checked. Front-page queue
-   (18 Nov, final): 1 figures 040–041 · 2 dad-talk follow-up · 3 retrofit · 4 refill r1 · 5 construction lesson + proof sheets ·
+   (18 Nov, final; คิว 1 figures 040–041 DONE 18 Nov, so every number below moves up by one on the front page): 1 figures 040–041 · 2 dad-talk follow-up · 3 retrofit · 4 refill r1 · 5 construction lesson + proof sheets ·
    6 app: adaptive sweep + lock + info-based picking · 7 read cp-1 · 8 mock-midterm set · 9 read mock · 10 รอบ 2 ส่วนที่ 2 ·
    11 refill r2 · 12 retrofit the rest · 13 refill r3 · 14 refill r4 · 15 father's science unit 2 check.
 3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
