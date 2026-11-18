@@ -193,6 +193,14 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    items carry `ask`) + (5) too-fast card flag · คิว 3 = item 3 (รอบ 2) · คิว 4 = (4) retrofit the 19 old lessons by
    error priority, adding meaning/method items for the formula subtopics still without them · คิว 5 = read
    checkpoint 1 results (6–7 Dec, Sonnet).
+2e. **Midterm plan, 18 Nov (read `content/midterm-plan.md` first; it overrides the queue numbering above):** midterm 21–25 Dec,
+   scope = school math booklet (statistics 2, congruence, geometric reasoning 1 incl. constructions and parallelogram proofs)
+   + science solutions and separation. `lessonQueue` re-sorted so midterm lessons finish by 8 Dec; ratio / number theory /
+   motion / body lessons come after. New front-page queue (18 Nov): 1 figures for sets 040–041 (before 22 Nov) · 2 dad-talk
+   follow-up · 3 meaning-first retrofit of sci-solution-3/4/5, sci-separation-2, math-stats-5 (+ histogram figures) before they
+   are served · 4 construction-reasoning lesson + proof sheets (before 3 Dec) · 5 read checkpoint 1 · 6 mock-midterm set of
+   ~28 items for 12 Dec (before 10 Dec) · 7 read the mock · 8 "รอบ 2 ส่วนที่ 2" in prep week 14–18 Dec · 9 retrofit the rest
+   after the midterm · 10 the father's check of the missing science unit 2. Every new set still needs the blind check.
 3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
    **Part 1 DONE 18 Nov:** fig kinds + ch.3 เส้นขนาน + ch.4 ให้เหตุผลทางเรขาคณิต read (50 pp.) → sets 050–052 (blind-checked).
    **Part 2 = front-page queue item "รอบ 2 ส่วนที่ 2" (Opus, computer):** ch.5 แยกตัวประกอบ (13 pp.) + science unit 5
