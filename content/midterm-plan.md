@@ -60,3 +60,25 @@ idea was rejected because the student does not press optional things (e.g. secre
   precede the app change so the bank does not run dry in week one. After round 1 the father reads Settings > Usage and we resize.
 - Per-spell old-knowledge coverage also rides on cp-2 / cp-3 and the full papers (2–3 items per old spell per checkpoint).
 - 13 Dec: per-spell readiness summary from sweep data with the item count per spell shown; trend only.
+
+## School math booklet read in full, 18 Nov (34 photos in the folder, not 37; booklet pp. 1–25 + 3 proof/construction chapters)
+Booklet = "สถิติ 2 · ความเท่ากันทุกประการ · การให้เหตุผลทางเรขาคณิต (1)". Nothing contradicts the plan; what it adds:
+- **Statistics (6 practice sheets + end-of-chapter):** dot plot, stem-and-leaf (incl. back-to-back for two groups), frequency table with
+  tally, **class boundaries (ขอบล่าง–ขอบบน), class width, class midpoint**, histogram read/drawn, percent of the class, range, mean from
+  a list and from a frequency table, **a missing value from a given mean (also mean = median)**, combining group means (6 boys + 4 girls →
+  total → the girls' mean), mean of 5 semesters' GPA with credits shown, median (odd/even N, frequency table, with an unknown x),
+  mode (none / more than one), "equal 5 classes" histogram of 45 scores. Bank check: the words ขอบบน/ขอบชั้น/class midpoint appear in
+  no set and อันตรภาคชั้น in only 2 places → **math-stats-5 must carry class boundaries, width and midpoint** (retrofit item).
+- **Congruence:** naming corresponding parts, proofs written as *given / to prove / steps with a reason in brackets* and "with the
+  relation ด-ม-ด / ม-ด-ม / ด-ด-ด / ม-ม-ด / ฉาก-ด-ด"; end-of-chapter: square diagonal, kite, "are these two triangles congruent, and
+  why?" (a trap pair that may NOT be congruent), overlapping triangles ART/PIC. The school writes the criterion names as relation names:
+  our proof items must show the same layout (pick the reason from 3 for the bracket).
+- **Geometric reasoning (1):** proofs with parallel lines (angle sums, three parallel lines), the **six basic constructions with the
+  reasoning table** (copy a segment, bisect a segment, copy an angle, bisect an angle, perpendicular from an outside point, perpendicular
+  at a point on the line), "analyse the problem" (given / to prove) for isosceles pairs, equal altitudes (CD = BE, AD = AE), and
+  **parallelogram proofs** (diagonals bisect each other; midpoints of two sides make DFBE a parallelogram).
+- Impact on the plan: (1) the construction-reasoning lesson (queue 5) must cover all six constructions, each with "why it works" as
+  congruent triangles; (2) the mock-midterm (queue 8) uses this booklet's layout: ~8 proof-completion items, ~4 construction-reason items,
+  ~8 statistics items, the rest congruence; (3) the retrofit of math-stats-5 adds class boundaries/midpoint/width and the
+  "missing value from a mean" and "combine group means" items; (4) add one "not necessarily congruent" trap pair to the congruence sets.
+- The photos contain the student's handwriting and name: never copied into the repo; nothing personal is stored.
