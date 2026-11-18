@@ -187,7 +187,7 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    can uncover at once; most past uncovers took 1–4 s), so an uncover faster than `coverFloor` no longer clears the
    mistake, she sees one neutral line, the parent page counts fast uncovers; and 15 situation twins were written for
    every question that had reached that path without a twin (blind-checked). Keep twins complete so the path is rare.
-   Front-page queue after that (renumbered 18 Nov: คิว 1 dad-talk follow-up · คิว 2 รอบ 2 · คิว 3 retrofit · คิว 4 checkpoint 1 results).
+   Front-page queue after that (renumbered 18 Nov: คิว 1 dad-talk follow-up · คิว 2 รอบ 2 (since 18 Nov afternoon: part 2, see item 3 below) · คิว 3 retrofit · คิว 4 checkpoint 1 results).
    Old numbering, 17 Nov: คิว 1 = item 4 below (after his first dad talk; keep the
    "อธิบายโดยไม่ใช้สูตร" questions in every brief) · คิว 2 = app: (3) compute/meaning pair flag (pair by `sub`, meaning
    items carry `ask`) + (5) too-fast card flag · คิว 3 = item 3 (รอบ 2) · คิว 4 = (4) retrofit the 19 old lessons by
