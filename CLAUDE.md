@@ -226,8 +226,17 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
   reads and fan-outs need the father's OK first and a one-line cost warning.
 - Check what a night cost: father's Settings > Usage. Anthropic publishes no per-model multiplier for Pro.
 
+## Claude Project (made 18 Nov 2026)
+The father's chats live in the Claude Project "สมุดคาถา" (https://claude.ai/project/01a1ee49-16dc-7164-99ce-2c3c844c6f72).
+Its instructions only say: reply in Thai, attach the repo, read this file and the status doc, do the queue item.
+It is for grouping chats, not for memory: **this file and the status doc stay the only source of truth**. Do not
+upload copies of repo files into the project's knowledge (they go stale), and do not use the project's GitHub
+sync (it copies a snapshot); every chat attaches the repo itself with `add_repo`. The nightly scheduled task
+("สมุดคาถา: เตรียมเนื้อหาทุกเย็น", 22:57 Bangkok) is an account-level task that starts a fresh session and attaches
+the repo itself; it was NOT moved into the project and does not depend on it.
+
 ## When the father should open a new chat
-Not by topic. Every chat here is the same project. Open a new one at a **handoff point**: the last thing he asked
+Not by topic. Every chat here is the same project, so open new chats from the Project page. Open a new one at a **handoff point**: the last thing he asked
 for is finished, reported and committed, and the next thing is a new request. Rule of thumb: about one chat per
 working session or per batch of requests, and always after the chat has been summarised once (the first lines of
 the chat say "continued from a previous conversation"). Because state lives in this file and the status doc, a
