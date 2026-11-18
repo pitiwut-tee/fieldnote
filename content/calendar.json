@@ -25,6 +25,8 @@
  "schoolOff": {},
  "schoolBreaks": [],
  "currentSpells": [
+  "m16",
+  "m15",
   "m22",
   "s4",
   "s3"
@@ -74,31 +76,32 @@
   "math-stats-3",
   "sci-separation-1",
   "sci-solution-7",
-  "sci-separation-3",
-  "tool-ratio-table-1",
-  "math-stats-6",
-  "fix-sci-1",
-  "sci-separation-4",
+  "math-stats-1",
   "fix-math-1",
-  "meaning-sci-1",
-  "math-congruence-1",
-  "meaning-math-1",
-  "math-congruence-2",
+  "sci-separation-3",
   "math-parallel-1",
-  "math-parallel-2",
+  "fix-sci-1",
+  "math-congruence-1",
+  "sci-separation-4",
+  "math-congruence-2",
+  "sci-solution-3",
+  "math-stats-5",
+  "sci-solution-4",
+  "math-stats-6",
+  "sci-separation-2",
   "math-georeason-1",
+  "sci-solution-5",
+  "math-parallel-2",
+  "meaning-sci-1",
+  "meaning-math-1",
+  "tool-ratio-table-1",
   "math-ratio-2",
   "math-ratio-1",
-  "math-stats-5",
-  "sci-solution-3",
-  "math-stats-1",
-  "sci-solution-4",
-  "sci-solution-5",
   "math-numtheory-1",
   "sci-motion-1",
   "sci-body-1"
  ],
- "lessonQueueNote": "School order (her school's term-2 workbook): statistics first (she missed a week), science midterm = solutions + separation. The content run updates this queue. (2026-11-08 run: math-ratio-1 added after sci-separation-1 because ratio questions were missed twice in the mixed set.) (2026-11-10 evening: sci-pressure-1 put first; she said she has not learned Pa, and pressure is in the exam scope; the father asked to teach it now.) (2026-11-12: math-numtheory-1, sci-motion-1, sci-body-1 appended at the END: exam-gap lessons, after the school-order lessons.) (2026-11-12 evening: sci-solution-7, sci-separation-3, math-ratio-2 inserted after sci-separation-1 — all three cover the school's December midterm scope, read from the school's own documents.) (2026-11-17 chat 2: tool-ratio-table-1 after sci-separation-3, fix-sci-1 after math-stats-6, fix-math-1 after sci-separation-4 — ratio-table tool and repeated-error repair items with 3-reason checks; their check items also serve the repeated-error loop.)",
+ "lessonQueueNote": "School order (her school's term-2 workbook): statistics first (she missed a week), science midterm = solutions + separation. The content run updates this queue. (2026-11-08 run: math-ratio-1 added after sci-separation-1 because ratio questions were missed twice in the mixed set.) (2026-11-10 evening: sci-pressure-1 put first; she said she has not learned Pa, and pressure is in the exam scope; the father asked to teach it now.) (2026-11-12: math-numtheory-1, sci-motion-1, sci-body-1 appended at the END: exam-gap lessons, after the school-order lessons.) (2026-11-12 evening: sci-solution-7, sci-separation-3, math-ratio-2 inserted after sci-separation-1 — all three cover the school's December midterm scope, read from the school's own documents.) (2026-11-17 chat 2: tool-ratio-table-1 after sci-separation-3, fix-sci-1 after math-stats-6, fix-math-1 after sci-separation-4 — ratio-table tool and repeated-error repair items with 3-reason checks; their check items also serve the repeated-error loop.) (2026-11-18 midterm plan, content/midterm-plan.md: the father confirmed the midterm is 21–25 Dec and covers the school's math booklet (statistics 2, congruence, geometric reasoning 1) and science units solutions + separation. Queue re-sorted so every midterm-scope lesson is served by 8 Dec, math/science alternating; sci-separation-2 (it was never queued) added; exam-gap lessons (ratio, number theory, motion, body) moved after the midterm. Lessons not yet rewritten meaning-first (sci-solution-3/4/5, sci-separation-2, math-stats-5) sit late on purpose so they can be retrofitted first; math-congruence-1/2 wait for their figures. A construction-reasoning lesson is still to be written and inserted before meaning-math-1.)",
  "sweepFrom": "2026-11-09",
  "dailyMinutes": {
   "school": "45–60",
@@ -107,12 +110,13 @@
  "schoolExams": [
   {
    "name": "สอบกลางภาค",
-   "from": "2026-12-14",
-   "to": "2026-12-18",
+   "from": "2026-12-21",
+   "to": "2026-12-25",
    "estimated": true,
    "spells": [
     "m22",
     "m16",
+    "m15",
     "s4",
     "s3"
    ]
@@ -132,7 +136,7 @@
   }
  ],
  "examPrepDays": 7,
- "schoolExamsNote": "Estimated by the father from last year (9 Nov 2026): midterm = the week before Christmas, final = the last week of February. Replace with real dates when the school announces them. 7 days before: slot 1 becomes a review of the exam spells (no new lessons). During exam days only vocab is required. Spells follow content/school-plan.md; update them if the school's exam scope differs.",
+ "schoolExamsNote": "Midterm 21–25 Dec 2026 given by the father on 18 Nov (still not confirmed by the school, so `estimated` stays). Final is still the father's estimate. 7 days before: slot 1 becomes a review of the exam spells (no new lessons). During exam days only vocab is required. Spells follow content/school-plan.md; update them if the school's exam scope differs.",
  "voidRules": [
   {
    "type": "labverdict",
