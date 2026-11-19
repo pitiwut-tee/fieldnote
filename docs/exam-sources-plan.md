@@ -20,12 +20,15 @@ Not in the three folders but in the same parent: older recalled papers (MWIT 256
 math), a monthly online math file (97 MB), two tutor science PDFs, three chemistry books. `content/exam-analysis.md`
 already covers papers 2565–2568; the 2569 paper (sat 15 Nov) is the one gap. Ask before reading any of these.
 
-## Plan
+## Plan (father approved 19 Nov 2026: five reading chats, read R4 closely too, do not skip it)
 Each batch is one fresh Opus chat opened from the computer. Output of a reading chat = a new section in
 `content/exam-analysis.md` (topic table, share per topic, item types, difficulty, trap types, "what our bank lacks") plus a
 short blueprint list (topic + skill + style, no copied numbers or wording) that the later refill rounds use. Reading chats
 write NO new question sets (keeps them cheap and keeps the blind check where it belongs, in the refill chats).
 Cost saver: first list the topic of every page at low resolution, then read closely only the pages whose topic the bank
 lacks or that show a new trap type.
-Order: R1a → R1b (science is the scarcest, and 2569 is the newest paper) → R2 → R3 → R4 (R4 can be skipped or sampled if
-usage is tight). R1a/R1b should finish before refill round 1 (30 Nov) so the blueprint shapes it.
+Front-page queue order (19 Nov): after retrofit and before refill r1 (30 Nov): R1a (by 26 Nov) -> R1b (27 Nov) -> math
+2569 recall paper (by 28 Nov; WAITING for the father to add the files and tell us; skip to the next row if absent and do it
+later) -> R2 books 4-7 (29 Nov). R3 books 8-10 sits after the cp-1 read (by 9 Dec). R4 books 1-3 sits after the mock read
+(13-16 Dec, before refill r2). When a reading chat finishes, delete its row, renumber, and tell the refill chats which
+section of `exam-analysis.md` to use.
