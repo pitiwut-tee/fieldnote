@@ -110,8 +110,8 @@ Check it against real durations (`durationSec`) every few days and tell him if d
   `currentSpells`, never ม.3). Level 1–2, quick (under ~1.5 min each), every one with `optErr`, `ctx`, a near-peer
   `ex`. The app shows each question once, one per spell per day, the spell checked longest ago first. Keep **at
   least 70 unseen** sweep questions spread over at least 15 spells (since 20 Nov she uses up to 10–15 a day; 70 ≈ one
-  week); when below, add a new sweep file (counts as one set) and say in ③ that the bank is low. The father's Opus
-  refill chats (front-page queue) are the main supply; the nightly file is a stop-gap. Use sweep results (items in `type:"sweep"` records) to see what she has forgotten: a spell under 60% after
+  week); when below, add a new sweep file (counts as one set) and say in ③ that the bank is low. Since 19 Nov the nightly
+  run (Opus) is the main supply (see "Daily time and supply check"). Use sweep results (items in `type:"sweep"` records) to see what she has forgotten: a spell under 60% after
   ≥4 sweep questions goes into `school-plan.md` "to review Jan–Mar" and may get a probe sooner.
 - Keep ready (unused = no non-test attempt has its `setId`): lessons for the planned days, at least 1 mixed set
   (2 from 2027-09-01, and set `calendar.mixedPerWeek` to 2 then), at least 1 passage, at least 2 probes.
@@ -139,15 +139,20 @@ The father does not want to watch the numbers himself: the run checks them and t
 4. **Stock floors (check every run; write what your model may write, report the rest in ③ and in your message):**
    | stock | floor | who refills |
    |---|---|---|
-   | unseen sweep items (non-current spells) | 70 (≈ 1 week at up to 10–15 a day) | Opus queue chats; a nightly stop-gap file is allowed |
-   | upcoming lessons in `lessonQueue` with ≥ 12 practice items | the next 4 lessons | Opus (queue chats; the nightly run only if it runs on Opus) |
+   | unseen sweep items (non-current spells) | 70 (≈ 1 week at up to 10–15 a day) | the nightly run (Opus) |
+   | upcoming lessons in `lessonQueue` with ≥ 12 practice items | the next 4 lessons | the nightly run (Opus) |
    | lessons left in `lessonQueue` | 10 school days ahead | Opus queue chats (new lessons need the father's material) |
    | situation twins for questions she missed in the last 3 days | every one | nightly run (already in step 4, "Twins") |
    | vocabulary | rule in step 4 | nightly run |
-   If the run is on **Opus** (the system prompt names the model), it may also: extend the next 4 lessons to ≥ 12
-   practice items (+4–5 level 2–3 items each, new situations, some in the 2569 exam formats) and top the sweep bank up
-   to the floor, up to 30 new items a night, every one blind-checked; this does not count toward the 3-set limit.
-   On Sonnet, do not write lesson items; report the shortfall.
+   If the run is on **Opus** (the system prompt names the model; since 19 Nov the scheduled task runs on Opus, father's
+   decision), it also: extends the next 4 lessons in `lessonQueue` order to ≥ 12 practice items (+4–5 level 2–3 items
+   each, new situations, some in the 2569 exam formats from `content/exam-analysis.md`; append to `practice`, new ids,
+   `qtags.json` entries, option-length rule) and tops the sweep bank up to the floor (new sweep file `03x-sweep-N.json`),
+   up to **30 new items a night, 60 while a floor is still unmet** (first nights after 19 Nov), every one blind-checked;
+   this does not count toward the 3-set limit. Lessons first when a lesson is served tomorrow without its extension.
+   Do NOT touch sci-solution-4, sci-separation-2, sci-solution-5 (a father's queue chat retrofits them) or any lesson a
+   queue row names as in progress. If a floor is still unmet after the run, mark ③ "พ่อควรทำ" and add a queue row in ②
+   for an Opus chat. On Sonnet, do not write lesson items; report the shortfall.
 
 Read `content/school-plan.md` every run: it holds the science weighting estimate, the usual topic order, and
 known gaps. Follow its balance when choosing non-current topics. If it ever contains the school's own outline,

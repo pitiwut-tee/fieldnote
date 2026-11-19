@@ -253,8 +253,10 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    past papers: they shape exam style, most useful once the midterm is past); ID-Book 3123 (chemical reactions, ม.3
    term 2) in Feb. cp-2/cp-3 writing rows added (by 10 / 24 Jan). (d) Nightly run: daily time report with alert rules
    and stock floors (AUTOMATION.md "Daily time and supply check"); it writes lesson items and big sweep top-ups only if
-   it runs on Opus. **Waiting for the father (front page ④):** switch the nightly scheduled task to Opus (then queue
-   rows 6, 8, 12, 17, 29 can go). Only he may ask for a model change.
+   it runs on Opus. **Father approved 19 Nov 22:21: the nightly scheduled task now runs on Opus** (model and prompt updated the same
+   evening); it is the main daily supplier (sweep top-ups to 70, the next 4 lessons extended to ≥ 12 practice items,
+   twins, vocabulary; up to 30 items a night, 60 while a floor is unmet). The queue rows for sweep refills and lesson-item
+   batches were removed; the front-page queue is now 23 rows (reading, retrofit, new lessons, checkpoints, app).
 3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
    **Part 1 DONE 18 Nov:** fig kinds + ch.3 เส้นขนาน + ch.4 ให้เหตุผลทางเรขาคณิต read (50 pp.) → sets 050–052 (blind-checked).
    **Part 2 = front-page queue item "รอบ 2 ส่วนที่ 2" (Opus, computer):** ch.5 แยกตัวประกอบ (13 pp.) + science unit 5
@@ -267,7 +269,8 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
 - **Opus** (newest) for: writing new sets with keys and explanations, reading books to decide what the exam needs,
   large changes to `src/app.html`. A wrong key or wrong explanation teaches her something false.
 - **Sonnet** for routine: build/verify, small fixes, file inventory, publishing, status doc, reading text PDFs,
-  the nightly run, the independent blind check.
+  the independent blind check. (The nightly run moved to Opus on 19 Nov 2026, father's decision, because it now writes
+  the daily sweep items and lesson extensions.)
 - Cost habits: open a fresh chat per work session (see below); do not re-read big files "just in case"; large
   reads and fan-outs need the father's OK first and a one-line cost warning.
 - Check what a night cost: father's Settings > Usage. Anthropic publishes no per-model multiplier for Pro.
