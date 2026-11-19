@@ -210,6 +210,29 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    (18 Nov, final; คิว 1 figures 040–041 DONE 18 Nov, so every number below moves up by one on the front page): 1 figures 040–041 · 2 dad-talk follow-up · 3 retrofit · 4 refill r1 · 5 construction lesson + proof sheets ·
    6 app: adaptive sweep + lock + info-based picking · 7 read cp-1 · 8 mock-midterm set · 9 read mock · 10 รอบ 2 ส่วนที่ 2 ·
    11 refill r2 · 12 retrofit the rest · 13 refill r3 · 14 refill r4 · 15 father's science unit 2 check.
+2g. **Father's three questions, 19 Nov evening (answered in chat; his choices go to the front page ④):**
+   (1) **The sweep is not locked yet.** The lock is part of front-page queue 8 (adaptive sweep + lock + info picking,
+   "before 5 Dec", after refill r1). The father thought it was already built; it is not. On 19 Nov she still did the
+   sweep last (lesson 12:53–13:05, vocab, then sweep 13:10). Proposed: build the lock alone now (small app change, no
+   bank needed); the adaptive size stays in queue 8 because it needs refill r1.
+   (2) **math-stats-1 was served again on 19 Nov by mistake, not by design.** She did it on 4 Nov (the trial day, 7/10);
+   the 5 Nov fresh start (`calendar.startDay`, START_DAY in app.html) cleared 4 Nov from her device, so `pickLesson`
+   thought it was never done. The parent db still has the 4 Nov record, which is why the 18 Nov midterm plan dated
+   fix-math-1 on 19 Nov. Only one lesson record predates 5 Nov, so nothing else will repeat. Effect: same 13 items,
+   13/13 "ง่าย" in 11 min (a 15-day retest of identical items, so weak evidence); every queued lesson moves one day
+   later (fix-math-1 20 Nov … meaning-sci-1 5 Dec); spare days 9–11 Dec absorb it; cp-1 still covers only topics taught
+   ≥ 7 days earlier. **Rule:** when planning from the parent db, records before `calendar.startDay` are not on her device.
+   (3) **Daily time runs short of the 45–60 min target.** Facts: lessons are labelled "30–40 นาที" but take her ~11–13 min
+   (sep-1 12.6, sol-7 12.5, stats-1 11.4; only the first day was 25 min); vocab ~5, sweep 5 items ~3. A complete school day
+   is ~20–25 min, so the target cannot be reached by the mission as built: our sizing error, not her slacking. The
+   agreed adaptive sweep (queue 8) adds only ~3–6 min, so it does not close the gap. No earlier "collect data until date X"
+   decision was recorded. Two kinds of "fast" must be told apart: fast-and-right (too easy / already known) vs
+   fast-and-wrong on level 2–3 (rushing or giving up; e.g. 16 Nov sol-7: 3 wrong answers in 5–9 s). Proposed decision
+   point: cp-1 (Sun 6 Dec, timed, unseen) read in queue 9 together with a fast-right / fast-wrong count over all records
+   since 5 Nov. Outcomes: cp-1 good → speed is efficiency: lower the target to what the mission really takes and spend
+   extra time on new subtopics (breadth: 114/243 covered), e.g. a second lesson as a holiday mission, not optional;
+   cp-1 weak + many fast-wrong → rushing: wave 2 reason step (24 Nov) and the dad talk first; weak without rushing →
+   teaching/content. More lessons per day also means a faster Opus writing pace (usage): say so before choosing.
 3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
    **Part 1 DONE 18 Nov:** fig kinds + ch.3 เส้นขนาน + ch.4 ให้เหตุผลทางเรขาคณิต read (50 pp.) → sets 050–052 (blind-checked).
    **Part 2 = front-page queue item "รอบ 2 ส่วนที่ 2" (Opus, computer):** ch.5 แยกตัวประกอบ (13 pp.) + science unit 5

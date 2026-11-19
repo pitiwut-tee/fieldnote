@@ -23,6 +23,9 @@ insert before meaning-math-1) · 6 Dec checkpoint cp-1 (replaces the lesson) · 
 9–11 spare days for lessons she missed · 12 Dec mock-midterm checkpoint (TO WRITE) · 13 Dec read results and repair ·
 14–20 Dec prep week (the app already turns slot 1 into a 10-question review; no new lessons) · 21–25 Dec exams.
 Exam-gap lessons (ratio, number theory, motion, body) are queued after the midterm.
+**19 Nov shift:** math-stats-1 was served again on 19 Nov (its 4 Nov record was wiped from her device at the 5 Nov fresh
+start), so every lesson above moves one day later: 20 fix-math-1 · 21 sci-separation-3 · … · 5 Dec meaning-sci-1; the
+construction lesson and meaning-math-1 / tool-ratio-table-1 take 7–9 Dec; spare day 10–11 Dec.
 If she falls behind, drop in this order: tool-ratio-table-1, meaning-math-1, math-parallel-2, sci-solution-5.
 
 ## Why this order
