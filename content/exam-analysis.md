@@ -224,7 +224,9 @@ tubes to compare); (i) flow charts with blank steps for 4-component mixtures; (j
 **Where each goes:** front-page retrofit row (sci-solution-4, sci-separation-2, sci-solution-5, before 28 Nov):
 sci-solution-4 takes (b), (g), (h) and the rate-vs-solubility point 8; sci-separation-2 takes (e) and (i) plus
 steam-distillation conditions; sci-solution-5 takes (c), (f), (j) and one mixing item with a pure-solid addition. (a)
-and (d) are for a separation-3/4 twin batch or sweep items (Rf already caused a repeated error, s3.3). Every new item
+and (d) belong to separation-3/4, which she has already played, so the same retrofit chat writes them as situation
+twins in `variants.json` for those lessons' Rf and distillation items (Rf already caused a repeated error, s3.3; s3/s4
+are current spells, so the sweep cannot take them). Every new item
 keeps hard rules 2, 5 and 8; the "which statements are correct" format should be about one item in four here.
 
 ## Mathematics
