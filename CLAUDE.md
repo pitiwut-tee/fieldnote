@@ -12,8 +12,10 @@ This file is the long-term memory. Chats are disposable; this repo and the statu
 2. **Never copy copyrighted questions** (tutor books, textbooks, school workbooks, recalled past papers). Write own
    questions; topics and style only. Never put PDFs or scans in the repo. Recalled exam papers stay on the father's
    computer and are used only as a printed, timed external mock; only scores enter the system.
-3. A chemistry book's watermark contains a registrant's name: never use that file's content. Never use real
-   character, brand, game or band names (use the feel only).
+3. The chemistry e-books (ID-Book 3121/3122/3123, from a course the student took) carry the student's name as a diagonal
+   watermark. Father clarified 19 Nov 2026: reading these files is ALLOWED (topics, problem styles, difficulty); what is
+   forbidden is writing that name, or any trace of it, into the public repo, a commit or a figure. Rule 2 still applies
+   (no copied questions). Never use real character, brand, game or band names (use the feel only).
 4. Do not circumvent DRM or blocked sites. If a site is refused, say so and ask the father for the file.
 5. **Every new question set gets an independent blind answer check** (a separate agent solves it before seeing the
    key) before it is committed. It caught a wrong key on 12 Nov; never skip it.

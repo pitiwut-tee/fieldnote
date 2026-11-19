@@ -47,3 +47,9 @@ organisers from the real paper's skeleton). So they are reconstructions, not the
 types, point structure, topic mix and difficulty, and check what repeats across the recalled sources before trusting any
 single item. Folders 1-5 were read on 19 Nov (batch R1a, see exam-analysis.md). Remaining 2569 batch = folders 6 + 7
 (30 images, front-page queue "อ่านแนวข้อสอบ ค"): confirm every item number is present, compare with R1a.
+
+## Chemistry e-books (added 19 Nov 2026)
+Folder "เคมี ม.ต้น On demand": ID-Book 3121 (144 pp.; matter basics and classification of substances), 3122 (172 pp.; includes
+concentration and solution problems taken from olympiad-style past items), 3123 (126 pp.; chemical change with practice
+sets). All scans, 442 pp. in total, student-name watermark on every page (see hard rule 3: reading allowed, never write the
+name). One chat per book; output = topic/skill/style notes in exam-analysis.md, no copied questions.
