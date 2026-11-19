@@ -38,3 +38,12 @@ section of `exam-analysis.md` to use.
   formats, trap types, 13 blueprints). Folder 3 turned out to be a tutor's own written-answer worksheet, not a recall; it is
   described there but not counted. No watermark with a private person's name (the watermarks are tutor brands). Refill
   rounds: use that section's "Blueprints" and "Format targets" together with the 2565/2567 notes above it.
+
+## Added 19 Nov 2026 evening: folders 6 and 7 of the 2569 folder
+Folder 6 = 21 images, a volunteer-made "look-alike" science paper (35 items, 90 pts, 90 min stated; 34 included; item
+order and figure scale NOT those of the real paper). Folder 7 = 9 images, a look-alike math paper (27 items, 90 pts: 12
+multiple choice 2.5 pts, 5 fill-in 4 pts, 5 fill-in 5 pts, 5 fill-in 3 pts; items 23-27 are unseen items written by the
+organisers from the real paper's skeleton). So they are reconstructions, not the real paper verbatim: use them for item
+types, point structure, topic mix and difficulty, and check what repeats across the recalled sources before trusting any
+single item. Folders 1-5 were read on 19 Nov (batch R1a, see exam-analysis.md). Remaining 2569 batch = folders 6 + 7
+(30 images, front-page queue "อ่านแนวข้อสอบ ค"): confirm every item number is present, compare with R1a.
