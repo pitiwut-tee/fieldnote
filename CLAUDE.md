@@ -235,6 +235,12 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    extra time on new subtopics (breadth: 114/243 covered), e.g. a second lesson as a holiday mission, not optional;
    cp-1 weak + many fast-wrong → rushing: wave 2 reason step (24 Nov) and the dad talk first; weak without rushing →
    teaching/content. More lessons per day also means a faster Opus writing pace (usage): say so before choosing.
+   **Father's answer, 19 Nov 21:02:** do the lock now, and raise the daily volume now (not after cp-1); usage is fine;
+   re-plan the whole queue. **DONE 19 Nov (commit 53f7bc4, parent page published):** lock + time-gap sweep size + daily
+   mistake review, rules from 20 Nov (`DAY_RULES_FROM` in app.html; details in content/midterm-plan.md last section;
+   verify.js has a test). cp-1 (queue 9) now decides only a second lesson a day. Queue re-planned the same evening
+   (front page ②, 25 rows): sweep refills are weekly now (~60 items each), 1A first (by 22 Nov) because ~35 unseen
+   items were left; AUTOMATION.md threshold raised to 70 unseen.
 3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
    **Part 1 DONE 18 Nov:** fig kinds + ch.3 เส้นขนาน + ch.4 ให้เหตุผลทางเรขาคณิต read (50 pp.) → sets 050–052 (blind-checked).
    **Part 2 = front-page queue item "รอบ 2 ส่วนที่ 2" (Opus, computer):** ch.5 แยกตัวประกอบ (13 pp.) + science unit 5

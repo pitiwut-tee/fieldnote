@@ -98,16 +98,19 @@ Keep about 3–4 days ready ahead (runs are daily now), using `content/calendar.
 Check it against real durations (`durationSec`) every few days and tell him if days run short or long. What each day uses:
 
 - School day: 1 lesson (topics in `calendar.currentSpells` first, in `calendar.lessonQueue` order) + vocabulary +
-  **old-topic sweep 5 questions** (`ย้อนคาถาเก่า`). Fridays may be a repair set instead of the lesson (automatic).
-- Holiday (full level): 1 lesson + slot 3 + vocabulary + **sweep 10 questions**. Slot 3 = the weekly mixed set on
+  **daily mistake review 6** (from 20 Nov, when the pool has ≥ 3) + **old-topic sweep 5/8/10** (`ย้อนคาถาเก่า`; size
+  set by the day's time gap, locked until the other missions are done). Fridays may be a repair set instead of the
+  lesson (automatic; no daily review that day).
+- Holiday (full level): 1 lesson + slot 3 + vocabulary + daily review 8 + **sweep 10/12/15**. Slot 3 = the weekly mixed set on
   the first holiday of the week, the weekly passage on the next holiday, otherwise a probe. A second lesson is
   offered after the mission is done but is not required.
 - **Sweep bank** (`kind:"sweep"`, files `content/sets/03x-sweep-N.json`, shape of `030-sweep-1.json`): questions
   from ม.1–2 topics she has already learned (spells whose grade is ม.1/ม.2 and school status done/maybe/part, never
   `currentSpells`, never ม.3). Level 1–2, quick (under ~1.5 min each), every one with `optErr`, `ctx`, a near-peer
   `ex`. The app shows each question once, one per spell per day, the spell checked longest ago first. Keep **at
-  least 50 unseen** sweep questions spread over at least 15 spells; when below, add a new sweep file (counts as one
-  set). Use sweep results (items in `type:"sweep"` records) to see what she has forgotten: a spell under 60% after
+  least 70 unseen** sweep questions spread over at least 15 spells (since 20 Nov she uses up to 10–15 a day; 70 ≈ one
+  week); when below, add a new sweep file (counts as one set) and say in ③ that the bank is low. The father's Opus
+  refill chats (front-page queue) are the main supply; the nightly file is a stop-gap. Use sweep results (items in `type:"sweep"` records) to see what she has forgotten: a spell under 60% after
   ≥4 sweep questions goes into `school-plan.md` "to review Jan–Mar" and may get a probe sooner.
 - Keep ready (unused = no non-test attempt has its `setId`): lessons for the planned days, at least 1 mixed set
   (2 from 2027-09-01, and set `calendar.mixedPerWeek` to 2 then), at least 1 passage, at least 2 probes.

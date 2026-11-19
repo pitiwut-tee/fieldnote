@@ -86,3 +86,16 @@ Booklet = "สถิติ 2 · ความเท่ากันทุกปร
   ~8 statistics items, the rest congruence; (3) the retrofit of math-stats-5 adds class boundaries/midpoint/width and the
   "missing value from a mean" and "combine group means" items; (4) add one "not necessarily congruent" trap pair to the congruence sets.
 - The photos contain the student's handwriting and name: never copied into the repo; nothing personal is stored.
+
+## 19 Nov evening: built early, and the volume raised (father's decision)
+The father saw the sweep unlocked and the days running short (lessons take her ~12 min, a full school day was ~20–25 min
+against 45–60) and asked to raise daily volume now, not after cp-1. Built in `src/app.html` (rules from 20 Nov,
+`DAY_RULES_FROM`): the lock, the time-gap size (school 5/8/10 vs 45 min; full holiday 10/12/15 vs 75 min; mid/light
+holiday 5/8/10), and a **daily mistake review** of 6 items (holiday 8) from `reviewPool` when it has ≥ 3, not on Friday
+repair days, exam weeks, checkpoint/paper or minimum days. Expected school day ≈ 30–35 min. Prep week: no sweep and no
+daily review (slot 1 is the 10-question exam review). Still open: info-based picking (queue 22, after the midterm).
+**Bank consequence:** at up to 10–15 a day the sweep needs ~60 new items a week, so refills become weekly (front-page
+queue 1 = 1A by 22 Nov, 7 = 1B by 30 Nov, 10 = round 2 with situation twins by 7 Dec, 14 = round 3 by 20 Dec, then
+weekly from 28 Dec). On 19 Nov about 35 unseen items were left over 25 spells. A day where the bank runs short serves
+fewer items; the parent page shows "served" next to the planned size.
+cp-1 (6 Dec, queue 9) now decides only whether to add a second lesson a day, using two weeks of the new mission.
