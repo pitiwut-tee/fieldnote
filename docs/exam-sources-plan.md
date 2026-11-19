@@ -10,7 +10,7 @@ file (hard rule 3) and tell the father.
 ## Inventory (counted 19 Nov 2026)
 | batch | what | size | notes |
 |---|---|---|---|
-| R1a | "2569 from memory" folder, 5 sub-folders | 44 images | science of the paper sat 15 Nov 2026: sub-folder 1 = 10 explainer cards (earth science etc., tutor-watermarked), 2 = 13 handwritten physics solutions, 3 = 11 pages recalled physics/science with figures, 4 = 5 chemistry cards, 5 = 5 biology cards. Solutions are shown. |
+| R1a (DONE 19 Nov) | "2569 from memory" folder, 5 sub-folders | 44 images | science of the paper sat 15 Nov 2026: sub-folder 1 = 10 explainer cards (earth science etc., tutor-watermarked), 2 = 13 handwritten physics solutions, 3 = 11 pages recalled physics/science with figures, 4 = 5 chemistry cards, 5 = 5 biology cards. Solutions are shown. |
 | R1b | "Mock Exam" folder, 2 sub-folders | 34 images | tutor mock for the shared science-school paper: set 1 = 22 pages, set 3 = 12 pages (23 items); handwritten marks and answers already on the pages. Science (density, pH/acid rain...). |
 | R2 | math book sets 4–7 | 4 PDFs, 136 pages | scanned, worked solutions after each item |
 | R3 | math book sets 8–10 | 3 PDFs, 114 pages | same format |
@@ -32,3 +32,9 @@ Front-page queue order (19 Nov): after retrofit and before refill r1 (30 Nov): R
 later) -> R2 books 4-7 (29 Nov). R3 books 8-10 sits after the cp-1 read (by 9 Dec). R4 books 1-3 sits after the mock read
 (13-16 Dec, before refill r2). When a reading chat finishes, delete its row, renumber, and tell the refill chats which
 section of `exam-analysis.md` to use.
+
+## Done
+- **R1a, 19 Nov 2026:** all 44 images read. Output: `content/exam-analysis.md` section "Paper sat 15 Nov 2569" (topic table,
+  formats, trap types, 13 blueprints). Folder 3 turned out to be a tutor's own written-answer worksheet, not a recall; it is
+  described there but not counted. No watermark with a private person's name (the watermarks are tutor brands). Refill
+  rounds: use that section's "Blueprints" and "Format targets" together with the 2565/2567 notes above it.
