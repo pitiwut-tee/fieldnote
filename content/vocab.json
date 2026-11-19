@@ -914,5 +914,205 @@
   "exTh": "ใช้สีสดใสสำหรับฉากที่มีความสุข",
   "cat": "art",
   "syl": "bright"
+ },
+ {
+  "w": "analyze",
+  "th": "วิเคราะห์",
+  "ex": "Let's analyze the data before we decide.",
+  "exTh": "มาวิเคราะห์ข้อมูลก่อนตัดสินใจกันเถอะ",
+  "cat": "gen",
+  "syl": "an·a·lyze"
+ },
+ {
+  "w": "conclude",
+  "th": "สรุป (จากหลักฐาน)",
+  "ex": "From the graph, we conclude that the water got warmer.",
+  "exTh": "จากกราฟ เราสรุปได้ว่าน้ำอุ่นขึ้น",
+  "cat": "gen",
+  "syl": "con·clude"
+ },
+ {
+  "w": "method",
+  "th": "วิธีการ",
+  "ex": "Which method is faster: drawing a table or using a formula?",
+  "exTh": "วิธีไหนเร็วกว่า: วาดตารางหรือใช้สูตร",
+  "cat": "gen",
+  "syl": "meth·od"
+ },
+ {
+  "w": "sequence",
+  "th": "ลำดับ",
+  "ex": "Put the pictures in the right sequence.",
+  "exTh": "เรียงรูปภาพให้ถูกลำดับ",
+  "cat": "gen",
+  "syl": "se·quence"
+ },
+ {
+  "w": "accurate",
+  "th": "แม่นยำ ถูกต้อง",
+  "ex": "Use a ruler to make an accurate drawing.",
+  "exTh": "ใช้ไม้บรรทัดเพื่อวาดรูปให้แม่นยำ",
+  "cat": "gen",
+  "syl": "ac·cu·rate"
+ },
+ {
+  "w": "condition",
+  "th": "เงื่อนไข / สภาพ",
+  "ex": "Read every condition in the question carefully.",
+  "exTh": "อ่านทุกเงื่อนไขในโจทย์อย่างระมัดระวัง",
+  "cat": "gen",
+  "syl": "con·di·tion"
+ },
+ {
+  "w": "effect",
+  "th": "ผล (ที่เกิดขึ้น)",
+  "ex": "Heat has a big effect on how fast sugar dissolves.",
+  "exTh": "ความร้อนมีผลมากต่อความเร็วที่น้ำตาลละลาย",
+  "cat": "gen",
+  "syl": "ef·fect"
+ },
+ {
+  "w": "purpose",
+  "th": "จุดประสงค์",
+  "ex": "The purpose of this test is to find your weak spots.",
+  "exTh": "จุดประสงค์ของแบบทดสอบนี้คือหาจุดที่ยังอ่อน",
+  "cat": "gen",
+  "syl": "pur·pose"
+ },
+ {
+  "w": "contain",
+  "th": "บรรจุ / มีอยู่ข้างใน",
+  "ex": "This bottle contains 500 mL of juice.",
+  "exTh": "ขวดนี้บรรจุน้ำผลไม้ 500 มิลลิลิตร",
+  "cat": "gen",
+  "syl": "con·tain"
+ },
+ {
+  "w": "liquid",
+  "th": "ของเหลว",
+  "ex": "Water is a liquid at room temperature.",
+  "exTh": "น้ำเป็นของเหลวที่อุณหภูมิห้อง",
+  "cat": "sci",
+  "syl": "liq·uid"
+ },
+ {
+  "w": "vapor",
+  "th": "ไอ (ของสาร)",
+  "ex": "Water vapor rises and turns into clouds.",
+  "exTh": "ไอน้ำลอยขึ้นไปแล้วกลายเป็นเมฆ",
+  "cat": "sci",
+  "syl": "va·por"
+ },
+ {
+  "w": "melt",
+  "th": "หลอมเหลว / ละลาย (ของแข็งเป็นของเหลว)",
+  "ex": "Ice cream melts quickly in the sun.",
+  "exTh": "ไอศกรีมละลายเร็วกลางแดด",
+  "cat": "sci",
+  "syl": "melt"
+ },
+ {
+  "w": "particle",
+  "th": "อนุภาค",
+  "ex": "Particles in a gas move fast and are far apart.",
+  "exTh": "อนุภาคในแก๊สเคลื่อนที่เร็วและอยู่ห่างกัน",
+  "cat": "sci",
+  "syl": "par·ti·cle"
+ },
+ {
+  "w": "solution",
+  "th": "สารละลาย / วิธีแก้ปัญหา",
+  "ex": "Salt water is a solution of salt in water.",
+  "exTh": "น้ำเกลือคือสารละลายของเกลือในน้ำ",
+  "cat": "sci",
+  "syl": "so·lu·tion"
+ },
+ {
+  "w": "angle",
+  "th": "มุม",
+  "ex": "The two lines meet at an angle of 90 degrees.",
+  "exTh": "เส้นสองเส้นพบกันเป็นมุม 90 องศา",
+  "cat": "sci",
+  "syl": "an·gle"
+ },
+ {
+  "w": "parallel",
+  "th": "ขนานกัน",
+  "ex": "Railway tracks are parallel lines.",
+  "exTh": "รางรถไฟเป็นเส้นขนาน",
+  "cat": "sci",
+  "syl": "par·al·lel"
+ },
+ {
+  "w": "median",
+  "th": "มัธยฐาน (ค่ากลางเมื่อเรียงข้อมูล)",
+  "ex": "Sort the numbers first, then find the median.",
+  "exTh": "เรียงตัวเลขก่อน แล้วค่อยหามัธยฐาน",
+  "cat": "sci",
+  "syl": "me·di·an"
+ },
+ {
+  "w": "triangle",
+  "th": "รูปสามเหลี่ยม",
+  "ex": "A triangle has three sides and three angles.",
+  "exTh": "รูปสามเหลี่ยมมีสามด้านและสามมุม",
+  "cat": "sci",
+  "syl": "tri·an·gle"
+ },
+ {
+  "w": "guild",
+  "th": "สมาคม / กิลด์",
+  "ex": "The young mage joined a guild of painters.",
+  "exTh": "นักเวทหนุ่มเข้าร่วมกิลด์ของนักวาดภาพ",
+  "cat": "art",
+  "syl": "guild"
+ },
+ {
+  "w": "creature",
+  "th": "สิ่งมีชีวิต (มักใช้กับสัตว์แปลกๆ)",
+  "ex": "She drew a tiny creature with glowing wings.",
+  "exTh": "เธอวาดสิ่งมีชีวิตตัวจิ๋วที่มีปีกเรืองแสง",
+  "cat": "art",
+  "syl": "crea·ture"
+ },
+ {
+  "w": "potion",
+  "th": "ยาวิเศษ / น้ำยา",
+  "ex": "The apprentice mixed a blue potion in a glass jar.",
+  "exTh": "เด็กฝึกงานผสมน้ำยาสีฟ้าในโหลแก้ว",
+  "cat": "art",
+  "syl": "po·tion"
+ },
+ {
+  "w": "pose",
+  "th": "ท่าทาง (ตอนโพสหรือวาดแบบ)",
+  "ex": "Hold this pose while I sketch you.",
+  "exTh": "ค้างท่านี้ไว้ระหว่างที่ฉันสเก็ตช์นะ",
+  "cat": "art",
+  "syl": "pose"
+ },
+ {
+  "w": "island",
+  "th": "เกาะ",
+  "ex": "A small robot lived alone on a quiet island.",
+  "exTh": "หุ่นยนต์ตัวเล็กอาศัยอยู่ลำพังบนเกาะที่เงียบสงบ",
+  "cat": "art",
+  "syl": "is·land"
+ },
+ {
+  "w": "legend",
+  "th": "ตำนาน",
+  "ex": "There is a legend about a dragon under the lake.",
+  "exTh": "มีตำนานเรื่องมังกรที่อยู่ใต้ทะเลสาบ",
+  "cat": "art",
+  "syl": "leg·end"
+ },
+ {
+  "w": "collect",
+  "th": "สะสม / เก็บรวบรวม",
+  "ex": "She likes to collect cute creature cards.",
+  "exTh": "เธอชอบสะสมการ์ดสิ่งมีชีวิตน่ารักๆ",
+  "cat": "art",
+  "syl": "col·lect"
  }
 ]
