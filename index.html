@@ -687,7 +687,7 @@ async function importCode(raw, asTest){
 }
 
 /* ---------- updates: GitHub Pages lets the browser keep an old copy for a while, so check for a newer build ---------- */
-const BUILD="2026-11-19 21:10";
+const BUILD="2026-11-19 22:07";
 async function checkUpdate(){ if(!/^https?:/.test(location.protocol)||typeof db!=="undefined"&&db) return;
   try{ const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text(); const m=t.match(/const BUILD="(\d{4}-\d\d-\d\d \d\d:\d\d)"/);
     if(m&&m[1]!==BUILD&&!m[1].includes("@@")&&!document.getElementById("updbar")){ const d=document.createElement("button"); d.id="updbar"; d.className="btn";
@@ -893,7 +893,17 @@ function progressOf(list){
     if(info.level==="school") return {units:1,probe:false,info}; const L=LEVELS[info.level]; return {units:L.units,probe:L.probe&&probesLeft(d),info} };
   const sweepFrom=CAL.sweepFrom?new Date(CAL.sweepFrom+"T00:00:00").getTime():Infinity, noSweepToday=(()=>{try{return !sweepQuestions(list,1).length}catch(e){return true}})();
   const sweepOk=d=>d<sweepFrom||examAt(d)||sweepDays.has(d)||(d===today&&noSweepToday)||(()=>{ const n=need(d); return n.cp||n.paper })();
-  const isMet=d=>{ const n=need(d); if(n.min) return miniDays.has(d)||(units.get(d)||0)>=1; return (vocabDays.has(d)||(d===today&&noVocabToday))&&(units.get(d)||0)>=n.units&&(!n.probe||(probes.get(d)||0)>=1)&&sweepOk(d) };
+  /* 19 Nov (father): the daily mistake review is required for the flame from DAY_RULES_FROM, on the days it is a mission
+     (pool ≥ REVIEW_MIN_POOL at the end of that day, not a Friday repair day, exam weeks, checkpoint/paper or minimum days).
+     The pool is only rebuilt for a past day she did not review, so this stays cheap. */
+  const reviewCache=new Map();
+  const reviewOk=d=>{ if(d<DAY_RULES_FROM||reviewDays.has(d)) return true; const n=need(d);
+    if(n.min||n.cp||n.paper||n.exam||examAt(d)) return true;
+    if(d===today) return !(()=>{ try{ return reviewPool(list).length>=REVIEW_MIN_POOL&&!repairToday(list,n.info) }catch(e){ return false } })();
+    if(n.info.kind==="school"&&new Date(d).getDay()===5) return true;
+    if(!reviewCache.has(d)){ let need_=false; try{ const end=nextDay(d); need_=reviewPool(list.filter(a=>new Date(a.endedAt).getTime()<end)).length>=REVIEW_MIN_POOL }catch(e){} reviewCache.set(d,!need_) }
+    return reviewCache.get(d) };
+  const isMet=d=>{ const n=need(d); if(n.min) return miniDays.has(d)||(units.get(d)||0)>=1; return (vocabDays.has(d)||(d===today&&noVocabToday))&&(units.get(d)||0)>=n.units&&(!n.probe||(probes.get(d)||0)>=1)&&sweepOk(d)&&reviewOk(d) };
   const keys=[...byDay.keys(),...skipDays,...[...leaveDays].filter(d=>d<=today)];
   let streak=0, best=0, freeze=0, goalDays=0; const frozen=new Set(), earned=[], questDone=new Set();
   if(keys.length){

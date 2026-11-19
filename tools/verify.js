@@ -464,6 +464,11 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     if(s2.locked) return "sweep still locked after every other mission: "+JSON.stringify(await pg.evaluate(()=>missionList(progressOf(mine()))));
     if(!(s2.sp.size>s2.sp.base)) return `sweep did not grow on a short day (${JSON.stringify(s2.sp)})`;
     if(!await pg.locator("#sweep-go").count()) return "no sweep button after unlock";
+    /* the review is required for the flame by itself (also on a day the sweep bank is empty) */
+    const g=await pg.evaluate(()=>{ const now=new Date(Date.now()-30000).toISOString(); attempts.push({type:"sweep",setId:"sweep",startedAt:now,endedAt:now,durationSec:60,correct:1,total:1,xp:5,items:[]});
+      const withR=progressOf(mine()).goalToday; const keep=attempts; attempts=attempts.filter(a=>a.type!=="review"); const p=progressOf(mine()), without=p.goalToday, rep=repairToday(mine(),p.info); attempts=keep; return {withR,without,rep} });
+    if(!g.withR) return "full day with review is not met";
+    if(!g.rep&&g.without) return "flame lit without the daily review";
     await reset() });
 
   const testAttempts=await pg.evaluate(()=>{ const x=JSON.parse(JSON.stringify(mine())); return x });
