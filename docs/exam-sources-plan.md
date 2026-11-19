@@ -53,3 +53,5 @@ Folder "เคมี ม.ต้น On demand": ID-Book 3121 (144 pp.; matter bas
 concentration and solution problems taken from olympiad-style past items), 3123 (126 pp.; chemical change with practice
 sets). All scans, 442 pp. in total, student-name watermark on every page (see hard rule 3: reading allowed, never write the
 name). One chat per book; output = topic/skill/style notes in exam-analysis.md, no copied questions.
+**3122 read in full 19 Nov 2026** (scans viewed as two-page spreads, ~81 images): notes in content/exam-analysis.md
+"Chemistry e-book ID-Book 3122". 3121 and 3123 remain (front-page queue).

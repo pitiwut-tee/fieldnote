@@ -141,6 +141,92 @@ one ✓/✗-grid item per mixed set; one judgment item ("most sensible action" /
 Untaught spells (s5, s10, s17, s18, s20 at the time of writing) go into future lessons and their own sets, never into the
 old-topic sweep or a checkpoint until taught (hard rule 6 and the checkpoint rule "taught ≥ 7 days earlier").
 
+### Chemistry e-book ID-Book 3122 "solutions and separation" (read in full 19 Nov 2026, front-page queue 1)
+A tutoring course book the student took (scans, 162 content pages; reading allowed, name never written: hard rule 3).
+Notes below are topics, skills and traps in our own words; no question was copied and none may be (hard rule 2).
+**What it is:** about 40% teaching pages with blank boxes filled in class, 60% practice. The practice items are labelled
+as past O-NET (ม.3), TEDET, IJSO-selection and ASMO items, not MWIT items, so they show the national/olympiad-prep
+style around our exam, not the exam itself. Level: mostly at or above our lessons; the "mixing" and two-solute
+crystallisation items are the hardest. Some items need content beyond ม.2 (solubility rules for ionic compounds, lattice
+vs hydration energy in kJ, AgCl dissolving in ammonia, sugar hydrolysis, polarity from Rf): skip those for now.
+Two keys in the book looked doubtful when read (an item whose options cannot include the scaled answer; a Dead Sea
+% w/w item); never reuse a book item's number pattern without solving it ourselves.
+
+**Skill map (s4 solutions):**
+1. Solubility as "g per 100 g water at T" and its **scaling by water mass** (any amount of water, also 1 dm³) = the
+   ratio table; "solution volume ≈ water volume" assumptions are stated in the stem.
+2. **Crystals on cooling** = (dissolved) − (solubility at the new T, scaled); the trap "none crystallises" when the amount
+   is still below the new solubility; "amount crystallised" vs "amount left dissolved"; a falling-solubility salt
+   crystallises on **heating**; supersaturated starts (more than the solubility at the start T).
+3. **Two solutes in one water**, each judged against its own curve (one may crystallise, the other not).
+4. **Evaporating solvent** from a saturated solution → crystals; the inverse (how much water to evaporate for a given mass
+   of crystals); evaporation with crystals forming changes both solute and solution mass.
+5. **Point vs curve**: on the curve = saturated, below = unsaturated, above = supersaturated/undissolved; "same curve"
+   does not mean "same concentration" (only at the same T); saturated ≠ 100%.
+6. **Solubility → % by mass** = s ÷ (100 + s), not s% (statement-check trap: "a 60% w/w solution is saturated").
+7. Endo/exo from the slope of a curve or from a thermometer/"the glass feels cold"; heat released or absorbed
+   scales with the amount dissolved; separation energy vs hydration energy only qualitatively at our level.
+8. Factors: kind of solute and solvent (like dissolves like), amount of solvent, temperature (solids mostly up, a few
+   down; gases down), pressure (gases only); **surface area / stirring change the rate, not the solubility**.
+9. Gas solubility experiments (soda in tubes at different water temperatures; open vs capped tube) including **which
+   tubes to compare to test one factor** (fair test inside a content item).
+10. Concentration units % w/w, % v/v, % w/v, ppm, ppb (ppm ≈ mg/L in water); real contexts (pollutants, biomagnification
+   along a food chain, cleaners where "most acid mass" ≠ "most concentrated/most dangerous").
+11. Unit conversions with **density**: % w/w ↔ % w/v, solution mass from volume, volume of a solid from its density;
+   one item in symbolic form (letters for densities).
+12. Preparation from a pure solute: "1 g made up to 100 cm³" vs "1 g + 99 cm³ water" vs "1 g + 99 g water"; volumetric
+   flask, make up to the mark, label; measuring tool choice for a small volume.
+13. **Dilution** (solute before = solute after): "add water until the total is V" vs "add V more water" (both mixed on
+   purpose); take a portion first, then dilute; how much water to add vs final volume; **serial dilution** (each step
+   ×1/10); two-step dilution in a story (juice).
+14. **Mixing** two concentrations (total solute ÷ total amount), then adding water and/or pure solid; the inverse (how
+   much of each stock to mix for a target; the unknown volume of one stock); comparing three prepared solutions by
+   converting all to one unit; "who made the weakest solution" with a beaker size as a distractor.
+15. Formats: very many "which statements are correct / NOT correct" (3–5 statements mixing numbers and ideas), tables
+   and curves on almost every item, short everyday or lab stories.
+
+**Skill map (s3 separation):**
+1. Choosing a method from **property data** (state, BP, MP, solubility in water and in another solvent, magnetism,
+   density, particle size): the most frequent item type; often a table for 3–6 substances and a **flow chart with
+   blanks** (W, X, Y, Z steps) or a "tree" of a 4-component mixture.
+2. **Sequencing** a multi-step separation (sublime first, magnet, dissolve + filter, evaporate or crystallise; salt from
+   seawater in six steps; zinc-sulfate crystals; caffeine from tea; soy-oil with hexane).
+3. Filtration only for insoluble solids; "dissolve then filter" needs one soluble and one insoluble component.
+4. Simple vs fractional distillation (BP gap; crude-oil fractions and uses; gasohol/E85/B5 as blend percentages);
+   **thermometer position**; **temperature–time graph of a distillation** with plateaus at each component's BP; what a
+   stronger flame does NOT change (plateau temperature); the collected liquid at a given time.
+5. Steam distillation: three conditions (volatile, insoluble in water, unreactive with water) + plant parts; choosing
+   the one substance in a table that qualifies.
+6. Solvent extraction: the three properties of a good solvent; **choose the solvent from a solubility table by the
+   ratio** (dissolves the target much more than the others), order of two extractions; water vs ethanol extraction of
+   a plant colour vs scent from a results table.
+7. Separatory funnel and layers by density (which layer is denser; floating vs sinking solids is density, not solubility).
+8. Crystallisation as a separation of two dissolved solids with different solubility curves; slow cooling → large crystals.
+9. **Chromatography**: Rf = substance distance ÷ solvent distance, both **measured from the start line** (several
+   figures put the start line above 0 cm: subtract it; a known trap); Rf ≤ 1, no unit, depends on solvent/paper/conditions;
+   farther = dissolves better in the solvent and is held less; ≥ n spots ⇒ at least n substances; spots too close →
+   change solvent or use longer paper (adding more solvent does not help); identify a sample by matching reference
+   spots **in every solvent**, not just one; **Rf stays the same when the paper is longer or the front goes farther, so
+   distances scale** (ratio item); compute Rf before comparing rows whose solvent distances differ; column order from
+   +/++ tables of solubility and adsorption.
+10. Everyday applications: tap-water treatment (purpose of alum, lime, sand/anthracite filter, chlorine, water tower),
+   cane-sugar process, salt farming, solar still, a traditional pot still for rice spirit; "which works on a different
+   principle" from photos (sieve-like vs density-based).
+
+**Compared with our bank (19 Nov):** solutions basics, scaling, crystals on cooling, mixing, ppm, gas vs temperature,
+dilution and basic Rf are already covered (sets 002–043, 045, 048). **Missing or thin:** (a) Rf with the start line above
+0 and Rf invariance when distances scale; matching an unknown across several solvents; (b) solubility → % w/w; (c)
+evaporating water from a saturated solution → crystal mass, and its inverse; (d) the distillation temperature–time
+plateau graph and thermometer position; (e) choosing a solvent from a solubility table by ratio; steam-distillation
+conditions as a table item; (f) serial dilution; "add V more" vs "make up to V" side by side; (g) point-vs-curve
+classification (saturated / unsaturated / supersaturated); (h) a fair-test item inside a solutions experiment (which
+tubes to compare); (i) flow charts with blank steps for 4-component mixtures; (j) % w/w ↔ % w/v with density.
+**Where each goes:** front-page retrofit row (sci-solution-4, sci-separation-2, sci-solution-5, before 28 Nov):
+sci-solution-4 takes (b), (g), (h) and the rate-vs-solubility point 8; sci-separation-2 takes (e) and (i) plus
+steam-distillation conditions; sci-solution-5 takes (c), (f), (j) and one mixing item with a pure-solid addition. (a)
+and (d) are for a separation-3/4 twin batch or sweep items (Rf already caused a repeated error, s3.3). Every new item
+keeps hard rules 2, 5 and 8; the "which statements are correct" format should be about one item in four here.
+
 ## Mathematics
 
 Format (90 minutes; changes a little each year):

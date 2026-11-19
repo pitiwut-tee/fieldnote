@@ -66,7 +66,10 @@ This file is the long-term memory. Chats are disposable; this repo and the statu
 2. Read the status doc above. Do the task the father names. Do not re-explain the project to him.
    "ทำคิวที่ N ในหน้าแรกของพ่อ" = the row N of ② in tab หน้าแรกของพ่อ; its details are in "Build plan" below.
 3. His folders on `D:\Krunee` and `D:\เตรียมม.ปลาย` are reachable only if the chat is linked to his computer.
-   Most PDFs there are scans; view them as images. Staged copies are snapshots.
+   Most PDFs there are scans; view them as images. Staged copies are snapshots. Cheapest readable way (tested 19 Nov
+   on ID-Book 3122): `pdftoppm -scale-to 1100 -jpeg`, paste two pages side by side into one image (~1550×1100), one
+   Read per spread = half the images of page-by-page; Thai body text and tables stay readable. Keep working notes
+   outside the repo (/home/claude/work), then write only the summary into the repo.
 4. At the end: update the status doc (date chip, numbers, one row of "ทำเสร็จล่าสุด"), **and the front page**
    (rules below), and if you learned a new standing rule, write it into the right file here, not just into the chat.
 
@@ -246,7 +249,8 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    5/10 on 19 Nov, spaced system); second lesson a day still waits for cp-1. (b) The daily review now counts toward the
    flame by itself (commit e982d9b). (c) Queue re-ranked by WHEN each output is used (front page ②, 30 rows): daily
    supply first (sweep 1A, lesson-items batch 1), then midterm quality (chemistry ID-Book 3122 = solutions/concentration,
-   before the sol-4/sep-2/sol-5 retrofit; 3121 = classification, before sweep 1B), midterm events, then the
+   before the sol-4/sep-2/sol-5 retrofit; **3122 DONE 19 Nov late**, skill map + gaps + what each retrofit lesson takes in
+   content/exam-analysis.md "Chemistry e-book ID-Book 3122"; 3121 = classification, before sweep 1B), midterm events, then the
    **post-midterm lesson pipeline** (the queue's lessons run out ~27 Dec: รอบ 2 part 2 moved up to before 5 Dec, two
    writing batches of ~8 lessons by 13 and 20 Dec; the father must supply the final-term math booklet and science
    documents by 5 Dec, front page ①), and only then the exam-source readings (Mock, 2569 folders 6–7, math books,
