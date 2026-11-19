@@ -241,6 +241,20 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    verify.js has a test). cp-1 (queue 9) now decides only a second lesson a day. Queue re-planned the same evening
    (front page ②, 25 rows): sweep refills are weekly now (~60 items each), 1A first (by 22 Nov) because ~35 unseen
    items were left; AUTOMATION.md threshold raised to 70 unseen.
+   **Same evening, second round (father agreed):** (a) lessons get +4–5 level 2–3 items each (target ≥ 12 practice; lessons
+   had only 7–10 practice items and took ~12 min; her accuracy L1/L2/L3 = 85/62/54%); vocabulary stays as is (spelling
+   5/10 on 19 Nov, spaced system); second lesson a day still waits for cp-1. (b) The daily review now counts toward the
+   flame by itself (commit e982d9b). (c) Queue re-ranked by WHEN each output is used (front page ②, 30 rows): daily
+   supply first (sweep 1A, lesson-items batch 1), then midterm quality (chemistry ID-Book 3122 = solutions/concentration,
+   before the sol-4/sep-2/sol-5 retrofit; 3121 = classification, before sweep 1B), midterm events, then the
+   **post-midterm lesson pipeline** (the queue's lessons run out ~27 Dec: รอบ 2 part 2 moved up to before 5 Dec, two
+   writing batches of ~8 lessons by 13 and 20 Dec; the father must supply the final-term math booklet and science
+   documents by 5 Dec, front page ①), and only then the exam-source readings (Mock, 2569 folders 6–7, math books,
+   past papers: they shape exam style, most useful once the midterm is past); ID-Book 3123 (chemical reactions, ม.3
+   term 2) in Feb. cp-2/cp-3 writing rows added (by 10 / 24 Jan). (d) Nightly run: daily time report with alert rules
+   and stock floors (AUTOMATION.md "Daily time and supply check"); it writes lesson items and big sweep top-ups only if
+   it runs on Opus. **Waiting for the father (front page ④):** switch the nightly scheduled task to Opus (then queue
+   rows 6, 8, 12, 17, 29 can go). Only he may ask for a model change.
 3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
    **Part 1 DONE 18 Nov:** fig kinds + ch.3 เส้นขนาน + ch.4 ให้เหตุผลทางเรขาคณิต read (50 pp.) → sets 050–052 (blind-checked).
    **Part 2 = front-page queue item "รอบ 2 ส่วนที่ 2" (Opus, computer):** ch.5 แยกตัวประกอบ (13 pp.) + science unit 5
