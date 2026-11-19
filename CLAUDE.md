@@ -200,7 +200,8 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    + science solutions and separation. `lessonQueue` re-sorted so midterm lessons finish by 8 Dec; ratio / number theory /
    motion / body lessons come after. New front-page queue (18 Nov): 1 figures for sets 040–041 (before 22 Nov) · 2 dad-talk
    follow-up · 3 meaning-first retrofit of sci-solution-3/4/5, sci-separation-2, math-stats-5 (+ histogram figures) before they
-   are served · 4 construction-reasoning lesson + proof sheets (before 3 Dec) · 5 read checkpoint 1 · 6 mock-midterm set of
+   are served (**19 Nov: sci-solution-3 and math-stats-5 DONE**, blind-checked; sci-solution-4, sci-separation-2, sci-solution-5
+   remain as front-page queue 2; recipe in docs/writing-content.md "Retrofitting an old lesson") · 4 construction-reasoning lesson + proof sheets (before 3 Dec) · 5 read checkpoint 1 · 6 mock-midterm set of
    ~28 items for 12 Dec (before 10 Dec) · 7 read the mock · 8 "รอบ 2 ส่วนที่ 2" in prep week 14–18 Dec · 9 retrofit the rest
    after the midterm · 10 the father's check of the missing science unit 2. Every new set still needs the blind check.
 2f. **Sweep plan, 18 Nov (read the last section of `content/midterm-plan.md`):** sweep size follows the day's time gap (5/8/10,

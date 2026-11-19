@@ -31,8 +31,9 @@ If she falls behind, drop in this order: tool-ratio-table-1, meaning-math-1, mat
 - Everything the Dec 6 checkpoint covers is taught by 29 Nov (7 days earlier); everything the 12 Dec mock covers is taught by 5 Dec.
 
 ## Work to write (each needs the independent blind check, hard rule 5)
-1. Figures for 040–041 by 22 Nov (DONE 18 Nov). 2. Retrofit sci-solution-3 (by 25 Nov), sci-solution-4 (27 Nov), math-stats-5 with
-histogram/table figures (26 Nov), sci-separation-2 (29 Nov), sci-solution-5 (1 Dec). 3. Construction-reasoning lesson
+1. Figures for 040–041 by 22 Nov (DONE 18 Nov). 2. Retrofit sci-solution-3 (by 25 Nov; DONE 19 Nov), sci-solution-4 (27 Nov), math-stats-5 with
+histogram/table figures (26 Nov; DONE 19 Nov, incl. class boundaries/width/midpoint, missing value from a mean, combine group
+means), sci-separation-2 (29 Nov), sci-solution-5 (1 Dec). 3. Construction-reasoning lesson
 (choose the reason, never draw) + two printed proof sheets, by 3 Dec. 4. Mock-midterm set (~28 items, school style, tags
 "taught / not taught", fill-in proofs as pick-the-reason), by 10 Dec.
 
