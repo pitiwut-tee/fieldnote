@@ -74,7 +74,8 @@ the next 3 days is enough, do just the small tasks (apply approvals, answer new 
   Many `read` / `misopt` → add longer, carefully worded questions. `unclear` → rewrite that question
   (edit its JSON, keep the same id) and mention it to the father.
 - Her own questions (`confused[].ask`): answer them in the letter, and the idea inside the next relevant concept card.
-- Time: lessons should take ~25–30 min, vocabulary ~10 min. Ratings "ยาก/ยากมาก" two or more times in a row
+- Time: measured 4–19 Nov, a lesson takes her ~11–13 min, vocabulary ~5, mistake review 6 items ~5, sweep ~0.6 min
+  an item (see "Daily time and supply check" below for the report rules). Ratings "ยาก/ยากมาก" two or more times in a row
   on a spell → keep the next set at level 1–2 heavier.
 - Probes (`type: "probe"`): spells under 60% → add a lesson set for that spell soon (Friday repair and the
   warm-up retry use her wrong answers automatically; you do not write repair sets).
@@ -122,6 +123,31 @@ Probe order (skip ones that already exist in `content/sets`): m3 อัตรา
 m5 ทฤษฎีจำนวน, m6 แบบรูป, m7 สมการเชิงเส้น, m4 จำนวนจริง, m15 เส้นขนาน, m19 พื้นที่ผิวและปริมาตร, m8 กราฟเชิงเส้น,
 m1 จำนวนเต็ม, s1 อนุภาค, s7 เซลล์, s8 พืช, s12 ความร้อน, s13 แรง, s14 ความดันและแรงลอยตัว, s9 ร่างกายมนุษย์,
 s19 บรรยากาศ, s3 การแยกสาร, s22 ตัวแปร, s23 อ่านกราฟ.
+
+### Daily time and supply check (father, 19 Nov 2026 — every run, any model)
+The father does not want to watch the numbers himself: the run checks them and tells him only when he must act.
+1. **Time line in ③ (every run):** today's minutes per mission (lesson · vocab · review · sweep · other) and the total vs
+   the target (school 45, full holiday 75); sweep planned/served size (`sweepSize`/`sweepServed` in the sweep record);
+   **fast-wrong** = wrong answers on level 2–3 with `timeSec` < 10 s that are not `dontknow`; and level 2–3 accuracy.
+   One short line, last column "แค่รู้ไว้", unless a rule below fires.
+2. **Mark "พ่อควรทำ" (and add a dated item to ①) only when:** (a) the total is under 25 min on 3 school days in a row,
+   or a mission was skipped 2 days in a row; (b) fast-wrong ≥ 4 in one day, or ≥ 25% of level 2–3 answers over the last
+   3 days (rushing: a dad-talk topic); (c) lesson level 2–3 accuracy under 40% on 2 lessons in a row (too hard / teaching);
+   (d) a stock below its floor that this run could not refill. Say the number and what he could do, never blame her.
+3. **Sundays:** add the week's average minutes per day, fast-wrong rate and level 2–3 accuracy to the ③ row, so the
+   trend is visible before cp-1 (6 Dec, front-page queue) decides the second lesson a day.
+4. **Stock floors (check every run; write what your model may write, report the rest in ③ and in your message):**
+   | stock | floor | who refills |
+   |---|---|---|
+   | unseen sweep items (non-current spells) | 70 (≈ 1 week at up to 10–15 a day) | Opus queue chats; a nightly stop-gap file is allowed |
+   | upcoming lessons in `lessonQueue` with ≥ 12 practice items | the next 4 lessons | Opus (queue chats; the nightly run only if it runs on Opus) |
+   | lessons left in `lessonQueue` | 10 school days ahead | Opus queue chats (new lessons need the father's material) |
+   | situation twins for questions she missed in the last 3 days | every one | nightly run (already in step 4, "Twins") |
+   | vocabulary | rule in step 4 | nightly run |
+   If the run is on **Opus** (the system prompt names the model), it may also: extend the next 4 lessons to ≥ 12
+   practice items (+4–5 level 2–3 items each, new situations, some in the 2569 exam formats) and top the sweep bank up
+   to the floor, up to 30 new items a night, every one blind-checked; this does not count toward the 3-set limit.
+   On Sonnet, do not write lesson items; report the shortfall.
 
 Read `content/school-plan.md` every run: it holds the science weighting estimate, the usual topic order, and
 known gaps. Follow its balance when choosing non-current topics. If it ever contains the school's own outline,
