@@ -445,6 +445,27 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     if(!await pg.evaluate(()=>progressOf(mine()).paperToday)) return "paper day not recorded";
     await noToday(); await pg.evaluate(()=>localStorage.setItem("fieldnote.waveSeen","[1,2]")) });
 
+  /* 19 Nov 2026 day rules: sweep locked until the other missions are done, size follows the time gap, daily mistake review */
+  await T("sweep lock + adaptive size + daily review mission",async()=>{ await noToday();
+    const old=await pg.evaluate(()=>new Date(Date.now()-3*86400000).toISOString());
+    const L=await pg.evaluate(()=>SETS.find(s=>s.kind==="lesson"&&s.practice.length>=6).practice.slice(0,6).map(q=>q.id));
+    const les=await pg.evaluate(()=>pickLesson(mine(),true).id);
+    await reset([{type:"set",setId:"zz-old",startedAt:old,endedAt:old,durationSec:600,correct:0,total:6,xp:5,items:L.map(id=>({qid:id,correct:false,level:1,timeSec:20}))}]);
+    const st=await pg.evaluate(()=>{ const p=progressOf(mine()); return {keys:missionList(p).map(x=>x.key),locked:sweepLocked(p),repair:repairToday(mine(),p.info)} });
+    if(!st.keys.includes("sweep")) return "no sweep mission";
+    if(!st.locked) return "sweep is not locked before the other missions";
+    if(!st.repair&&!st.keys.includes("review")) return "no daily review mission with 6 mistakes in the pool";
+    if(await pg.locator("#sweep-go").count()) return "locked sweep still shows its start button";
+    await pg.evaluate(()=>startSweep()); if(await pg.evaluate(()=>view)==="session") return "startSweep ran while locked";
+    await pg.evaluate(()=>{ if(document.getElementById("sheet")) closeSheet() });
+    await pg.evaluate(([les])=>{ const now=new Date(Date.now()-60000).toISOString(); attempts.push({type:"set",setId:les,startedAt:now,endedAt:now,durationSec:720,correct:1,total:1,xp:10,items:[]},{type:"vocab",setId:"vocab",startedAt:now,endedAt:now,durationSec:300,correct:1,total:1,xp:10,items:[]},
+      {type:"review",setId:"review",topic:"ทบทวน",startedAt:now,endedAt:now,durationSec:200,correct:1,total:1,xp:5,items:[]},{type:"probe",setId:"zz-probe",startedAt:now,endedAt:now,durationSec:300,correct:1,total:1,xp:5,items:[]}); view="home"; render() },[les]);
+    const s2=await pg.evaluate(()=>{ const p=progressOf(mine()), sp=sweepPlan(p,mine()); return {locked:sweepLocked(p),sp} });
+    if(s2.locked) return "sweep still locked after every other mission: "+JSON.stringify(await pg.evaluate(()=>missionList(progressOf(mine()))));
+    if(!(s2.sp.size>s2.sp.base)) return `sweep did not grow on a short day (${JSON.stringify(s2.sp)})`;
+    if(!await pg.locator("#sweep-go").count()) return "no sweep button after unlock";
+    await reset() });
+
   const testAttempts=await pg.evaluate(()=>{ const x=JSON.parse(JSON.stringify(mine())); return x });
   await b.close();
 

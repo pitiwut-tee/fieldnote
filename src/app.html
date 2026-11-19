@@ -819,6 +819,18 @@ function xpRules(rec,prev){
 /* ---------- day types: school day or holiday (Thai public holidays, school days off, weekends), plus a manual switch ---------- */
 const LEVELS={full:{label:"เต็ม",mins:"ราว 75–90 นาที แบ่งทำเป็นช่วงๆ",units:2,probe:true,sweep:10},mid:{label:"กลาง",mins:"ราว 60 นาที",units:2,probe:true,sweep:5},light:{label:"เบา",mins:"ราว 40 นาที",units:1,probe:false,sweep:5},min:{label:"ขั้นต่ำ",mins:"ราว 15 นาที",units:0,probe:false,sweep:0}};
 const SWEEP_SCHOOL=5;
+/* 19 Nov 2026 (father): a school lesson takes her ~12 min, not 30–40, so a full day was ~20–25 min against 45–60.
+   From DAY_RULES_FROM: (1) the old-topic sweep is locked until the other missions of the day are done; (2) its size
+   follows the day's time gap: minutes already spent today on other work vs DAY_TARGET (gap > 10 min → big size,
+   5–10 → middle, else the base); (3) a daily "ทบทวนข้อที่เคยพลาด" (mistakes pool, REVIEW_DAILY items) joins the
+   missions when the pool has ≥ REVIEW_MIN_POOL items, except on Friday repair days, exam weeks, checkpoint/paper days
+   and minimum days. She is never told the sweep grew because of low time (hard rule 7). Prep week: no sweep and no
+   daily review (the lesson slot is already a 10-question exam review). */
+const DAY_RULES_FROM=dayKey("2026-11-20T00:00:00+07:00");
+const DAY_TARGET={school:45,full:75,mid:60,light:40};
+const REVIEW_DAILY={school:6,holiday:8}, REVIEW_MIN_POOL=3;
+function minsToday(list){ const t=todayKey(); return list.filter(a=>dayKey(a.endedAt)===t&&a.type!=="sweep"&&!a.test).reduce((s,a)=>s+Math.min(2700,Math.max(0,+a.durationSec||0)),0)/60 }
+function repairToday(list,info){ return info.kind==="school"&&new Date().getDay()===5&&reviewPool(list).length+dueQuestions(list,3).length>=4 }
 const LOWER_REASONS=["มีธุระครอบครัว","ไปเที่ยว/ออกนอกบ้าน","การบ้านหรืองานเยอะ","เรียนพิเศษ/กิจกรรม","ไม่สบาย","อื่นๆ"];
 const MILESTONES=[3,7,14,30,50,100,200,365];
 function isoDay(dk){ const d=new Date(dk); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0") }
@@ -852,7 +864,7 @@ function questStatus(list, wk, upto, met){
 
 function progressOf(list){
   const modes=dayModes(list);
-  const byDay=new Map(), miniDays=new Set(), cpDays=new Set(), paperDays=new Set(), sweepDays=new Set(), skipDays=new Set(), leaveDays=new Set(), vocabDays=new Set(), units=new Map(), probes=new Map(), met=new Set();
+  const byDay=new Map(), reviewDays=new Set(), miniDays=new Set(), cpDays=new Set(), paperDays=new Set(), sweepDays=new Set(), skipDays=new Set(), leaveDays=new Set(), vocabDays=new Set(), units=new Map(), probes=new Map(), met=new Set();
   list.forEach(a=>{ const k=dayKey(a.endedAt);
     if(a.type==="daymode") return;
     if(a.type==="mission"||a.type==="teach"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* mission / teaching dad: XP only, not a daily unit */
@@ -863,7 +875,7 @@ function progressOf(list){
     /* 17 Nov fix (father + student): a plain "ทบทวนข้อที่เคยพลาด" set ticked mission 1 (ชุดฝึก), so on 17 Nov the day
        showed only review and the new lesson vanished. From 18 Nov a plain review gives XP but is not the day's lesson.
        Friday repair ("repair") and pre-exam review ("exam-review") still fill the slot. Days before stay as they were. */
-    if(plainReview(a)&&k>=REVIEW_RULE_FROM){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
+    if(plainReview(a)&&k>=REVIEW_RULE_FROM){ reviewDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
     if(a.type==="mini"){ miniDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* minimum day (15 min): its own daily step */
     if(a.type==="checkpoint") cpDays.add(k); if(a.type==="paper") paperDays.add(k);   /* 🧠 3-question recall tile: XP, not a lesson unit */   /* old-topic sweep: its own daily step, not a lesson unit */
     if(isSkip(a)){ if(a.leave&&a.from&&a.to){ for(let d=a.from; d<=a.to; d=nextDay(d)) leaveDays.add(d) } else skipDays.add(k); return }
@@ -902,7 +914,8 @@ function progressOf(list){
   const n=need(today), u=units.get(today)||0, pr=probes.get(today)||0;
   return {streak,best,freeze,goalDays,frozen,skipDays,byDay,met,todayXp:byDay.get(today)||0,leaveDays,onLeave:leaveDays.has(today),
     unitsToday:u,probesToday:pr,sweepToday:sweepDays.has(today),sweepNeeded:today>=sweepFrom&&!noSweepToday,lessonToday:u-pr>=1||(u>=1&&!n.probe),vocabToday:vocabDays.has(today),noVocabToday,need:n,info:n.info,modes,
-    miniToday:miniDays.has(today),cpToday:cpDays.has(today),paperToday:paperDays.has(today),
+    miniToday:miniDays.has(today),cpToday:cpDays.has(today),reviewToday:reviewDays.has(today),
+    reviewNeeded:(()=>{ try{ return today>=DAY_RULES_FROM&&reviewPool(list).length>=REVIEW_MIN_POOL&&!repairToday(list,need(today).info) }catch(e){ return false } })(),paperToday:paperDays.has(today),
     goalToday:met.has(today),earnedToday:earned.filter(e=>e.d===today),quests:questStatus(list,weekStart(today),today,met),questDoneThisWeek:questDone.has(weekStart(today)),questWeeks:[...questDone].sort()};
 }
 
@@ -955,8 +968,8 @@ function startExamReview(x,n){ const list=mine(), ss=new Set(x.spells||[]), seen
        active:true, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
   view="session"; render(); window.scrollTo({top:0}) }
 function planToday(list, p){
-  const wd=new Date().getDay(), school=p.info.kind==="school";
-  const repair=school&&wd===5&&reviewPool(list).length+dueQuestions(list,3).length>=4;
+  const school=p.info.kind==="school";
+  const repair=repairToday(list,p.info);
   const doneToday=list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===todayKey()).map(a=>a.setId);
   const lesson=repair?null:pickLesson(list, true);   /* slot 1 always follows the school's current topics and lesson queue */
   const mixed=school?null:pickMixed(list);
@@ -1128,8 +1141,8 @@ function markExplain(steps, trial, setKind){
   const all=steps.filter(st=>st.kind==="q"&&!st.optional), main=all.filter(st=>!st.due&&!st.retry&&!st.chk&&!/^อุ่นเครื่อง/.test(st.phase)), qs=main.length?main:all; if(!qs.length) return;
   const top=qs.find(st=>st.q.level===3)||qs.slice().sort((a,b)=>b.q.level-a.q.level)[0]; top.explain=true;
 }
-function startReview(n, title){
-  const list=mine(), repair=n>5;
+function startReview(n, title, opts){
+  const list=mine(), repair=opts&&opts.daily?false:n>5;
   /* the Friday repair set also brings back up to 3 spells that are due (spaced review), not only mistakes */
   const due=repair?dueQuestions(list,3):[], dueIds=new Set(due.map(q=>q.id));
   const qs=[...due,...reviewPool(list).filter(q=>!dueIds.has(q.id))].slice(0,n||5); if(!qs.length) return;
@@ -1155,12 +1168,21 @@ function sweepQuestions(list,n){
   while(out.length<n&&round<4){ for(const sp of order){ const q=bySpell.get(sp)[round]; if(q&&out.length<n) out.push(q) } round++ }
   return out }
 function hashStr(x){ let h=0; for(const c of x) h=(h*31+c.charCodeAt(0))|0; return Math.abs(h) }
-function sweepSize(p){ return p.info.kind==="school"?SWEEP_SCHOOL:(LEVELS[p.info.level]||LEVELS.full).sweep }
+function sweepBase(p){ return p.info.kind==="school"?SWEEP_SCHOOL:(LEVELS[p.info.level]||LEVELS.full).sweep }
+/* size of today's sweep (19 Nov rule, see DAY_RULES_FROM): base, minutes already spent today, gap to the day's target */
+function sweepPlan(p,list){ const base=sweepBase(p); if(!base||todayKey()<DAY_RULES_FROM) return {base,size:base,mins:null,gap:null};
+  const lv=p.info.level, tgt=DAY_TARGET[lv]||DAY_TARGET.school, mins=Math.round(minsToday(list||mine())), gap=tgt-mins, big=lv==="full";
+  const size=gap>10?(big?15:10):gap>=5?(big?12:8):base;
+  return {base,size:Math.max(base,size),mins,gap} }
+function sweepSize(p,list){ return sweepPlan(p,list).size }
+function sweepLocked(p){ return todayKey()>=DAY_RULES_FROM&&missionList(p).some(x=>x.key!=="sweep"&&!x.done) }
 function startSweep(){
-  const list=mine(), p=progressOf(list), qs=sweepQuestions(list,sweepSize(p)); if(!qs.length) return;
+  const list=mine(), p=progressOf(list);
+  if(sweepLocked(p)) return sheet({icon:"🔒",title:"ย้อนคาถาเก่ายังไม่เปิด",html:`<p>ทำภารกิจอื่นของวันนี้ให้ครบก่อน แล้วย้อนคาถาเก่าจะเปิดเป็นด่านสุดท้ายของวัน</p>`,actions:[{label:"โอเค",fn:closeSheet}]});
+  const sp=sweepPlan(p,list), qs=sweepQuestions(list,sp.size); if(!qs.length) return;
   const t="ย้อนคาถาเก่า";
   const steps=[...qs.map(q=>({kind:"q",phase:t,q:shuffleQ(q)})),{kind:"finish",phase:"เสร็จ"}];
-  S = {mode:"review", sweep:true, set:{id:"sweep",subject:"ย้อนคาถาเก่า",topic:"ย้อนคาถาเก่า ม.1–2"}, steps, trial:[], trialVote:{},
+  S = {mode:"review", sweep:true, sweepPlan:{...sp,served:qs.length}, set:{id:"sweep",subject:"ย้อนคาถาเก่า",topic:"ย้อนคาถาเก่า ม.1–2"}, steps, trial:[], trialVote:{},
        active:true, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
   view="session"; render(); window.scrollTo({top:0});
 }
@@ -1241,6 +1263,7 @@ function missionList(p){
   const m=[{key:"lesson",done:nonProbe>=1||(!probeLeft&&u>=1)},{key:"vocab",done:p.vocabToday||p.noVocabToday}];
   const ex=examAt(todayKey()); if(ex&&ex.phase==="during") return m.slice(1); if(ex) return m;
   if(lv==="full"||lv==="mid") m.push({key:"probe",done:probeLeft?p.probesToday>=1:u>=2});
+  if(p.reviewNeeded||(p.reviewToday&&todayKey()>=DAY_RULES_FROM)) m.push({key:"review",done:p.reviewToday});
   if(p.sweepNeeded||p.sweepToday) m.push({key:"sweep",done:p.sweepToday});
   return m;
 }
@@ -1262,7 +1285,7 @@ function piecesBar(n){ const pc=n%7||(n?7:0); return `${"■".repeat(pc)}${"□"
 function piecesLine(list){ if(todayKey()<dayKey(PIECE_FROM+"T00:00:00+07:00")) return ""; const n=mapPieces(list);
   return `<p class="small" style="margin:4px 0">🧩 ชิ้นส่วนแผนที่ ${piecesBar(n)} <span class="muted">· ทำภารกิจวันนี้ครบทุกจุด ได้ 1 ชิ้น${n>=7?" · ครบแล้ว! เขตใหม่ของทีมกู้โลกกำลังมา":""}</span></p>` }
 /* the day's missions drawn as one expedition route (father, 10 Nov); the optional extra is a secret path that opens at the end */
-const EXP_STOP={lesson:["📘","บทเรียน"],vocab:["🔤","คำศัพท์"],probe:["⛰️","ด่านสำรวจ"],sweep:["🧭","ย้อนของเก่า"],mini:["⏱️","ชุดขั้นต่ำ"],checkpoint:["🏁","ด่านประเมิน"],paper:["📝","ข้อสอบกระดาษ"]};
+const EXP_STOP={lesson:["📘","บทเรียน"],vocab:["🔤","คำศัพท์"],probe:["⛰️","ด่านสำรวจ"],review:["🔁","ทบทวนข้อพลาด"],sweep:["🧭","ย้อนของเก่า"],mini:["⏱️","ชุดขั้นต่ำ"],checkpoint:["🏁","ด่านประเมิน"],paper:["📝","ข้อสอบกระดาษ"]};
 function expRoute(ms,p){ const all=ms.every(x=>x.done), nx=ms.findIndex(x=>!x.done), n=ms.length, list=mine(), pw=expDayPower(list), bo=expBoost(list);
   const pts=ms.map((_,k)=>[10+(n>1?k*(66/(n-1)):33), k%2?42:72]); const sec=[90,16];
   const path=[...pts,sec].map((q,k,a)=>k?`Q ${(a[k-1][0]+q[0])/2} ${k%2?a[k-1][1]-14:a[k-1][1]+14} ${q[0]} ${q[1]}`:`M ${q[0]} ${q[1]}`).join(" ");
@@ -1382,9 +1405,16 @@ function renderHome(){
       :mission(3,"probe",plan.probe?"ด่านสำรวจ · เช็กเรื่องที่เรียนมาแล้ว ราว 20 นาที":"ชุดฝึกเพิ่ม (ด่านสำรวจครบแล้ว)",
       md.probe&&doneProbe?doneTitle(doneProbe):plan.probe?`<h2>${esc(plan.probe.topic)}</h2><p class="small muted">${plan.probe.practice.length} ข้อ ไม่มีการ์ดก่อนทำ ทำได้ดีคาถาขึ้นขั้นทันที</p>`:`<p class="small muted">ทำชุดไหนก็ได้อีก 1 ชุด</p>`,
       md.probe&&doneProbe?notesBtn(doneProbe):`<button class="btn" id="${plan.probe?"go-probe":"go-extra2"}">${plan.probe?"เข้าด่าน":"เลือกชุด"}</button>`)):""}
-    ${ms.some(x=>x.key==="sweep")?mission(ms.findIndex(x=>x.key==="sweep")+1,"sweep",`ย้อนคาถาเก่า ม.1–2 · ราว ${sweepSize(p)>5?"12":"7"} นาที`,
-      md.sweep?`<h2>ย้อนคาถาเก่า</h2><p class="small muted">ทำแล้ว ✓ ข้อที่พลาดจะวนมาให้ทวน</p>`:`<h2>${sweepSize(p)} ข้อคละเรื่องที่เคยเรียน</h2><p class="small muted">เช็กว่ายังเข้าใจอยู่ไหม ไม่บอกล่วงหน้าว่าเรื่องอะไร ลืมไม่เป็นไร เราจะได้รู้ว่าต้องทวนตรงไหน</p>`,
-      md.sweep?"":`<button class="btn" id="sweep-go">เริ่มย้อน</button>`):""}
+    ${ms.some(x=>x.key==="review")?(()=>{ const rn=Math.min(REVIEW_DAILY[p.info.kind==="school"?"school":"holiday"],reviewPool(list).length);
+      return mission(ms.findIndex(x=>x.key==="review")+1,"review",`ทบทวนข้อที่เคยพลาด · ราว ${Math.max(3,Math.round(rn*0.8))} นาที`,
+      md.review?`<h2>ทบทวนข้อที่เคยพลาด</h2><p class="small muted">ทำแล้ว ✓ ข้อที่ยังพลาดจะกลับมาอีกในวันหลัง</p>`:`<h2>${rn} ข้อที่เคยพลาด</h2><p class="small muted">บางข้อกลับมาในสถานการณ์ใหม่ ลองคิดใหม่ทีละขั้น ถูกแล้วข้อนั้นจะออกจากกองทบทวน</p>`,
+      md.review?"":`<button class="btn" id="dreview-go">เริ่มทบทวน</button>`) })():""}
+    ${ms.some(x=>x.key==="sweep")?(()=>{ const lock=!md.sweep&&sweepLocked(p), sz=lock?0:sweepSize(p,list);
+      return mission(ms.findIndex(x=>x.key==="sweep")+1,"sweep",lock?"ย้อนคาถาเก่า ม.1–2 · ด่านสุดท้ายของวัน":`ย้อนคาถาเก่า ม.1–2 · ราว ${Math.max(3,Math.round(sz*0.7))} นาที`,
+      md.sweep?`<h2>ย้อนคาถาเก่า</h2><p class="small muted">ทำแล้ว ✓ ข้อที่พลาดจะวนมาให้ทวน</p>`
+      :lock?`<h2>🔒 ปลดล็อกหลังภารกิจอื่นเสร็จ</h2><p class="small muted">ทำภารกิจข้างบนให้ครบก่อน แล้วด่านนี้จะเปิดเป็นด่านสุดท้ายของวัน</p>`
+      :`<h2>${sz} ข้อคละเรื่องที่เคยเรียน</h2><p class="small muted">เช็กว่ายังเข้าใจอยู่ไหม ไม่บอกล่วงหน้าว่าเรื่องอะไร ลืมไม่เป็นไร เราจะได้รู้ว่าต้องทวนตรงไหน</p>`,
+      md.sweep||lock?"":`<button class="btn" id="sweep-go">เริ่มย้อน</button>`) })():""}
   </section>
   ${p.goalToday?`<section class="card usebox" id="m-secret"><span class="eyebrow">🗝️ เส้นทางลับเปิดแล้ว · ภารกิจวันนี้ครบ ทางนี้ไม่บังคับ</span>
     <div class="row">${plan.extra&&!doneToday.some(a=>a.setId===plan.extra.id)?`<button class="btn" data-more="${plan.extra.id}">ฝึกต่อ: ${esc(plan.extra.topic)}</button>`:nextLesson?`<button class="btn" data-more="${nextLesson.id}">ฝึกต่อ: ${esc(nextLesson.topic)}</button>`:""}
@@ -1415,10 +1445,11 @@ function renderHome(){
     await saveAttempt({type:"mood",setId:"mood",mood:m.dataset.mood,topic:"ความพร้อมวันนี้: "+MOODS.find(x=>x[0]===m.dataset.mood)[2],startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
     buddyNote=moodReply(m.dataset.mood); renderHome() });
   { const sg=document.getElementById("sweep-go"); if(sg) sg.onclick=()=>startSweep() }
+  { const dr=document.getElementById("dreview-go"); if(dr) dr.onclick=()=>startReview(REVIEW_DAILY[p.info.kind==="school"?"school":"holiday"],"ทบทวนข้อที่เคยพลาด",{daily:true}) }
   { const cg=document.getElementById("comp-go"); if(cg) cg.onclick=()=>startComp() }
   bindUnderstandHome(list,p);
   const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
-  on("exp-go",()=>{ const k=document.getElementById("exp-go").dataset.key, ids={lesson:["go-rec"],vocab:["vocab-go"],probe:["go-probe","go-extra2"],sweep:["sweep-go"],mini:["mini-go"],checkpoint:["cp-go"]}[k]||[];
+  on("exp-go",()=>{ const k=document.getElementById("exp-go").dataset.key, ids={lesson:["go-rec"],vocab:["vocab-go"],probe:["go-probe","go-extra2"],sweep:["sweep-go"],review:["dreview-go"],mini:["mini-go"],checkpoint:["cp-go"]}[k]||[];
     const b=ids.map(x=>document.getElementById(x)).find(Boolean); if(b) b.click(); else { const t=document.getElementById("m-"+k); if(t) t.scrollIntoView({behavior:"smooth",block:"center"}) } });
   on("exp-adv",()=>{ view="adv"; render(); window.scrollTo({top:0}) });
   $v.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>{ const t=document.getElementById(b.dataset.goto); if(t) t.scrollIntoView({behavior:"smooth",block:"center"}) });
@@ -2143,7 +2174,7 @@ async function finishReview(){
   $v.innerHTML=`<section class="card"><p class="muted">กำลังบันทึก…</p></section>`;
   const items=S.items, scored=items.filter(x=>!x.skipped);
   if(S.sweep){ const sc=items.filter(x=>!x.skipped), c=sc.filter(x=>x.correct).length;
-    return finishWith({type:"sweep",setId:"sweep",subject:"ย้อนคาถาเก่า",topic:"ย้อนคาถาเก่า ม.1–2",startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
+    return finishWith({type:"sweep",setId:"sweep",subject:"ย้อนคาถาเก่า",topic:"ย้อนคาถาเก่า ม.1–2",...(S.sweepPlan&&S.sweepPlan.mins!=null?{sweepBase:S.sweepPlan.base,sweepSize:S.sweepPlan.size,sweepServed:S.sweepPlan.served,minsBefore:S.sweepPlan.mins}:{}),startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
       durationSec:Math.round((Date.now()-S.start)/1000),correct:c,total:sc.length,xp:itemXp(items),confused:S.confused,items}) }
   if(S.comp){ const sc=items.filter(x=>!x.skipped), c=sc.filter(x=>x.correct).length, read=sc.filter(x=>!x.exTotal||x.exSteps>=x.exTotal).length;
     return finishWith({type:"comp",setId:"comp",subject:"แนวแข่งขัน",topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
@@ -4826,7 +4857,8 @@ function sweepCard(list){
   const by={}; sw.forEach(a=>(a.items||[]).forEach(x=>{ const sp=QBANK[x.qid]?.q.spell; if(!sp||x.skipped) return; (by[sp]??=[0,0]); by[sp][0]++; if(x.correct) by[sp][1]++ }));
   const rows=Object.entries(by).sort((a,b)=>a[1][1]/a[1][0]-b[1][1]/b[1][0]);
   return `<section class="card"><h3>ย้อนคาถาเก่า ม.1–2 และสัญญาณจากลูก</h3>
-    ${rows.length?`<p class="small muted">ข้อคละเรื่องที่เคยเรียน วันละ 5–10 ข้อ เรียงจากเรื่องที่ลืมมากที่สุด เรื่องที่ตอบผิดจะกลับมาในชุดทบทวน และช่วง ม.ค.–มี.ค. จะทวนเรื่องเหล่านี้ก่อน</p>
+    ${rows.length?`<p class="small muted">ข้อคละเรื่องที่เคยเรียน วันละ 5–15 ข้อ เรียงจากเรื่องที่ลืมมากที่สุด เรื่องที่ตอบผิดจะกลับมาในชุดทบทวน และช่วง ม.ค.–มี.ค. จะทวนเรื่องเหล่านี้ก่อน</p>
+      ${(()=>{ const ad=sw.filter(a=>a.sweepSize!=null).slice(-7).reverse(); return ad.length?`<p class="small muted">จำนวนข้อปรับตามเวลาที่ลูกใช้กับภารกิจอื่นก่อนหน้าในวันนั้น (ตั้งแต่ 20 พ.ย. ลูกไม่เห็นเหตุผลนี้): ${ad.map(a=>`${new Date(a.endedAt).toLocaleDateString("th-TH",{day:"numeric",month:"short"})} ${a.sweepServed??a.total} ข้อ (ปกติ ${a.sweepBase} · ก่อนหน้า ${a.minsBefore} นาที)`).join(" · ")}${ad.some(a=>(a.sweepServed??a.total)<a.sweepSize)?" · บางวันได้น้อยกว่าที่ควรเพราะคลังข้อใหม่หมด":""}</p>`:"" })()}
       <div class="stats" style="grid-template-columns:repeat(2,1fr)">${rows.map(([sp,[n,c]])=>`<div class="stat" style="border-left:4px solid ${c/n>=0.8?"var(--good)":c/n>=0.5?"var(--beak)":"var(--warn)"};padding-left:8px"><span class="small" style="font-weight:600">${esc(SPELLS.find(x=>x.id===sp)?.topic||sp)}</span><span class="small muted">ถูก ${c}/${n}</span></div>`).join("")}</div>`:""}
     ${moods.length?`<p class="small"><b>ลูกบอกว่าพร้อมแค่ไหน:</b> ${moods.map(m=>`${new Date(m.endedAt).toLocaleDateString("th-TH",{weekday:"short"})} ${(MOODS.find(x=>x[0]===m.mood)||[])[1]||""}`).join(" · ")}</p>`:""}
     ${help.length?`<p class="small"><b>ตอนอ่านการ์ดสรุป ลูกกด "ขออธิบายอีกแบบ" ที่:</b> ${help.map(a=>{const st=SETS.find(x=>x.id===a.setId); return st?`${esc(st.topic)} (ส่วนที่ ${a.conceptHelp.map(i=>i+1).join(", ")})`:""}).filter(Boolean).join(" · ")}</p>`:""}
