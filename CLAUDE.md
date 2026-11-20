@@ -268,6 +268,12 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    sweep cap 15 · B a lesson on Fridays too, repair replaces the review (queue runs out ~5 days sooner) · C keep it.
    Data note: her records reach the parent db only when the father imports her file, so a nightly run before the
    import sees "0 min" (20 Nov run did); judge a day only after its import.
+   **Father's decision 21 Nov 02:07:** wait for real Sat/Sun 21–22 Nov numbers before choosing. Estimates (±5 min, from
+   5–20 Nov records): Mon–Thu 30–35 (target 45) · Fri ~19 · Sat/Sun ~45–50 (target 75). Set A (no lesson cost): Fri
+   repair+lesson, review 10/12, sweep 15 → ~38–42 / 43–47 / 50–55. Set B = A + 2nd lesson Sat/Sun (→ 65–70; queue of 22
+   lessons then ends ~8–9 Dec, so lesson writing and the father's final-term documents are needed ~1 Dec). The
+   "40–45 min" he remembered is NOT recorded in the repo (it says 30–35); Fridays were never counted. Next chat: import
+   his file, then summarise the week (minutes per mission, skipped/light days) and propose A or B.
 3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
    **Part 1 DONE 18 Nov:** fig kinds + ch.3 เส้นขนาน + ch.4 ให้เหตุผลทางเรขาคณิต read (50 pp.) → sets 050–052 (blind-checked).
    **Part 2 = front-page queue item "รอบ 2 ส่วนที่ 2" (Opus, computer):** ch.5 แยกตัวประกอบ (13 pp.) + science unit 5
