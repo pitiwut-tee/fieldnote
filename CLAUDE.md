@@ -261,6 +261,13 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    evening); it is the main daily supplier (sweep top-ups to 70, the next 4 lessons extended to ≥ 12 practice items,
    twins, vocabulary; up to 30 items a night, 60 while a floor is unmet). The queue rows for sweep refills and lesson-item
    batches were removed; the front-page queue is now 23 rows (reading, retrofit, new lessons, checkpoints, app).
+2h. **Friday gap, 21 Nov (father asked why Fri 20 Nov was still ~20 min):** on a school Friday `repairToday` replaces
+   the lesson with an 8-item repair set and drops the daily review, so Friday = repair ~7.5 + vocab ~4 + sweep 10 items
+   (school cap) ~7.5 = 19 min. The 19 Nov "30–35 min" estimate forgot Fridays; she was not rushing (0 fast-wrong, own
+   reasons typed on every miss). Options put to him (front page ④): A (recommended) Friday repair 14 items + Friday
+   sweep cap 15 · B a lesson on Fridays too, repair replaces the review (queue runs out ~5 days sooner) · C keep it.
+   Data note: her records reach the parent db only when the father imports her file, so a nightly run before the
+   import sees "0 min" (20 Nov run did); judge a day only after its import.
 3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
    **Part 1 DONE 18 Nov:** fig kinds + ch.3 เส้นขนาน + ch.4 ให้เหตุผลทางเรขาคณิต read (50 pp.) → sets 050–052 (blind-checked).
    **Part 2 = front-page queue item "รอบ 2 ส่วนที่ 2" (Opus, computer):** ch.5 แยกตัวประกอบ (13 pp.) + science unit 5
