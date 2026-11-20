@@ -274,6 +274,22 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    lessons then ends ~8–9 Dec, so lesson writing and the father's final-term documents are needed ~1 Dec). The
    "40–45 min" he remembered is NOT recorded in the repo (it says 30–35); Fridays were never counted. Next chat: import
    his file, then summarise the week (minutes per mission, skipped/light days) and propose A or B.
+2i. **Midterm strategy, 21 Nov (father decided; supersedes any older "extra time" idea):** (1) coverage first: until ~8 Dec
+   every midterm topic taught once, by lessons as queued; (2) from ~9 Dec to the exam (21–25 Dec) NO new lessons, the extra
+   time goes to repair (open misconceptions, daily mistake review, mock 12 Dec, hand-written proof sheets marked by the
+   father). Lessons for post-midterm topics (ratio, motion, body, ...) are NOT needed to be earlier, so Set B (2nd lesson
+   Sat/Sun) is not needed for the midterm; the father leans to **Set A** (Friday repair 14 + sweep 15), final choice
+   after the real Sat/Sun 21–22 Nov numbers (front-page queue 1). (3) The school announces exam scope only near the exam,
+   and tests what has been taught, so scope = the school's textbooks/booklet. We have NOT read every page: front-page queue 4
+   reads only the midterm parts, compares with `qtags.json`, fills thin subtopics (m22.9, s3.4, s3.7, s4.8); ask the father
+   before the read (scan cost, hard rule 9). Do not claim "covered" before that check. (4) Twins are not made on the fly:
+   they are written ahead (nightly Opus run, one per recent wrong question, `variants.json`) and served by the app when the
+   question returns; they are scored like any answer by the loop (resolved only after the ≥ 7-day checks). Telling her:
+   repair lessons "come back because we have not cleared this point yet", never guilt (hard rule 7).
+   Queue after this decision (front page ②, 24 rows): 1 week summary + choose A/B · 2 app for the choice (before Fri 27 Nov)
+   · 3 dad-talk follow-up · **4 midterm coverage check (new, before 29 Nov)** · 5 construction lesson · 6 รอบ 2 part 2
+   · 7 after cp-1 (cut the 2nd-lesson idea to post-midterm only; plan repair for 9–20 Dec) · 8 mock-midterm · 9–11 …
+   ID-Book 3121 moved to 26–31 Dec (midterm separation content already used 3122).
 3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
    **Part 1 DONE 18 Nov:** fig kinds + ch.3 เส้นขนาน + ch.4 ให้เหตุผลทางเรขาคณิต read (50 pp.) → sets 050–052 (blind-checked).
    **Part 2 = front-page queue item "รอบ 2 ส่วนที่ 2" (Opus, computer):** ch.5 แยกตัวประกอบ (13 pp.) + science unit 5
