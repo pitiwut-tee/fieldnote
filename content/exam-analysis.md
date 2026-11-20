@@ -221,6 +221,9 @@ plateau graph and thermometer position; (e) choosing a solvent from a solubility
 conditions as a table item; (f) serial dilution; "add V more" vs "make up to V" side by side; (g) point-vs-curve
 classification (saturated / unsaturated / supersaturated); (h) a fair-test item inside a solutions experiment (which
 tubes to compare); (i) flow charts with blank steps for 4-component mixtures; (j) % w/w ↔ % w/v with density.
+**DONE 20 Nov (front-page queue 2):** all of (a)–(j) below were written and blind-checked: sci-solution-4 ss4p9–ss4p13, sci-separation-2
+sp2p9–sp2p13, sci-solution-5 ss5p9–ss5p14, twins sp3p5~v1/v2 (start line above 0, Rf invariance), sp3p7~v1 (match across two
+solvents), sp4p4~v1 (plateau graph), sp4p3~v1 (thermometer position). Thin still: (f) serial dilution has only one item so far.
 **Where each goes:** front-page retrofit row (sci-solution-4, sci-separation-2, sci-solution-5, before 28 Nov):
 sci-solution-4 takes (b), (g), (h) and the rate-vs-solubility point 8; sci-separation-2 takes (e) and (i) plus
 steam-distillation conditions; sci-solution-5 takes (c), (f), (j) and one mixing item with a pure-solid addition. (a)

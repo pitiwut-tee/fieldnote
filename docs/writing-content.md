@@ -304,7 +304,7 @@ Any `fig` (question, reteach/library step, or `concept.figs[i]` = a figure under
   (playwright, using `geoFig`/`svgFig` from `src/app.html`) and look at it before committing; give the rendered
   images to the blind checker too.
 
-## Retrofitting an old lesson (meaning first; done for sci-solution-3 and math-stats-5 on 19 Nov 2026)
+## Retrofitting an old lesson (meaning first; done for sci-solution-3 and math-stats-5 on 19 Nov, sci-solution-4, sci-separation-2 and sci-solution-5 on 20 Nov 2026)
 
 Lessons written 4–12 Nov lack `hook`/`more` and open with a formula. Recipe (keep it the same for the rest):
 - Keep the set id, `added` and the ids of items whose idea stays; add `"revised": "YYYY-MM-DD"` and a one-line
@@ -317,3 +317,6 @@ Lessons written 4–12 Nov lack `hook`/`more` and open with a formula. Recipe (k
   At least one `ask:"meaning"` or `ask:"method"` item per formula subtopic in the lesson.
 - Add what the school booklet needs that the old lesson missed (content/midterm-plan.md), update `qtags.json` for new or
   re-tagged ids, then the blind check with rendered figures (hard rule 5).
+- Since 20 Nov a retrofitted lesson also gets ≥ 12 practice items (13–14 so far), `parts` on every new level-3 item, and about one
+  "which statements are correct" item (ก ข ค) per lesson. Option sets for a predict must ask about one unambiguous quantity: the
+  blind check on 20 Nov caught "more or less gas comes out" (out of the bottle vs left dissolved); ask what the water can hold instead.
