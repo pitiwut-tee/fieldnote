@@ -687,7 +687,7 @@ async function importCode(raw, asTest){
 }
 
 /* ---------- updates: GitHub Pages lets the browser keep an old copy for a while, so check for a newer build ---------- */
-const BUILD="2026-11-20 23:04";
+const BUILD="2026-11-21 09:01";
 async function checkUpdate(){ if(!/^https?:/.test(location.protocol)||typeof db!=="undefined"&&db) return;
   try{ const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text(); const m=t.match(/const BUILD="(\d{4}-\d\d-\d\d \d\d:\d\d)"/);
     if(m&&m[1]!==BUILD&&!m[1].includes("@@")&&!document.getElementById("updbar")){ const d=document.createElement("button"); d.id="updbar"; d.className="btn";
@@ -829,6 +829,8 @@ const SWEEP_SCHOOL=5;
 const DAY_RULES_FROM=dayKey("2026-11-20T00:00:00+07:00");
 const DAY_TARGET={school:45,full:75,mid:60,light:40};
 const REVIEW_DAILY={school:6,holiday:8}, REVIEW_MIN_POOL=3;
+/* 21 Nov (father): a school Friday has no lesson, so the repair set is bigger (14, was 8) and the sweep may grow like a holiday (up to 15) */
+const REPAIR_FRIDAY=14;
 function minsToday(list){ const t=todayKey(); return list.filter(a=>dayKey(a.endedAt)===t&&a.type!=="sweep"&&!a.test).reduce((s,a)=>s+Math.min(2700,Math.max(0,+a.durationSec||0)),0)/60 }
 function repairToday(list,info){ return info.kind==="school"&&new Date().getDay()===5&&reviewPool(list).length+dueQuestions(list,3).length>=4 }
 const LOWER_REASONS=["มีธุระครอบครัว","ไปเที่ยว/ออกนอกบ้าน","การบ้านหรืองานเยอะ","เรียนพิเศษ/กิจกรรม","ไม่สบาย","อื่นๆ"];
@@ -1181,7 +1183,7 @@ function hashStr(x){ let h=0; for(const c of x) h=(h*31+c.charCodeAt(0))|0; retu
 function sweepBase(p){ return p.info.kind==="school"?SWEEP_SCHOOL:(LEVELS[p.info.level]||LEVELS.full).sweep }
 /* size of today's sweep (19 Nov rule, see DAY_RULES_FROM): base, minutes already spent today, gap to the day's target */
 function sweepPlan(p,list){ const base=sweepBase(p); if(!base||todayKey()<DAY_RULES_FROM) return {base,size:base,mins:null,gap:null};
-  const lv=p.info.level, tgt=DAY_TARGET[lv]||DAY_TARGET.school, mins=Math.round(minsToday(list||mine())), gap=tgt-mins, big=lv==="full";
+  const lv=p.info.level, tgt=DAY_TARGET[lv]||DAY_TARGET.school, mins=Math.round(minsToday(list||mine())), gap=tgt-mins, big=lv==="full"||(p.info.kind==="school"&&new Date().getDay()===5&&repairToday(list||mine(),p.info));
   const size=gap>10?(big?15:10):gap>=5?(big?12:8):base;
   return {base,size:Math.max(base,size),mins,gap} }
 function sweepSize(p,list){ return sweepPlan(p,list).size }
@@ -1400,7 +1402,7 @@ function renderHome(){
     ${specialMissions(p,ms,md,mission)}
     ${loopCard(list)}
     ${libEntry()}
-    ${!ms.some(x=>x.key==="lesson")?"":mission(1,"lesson",(examAt(todayKey())||{}).phase==="during"?"ไม่บังคับช่วงสอบ":plan.exam?"โหมดเตรียมสอบ · ราว 25 นาที":plan.repair?"ชุดซ่อมจุดอ่อน (วันศุกร์) · ราว 20 นาที":"ชุดฝึก"+(md.lesson?" · ทำแล้ว":" · ราว 30 นาที"),lessonTitle,
+    ${!ms.some(x=>x.key==="lesson")?"":mission(1,"lesson",(examAt(todayKey())||{}).phase==="during"?"ไม่บังคับช่วงสอบ":plan.exam?"โหมดเตรียมสอบ · ราว 25 นาที":plan.repair?"ชุดซ่อมจุดอ่อน (วันศุกร์) · ราว 15 นาที":"ชุดฝึก"+(md.lesson?" · ทำแล้ว":" · ราว 30 นาที"),lessonTitle,
       md.lesson&&doneLesson?`<div class="row">${notesBtn(doneLesson)}<button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"เลือกชุดอื่น"}</button></div>`
       :`<div class="row"><button class="btn" id="go-rec">${plan.exam?"เริ่มทบทวน":plan.repair?"เริ่มซ่อม":"เริ่มชุดนี้"}</button><button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"อยากทำเรื่องอื่น"}</button></div>`,
       showAll?`<div class="sets">${SETS.map((s,k)=>s===plan.lesson||s.kind==="sweep"||s.kind==="checkpoint"?"":setCard(s,k)).join("")}</div>`:"")}
@@ -1463,7 +1465,7 @@ function renderHome(){
     const b=ids.map(x=>document.getElementById(x)).find(Boolean); if(b) b.click(); else { const t=document.getElementById("m-"+k); if(t) t.scrollIntoView({behavior:"smooth",block:"center"}) } });
   on("exp-adv",()=>{ view="adv"; render(); window.scrollTo({top:0}) });
   $v.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>{ const t=document.getElementById(b.dataset.goto); if(t) t.scrollIntoView({behavior:"smooth",block:"center"}) });
-  on("go-rec",()=>{ if(plan.exam) return startExamReview(plan.exam,10); if(plan.repair) return startReview(8,"ชุดซ่อมจุดอ่อน"); if(plan.lesson){introSet=plan.lesson;view="intro";render()} });
+  on("go-rec",()=>{ if(plan.exam) return startExamReview(plan.exam,10); if(plan.repair) return startReview(REPAIR_FRIDAY,"ชุดซ่อมจุดอ่อน"); if(plan.lesson){introSet=plan.lesson;view="intro";render()} });
   on("go-probe",()=>{introSet=plan.probe;view="intro";render()});
   on("go-mixed",()=>{introSet=plan.mixed;view="intro";render()});
   on("go-passage",()=>{introSet=plan.passage;view="intro";render()});

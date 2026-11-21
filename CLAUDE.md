@@ -290,6 +290,12 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    · 3 dad-talk follow-up · **4 midterm coverage check (new, before 29 Nov)** · 5 construction lesson · 6 รอบ 2 part 2
    · 7 after cp-1 (cut the 2nd-lesson idea to post-midterm only; plan repair for 9–20 Dec) · 8 mock-midterm · 9–11 …
    ID-Book 3121 moved to 26–31 Dec (midterm separation content already used 3122).
+   **Father's clarification, 21 Nov 09:00 (read the old chat):** he had thought the 19 Nov volume increase already covered
+   Fridays; it did not. What he wants for Friday is ONLY option ก (more items, NO lesson on Fridays, wait for cp-1 before any
+   second lesson). My "Set A" lines above wrongly said "Fri repair+lesson": correct Set A = Friday repair 14 + Friday sweep
+   up to 15, no lesson (≈ 28–30 min); Set B (extra lessons) stays undecided until cp-1. **DONE 21 Nov (app):** `REPAIR_FRIDAY=14`
+   (was 8) and a school Friday with a repair set gets the holiday-style sweep size (15/12/base); verify passes. Sat/Sun numbers
+   are still read after her 22 Nov file (queue 1) but no longer gate the Friday fix.
 3. **Chat "รอบ 2" (needs the chat linked to his computer):** IPST ม.2 เล่ม 2 round 2 + geometry `fig` kind (plan above).
    **Part 1 DONE 18 Nov:** fig kinds + ch.3 เส้นขนาน + ch.4 ให้เหตุผลทางเรขาคณิต read (50 pp.) → sets 050–052 (blind-checked).
    **Part 2 = front-page queue item "รอบ 2 ส่วนที่ 2" (Opus, computer):** ch.5 แยกตัวประกอบ (13 pp.) + science unit 5
