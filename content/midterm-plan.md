@@ -122,3 +122,22 @@ solutions (ss3p11) → sci-solution-3 11 (still under 12; the nightly run may ex
 recorded (they come from ID-Book 3122); m22.1/m22.2/m22.10 are not in the booklet; compass constructions (m14) wait for
 queue 5. Not checkable from the notes: the exact drill types of the school's nine concentration problems and anything in the
 missing science unit 2 (father's check, by 25 Nov).
+
+## Midterm coverage check, 22 Nov (front-page queue 4, part 2 of 2)
+Re-read the five science midterm documents from the father's folder (text of the three short ones; the 110-page
+"หน่วย 1 สารละลาย ม.2" by contact sheets plus full-size pages 78–81; the two handwritten pages at its end were not
+read or recorded). They match the 12 Nov notes. Findings:
+- **sci-solution-6 (ppm, energy of dissolving, preparing) was NOT in `lessonQueue`**, so it would have been served only
+  after the queue ran out (~end of Dec), yet the school document has ppm (a worked example with 0.05 mg in 100 g and a
+  practice item) and preparation. Fixed: `sci-solution-6` now follows `sci-solution-5` in `lessonQueue`
+  (everything after it moves one day later; spare days 9–11 Dec absorb it). Correction to part 1: ppm IS in the school's documents.
+- Gaps filled in sci-solution-6 (now 14 practice items, blind-checked 6/6): ppm when the sample is not 1 kg (ss6p9),
+  what "3 ppm" means (ss6p10, `ask:meaning`), solubility level by g per 100 g with the school's thresholds
+  (>1 good · 0.1–1 slight · <0.1 insoluble) and scaling a 10 g sample to 100 g (ss6p11, ss6p12), organic vs inorganic
+  solvent (ss6p13), supersaturated (ss6p14).
+- Textbook error to avoid: the school's page lists น้ำมันเบนซิน as an inorganic solvent; petrol is organic. Do not write
+  items on that example; tell the father if she asks.
+- Already covered, no gap: solute/solvent rules and tables, alloys and gas mixtures, saturated/unsaturated, factors
+  (temperature, pressure, particle size, stirring), %v/v, %w/w, %w/v with density, dilution, evaporation, solubility
+  curves, separation methods and Rf. Daily-life uses (thinner, pesticide dilution) are only a few items; left on purpose.
+- Still not checkable: the missing science unit 2 (father's check) and the exact exam wording.
