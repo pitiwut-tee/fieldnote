@@ -112,6 +112,11 @@ One page he reads in ~2 minutes a day. Keep it short; history goes to the other 
   or ask-her-to-explain activity, one check question with its answer), plus what NOT to discuss (untaught topics,
   patterns already improving, our own unclear questions). After he records the talk, give twin questions on those
   patterns 2–3 days later. First brief: 17 Nov. Once he has tried it, add a Sunday step to AUTOMATION.md.
+  Brief-writing rules (father, 21 Nov): (i) never ask him or her to recall something from the data: quote her own
+  words in the brief (player's guides are `type:"studio"`, `act:"rewrite"`, `answer`), with the date and question;
+  (ii) "explain without the formula" questions are concrete situations she answers aloud ("pour 70 g into 100 g of
+  water that holds 60 g at most: what do you see?"), never "what does the number 60 tell us?" (too open: he could
+  not answer it himself); give the good answer and what a wrong answer reveals.
 - Checkpoints (approved 17 Nov): short = 45–50 min, ~24 items (science 12 + math 12), on a Sunday in place of
   the lesson; our own unseen, timed, mixed questions on topics taught ≥ 7 days earlier, new contexts not new
   numbers, some "which reasoning is right" items. Full = a recalled paper, 90 min, printed. Dates (avoid school
