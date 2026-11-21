@@ -99,3 +99,26 @@ queue 1 = 1A by 22 Nov, 7 = 1B by 30 Nov, 10 = round 2 with situation twins by 7
 weekly from 28 Dec). On 19 Nov about 35 unseen items were left over 25 spells. A day where the bank runs short serves
 fewer items; the parent page shows "served" next to the planned size.
 cp-1 (6 Dec, queue 9) now decides only whether to add a second lesson a day, using two weeks of the new mission.
+
+## Midterm coverage check, 21 Nov (front-page queue 4, part 1 of 2)
+Done from the notes of the full reads already made (school math booklet 18 Nov, the five science documents 12 Nov,
+IPST ch.1–4) against every set item (`sub` or `qtags`) plus a keyword scan of question text. The chat could not open the
+father's folders (folder access was refused in that chat), so no school file was re-read; part 2 = re-read the five
+science documents (text PDFs, cheap) to confirm, once he adds the folder in the desktop app. Items per subtopic (lesson
+sets / checkpoint / twins), 21 Nov before the fill: m22.3 8 · m22.4 9 · m22.5 11 · m22.6 14 · m22.7 20 · m22.8 11 · m22.9 4 ·
+m22.11 14 · m16.1–4 6/8/8/6 · m15.1 1 · m15.2 17 · m15.3 10 · m15.4 12 · s4.1 13 · s4.2 25 · s4.3 9 · s4.4 17 · s4.5 3 · s4.6 24 ·
+s4.7 2 · s4.8 4 · s4.9 0 (solid/gas items of sci-solution-7 are tagged s4.1) · s3.1 6 · s3.2 8 · s3.3 9 (+6 twins) · s3.4 6 ·
+s3.5 7 · s3.6 10 · s3.7 4.
+**Gaps found (school scope, 0–1 questions) and filled the same day, 12 items, blind-checked 12/12 main + 6/6 reasons:**
+tally into a frequency table (st6p9), mode with two values / no mode (st6p10, her marked "mode = frequency" error is a
+distractor), back-to-back stem-and-leaf (st6p11), what a range says (st6p12, `ask:meaning`) → math-stats-6 now 12 practice;
+proof "diagonals of a parallelogram bisect each other" in the booklet's given / to prove / reason layout (gr1p10),
+"midpoints of opposite sides make a parallelogram" (gr1p11), three parallel lines with a bent path (gr1p12) →
+math-georeason-1 now 12; simple distillation needs a large boiling-point gap, ~30 °C as the school's rough rule (sp4p13),
+why a crude-oil column separates (sp4p14, `ask:meaning`) → sci-separation-4 14; hexane extraction, why the solvent is easy
+to remove (sp2p14) → sci-separation-2 14; brass as a solid solution (ss3p10) and the two solvent rules for gas/liquid
+solutions (ss3p11) → sci-solution-3 11 (still under 12; the nightly run may extend it).
+**Still thin but left on purpose:** s4.5 ppm (3) and s4.7 energy of dissolving (2) are not in the school's midterm documents as
+recorded (they come from ID-Book 3122); m22.1/m22.2/m22.10 are not in the booklet; compass constructions (m14) wait for
+queue 5. Not checkable from the notes: the exact drill types of the school's nine concentration problems and anything in the
+missing science unit 2 (father's check, by 25 Nov).

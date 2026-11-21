@@ -290,6 +290,10 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    · 3 dad-talk follow-up · **4 midterm coverage check (new, before 29 Nov)** · 5 construction lesson · 6 รอบ 2 part 2
    · 7 after cp-1 (cut the 2nd-lesson idea to post-midterm only; plan repair for 9–20 Dec) · 8 mock-midterm · 9–11 …
    ID-Book 3121 moved to 26–31 Dec (midterm separation content already used 3122).
+   **Queue 4 part 1 DONE 21 Nov:** coverage table from the notes + 12 gap items (blind-checked) in math-stats-6, math-georeason-1,
+   sci-separation-4, sci-separation-2, sci-solution-3; details in content/midterm-plan.md "Midterm coverage check". Part 2 (re-read the
+   five science text PDFs to confirm) needs the father to add `D:\เตรียมม.ปลาย` via the desktop app's "Add folder"
+   (device_request_folder_access was refused in that chat; do not retry it, ask him).
    **Father's clarification, 21 Nov 09:00 (read the old chat):** he had thought the 19 Nov volume increase already covered
    Fridays; it did not. What he wants for Friday is ONLY option ก (more items, NO lesson on Fridays, wait for cp-1 before any
    second lesson). My "Set A" lines above wrongly said "Fri repair+lesson": correct Set A = Friday repair 14 + Friday sweep
