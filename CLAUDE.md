@@ -128,6 +128,16 @@ daily-time gap, so this replaces the "second lesson a day" idea (use depth, not 
 Interim rule (AUTOMATION.md, 22 Nov): until he chooses, the nightly run adds level-1 items first. This is also a data point
 for the February "teaching method vs depth" decision: log what changes after (B).
 
+**Father's decision 22 Nov 23:56 and the learning-science basis.** He agreed A+B and asked whether 6 level-1 items are enough and
+whether level 2-3 should come on day 1. Research (Sweller/Kalyuga worked-example + expertise reversal; Rosenshine ~80% success in guided
+practice; Wilson 2019 "85% rule", derived for machines/perception so only a hint for a child; Bjork desirable difficulties; mastery learning ~7
+opportunities per skill on average, 3 in a row as a usual threshold) says: novices need examples and many successful easy items first; difficulty only
+helps if she can overcome it (her L2/L3 = 62/54% is below the ~80-85% range); interleaving/spacing come after acquisition. So 6 is a floor, not a constant:
+target = a mastery gate ("4 of the last 5 right", cap ~12 level-1 items), day 1 only 2-3 level-2 items as a readiness check, level 3 on later days
+(spaced / sweeps / checkpoints). **Content side starts 23 Nov** (nightly writes level-1 first, see AUTOMATION.md; fix-sci-1 and math-congruence-1 already
+have 6); **app side** (peek button, mastery gate) is a front-page queue row, not tied to 27 Nov. Measure after: level-1 items needed to reach the gate,
+L2/L3 accuracy vs 62/54%, and whether peeks fall over time.
+
 ## Reason check: "none of these fits" (22 Nov 2026, built)
 After a right or wrong answer on an item with `check`, she can tap "✍️ วิธีคิดของฉันไม่ตรงกับข้อไหนเลย" and write her own
 reason BEFORE the explanation shows (so it is not contaminated). Stored on the item as `checkNone:true` and `checkOwn`

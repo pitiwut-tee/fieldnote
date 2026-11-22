@@ -269,3 +269,10 @@ and that the content followed the calendar only.
 
 
 Time note (22 Nov 2026): minutes = `actSec` when present, else an estimate from answered items (see CLAUDE.md "Study time = active time"); records before 22 Nov are wall-clock and may be inflated.
+
+Level mix for lessons (father agreed 22 Nov, research in CLAUDE.md "Student feedback 22 Nov"): day 1 of a lesson = concept card, then
+mostly level-1 items of one kind (>= 6, keep adding while the lesson has fewer), only 2-3 level-2 items at the end as a readiness check, and level 3
+only when the lesson is served again (spaced) or in sweeps/checkpoints. Do not delete existing level-3 items; when you add items, write level 1 first.
+Order of work from 23 Nov: the lessons in `lessonQueue` that will be served soonest and have < 6 level-1 items (as of 22 Nov, in queue order:
+sci-separation-4 (2), math-congruence-2 (2), sci-solution-3 (4), math-stats-5 (3), sci-solution-4 (3), math-stats-6 (3), sci-separation-2 (3),
+math-georeason-1 (2), sci-solution-5 (3), math-parallel-2 (2)). Each extended lesson still needs the blind check.
