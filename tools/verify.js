@@ -214,7 +214,7 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
   /* answer whatever session is open until it ends. wrong=true answers every question wrong (to test the paths after a miss) */
   async function play(wrong){ let ok=0, total=0;
     const pickWrong=async()=>pg.evaluate(()=>{ const q=S.steps[S.i].q; return q.opts.findIndex((_,k)=>k!==q.a) });
-    for(let i=0;i<60;i++){
+    for(let i=0;i<140;i++){
       if(await pg.locator("[data-hk]").count()){ await pg.locator("[data-hk]").first().click(); continue }
       if(await pg.locator("[data-pred]").count()){ await pg.click(`[data-pred="0"]`); continue }   /* the right prediction is written first */
       if(await pg.locator("#cnext").count()){ await pg.click("#cnext"); continue }
