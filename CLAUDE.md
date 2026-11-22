@@ -93,8 +93,14 @@ text itself: the question stem (copy our own question text), her typed words in 
 final answer of a "try it yourself" item at the end of the letter. Find her questions in the parent db
 (`attempts` docs, field `confused[]`: `qid`, `prompt`, `ask`) and answer every one; answer the typed `ask`, not a
 nearby note (the first 22 Nov letter answered the "solvent" note from 20 Nov and missed the typed "ไม่รู้คำอังกฤษ" on
-sepp5~v1). Pending father's choice (front page ④, 22 Nov): a structured `replies` letter with `qid` and a
-"คำถามของฉัน" page in the app, so she can open the question itself.
+sepp5~v1). **Father approved 22 Nov ("ทำ") → front-page queue 3 (Opus, no computer, before 29 Nov):**
+(1) letters may carry `replies:[{qid, ask?, text}]`; the app shows, per reply, the question stem + its figure (existing
+`geo`/`svg` renderers) + her typed words above the answer (qid is looked up in sets, `variants.json`, sweeps; if not
+found fall back to the plain `text`); keep the plain `text` field working for old letters. (2) a "คำถามของฉัน" page
+(home entry like the library): lists every `confused[]` entry with an `ask` from her own progress, each with the
+question, her words and the letter reply when one exists (match by qid + ask). Until it is built, keep putting the
+stems inside the letter text as above. Add `tools/verify.js` checks (a reply with a qid renders the stem and figure;
+unknown qid falls back); parent page change only if the page logs opens (optional).
 
 ## Figures in questions (father approved 16 Nov 2026)
 - **(1) DONE 18 Nov:** `geo` and `svg` fig kinds in `src/app.html` (`geoFig`, `svgFig`), `concept.figs` (a figure
