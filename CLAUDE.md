@@ -137,6 +137,24 @@ target = a mastery gate ("4 of the last 5 right", cap ~12 level-1 items), day 1 
 (spaced / sweeps / checkpoints). **Content side starts 23 Nov** (nightly writes level-1 first, see AUTOMATION.md; fix-sci-1 and math-congruence-1 already
 have 6); **app side** (peek button, mastery gate) is a front-page queue row, not tied to 27 Nov. Measure after: level-1 items needed to reach the gate,
 L2/L3 accuracy vs 62/54%, and whether peeks fall over time.
+**App side BUILT 23 Nov (front-page queue 2, commit after 9d4b828):** settings in `calendar.json` `gate` (read as `GATE` in app.html).
+(A) "📖 ดูเนื้อหา/สูตร" (`canPeek`, `peekCard`): only on a lesson's own practice items (phase "ฝึกทำ") before answering; overlay of the
+concept summary (points + figs + formulas + vocab); item gets `peek:n`, record gets `peeks`; `chkOk`, `spellStats` and the
+misconception check ignore peeked answers (no คงทน / tier / resolve credit); it still counts as practice and toward the gate.
+(B) gate (`gateEligible`, `gateApply`): applies from 2026-11-23 to a lesson she has never done that has **>= 6 level-1 items**
+(fewer → old behaviour; the nightly run is filling them in queue order). Practice is served level 1 first (stable sort); after each
+level-1 answer: pass = >= 6 answered and 4 of the last 5 right (right = correct, not guessed, not full hint, not "don't know"); stop
+also at 12 (cap) or when level 1 runs out. Then 3 level-2 items stay (2 if not passed); unused level-1 items are dropped; the other
+level-2, every level-3 and a level-3 challenge are trimmed (`gated`) and listed in the record's `gate.deferred`. A moved explain step
+goes to the last kept level-2 item. She sees one short note (no guilt). Deferred items come back as lesson warm-up "ต่อจากบทก่อน"
+(`carryQuestions`, `dueIds` prefix `g:`, item `carry:true`, no peek), up to 6 a lesson day, oldest lesson first, lower level first,
+dropped after 14 days (a lesson like fix-sci-1 defers 12, so not all come back: they stay in the bank for twins/sweeps).
+Resume keeps the trimming. Parent page card "บทเรียนแบบพื้นฐานก่อน" (tab with the readiness pane): per lesson level-1 used,
+result, day-1 level-2, peeks, deferred; level-2/3 accuracy since 23 Nov vs 62/54%; carried items done. verify.js test
+"level-1 gate, carried items and the 📖 peek button". **Effect on time:** a gated day-1 lesson is shorter than the old full
+lesson (e.g. fix-sci-1: 9 practice items instead of 20) while carried items add up to 6 to the next lessons' warm-ups; the nightly
+time report must watch whether weekday minutes drop, and say so on the front page. Worked examples (B's "1–2 fully worked
+examples") are content: not built in the app; the concept card/`ex` carry them for now.
 
 ## Reason check: "none of these fits" (22 Nov 2026, built)
 After a right or wrong answer on an item with `check`, she can tap "✍️ วิธีคิดของฉันไม่ตรงกับข้อไหนเลย" and write her own
@@ -370,6 +388,8 @@ ratio sharing). (d) **"which method?" items** with no computing (GCD vs LCM, %w/
    sci-separation-4, sci-separation-2, sci-solution-3; details in content/midterm-plan.md "Midterm coverage check". Part 2 (re-read the
    five science text PDFs to confirm) needs the father to add `D:\เตรียมม.ปลาย` via the desktop app's "Add folder"
    (device_request_folder_access was refused in that chat; do not retry it, ask him).
+   **Science unit 2 closed 23 Nov:** the father checked: the school has no science unit 2 (numbering skips it), so nothing is missing
+   (old queue 24 / "15 father's science unit 2 check" done, no extra reading).
    **Father's clarification, 21 Nov 09:00 (read the old chat):** he had thought the 19 Nov volume increase already covered
    Fridays; it did not. What he wants for Friday is ONLY option ก (more items, NO lesson on Fridays, wait for cp-1 before any
    second lesson). My "Set A" lines above wrongly said "Fri repair+lesson": correct Set A = Friday repair 14 + Friday sweep

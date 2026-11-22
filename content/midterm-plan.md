@@ -120,8 +120,8 @@ to remove (sp2p14) → sci-separation-2 14; brass as a solid solution (ss3p10) a
 solutions (ss3p11) → sci-solution-3 11 (still under 12; the nightly run may extend it).
 **Still thin but left on purpose:** s4.5 ppm (3) and s4.7 energy of dissolving (2) are not in the school's midterm documents as
 recorded (they come from ID-Book 3122); m22.1/m22.2/m22.10 are not in the booklet; compass constructions (m14) wait for
-queue 5. Not checkable from the notes: the exact drill types of the school's nine concentration problems and anything in the
-missing science unit 2 (father's check, by 25 Nov).
+queue 5. Not checkable from the notes: the exact drill types of the school's nine concentration problems and nothing else
+(the "missing" science unit 2 does not exist: father checked 23 Nov).
 
 ## Midterm coverage check, 22 Nov (front-page queue 4, part 2 of 2)
 Re-read the five science midterm documents from the father's folder (text of the three short ones; the 110-page
@@ -140,4 +140,6 @@ read or recorded). They match the 12 Nov notes. Findings:
 - Already covered, no gap: solute/solvent rules and tables, alloys and gas mixtures, saturated/unsaturated, factors
   (temperature, pressure, particle size, stirring), %v/v, %w/w, %w/v with density, dilution, evaporation, solubility
   curves, separation methods and Rf. Daily-life uses (thinner, pesticide dilution) are only a few items; left on purpose.
-- Still not checkable: the missing science unit 2 (father's check) and the exact exam wording.
+- Still not checkable: the exact exam wording.
+- **Science unit 2, closed 23 Nov 2026:** the father checked the school's documents and there is no unit 2 (the numbering
+  skips it); nothing is missing from what we read, so no extra reading (front-page queue 24 removed).

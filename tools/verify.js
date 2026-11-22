@@ -215,6 +215,7 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
   async function play(wrong){ let ok=0, total=0;
     const pickWrong=async()=>pg.evaluate(()=>{ const q=S.steps[S.i].q; return q.opts.findIndex((_,k)=>k!==q.a) });
     for(let i=0;i<140;i++){
+      if(await pg.locator("#sheet").count()){ await pg.evaluate(()=>closeSheet()); continue }   /* e.g. the level-1 gate's note (23 Nov) */
       if(await pg.locator("[data-hk]").count()){ await pg.locator("[data-hk]").first().click(); continue }
       if(await pg.locator("[data-pred]").count()){ await pg.click(`[data-pred="0"]`); continue }   /* the right prediction is written first */
       if(await pg.locator("#cnext").count()){ await pg.click("#cnext"); continue }
@@ -543,6 +544,61 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     const it=await pg.evaluate(()=>S.items[S.items.length-1]); await pg.evaluate(W2=>{ CAL.understand=JSON.parse(W2) },W2);
     if(!(it&&it.checkNone===true&&it.checkOwn==="ฉันนับจากรูปเอง")) return "own reason not recorded: "+JSON.stringify(it&&{checkNone:it.checkNone,checkOwn:it.checkOwn});
     if(it.checkOk!==undefined) return "an own reason must not be scored as a wrong or right option (checkOk set)";
+    await reset() });
+
+  /* 23 Nov 2026 (queue 2, father agreed A+B): level-1 gate, day-1 level-2 quota, carried items, 📖 peek */
+  await T("level-1 gate, carried items and the 📖 peek button (23 Nov)",async()=>{ await noToday(); await reset();
+    const pick=await pg.evaluate(()=>{ const ok=SETS.filter(s=>s.kind==="lesson"&&s.concept&&s.concept.points&&s.practice.filter(q=>(q.level||1)===1).length===6&&s.practice.some(q=>q.level===3));
+      const few=SETS.find(s=>s.kind==="lesson"&&s.practice.filter(q=>(q.level||1)===1).length<GATE.minL1); return {a:ok[0]&&ok[0].id,b:ok[1]&&ok[1].id,few:few&&few.id} });
+    if(!pick.a||!pick.b) return "need two lessons with exactly 6 level-1 items and a level-3 item";
+    if(await pg.evaluate(id=>{ startSet(SETS.find(s=>s.id===id),false); return !!S.gate },pick.few)) return "a lesson with fewer than "+6+" level-1 items must run without the gate";
+    /* play the level-1 items with a given pattern of right/wrong, the way the "ต่อไป" button does */
+    const play=(id,pattern)=>pg.evaluate(([id,pattern])=>{ startSet(SETS.find(s=>s.id===id),false);
+      const P=S.steps.map((st,i)=>({st,i})).filter(o=>o.st.kind==="q"&&o.st.phase==="ฝึกทำ");
+      const lv=P.map(o=>o.st.q.level||1); if(lv.some((l,k)=>k&&l<lv[k-1])) return {err:"practice is not served level 1 first: "+lv.join("")};
+      let k=0; S.i=P[0].i;
+      while(S.steps[S.i]&&S.steps[S.i].kind==="q"&&S.steps[S.i].phase==="ฝึกทำ"&&(S.steps[S.i].q.level||1)===1){ const q=S.steps[S.i].q;
+        S.items.push({qid:q.id,level:q.level||1,phase:"ฝึกทำ",correct:!!pattern[k++]}); gateApply(); S.answered={at:Date.now()}; advance(); closeSheet() }
+      const live=P.filter(o=>!o.st.gated).map(o=>o.st.q.level||1);
+      return {gate:S.gate,n1:k,live,cur:S.steps[S.i]&&S.steps[S.i].phase,curLv:S.steps[S.i]&&S.steps[S.i].q&&S.steps[S.i].q.level,
+        explain:S.steps.filter(x=>x.explain&&!x.gated).length,explainGated:S.steps.filter(x=>x.explain&&x.gated).length} },[id,pattern]);
+    let r=await play(pick.a,[0,0,1,1,1,1]);
+    if(r.err) return r.err;
+    if(!(r.gate&&r.gate.done&&r.gate.passed&&r.gate.n1===6&&r.gate.why==="pass")) return "4 of the last 5 right after 6 items must pass: "+JSON.stringify(r.gate);
+    if(r.live.filter(l=>l===2).length!==3||r.live.includes(3)) return "after passing, day 1 keeps exactly 3 level-2 items and no level 3: "+r.live.join("");
+    if(r.curLv!==2) return "after the gate the next step must be level 2, got "+r.curLv;
+    if(!r.gate.deferred.length) return "level-3 items must be carried to later days";
+    if(r.explainGated&&!r.explain) return "the explain step was trimmed away without moving to a kept item";
+    r=await play(pick.a,[0,0,0,1,1,1]);
+    if(!(r.gate.done&&!r.gate.passed&&r.gate.why==="out"&&r.live.filter(l=>l===2).length===2)) return "3 of the last 5 must not pass; when level 1 runs out only 2 level-2 items stay: "+JSON.stringify({g:r.gate,live:r.live});
+    /* resume after a reload keeps the trimming */
+    const res=await pg.evaluate(()=>{ saveProgress(); const before={i:S.i,gated:S.steps.map(x=>!!x.gated).join(),gate:JSON.stringify(S.gate)}; S=null; resumeSet();
+      return {same:S.i===before.i&&S.steps.map(x=>!!x.gated).join()===before.gated&&JSON.stringify(S.gate)===before.gate} });
+    if(!res.same) return "resume lost the gate's trimming";
+    /* 📖 peek: on the lesson's own practice item, opens the card, is recorded on the item; never on warm-up steps */
+    await pg.evaluate(()=>{ S.answered=null; S.pick=null; view="session"; render() });
+    if(!await pg.locator("#peek").count()) return "no 📖 button on a lesson practice item";
+    await pg.click("#peek"); if(!await pg.locator("#sheet .formula, #sheet li").count()) return "the peek sheet does not show the lesson card";
+    await pg.click('#sheet [data-sh="0"]');
+    const n0=await pg.evaluate(()=>S.items.length);
+    for(let i=0;i<20&&await pg.evaluate(n=>S.items.length===n,n0);i++){
+      if(await pg.locator("[data-pred]").count()){ await pg.click('[data-pred="0"]'); continue }
+      if(await pg.locator(".opt:not([disabled]):not(.ckopt)").count()){ const k=await pg.evaluate(()=>S.steps[S.i].q.a); await pg.locator(".opt:not(.ckopt)").nth(k).click(); for(const b of ["#send-sure","#send-plain"]) if(await pg.locator(b).count()){ await pg.click(b); break } continue }
+      if(await pg.locator("#numin:not([disabled])").count()){ const a=await pg.evaluate(()=>S.steps[S.i].q.answer); await pg.fill("#numin",String(a)); for(const b of ["#check","#send-unsure","#send-plain"]) if(await pg.locator(b).count()){ await pg.click(b); break } continue }
+      if(await pg.locator("[data-ck]").count()){ const a=await pg.evaluate(()=>S.steps[S.i].q.check.a); await pg.click(`[data-ck="${a}"]`); continue }
+      if(await pg.locator("#exnext").count()){ await pg.click("#exnext"); continue }
+      if(await pg.locator("#next").count()){ await pg.click("#next"); await pg.waitForTimeout(80); continue } break }
+    const it=await pg.evaluate(()=>S.items[S.items.length-1]);
+    if(!(it&&it.peek===1)) return "the peek was not recorded on the item: "+JSON.stringify(it&&{qid:it.qid,peek:it.peek});
+    if(await pg.evaluate(()=>chkOk({correct:true,peek:1}))) return "a peeked answer must not count as checkpoint evidence (คงทน)";
+    const warmBtn=await pg.evaluate(()=>{ const k=S.steps.findIndex(x=>x.kind==="q"&&x.phase!=="ฝึกทำ"); if(k<0) return null; S.i=k; S.answered=null; render(); return !!document.getElementById("peek") });
+    if(warmBtn) return "the 📖 button must not show on warm-up / spaced steps";
+    /* yesterday's deferred items come back as warm-up of the next lesson, at most GATE.carry */
+    const ids=r.gate.deferred, y=await pg.evaluate(()=>new Date(Date.now()-86400000).toISOString());
+    await reset([{type:"set",setId:pick.a,topic:"x",startedAt:y,endedAt:y,durationSec:600,correct:6,total:9,gate:{on:true,done:true,passed:true,n1:6,ok1:6,why:"pass",deferred:ids},items:[]}]);
+    const c=await pg.evaluate(id=>{ startSet(SETS.find(s=>s.id===id),false); return {carry:S.steps.filter(x=>x.carry).map(x=>x.q.id),due:S.dueIds.filter(d=>d.startsWith("g:"))} },pick.b);
+    if(!c.carry.length||c.carry.length>6||c.carry.some(id=>!ids.includes(id))||c.due.length!==c.carry.length) return "carried items wrong: "+JSON.stringify(c);
+    if(await pg.evaluate(()=>{ const k=S.steps.findIndex(x=>x.carry); S.i=k; S.answered=null; render(); return !!document.getElementById("peek") })) return "no 📖 on carried items";
     await reset() });
 
   /* 22 Nov 2026: study time = active time. A forgotten open tab, the app hidden or swiped away, and a resumed lesson must not add hours */

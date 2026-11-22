@@ -1062,7 +1062,7 @@ function spellStats(list){
     (a.items||[]).forEach(x=>{
       if(x.skipped||x.notTaught) return; const sp=x.spell||QBANK[x.qid]?.q.spell; if(!sp||!x.level) return;
       const o=st[sp]??={days:{},last:0}; const dd=o.days[d]??={1:[0,0],2:[0,0],3:[0,0]};
-      dd[x.level][0]++; if(x.correct&&!x.guessed&&!x.hintStep) dd[x.level][1]++; o.last=Math.max(o.last,d);
+      dd[x.level][0]++; if(x.correct&&!x.guessed&&!x.hintStep&&!x.peek) dd[x.level][1]++; o.last=Math.max(o.last,d);
     });
   });
   const out={}, t=todayKey();
@@ -1088,18 +1088,56 @@ function nextStep(sp,info){
 }
 
 /* ---------- lesson sessions ---------- */
+/* acquisition before retrieval (father agreed A+B, 22 Nov 23:56; queue 2 built 23 Nov). A new lesson with >= GATE.minL1 level-1 items
+   serves its level-1 items first, card one tap away (📖 peek), until 4 of the last 5 are right (at least 6, cap 12). Then only 2–3
+   level-2 items as a readiness check; the other level-2 and every level-3 item (and a level-3 challenge) are carried to later lesson
+   days as warm-up ("ต่อจากบทก่อน", up to GATE.carry a day, oldest lesson first, gone after GATE.carryDays). Lessons with fewer
+   level-1 items run as before (the content side is filling them). The gate never applies to a lesson she has already done. */
+const GATE=Object.assign({from:"2026-11-23",min:6,cap:12,win:5,need:4,l2:3,l2fail:2,minL1:6,carry:6,carryDays:14},CAL.gate||{});
+function gateEligible(set){ if(set.kind!=="lesson"||!set.practice||isoDay(todayKey())<GATE.from) return false;
+  if((set.practice||[]).filter(q=>(q.level||1)===1).length<GATE.minL1) return false;
+  return !mine().some(a=>a.type==="set"&&a.setId===set.id) }
+function gateOk(x){ return !!(x.correct&&!x.guessed&&!x.hintStep&&!x.dontknow) }
+/* deferred items of earlier gated lessons that she has not met since (any record), oldest lesson first, lower level first */
+function carryQuestions(list,n,exclude){ const t=todayKey(), met=new Set(), ex=new Set(exclude||[]), out=[];
+  list.forEach(a=>(a.items||[]).forEach(x=>met.add(x.qid)));
+  list.filter(a=>a.type==="set"&&a.gate&&Array.isArray(a.gate.deferred)&&dayKey(a.endedAt)<t&&t-dayKey(a.endedAt)<=GATE.carryDays*DAY)
+    .sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt)).forEach(a=>{
+      a.gate.deferred.map(id=>QBANK[id]?.q).filter(q=>q&&!met.has(q.id)&&!ex.has(q.id)).sort((p,q)=>(p.level||1)-(q.level||1)).forEach(q=>{ if(out.length<n){ out.push(q); ex.add(q.id) } }) });
+  return out }
+/* called after a level-1 practice answer: when the gate passes, hits the cap or runs out of level-1 items, trim the rest of the lesson */
+/* returns a function that shows her a short note about what happens next (called after advance renders), or nothing */
+function gateApply(){ const g=S.gate; if(!g||g.done) return null;
+  const P=S.steps.map((st,i)=>({st,i})).filter(o=>o.st.kind==="q"&&(o.st.phase==="ฝึกทำ"||o.st.optional));
+  const its=S.items.filter(x=>x.phase==="ฝึกทำ"&&!x.skipped&&(x.level||1)===1), last=its.slice(-GATE.win);
+  const pass=its.length>=GATE.min&&last.filter(gateOk).length>=GATE.need, left1=P.filter(o=>o.i>S.i&&!o.st.optional&&(o.st.q.level||1)===1).length;
+  if(!(pass||its.length>=GATE.cap||left1===0)) return null;
+  let keep2=pass?GATE.l2:GATE.l2fail, hadExplain=false; const deferred=[], kept=[];
+  P.filter(o=>o.i>S.i).forEach(o=>{ const lv=o.st.q.level||1;
+    if(!o.st.optional&&lv===1){ o.st.gated=true; return }
+    if(!o.st.optional&&lv===2&&keep2>0){ keep2--; kept.push(o.st); return }
+    if(o.st.optional&&lv<3) return;
+    o.st.gated=true; if(o.st.explain) hadExplain=true; deferred.push(o.st.q.id) });
+  if(hadExplain&&kept.length){ const k=kept[kept.length-1]; k.explain=true; k.explain1=true }
+  Object.assign(g,{done:true,passed:pass,n1:its.length,ok1:its.filter(gateOk).length,why:pass?"pass":its.length>=GATE.cap?"cap":"out",deferred});
+  const n2=kept.length; if(!n2&&!deferred.length) return null;
+  return ()=>sheet({icon:pass?"🌱":"🧭",title:pass?"ขั้นพื้นฐานแน่นแล้ว!":"ฝึกขั้นพื้นฐานครบชุดแล้ว",
+    html:`<p class="small">${pass?`ถูก ${last.filter(gateOk).length} ใน ${last.length} ข้อล่าสุด`:`ทำขั้นพื้นฐานไป ${its.length} ข้อ`}${n2?` ต่อไปลองขั้น 2 อีก ${n2} ข้อ (ยังเปิดดูเนื้อหาได้)`:""}</p>${deferred.length?`<p class="small">ข้อที่ยากขึ้นอีก ${deferred.length} ข้อ เก็บไว้ให้ลองในบทเรียนวันต่อๆ ไป ตอนที่พื้นฐานเรื่องนี้แน่นแล้ว</p>`:""}`,
+    actions:[{label:"ไปต่อ",fn:closeSheet}]}) }
 function startSet(set, conceptFirst, perms, dueIds){
-  const probe=set.kind==="probe", mixed=set.kind==="mixed";
+  const probe=set.kind==="probe", mixed=set.kind==="mixed", gateOn=gateEligible(set);
+  if(gateOn) set={...set,practice:set.practice.map((q,k)=>({q,k})).sort((a,b)=>(a.q.level||1)-(b.q.level||1)||a.k-b.k).map(o=>o.q)};
   /* spaced review: a lesson's warm-up gets 1 question from a spell that is due again */
   /* plus 1 earlier mistake (at least 2 days old) so the mistake pile doesn't only wait for Friday */
-  const due = set.kind==="lesson" ? (dueIds ? dueIds.map(id=>{const q=QBANK[id.replace(/^[rcl]:/,"").replace(/@.*$/,"")]?.q; return q&&(id.startsWith("l:")?{...q,_loop:id.split("@")[1]||subOf(q.id)}:id.startsWith("c:")?{...q,_chk:true}:{...recallize(q),...(id.startsWith("r:")?{_retry:true}:{})})}).filter(Boolean)
+  const due = set.kind==="lesson" ? (dueIds ? dueIds.map(id=>{const q=QBANK[id.replace(/^[rclg]:/,"").replace(/@.*$/,"")]?.q; return q&&(id.startsWith("g:")?{...q,_carry:true}:id.startsWith("l:")?{...q,_loop:id.split("@")[1]||subOf(q.id)}:id.startsWith("c:")?{...q,_chk:true}:{...recallize(q),...(id.startsWith("r:")?{_retry:true}:{})})}).filter(Boolean)
     : (()=>{ const l=mine(), d=dueQuestions(l,1,[set.spell,...set.warm.map(q=>q.spell)]), t=todayKey();
         const last={}; l.filter(isLesson).forEach(a=>(a.items||[]).forEach(x=>{last[x.qid]=Math.max(last[x.qid]||0,dayKey(a.endedAt))}));
         const m=reviewPool(l).find(q=>!d.some(x=>x.id===q.id)&&q.spell!==set.spell&&t-(last[q.id]||0)>=2*DAY);
         const c=checkPlan(l,2,[set.spell]).qs.filter(q=>!d.some(x=>x.id===q.id)&&!(m&&m.id===q.id));
         const lq=loopChecks(l,1,[...c,...d,...(m?[m]:[])].map(q=>q.id));
-        return [...lq,...c.map(q=>({...q,_chk:true})),...d.map(q=>comeback(q,l)),...(m?[{...comeback(m,l),_retry:true}]:[])] })()) : [];
-  const warm = [...set.warm.map(q=>({kind:"q",phase:"อุ่นเครื่อง (ทบทวนของเก่า)",q})),...due.map(q=>q._loop?{kind:"q",phase:"เช็กเรื่องที่สอนใหม่อีกแบบ",q,loop:q._loop}:q._chk?{kind:"q",phase:"ด่านตรวจความจำ (ข้อใหม่ จากเรื่องที่เคยเรียน)",q:fillize(q),chk:true}:q._retry?{kind:"q",phase:"ลองใหม่ ข้อที่เคยพลาด",q,retry:true}:{kind:"q",phase:"ทบทวนตามรอบ (คาถาที่ไม่ได้ใช้มาหลายวัน)",q,due:true})];
+        const gq=isoDay(t)>=GATE.from?carryQuestions(l,GATE.carry,[...lq,...c,...d,...(m?[m]:[])].map(q=>q.id)):[];
+        return [...lq,...c.map(q=>({...q,_chk:true})),...d.map(q=>comeback(q,l)),...(m?[{...comeback(m,l),_retry:true}]:[]),...gq.map(q=>({...q,_carry:true}))] })()) : [];
+  const warm = [...set.warm.map(q=>({kind:"q",phase:"อุ่นเครื่อง (ทบทวนของเก่า)",q})),...due.map(q=>q._carry?{kind:"q",phase:"ต่อจากบทก่อน (ข้อขั้นถัดไป)",q:fillize(q),carry:true}:q._loop?{kind:"q",phase:"เช็กเรื่องที่สอนใหม่อีกแบบ",q,loop:q._loop}:q._chk?{kind:"q",phase:"ด่านตรวจความจำ (ข้อใหม่ จากเรื่องที่เคยเรียน)",q:fillize(q),chk:true}:q._retry?{kind:"q",phase:"ลองใหม่ ข้อที่เคยพลาด",q,retry:true}:{kind:"q",phase:"ทบทวนตามรอบ (คาถาที่ไม่ได้ใช้มาหลายวัน)",q,due:true})];
   const card = {kind:"concept",phase:"การ์ดสรุปเนื้อหา"};
   const passage=set.kind==="passage";
   const steps = (passage?[
@@ -1120,7 +1158,7 @@ function startSet(set, conceptFirst, perms, dueIds){
     {kind:"rate",phase:"ปิดท้าย"}
   ]).map((st,k)=>st.q?{...st,q:shuffleQ(st.q,perms&&perms[k])}:st);   // the right answer is not always the first choice
   const trial=trialsToday(); markExplain(steps, trial, set.kind); const legs=expLegs(steps,set);
-  S = {mode:"set", active:true, set, conceptFirst, steps, legs, dueIds:due.map(q=>q._loop?"l:"+q.id+"@"+q._loop:(q._chk?"c:":q._retry?"r:":"")+q.id), trial, trialVote:{}, i:0, start:Date.now(),act0:actNow(),qStart:Date.now(), items:[], answered:null, why:null, rating:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
+  S = {mode:"set", active:true, set, conceptFirst, steps, legs, dueIds:due.map(q=>q._loop?"l:"+q.id+"@"+q._loop:(q._carry?"g:":q._chk?"c:":q._retry?"r:":"")+q.id), gate:gateOn?{on:true,done:false}:null, peeks:0, trial, trialVote:{}, i:0, start:Date.now(),act0:actNow(),qStart:Date.now(), items:[], answered:null, why:null, rating:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
   PAD.strokes=[]; PAD.hist=[]; saveProgress();
   view="session"; render(); window.scrollTo({top:0});
   if(legs.length>=2&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>{ if(S&&S.mode==="set"&&S.i===0&&!S.items.length) expStartSheet() },150);
@@ -1148,7 +1186,7 @@ function expPts(x){ return x.skipped?0:(x.correct&&!x.guessed?2:0)+(x.exTotal&&x
 function expDayPower(list){ const t=todayKey(); let stops=0; try{ stops=missionList(progressOf(list)).filter(x=>x.done).length }catch(e){} return stops*10+list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===t).reduce((n,a)=>n+(a.items||[]).reduce((m,x)=>m+expPts(x),0),0)+(S&&S.mode==="set"&&S.active?S.items.reduce((m,x)=>m+expPts(x),0):0) }
 function expBoost(list){ return 0 }   /* the damage boost was dropped on 10 Nov: power now means battle charges only */
 function expBar(){ if(!S.legs||S.legs.length<2) return ""; const cur=S.steps[S.i].leg, pw=S.items.reduce((m,x)=>m+expPts(x),0);
-  return `<div class="expbar2" aria-label="ความคืบหน้าการออกสำรวจ">${S.legs.map((l,k)=>{ const n=l.steps.length, d=l.steps.filter(i=>i<S.i).length+(k===cur?0.5:0);
+  return `<div class="expbar2" aria-label="ความคืบหน้าการออกสำรวจ">${S.legs.map((l,k)=>{ const ls=l.steps.filter(i=>!S.steps[i].gated), n=Math.max(1,ls.length), d=ls.filter(i=>i<S.i).length+(k===cur?0.5:0);
     return `<div class="expleg ${k===cur?"now":k<cur?"done":""}" style="flex:${n}"><span class="small">${l.icon} ${esc(l.name)}</span><div class="progress"><i style="width:${Math.min(100,(k<cur?1:k>cur?0:d/n)*100)}%"></i></div></div>` }).join("")}</div>
 ` }
 function expStartSheet(){ const L=S.legs, qn=l=>l.steps.filter(i=>S.steps[i].kind==="q").length;
@@ -1613,7 +1651,7 @@ function renderFeedback(){
 const YAY=["ถูกต้อง +10 XP","ถูกต้อง เก่งมาก +10 XP","เป๊ะ! +10 XP","ถูก เวทนี้ใช้ได้ +10 XP","ใช่เลย +10 XP"];
 const OOPS=["ยังไม่ใช่ แต่ได้ลองแล้ว +5 XP","เกือบแล้ว +5 XP","ยังไม่ถูก ลองดูเฉลยกัน +5 XP","พลาดนิดเดียว +5 XP"];
 function header(){
-  const pct = Math.round(S.i/(S.steps.length-1)*100);
+  const live=S.steps.map((x,k)=>k).filter(k=>!S.steps[k].gated), pct = Math.round(Math.max(0,live.indexOf(S.i))/Math.max(1,live.length-1)*100);
   const combo=(()=>{let c=0; for(let k=S.items.length-1;k>=0;k--){ if(S.items[k].correct) c++; else if(!S.items[k].skipped) break } return c})();
   return `<div class="stage"><span>${esc(S.set.topic)}</span><span>${S.steps[S.i].phase} · ${itemXp(S.items)} XP${combo>=3?` · <b class="combo">ถูกติดกัน ${combo} ข้อ ✨</b>`:""}</span></div>
   ${S.legs&&S.legs.length>=2?expBar():`<div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div>`}`;
@@ -2025,7 +2063,7 @@ function renderStep(){
     ${S.hints?`<div class="feedback">${HL.slice(0,S.hints).map((h,k)=>`<span class="small hintline"><span><b>คำใบ้ ${k+1}</b> ${esc(h)}</span>${ans?"":S.hintKnown.includes(k)?`<span class="muted">✓ รู้อยู่แล้ว <button class="linkbtn" data-hku="${k}" type="button">กดผิด ยกเลิก</button></span>`:`<button class="linkbtn" data-hk="${k}" type="button">รู้อยู่แล้ว</button>`}</span>`).join("")}
       ${!ans&&S.hints>=HL.length?`<span class="small muted">ใช้คำใบ้ครบแล้ว ลองเขียนสิ่งที่รู้ลงกระดาษทดก่อน ถ้ายังไปต่อไม่ได้ กด "ยังคิดไม่ออก ดูเฉลย" ได้เลย ไม่ผิดอะไร</span>`:""}</div>`:""}
     ${body}${fb}
-    <div class="row">${!ans&&!predWait&&S.hints<HL.length?`<button class="btn ghost" id="hint">${S.hints===HL.length-1&&HL.length>(q.hints||[]).length?"ขอดูขั้นแรกของวิธีทำ":"ขอคำใบ้"} (${S.hints}/${HL.length})</button>`:""}
+    <div class="row">${!ans&&!predWait&&canPeek(st)?`<button class="btn ghost" id="peek" type="button">📖 ดูเนื้อหา/สูตร</button>`:""}${!ans&&!predWait&&S.hints<HL.length?`<button class="btn ghost" id="hint">${S.hints===HL.length-1&&HL.length>(q.hints||[]).length?"ขอดูขั้นแรกของวิธีทำ":"ขอคำใบ้"} (${S.hints}/${HL.length})</button>`:""}
     ${!ans&&!predWait?`<div class="row" style="gap:8px"><button class="btn ghost" id="dontknow">🤔 ยังคิดไม่ออก ดูเฉลย</button>${["mixed","probe","sweep"].includes(S.set.kind)||S.set.type==="sweep"?`<button class="btn ghost" id="nottaught">📭 ยังไม่ได้เรียนเรื่องนี้</button>`:""}</div>`:""}
     ${st.optional&&!ans&&!predWait?`<button class="btn ghost" id="skip">ข้ามข้อนี้</button>`:""}</div>
     ${!ans&&q.recall?`<p class="small muted">🧠 ข้อนี้เคยเจอแล้ว รอบนี้ไม่มีตัวเลือก พิมพ์คำตอบเองเลย</p>`:""}
@@ -2068,6 +2106,7 @@ function renderStep(){
     {
       $v.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{const k=+b.dataset.x; S.struck=S.struck.includes(k)?S.struck.filter(x=>x!==k):[...S.struck,k]; const y=window.scrollY; renderStep(); window.scrollTo({top:y})});
     }
+    { const pk=document.getElementById("peek"); if(pk) pk.onclick=()=>peekCard() }
     const hb=document.getElementById("hint"); if(hb) hb.onclick=()=>{S.hints++;const y=window.scrollY;renderStep();window.scrollTo({top:y})};
     $v.querySelectorAll("[data-hku]").forEach(b=>b.onclick=()=>{ const k=+b.dataset.hku; S.hintKnown=(S.hintKnown||[]).filter(x=>x!==k); const y=window.scrollY; renderStep(); window.scrollTo({top:y}) });
     $v.querySelectorAll("[data-hk]").forEach(b=>b.onclick=()=>{ const k=+b.dataset.hk; S.hintKnown=[...new Set([...(S.hintKnown||[]),k])]; if(k===S.hints-1&&S.hints<hintList(q).length) S.hints++; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) });
@@ -2090,13 +2129,27 @@ function renderStep(){
     { const lq=document.getElementById("go-lib-q"); if(lq) lq.onclick=()=>{ readStop(); S.libOpen=(S.libOpen||0)+1; openLib(lq.dataset.sub,{qid:q.id},"session") } }
     const nx=document.getElementById("next"); if(nx) nx.onclick=()=>{
       S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,...(st.chk?{chk:1}:{}),...(st.leg!=null&&S.legs&&S.legs.length>=2?{leg:st.leg}:{}),...(S.hints&&S.hints>=(q.hints||[]).length+1?{hintStep:true}:{}),...(S.hintKnown&&S.hintKnown.length?{hintKnown:S.hintKnown}:{}),...(exStepped(q,ans)?{exSteps:Math.min(S.exStep||1,exSteps(q.ex).length),exTotal:exSteps(q.ex).length}:{}),struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
-        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(S.libOpen?{lib:S.libOpen}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(S.whyOther&&(S.why||[]).includes("other")?{whyOther:S.whyOther.trim()}:{}),...(ans.correct&&(S.guessed||S.checkPick===-1)?{guessed:true}:{}),...(S.checkPick===-2?{checkNone:true,...(S.checkOwn&&S.checkOwn.trim()?{checkOwn:S.checkOwn.trim().slice(0,300)}:{})}:{}),...(S.notTaught?{notTaught:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0,coverFloor:S.coverFloor||coverFloor(q)}:{}),...(q.check&&S.checkPick!=null&&S.checkPick!==-1&&S.checkPick!==-2?{checkOk:S.checkPick===q.check.a,...(ans.correct?{}:{checkAfterWrong:true})}:{}),...(q.predict&&S.predictPick!=null?{predict:S.predictPick,predictOk:S.predictPick===q.predict.a}:{}),...(q.friend?{friend:true}:{}),...(q.sit?{sit:q.sit}:{}),...(st.loop?{loop:st.loop}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),len:q.q.length});
-      advance();
+        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(S.libOpen?{lib:S.libOpen}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(S.whyOther&&(S.why||[]).includes("other")?{whyOther:S.whyOther.trim()}:{}),...(ans.correct&&(S.guessed||S.checkPick===-1)?{guessed:true}:{}),...(S.checkPick===-2?{checkNone:true,...(S.checkOwn&&S.checkOwn.trim()?{checkOwn:S.checkOwn.trim().slice(0,300)}:{})}:{}),...(S.notTaught?{notTaught:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0,coverFloor:S.coverFloor||coverFloor(q)}:{}),...(q.check&&S.checkPick!=null&&S.checkPick!==-1&&S.checkPick!==-2?{checkOk:S.checkPick===q.check.a,...(ans.correct?{}:{checkAfterWrong:true})}:{}),...(q.predict&&S.predictPick!=null?{predict:S.predictPick,predictOk:S.predictPick===q.predict.a}:{}),...(q.friend?{friend:true}:{}),...(q.sit?{sit:q.sit}:{}),...(st.loop?{loop:st.loop}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),...(S.peekQ?{peek:S.peekQ}:{}),...(st.carry?{carry:true}:{}),len:q.q.length});
+      const gateNote=S.gate&&st.phase==="ฝึกทำ"&&(q.level||1)===1?gateApply():null;
+      advance(); if(gateNote) gateNote();
     };
   }
 }
 function answer(a){ readStop(); S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
-function advance(){ { const a=S.steps[S.i], b=S.steps[S.i+1]; if(S.legs&&S.legs.length>=2&&a&&b&&a.leg!=null&&b.leg!=null&&b.leg>a.leg&&b.kind!=="rate"&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>expCheckpoint(a.leg),120) } readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.libOpen=0; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.checkOwn=""; S.checkOwnOpen=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.coverFloor=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.predictPick=null; S.predOrder=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
+function advance(){ { const a=S.steps[S.i], b=S.steps.slice(S.i+1).find(x=>!x.gated); if(S.legs&&S.legs.length>=2&&a&&b&&a.leg!=null&&b.leg!=null&&b.leg>a.leg&&b.kind!=="rate"&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>expCheckpoint(a.leg),120) } readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; while(S.steps[S.i]&&S.steps[S.i].gated) S.i++; S.answered=null; S.libOpen=0; S.peekQ=0; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.checkOwn=""; S.checkOwnOpen=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.coverFloor=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.predictPick=null; S.predOrder=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
+
+/* 📖 peek (queue 2, 23 Nov): the lesson's card as an overlay over the question, as she would flip back a page in a book. Only on the
+   lesson's own practice items; never on warm-up, spaced, carried, loop or checkpoint steps, mixed sets, probes or sweeps. Never blocks.
+   A peeked item still counts as practice and toward the level-1 gate, but like a hint it cannot count as a checkpoint (คงทน),
+   a spell tier or a misconception check (chkOk, spellStats, miscState read x.peek). */
+function canPeek(st){ const c=S.set&&S.set.concept; return S.mode==="set"&&S.set.kind==="lesson"&&st.phase==="ฝึกทำ"&&!st.optional&&!!(c&&c.points&&c.points.length) }
+function conceptSumHtml(c){ return `<div style="text-align:left"><ul>${c.points.map((p,i)=>`<li>${gloss(p)}${figHtml((c.figs||[])[i])}</li>`).join("")}</ul>
+  ${(c.formulas||[]).map(f=>`<div class="formula">${esc(f)}</div>`).join("")}
+  ${(c.vocab||[]).length?`<div><span class="eyebrow">คำศัพท์อังกฤษของบทนี้</span><div class="vocab">${c.vocab.map(([e,t])=>`<span>${e} <i>${t}</i></span>`).join("")}</div></div>`:""}</div>` }
+function peekCard(){ const c=S.set.concept; S.peekQ=(S.peekQ||0)+1; S.peeks=(S.peeks||0)+1; saveProgress();
+  sheet({icon:"📖",title:c.title||"เนื้อหาของบทนี้",wide:true,read:[c.title,...c.points].filter(Boolean).map(x=>String(x).replace(/<[^>]+>/g,"")).join(" "),
+    html:`${conceptSumHtml(c)}<p class="small muted">เปิดดูได้ทุกเมื่อ ไม่เสียคะแนน ข้อที่เปิดดูยังนับเป็นการฝึก แต่ยังไม่นับว่าคงทน เพราะวันหลังจะลองทำโดยไม่ดู</p>`,
+    actions:[{label:"กลับไปทำข้อนี้",fn:closeSheet}]}) }
 
 /* concept card, one idea per screen: (1) why this topic exists — a puzzle to guess first (c.hook) or the "use" line,
    (2) each point alone with "เข้าใจแล้ว" / "ขออธิบายอีกแบบ" (c.more[i], else the next whole alternative),
@@ -2189,7 +2242,7 @@ function renderRate(){
     const items=S.items, scored=items.filter(x=>!x.skipped);
     const rec={...trialRec(),...((S.reflect||"").trim()?{reflect:S.reflect.trim()}:{}),...(S.dueIds&&S.dueIds.length?{dueIds:S.dueIds}:{}),type:S.set.kind==="probe"?"probe":S.set.kind==="mixed"?"mixed":S.set.kind==="passage"?"passage":"set",setId:S.set.id,spell:S.set.spell,subject:S.set.subject,topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
       durationSec:sessSec(),conceptSec:S.conceptSec||0,...(S.conceptHelp&&S.conceptHelp.length?{conceptHelp:[...new Set(S.conceptHelp)],...(S.hookPick!=null?{hookPick:S.hookPick}:{})}:S.hookPick!=null?{hookPick:S.hookPick}:{}),...(S.conceptListen?{conceptListen:S.conceptListen}:{}),...(S.readSec?{readSec:S.readSec,readChars:S.readChars}:{}),...(S.listenPassage?{listenPassage:S.listenPassage}:{}),rating:S.rating,memo:document.getElementById("memo").value.trim(),
-      correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items)+20,altShown:S.altShown,glossed:S.glossed,confused:S.confused,items};
+      correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items)+20,altShown:S.altShown,glossed:S.glossed,confused:S.confused,...(S.gate?{gate:{...S.gate}}:{}),...(S.peeks?{peeks:S.peeks}:{}),items};
     await finishWith(rec);
   };
 }
@@ -2216,7 +2269,7 @@ function saveProgress(){
   if(S&&S.mode==="review"&&S.active) return saveReviewProgress();
   if(!S||S.mode!=="set") return;
   try{ localStorage.setItem("fieldnote.inprogress",JSON.stringify({setId:S.set.id,conceptFirst:S.conceptFirst,day:todayKey(),i:S.i,start:S.start,el:sessMs(),items:S.items,confused:S.confused,altShown:S.altShown,conceptSec:S.conceptSec||0,glossed:S.glossed,readSec:S.readSec||0,readChars:S.readChars||0,
-    perms:S.steps.map(x=>x.q?.perm||null),dueIds:S.dueIds||[],trialVote:S.trialVote||{}})) }catch(e){}
+    perms:S.steps.map(x=>x.q?.perm||null),dueIds:S.dueIds||[],trialVote:S.trialVote||{},gate:S.gate||null,peeks:S.peeks||0,gated:S.steps.map((x,k)=>x.gated?k:-1).filter(k=>k>=0),explainAt:S.steps.map((x,k)=>x.explain?k:-1).filter(k=>k>=0),explain1At:S.steps.map((x,k)=>x.explain1?k:-1).filter(k=>k>=0)})) }catch(e){}
 }
 function clearProgress(){ try{ localStorage.removeItem("fieldnote.inprogress") }catch(e){} }
 function pendingSet(){
@@ -2228,6 +2281,10 @@ function resumeSet(){
   const p=pendingSet(); if(!p) return;
   if(p.live){ view="session"; render(); return }
   const sv=p.saved; startSet(p.set, sv.conceptFirst, sv.perms, sv.dueIds||[]);
+  /* the gate's trimming and a moved explain step come back exactly as they were */
+  if(sv.gate&&S.gate){ S.gate=sv.gate; (sv.gated||[]).forEach(k=>{ if(S.steps[k]) S.steps[k].gated=true });
+    if(sv.explainAt) S.steps.forEach((x,k)=>{ x.explain=sv.explainAt.includes(k); x.explain1=(sv.explain1At||[]).includes(k) }) }
+  S.peeks=sv.peeks||0;
   Object.assign(S,{trialVote:sv.trialVote||{},readSec:sv.readSec||0,readChars:sv.readChars||0,i:sv.i,start:sv.start,items:sv.items||[],confused:sv.confused||[],altShown:sv.altShown||0,conceptSec:sv.conceptSec,glossed:sv.glossed||[]});
   /* active clock continues from the time already spent, not from the first start (the hours away are not study time) */
   { const el=Math.max(0,+sv.el||0); S.act0=actNow()-el; S.start=Date.now()-el }
@@ -4920,6 +4977,22 @@ function parentExtras(list){ const ss=spellStats(list), sw={}; list.filter(a=>a.
   </div>
     <details class="small"><summary>ตัวชี้วัดความพร้อมแบบเก่า (ประมาณการรายเขต ใช้ประกอบเท่านั้น ดูแท็บความพร้อมสอบเป็นหลัก)</summary>${readinessCard(list)}</details></section>` }
 
+/* queue 2 (23 Nov): how the level-1 gate and 📖 peek work out. What to watch (CLAUDE.md "Student feedback 22 Nov"): level-1 items
+   needed to pass, level-2/3 accuracy against the 62/54% before the change, and whether peeks fall over time. */
+function gateCard(list){
+  const gl=list.filter(a=>a.type==="set"&&a.gate).sort((a,b)=>new Date(b.endedAt)-new Date(a.endedAt)); if(!gl.length) return "";
+  const pc=(xs)=>xs.length?Math.round(xs.filter(x=>x.correct&&!x.guessed).length/xs.length*100)+"% ("+xs.length+" ข้อ)":"–";
+  const since=new Date(GATE.from+"T00:00:00+07:00"), its=list.filter(a=>isLesson(a)&&new Date(a.endedAt)>=since).flatMap(a=>a.items||[]).filter(x=>!x.skipped);
+  const carried=its.filter(x=>x.carry), why={pass:"ผ่าน 4 ใน 5",cap:"ครบเพดาน",out:"ข้อพื้นฐานหมดก่อนผ่าน"};
+  const day=a=>new Date(a.endedAt).toLocaleDateString("th-TH",{day:"numeric",month:"short"});
+  return `<section class="card"><h3>บทเรียนแบบพื้นฐานก่อน (เริ่ม ${esc(GATE.from)})</h3>
+    <p class="small muted">บทใหม่ที่มีข้อขั้น 1 ตั้งแต่ ${GATE.minL1} ข้อ: ทำขั้น 1 จนถูก ${GATE.need} ใน ${GATE.win} ข้อล่าสุด (อย่างน้อย ${GATE.min} เพดาน ${GATE.cap}) แล้วขั้น 2 แค่ ${GATE.l2} ข้อ ที่เหลือไปเป็นข้ออุ่นเครื่อง "ต่อจากบทก่อน" ในวันถัดๆ ไป (วันละไม่เกิน ${GATE.carry} ข้อ)</p>
+    <div style="overflow-x:auto"><table class="mt"><thead><tr><th>วัน</th><th>บท</th><th>ขั้น 1 ที่ใช้</th><th>ผล</th><th>ขั้น 2 วันแรก</th><th>เปิดดูเนื้อหา</th><th>เลื่อนไปวันหลัง</th></tr></thead><tbody>
+    ${gl.slice(0,10).map(a=>{ const g=a.gate, l2=(a.items||[]).filter(x=>x.phase==="ฝึกทำ"&&x.level===2&&!x.skipped);
+      return `<tr><td>${day(a)}</td><td>${esc(a.topic||a.setId)}</td><td>${g.n1??"–"} (ถูก ${g.ok1??"–"})</td><td>${esc(why[g.why]||"ยังไม่ถึง")}</td><td>${l2.filter(x=>x.correct).length}/${l2.length}</td><td>${a.peeks||0} ครั้ง</td><td>${(g.deferred||[]).length} ข้อ</td></tr>` }).join("")}</tbody></table></div>
+    <p class="small">ตั้งแต่เริ่ม: ขั้น 2 ถูก ${pc(its.filter(x=>x.level===2))} · ขั้น 3 ถูก ${pc(its.filter(x=>x.level===3))} (ก่อนเปลี่ยน 62% / 54%) · ข้อที่ยกไปทำวันหลังทำแล้ว ${carried.length} ข้อ ถูก ${pc(carried)}</p>
+    <p class="small muted">ข้อที่เปิดดูเนื้อหาก่อนตอบยังนับเป็นการฝึก แต่ไม่นับเป็นหลักฐานคงทนหรือการแก้ความเข้าใจผิด ตัวเลขชุดแรกยังน้อย อย่าเพิ่งสรุป</p>
+  </section>` }
 /* old-topic sweep results by spell, plus her daily check-ins and which concept parts needed another explanation */
 function sweepCard(list){
   const sw=list.filter(a=>a.type==="sweep"), moods=list.filter(a=>a.type==="mood").slice(-7), help=list.filter(a=>a.conceptHelp&&a.conceptHelp.length).slice(-5);
@@ -4958,7 +5031,7 @@ function bankBySub(){ const b={}; Object.values(QBANK).forEach(o=>{ const q=o.q,
    a question she had never seen, met in a mixed context (a lesson's checkpoint step, or a first-time question in
    ย้อนคาถาเก่า / ชุดผสม / ด่านสำรวจ) on a later day than she first practised that subtopic. Levels can drop. */
 const CHK_TYPES=["sweep","mixed","probe","checkpoint"];
-function chkOk(x){ return !!(x.correct&&!x.guessed&&!x.hintStep&&!(x.hints>0)&&x.conf!=="unsure") }
+function chkOk(x){ return !!(x.correct&&!x.guessed&&!x.hintStep&&!x.peek&&!(x.hints>0)&&x.conf!=="unsure") }
 function subStats(list){ const st={}, seen=new Set();
   list.filter(a=>isLesson(a)||a.type==="recall"||a.type==="sweep").slice().sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt)).forEach(a=>(a.items||[]).forEach(x=>{
     if(x.skipped||x.notTaught) return; const s=subOf(x.qid); if(!s){ seen.add(x.qid); return }
@@ -5081,7 +5154,7 @@ function miscState0(list){ const ev=[];
     if(conceptMiss(x)){ const miss={d:e.d,at:e.at,qid:x.qid,err:x.optErr||null,typed:x.typed||null,orig:x.orig};
       if(cur){ cur.misses.push(miss); cur.ev=[] }
       else { m.pend.push(miss); if(new Set(m.pend.map(z=>z.d)).size>=2){ m.eps.push({sub,openAt:e.at,openDay:e.d,misses:m.pend,ev:[],reteachAt:null,guideAt:null,resolvedAt:null}); m.pend=[] } } }
-    else if(cur&&x.correct&&!x.guessed&&!x.hintStep&&!(x.hints>0)&&x.checkOk===true){
+    else if(cur&&x.correct&&!x.guessed&&!x.hintStep&&!x.peek&&!(x.hints>0)&&x.checkOk===true){
       cur.ev.push({d:e.d,at:e.at,sit:sitKey(x.qid),qid:x.qid});
       if(cur.ev.some(a=>cur.ev.some(b=>a.sit!==b.sit&&b.d-a.d>=7*DAY))){ cur.resolvedAt=e.at; cur.resolvedDay=e.d } } }
   return M }
@@ -5734,6 +5807,7 @@ function renderParent(){
     ${skips.length?skips.slice(0,7).map(k=>`<div class="logi"><span class="small muted">${new Date(k.endedAt).toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})}</span><span>${esc(k.reason||"-")}${k.memo?` · “${esc(k.memo)}”`:""}</span></div>`).join(""):`<p class="muted small">ยังไม่มีวันที่ขอพัก</p>`}
   </section>
   ${sweepCard(attempts.filter(a=>!a.test))}
+  ${gateCard(attempts.filter(a=>!a.test&&!voided(a)))}
   ${timeCard(all)}
   <section class="card"><h3>ข้อที่ควรนั่งคุยกัน</h3>
     ${talk.length?talk.map(x=>`<div class="logi"><span class="chip l${x.level}">${esc(x.topic)}</span><span class="small">${esc(x.prompt||x.qid)}</span></div>`).join(""):`<p class="muted small">ยังไม่มีข้อที่ต้องคุย</p>`}
