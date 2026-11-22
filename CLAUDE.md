@@ -101,6 +101,11 @@ found fall back to the plain `text`); keep the plain `text` field working for ol
 question, her words and the letter reply when one exists (match by qid + ask). Until it is built, keep putting the
 stems inside the letter text as above. Add `tools/verify.js` checks (a reply with a qid renders the stem and figure;
 unknown qid falls back); parent page change only if the page logs opens (optional).
+**Added 22 Nov (father: the Z/C words alone were not visualisable, he and she were both lost):** a letter reply must be
+able to carry a figure too (`fig` in the reply, same `geo`/`svg` kinds). Sample for the ladder question (fxmp6): `docs/zc-ladder.svg`
+(Z = equal 65°/65°, C = 115° + 65° = 180°; Thai labels, rendered and looked at). Rule for letters: whenever an answer
+says "imagine a shape" (Z, C, angle pairs, graphs), give a figure, never words alone; until queue 3 exists, send the
+figure to the father as an image in the chat so he can show it to her.
 
 ## Figures in questions (father approved 16 Nov 2026)
 - **(1) DONE 18 Nov:** `geo` and `svg` fig kinds in `src/app.html` (`geoFig`, `svgFig`), `concept.figs` (a figure
