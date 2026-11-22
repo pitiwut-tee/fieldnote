@@ -146,8 +146,9 @@ The father does not want to watch the numbers himself: the run checks them and t
    | vocabulary | rule in step 4 | nightly run |
    | daily cards (`content/cards.json`, the เกร็ดประจำวัน at บ้านคู่หู) | cards dated up to **7 days after today** (one `day` per date, no gaps) | the nightly run, any model (see below) |
    If the run is on **Opus** (the system prompt names the model; since 19 Nov the scheduled task runs on Opus, father's
-   decision), it also: extends the next 4 lessons in `lessonQueue` order to ≥ 12 practice items (+4–5 level 2–3 items
-   each, new situations, some in the 2569 exam formats from `content/exam-analysis.md`; append to `practice`, new ids,
+   decision), it also: extends the next 4 lessons in `lessonQueue` order to ≥ 12 practice items (**since 22 Nov: add level-1 items first,
+   so each lesson has ≥ 6 level-1 items of the same kind before its first level-2 item, graduated within the level; the rest
+   level 2–3; see CLAUDE.md "Student feedback 22 Nov 2026", the father's choice is pending**; new situations, some in the 2569 exam formats from `content/exam-analysis.md`; append to `practice`, new ids,
    `qtags.json` entries, option-length rule) and tops the sweep bank up to the floor (new sweep file `03x-sweep-N.json`),
    up to **30 new items a night, 60 while a floor is still unmet** (first nights after 19 Nov), every one blind-checked;
    this does not count toward the 3-set limit. Lessons first when a lesson is served tomorrow without its extension.

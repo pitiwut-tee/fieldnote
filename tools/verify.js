@@ -481,6 +481,70 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     if(!g.rep&&g.without) return "flame lit without the daily review";
     await reset() });
 
+  /* 22 Nov 2026: a half-done review-type session (sweep / daily review / repair / recall / mini) survives a reload and is resumed, not restarted */
+  await T("review-mode session survives a reload (22 Nov)",async()=>{ await noToday();
+    const old=await pg.evaluate(()=>new Date(Date.now()-3*86400000).toISOString());
+    const L=await pg.evaluate(()=>SETS.find(s=>s.kind==="lesson"&&s.practice.length>=6).practice.slice(0,6).map(q=>q.id));
+    await reset([{type:"set",setId:"zz-old",startedAt:old,endedAt:old,durationSec:600,correct:0,total:6,xp:5,items:L.map(id=>({qid:id,correct:false,level:1,timeSec:20}))}]);
+    await pg.evaluate(()=>startReview(5,"ทบทวนข้อที่เคยพลาด",{daily:true}));
+    const n0=await pg.evaluate(()=>S&&S.steps?S.steps.length:0); if(n0<4) return "could not start a review session ("+n0+" steps)";
+    const answerOne=async()=>{ const have=await pg.evaluate(()=>S.items.length);
+      for(let i=0;i<30;i++){ if(await pg.evaluate(()=>S.items.length)>have) return;
+        if(await pg.locator("[data-pred]").count()){ await pg.click('[data-pred="0"]'); continue }
+        if(await pg.locator("[data-ck]").count()){ const a=await pg.evaluate(()=>S.steps[S.i].q.check?S.steps[S.i].q.check.a:0); await pg.click(`[data-ck="${a}"]`); continue }
+        if(await pg.locator("#exnext").count()){ await pg.click("#exnext"); continue }
+        if(await pg.locator("#next").count()){ await pg.click("#next"); await pg.waitForTimeout(80); continue }
+        if(await pg.locator("#numin:not([disabled])").count()){ const a=await pg.evaluate(()=>S.steps[S.i].q.answer); await pg.fill("#numin",String(a));
+          if(await pg.locator("#check").count()) await pg.click("#check"); else for(const b of ["#send-unsure","#send-plain"]) if(await pg.locator(b).count()){ await pg.click(b); break } continue }
+        if(await pg.locator("#uncover").count()){ await pg.click("#uncover"); continue }
+        if(await pg.locator("#readdone").count()){ await pg.click("#readdone"); continue }
+        if(await pg.locator(".opt:not([disabled]):not(.ckopt)").count()){ const k=await pg.evaluate(()=>S.steps[S.i].q.a); await pg.locator(".opt:not(.ckopt)").nth(k).click();
+          for(const b of ["#send-sure","#send-plain"]) if(await pg.locator(b).count()){ await pg.click(b); break } continue }
+        await pg.waitForTimeout(60) } };
+    await answerOne(); await answerOne();
+    const before=await pg.evaluate(()=>({i:S.i,n:S.items.length,len:S.steps.length}));
+    if(before.n<2) return "could not answer 2 items before the reload";
+    if(!await pg.evaluate(()=>!!localStorage.getItem("fieldnote.inprogress.rv.repair")||!!localStorage.getItem("fieldnote.inprogress.rv.review"))) return "nothing was saved for the review session";
+    /* reload: in-memory state gone, localStorage stays */
+    await pg.evaluate(()=>{ S=null; LP=null; view="home"; render() }); await pg.waitForTimeout(300);
+    if(!await pg.locator("[data-rvgo]").count()) return "home shows no 'ทำต่อ' card for the unfinished review";
+    await pg.locator("[data-rvgo]").first().click(); await pg.waitForTimeout(200);
+    const after=await pg.evaluate(()=>({i:S.i,n:S.items.length,len:S.steps.length,mode:S.mode,view,active:S.active,gap:Date.now()-S.start}));
+    if(after.mode!=="review"||after.view!=="session"||after.n!==before.n||after.i!==before.i||after.len!==before.len) return "resume did not restore the session: "+JSON.stringify({before,after});
+    if(after.gap>600000) return "the clock counted the time she was away";
+    /* finishing clears the saved copy */
+    for(let g=0;g<12&&await pg.evaluate(()=>S.active&&S.steps[S.i]&&S.steps[S.i].kind==="q");g++) await answerOne();
+    for(let g=0;g<30&&await pg.evaluate(()=>S&&S.active);g++){ for(const sel of ["#save","#finish","#next"]) if(await pg.locator(sel).count()){ await pg.locator(sel).first().click(); break } await pg.waitForTimeout(150) }
+    await pg.waitForTimeout(500);
+    if(await pg.evaluate(()=>RV_KINDS.some(k=>localStorage.getItem("fieldnote.inprogress.rv."+k)))) return "saved copy was not cleared after finishing";
+    await reset() });
+
+  /* 22 Nov 2026: "my way of thinking matches none of the reasons": she can write her own, before the explanation shows */
+  await T("reason check: own reason option (checkNone / checkOwn)",async()=>{ await reset();
+    await pg.evaluate(()=>{ CAL.understand={...CAL.understand,wave2:"2000-01-01"}; startSet(SETS.find(s=>s.id==="zz-test"),false) });
+    let got=false;
+    for(let i=0;i<40&&!got;i++){
+      if(await pg.locator("[data-ckown]").count()){ got=true; break }
+      if(await pg.locator("[data-hk]").count()){ await pg.locator("[data-hk]").first().click(); continue }
+      if(await pg.locator("[data-pred]").count()){ await pg.click('[data-pred="0"]'); continue }
+      if(await pg.locator("#cnext").count()){ await pg.click("#cnext"); continue }
+      if(await pg.locator("#exnext").count()){ await pg.click("#exnext"); continue }
+      if(await pg.locator("#next").count()){ await pg.click("#next"); continue }
+      if(await pg.locator(".opt:not([disabled]):not(.ckopt)").count()){ const k=await pg.evaluate(()=>{ const q=S.steps[S.i].q; return q.opts.findIndex((_,j)=>j!==q.a) }); await pg.locator(".opt:not(.ckopt)").nth(k).click();
+        for(const b of ["#send-sure","#send-plain"]) if(await pg.locator(b).count()){ await pg.click(b); break } continue }
+      await pg.waitForTimeout(60) }
+    if(!got){ await pg.evaluate(W2=>{ CAL.understand=JSON.parse(W2) },W2); return "no 'write my own reason' button shown after a wrong answer" }
+    await pg.click("[data-ckown]");
+    if(!await pg.locator("#ckown").count()){ await pg.evaluate(W2=>{ CAL.understand=JSON.parse(W2) },W2); return "own-reason box did not open" }
+    if(await pg.locator("[data-ck]").count()){ await pg.evaluate(W2=>{ CAL.understand=JSON.parse(W2) },W2); return "the options are still shown next to the own-reason box" }
+    await pg.fill("#ckown","ฉันนับจากรูปเอง"); await pg.click("#ckown-send");
+    for(let i=0;i<8;i++){ if(await pg.locator("#exnext").count()){ await pg.click("#exnext"); continue } break }
+    await pg.click("#next"); await pg.waitForTimeout(100);
+    const it=await pg.evaluate(()=>S.items[S.items.length-1]); await pg.evaluate(W2=>{ CAL.understand=JSON.parse(W2) },W2);
+    if(!(it&&it.checkNone===true&&it.checkOwn==="ฉันนับจากรูปเอง")) return "own reason not recorded: "+JSON.stringify(it&&{checkNone:it.checkNone,checkOwn:it.checkOwn});
+    if(it.checkOk!==undefined) return "an own reason must not be scored as a wrong or right option (checkOk set)";
+    await reset() });
+
   const testAttempts=await pg.evaluate(()=>{ const x=JSON.parse(JSON.stringify(mine())); return x });
   await b.close();
 

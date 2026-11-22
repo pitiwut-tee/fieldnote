@@ -554,7 +554,7 @@ function leaveTest(){
 const START_DAY=new Date(CAL.startDay+"T00:00:00").getTime();
 try{
   if(Date.now()>=START_DAY&&localStorage.getItem("fieldnote.epoch")!=="2"){
-    ["fieldnote.attempts","fieldnote.fb","fieldnote.vocab","fieldnote.inprogress","fieldnote.test"].forEach(k=>localStorage.removeItem(k));
+    ["fieldnote.attempts","fieldnote.fb","fieldnote.vocab","fieldnote.inprogress","fieldnote.test",...["sweep","repair","review","recall","comp","mini"].map(k=>"fieldnote.inprogress.rv."+k)].forEach(k=>localStorage.removeItem(k));
     localStorage.setItem("fieldnote.epoch","2");
   }
   const keep=JSON.parse(localStorage.getItem("fieldnote.attempts")||"[]").filter(a=>new Date(a.endedAt).getTime()>=START_DAY);
@@ -687,7 +687,7 @@ async function importCode(raw, asTest){
 }
 
 /* ---------- updates: GitHub Pages lets the browser keep an old copy for a while, so check for a newer build ---------- */
-const BUILD="2026-11-22 12:04";
+const BUILD="2026-11-22 23:03";
 async function checkUpdate(){ if(!/^https?:/.test(location.protocol)||typeof db!=="undefined"&&db) return;
   try{ const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text(); const m=t.match(/const BUILD="(\d{4}-\d\d-\d\d \d\d:\d\d)"/);
     if(m&&m[1]!==BUILD&&!m[1].includes("@@")&&!document.getElementById("updbar")){ const d=document.createElement("button"); d.id="updbar"; d.className="btn";
@@ -788,7 +788,7 @@ function exSteps(t){ const w=String(t||"").split(/\s+/).filter(Boolean), out=[];
    explanation's first step when that step does not contain the answer. Choice questions without step1 get no third hint,
    because the first explanation step usually names the right option. */
 /* wrong, don't-know or guessed → the explanation opens one step at a time; a confident right answer sees it all at once */
-function exStepped(q,ans){ return ans&&(!ans.correct||S.guessed||S.checkPick===-1)&&exSteps(q.ex).length>=2 }
+function exStepped(q,ans){ return ans&&(!ans.correct||S.guessed||S.checkPick===-1||S.checkPick===-2)&&exSteps(q.ex).length>=2 }
 function exLeft(q,ans){ return exStepped(q,ans)&&(S.exStep||1)<exSteps(q.ex).length }
 function exHtml(q,ans){ if(!exStepped(q,ans)) return `<p>${gloss(q.ex)}</p>`; const st=exSteps(q.ex), n=Math.min(st.length,S.exStep||1);
   return `<ol class="exsteps">${st.slice(0,n).map((x,i)=>`<li class="${i===n-1?"now":""}">${gloss(x)}</li>`).join("")}</ol>
@@ -1005,7 +1005,7 @@ function reviewPool(list){
        Re-tapping the same remembered option in a review does not count, and neither do hidden options uncovered faster
        than she could read the stem and think (coverFast, 18 Nov). */
     const thought=a.type!=="review"&&!x.retry||x.of||x.recall||(x.cover&&!coverFast(x));
-    if(x.notTaught) return; if(x.correct===false||(x.correct&&(x.conf==="unsure"||x.checkOk===false||x.guessed||x.hintStep))) wrong.set(id,+new Date(a.endedAt)); else if(x.correct&&thought) wrong.delete(id);
+    if(x.notTaught) return; if(x.correct===false||(x.correct&&(x.conf==="unsure"||x.checkOk===false||x.checkNone||x.guessed||x.hintStep))) wrong.set(id,+new Date(a.endedAt)); else if(x.correct&&thought) wrong.delete(id);
   }));
   return [...wrong.entries()].sort((a,b)=>a[1]-b[1]).map(([qid])=>QBANK[qid].q);
 }
@@ -1154,6 +1154,7 @@ function markExplain(steps, trial, setKind){
   const top=qs.find(st=>st.q.level===3)||qs.slice().sort((a,b)=>b.q.level-a.q.level)[0]; top.explain=true;
 }
 function startReview(n, title, opts){
+  { const rp=opts&&opts.daily?false:n>5; if(resumeReview(rp?"repair":"review")) return }
   const list=mine(), repair=opts&&opts.daily?false:n>5;
   /* the Friday repair set also brings back up to 3 spells that are due (spaced review), not only mistakes */
   const due=repair?dueQuestions(list,3):[], dueIds=new Set(due.map(q=>q.id));
@@ -1191,6 +1192,7 @@ function sweepLocked(p){ return todayKey()>=DAY_RULES_FROM&&missionList(p).some(
 function startSweep(){
   const list=mine(), p=progressOf(list);
   if(sweepLocked(p)) return sheet({icon:"🔒",title:"ย้อนคาถาเก่ายังไม่เปิด",html:`<p>ทำภารกิจอื่นของวันนี้ให้ครบก่อน แล้วย้อนคาถาเก่าจะเปิดเป็นด่านสุดท้ายของวัน</p>`,actions:[{label:"โอเค",fn:closeSheet}]});
+  if(resumeReview("sweep")) return;
   const sp=sweepPlan(p,list), qs=sweepQuestions(list,sp.size); if(!qs.length) return;
   const t="ย้อนคาถาเก่า";
   const steps=[...qs.map(q=>({kind:"q",phase:t,q:shuffleQ(q)})),{kind:"finish",phase:"เสร็จ"}];
@@ -1215,11 +1217,12 @@ function compToday(list){ const t=todayKey(), done=new Set(), today=list.find(a=
   const st=subStats(list), ok=new Set(); Object.entries(CUR).forEach(([sp,subs])=>{ if(subs.some(s=>subStatus(st[s.id])>=2)) ok.add(sp) });
   const pool=COMP.filter(q=>ok.has(q.spell)&&!done.has(q.id)).sort((a,b)=>hashStr(a.id+t)%97-hashStr(b.id+t)%97);
   return {done:!!today, rec:today, q:pool[0]||null, left:pool.length, open:ok.size} }
-function startComp(){ const c=compToday(mine()); if(!c.q||c.done) return; const t="โจทย์แนวแข่งขันวันนี้";
+function startComp(){ if(resumeReview("comp")) return; const c=compToday(mine()); if(!c.q||c.done) return; const t="โจทย์แนวแข่งขันวันนี้";
   S = {mode:"review", comp:true, set:{id:"comp",subject:"แนวแข่งขัน",topic:t}, steps:[{kind:"q",phase:t+" · ลองคิดก่อน ผิดได้ไม่เสียอะไร",q:shuffleQ(c.q)},{kind:"finish",phase:"เสร็จ"}], trial:[], trialVote:{},
        active:true, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
   view="session"; render(); window.scrollTo({top:0}) }
 function startRecall(){
+  if(resumeReview("recall")) return;
   const list=mine(), src=recallSource(list); if(!src) return;
   const pick=src.ids.slice().sort(()=>Math.random()-.5).slice(0,3).map(id=>QBANK[id].q);
   const t="ทบทวนวันนี้ 3 ข้อ";
@@ -1394,6 +1397,9 @@ function renderHome(){
   ${(()=>{const pd=pendingSet(); return pd?`<section class="card" style="border:2px solid var(--beak)"><b>ทำชุด "${esc(pd.set.topic)}" ค้างไว้</b>
     <p class="small muted">ทำต่อจากข้อที่ค้างได้เลย ข้อที่ตอบไปแล้วยังอยู่ครบ</p>
     <div class="row"><button class="btn" id="resume">ทำต่อ</button><button class="btn ghost" id="discard">เริ่มชุดใหม่แทน</button></div></section>`:""})()}
+  ${pendingReviews().map(p=>`<section class="card" style="border:2px solid var(--beak)"><b>ทำ "${esc(p.set.topic)}" ค้างไว้</b>
+    <p class="small muted">ตอบไปแล้ว ${(p.items||[]).filter(x=>!x.skipped).length} ข้อ ทำต่อจากข้อที่ค้างได้เลย</p>
+    <div class="row"><button class="btn" data-rvgo="${p.kind}">ทำต่อ</button><button class="btn ghost" data-rvdel="${p.kind}">เริ่มใหม่แทน</button></div></section>`).join("")}
   <section class="card pick">
     <div class="todayhead"><span class="eyebrow">📋 รายละเอียดแต่ละจุดของวันนี้ · ${md?Object.values(md).filter(Boolean).length:0}/${ms.length}</span></div>
     ${dayPanel(p)}
@@ -1483,6 +1489,8 @@ function renderHome(){
   on("leave-test",leaveTest);
   on("skip-open",()=>{view="skip";render()});
   on("resume",resumeSet);
+  $v.querySelectorAll("[data-rvgo]").forEach(b=>b.onclick=()=>resumeReview(b.dataset.rvgo));
+  $v.querySelectorAll("[data-rvdel]").forEach(b=>b.onclick=()=>{ if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="กดอีกครั้ง ข้อที่ทำไว้จะหาย";return} clearReviewProgress(b.dataset.rvdel); if(S&&S.mode==="review"&&S.active&&rvKind()===b.dataset.rvdel) S.active=false; renderHome() });
   on("resume-v",()=>{view="vocab";render()});
   on("discard",e=>{const b=e.target; if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="กดอีกครั้ง ข้อที่ทำไว้จะหาย";return} clearProgress(); if(S&&S.mode==="set") S.active=false; renderHome()});
   on("vocab-go",startVocab);
@@ -1492,7 +1500,7 @@ function renderHome(){
     try{
       lsWrite(lsRead().filter(x=>x.sent));
       localStorage.setItem("fieldnote.fb",JSON.stringify(lsFb().filter(x=>x.sent)));
-      localStorage.removeItem("fieldnote.inprogress");
+      localStorage.removeItem("fieldnote.inprogress"); RV_KINDS.forEach(clearReviewProgress);
       rebuildVocabState(lsRead());
     }catch(err){}
     if(S) S.active=false; if(V) V.active=false;
@@ -1948,18 +1956,23 @@ function renderStep(){
   let fb = "";
   /* reason check: right answer on a question that has q.check → ask how she got it before showing the explanation */
   const ck=ans&&q.check&&!S.checkDone&&(ans.correct||waveOn(2)&&!ans.dontknow)?q.check:null;
+  /* her own reason (22 Nov, student: "my way of thinking matches none of the options"): she can say so and write it BEFORE the explanation shows */
+  const ownBtn=`<button class="opt ckopt" data-ckown="1">✍️ วิธีคิดของฉันไม่ตรงกับข้อไหนเลย ขอเขียนเอง</button>`;
+  const ownPanel=`<div class="opts"><textarea id="ckown" rows="3" maxlength="300" placeholder="เธอคิดยังไงถึงได้คำตอบนี้ พิมพ์สั้นๆ ตามที่คิดจริงได้เลย ไม่มีถูกผิด" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">${esc(S.checkOwn||"")}</textarea>
+      <button class="btn" id="ckown-send">ส่งวิธีคิดของฉัน แล้วดูเฉลย</button><button class="btn ghost" id="ckown-skip">ข้ามไปดูเฉลยเลย</button></div>`;
   if(ck&&S.checkPick==null&&!ans.correct){
     S.checkOrder=S.checkOrder||ck.opts.map((_,i)=>i).sort(()=>Math.random()-.5);
     fb=`<div class="feedback"><b class="no">ยังไม่ใช่ · คำตอบที่ถูกคือ ${esc(q.num?(q.answerText||q.answer)+" "+(q.unit||""):q.opts[q.a])}</b><p><b>ก่อนอ่านเฉลย ลองเลือกดู:</b> เหตุผลข้อไหนพาไปถึงคำตอบนี้</p>
-      <div class="opts">${S.checkOrder.map(k=>`<button class="opt ckopt" data-ck="${k}">${esc(ck.opts[k])}</button>`).join("")}<button class="opt ckopt" data-ck="-1">ยังมองไม่ออก ขออ่านเฉลยเลย</button></div>
+      ${S.checkOwnOpen?ownPanel:`<div class="opts">${S.checkOrder.map(k=>`<button class="opt ckopt" data-ck="${k}">${esc(ck.opts[k])}</button>`).join("")}${ownBtn}<button class="opt ckopt" data-ck="-1">ยังมองไม่ออก ขออ่านเฉลยเลย</button></div>`}
       <span class="small muted">เลือกเหตุผลให้ถูก แปลว่าเริ่มเห็นทางแล้ว แม้คำตอบรอบนี้จะพลาด</span></div>`;
   } else if(ck&&S.checkPick==null){
     S.checkOrder=S.checkOrder||ck.opts.map((_,i)=>i).sort(()=>Math.random()-.5);
     fb=`<div class="feedback"><b class="ok">✅ ถูกแล้ว!</b><p><b>ก่อนดูเฉลย ขอเช็กเหตุผลนิดนึง:</b> ${esc(ck.q||"เธอได้คำตอบนี้มาด้วยวิธีคิดแบบไหน")}</p>
-      <div class="opts">${S.checkOrder.map(k=>`<button class="opt ckopt" data-ck="${k}">${esc(ck.opts[k])}</button>`).join("")}<button class="opt ckopt" data-ck="-1">🎲 เดามา / ยังไม่แน่ใจวิธีคิด</button></div>
+      ${S.checkOwnOpen?ownPanel:`<div class="opts">${S.checkOrder.map(k=>`<button class="opt ckopt" data-ck="${k}">${esc(ck.opts[k])}</button>`).join("")}${ownBtn}<button class="opt ckopt" data-ck="-1">🎲 เดามา / ยังไม่แน่ใจวิธีคิด</button></div>`}
       <span class="small muted">เลือกเหตุผลที่ใกล้กับที่เธอคิดจริงที่สุด เหตุผลถูกได้ +5 XP</span></div>`;
   } else if(ans){
-    const ckNote = !ans.correct&&q.check&&S.checkPick!=null?(S.checkPick===q.check.a?`<p class="small"><b>เลือกเหตุผลถูก</b> เห็นทางแล้ว ลองอ่านเฉลยดูว่าพลาดตรงขั้นไหน</p>`:S.checkPick===-1?"":`<p class="small">เหตุผลที่ถูกคือ “${esc(q.check.opts[q.check.a])}” ${esc(q.check.ex||"")}</p>`)
+    const ckNote = !ans.correct&&q.check&&S.checkPick!=null?(S.checkPick===q.check.a?`<p class="small"><b>เลือกเหตุผลถูก</b> เห็นทางแล้ว ลองอ่านเฉลยดูว่าพลาดตรงขั้นไหน</p>`:S.checkPick===-1?"":S.checkPick===-2?`<p class="small"><b>ขอบคุณที่บอกวิธีคิดของเธอเอง</b>${S.checkOwn&&S.checkOwn.trim()?` เก็บไว้แล้ว จะเอาไปช่วยดูว่าเธอเข้าใจยังไง`:""} เหตุผลที่ในเฉลยมองคือ “${esc(q.check.opts[q.check.a])}” ${esc(q.check.ex||"")}</p>`:`<p class="small">เหตุผลที่ถูกคือ “${esc(q.check.opts[q.check.a])}” ${esc(q.check.ex||"")}</p>`)
+      :q.check&&S.checkPick===-2?`<p class="small"><b>ขอบคุณที่บอกวิธีคิดของเธอเอง</b> ${S.checkOwn&&S.checkOwn.trim()?`เก็บไว้แล้ว จะเอาไปช่วยดูว่าเธอเข้าใจยังไง `:""}ข้อนี้จะกลับมาให้ทวนอีกรอบ อ่านเฉลยแล้วลองเทียบดูว่าวิธีของเธอตรงกับเฉลยตรงไหน ต่างตรงไหน</p>`
       :q.check&&S.checkPick===-1?`<p class="small"><b>ขอบคุณที่บอกตรงๆ</b> เดาถูกไม่นับว่าเข้าใจ ข้อนี้จะกลับมาให้ทวนอีกรอบ อ่านเฉลยแล้วลองดูว่าวิธีคิดจริงคืออะไร</p>`
       :q.check&&S.checkPick!=null?(S.checkPick===q.check.a?`<p class="small"><b>เหตุผลถูกด้วย +5 XP</b> เข้าใจจริง ไม่ได้ฟลุก</p>`
       :`<p class="small"><b>คำตอบถูก แต่เหตุผลยังไม่ใช่</b> เหตุผลที่ถูกคือ “${esc(q.check.opts[q.check.a])}” ${esc(q.check.ex||"")} ข้อนี้จะกลับมาให้ทวนอีกรอบนะ</p>`):"";
@@ -2047,19 +2060,24 @@ function renderStep(){
     { const wo=document.getElementById("whyother"); if(wo) wo.oninput=()=>{ S.whyOther=wo.value.slice(0,200) } }
     { const gb=document.getElementById("guessed"); if(gb) gb.onclick=()=>{ S.guessed=!S.guessed; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) } }
     $v.querySelectorAll("[data-ck]").forEach(b=>b.onclick=()=>{ S.checkPick=+b.dataset.ck; S.checkDone=true; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) });
+    $v.querySelectorAll("[data-ckown]").forEach(b=>b.onclick=()=>{ S.checkOwnOpen=true; const y=window.scrollY; renderStep(); window.scrollTo({top:y}); const t=document.getElementById("ckown"); if(t) t.focus() });
+    { const t=document.getElementById("ckown"); if(t) t.oninput=()=>{ S.checkOwn=t.value.slice(0,300) }
+      const fin=()=>{ S.checkPick=-2; S.checkDone=true; S.checkOwnOpen=false; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) };
+      const sd=document.getElementById("ckown-send"); if(sd) sd.onclick=fin;
+      const sk=document.getElementById("ckown-skip"); if(sk) sk.onclick=()=>{ S.checkOwn=""; fin() } }
     $v.querySelectorAll("[data-why]").forEach(b=>b.onclick=()=>{const k=b.dataset.why; S.why=(S.why||[]).includes(k)?S.why.filter(x=>x!==k):[...(S.why||[]),k];const y=window.scrollY;renderStep();window.scrollTo({top:y})});
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
     const exn=document.getElementById("exnext"); if(exn) exn.onclick=()=>{ S.exStep=(S.exStep||1)+1; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) };
     { const lq=document.getElementById("go-lib-q"); if(lq) lq.onclick=()=>{ readStop(); S.libOpen=(S.libOpen||0)+1; openLib(lq.dataset.sub,{qid:q.id},"session") } }
     const nx=document.getElementById("next"); if(nx) nx.onclick=()=>{
       S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,...(st.chk?{chk:1}:{}),...(st.leg!=null&&S.legs&&S.legs.length>=2?{leg:st.leg}:{}),...(S.hints&&S.hints>=(q.hints||[]).length+1?{hintStep:true}:{}),...(S.hintKnown&&S.hintKnown.length?{hintKnown:S.hintKnown}:{}),...(exStepped(q,ans)?{exSteps:Math.min(S.exStep||1,exSteps(q.ex).length),exTotal:exSteps(q.ex).length}:{}),struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
-        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(S.libOpen?{lib:S.libOpen}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(S.whyOther&&(S.why||[]).includes("other")?{whyOther:S.whyOther.trim()}:{}),...(ans.correct&&(S.guessed||S.checkPick===-1)?{guessed:true}:{}),...(S.notTaught?{notTaught:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0,coverFloor:S.coverFloor||coverFloor(q)}:{}),...(q.check&&S.checkPick!=null&&S.checkPick!==-1?{checkOk:S.checkPick===q.check.a,...(ans.correct?{}:{checkAfterWrong:true})}:{}),...(q.predict&&S.predictPick!=null?{predict:S.predictPick,predictOk:S.predictPick===q.predict.a}:{}),...(q.friend?{friend:true}:{}),...(q.sit?{sit:q.sit}:{}),...(st.loop?{loop:st.loop}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),len:q.q.length});
+        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(S.libOpen?{lib:S.libOpen}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(S.whyOther&&(S.why||[]).includes("other")?{whyOther:S.whyOther.trim()}:{}),...(ans.correct&&(S.guessed||S.checkPick===-1)?{guessed:true}:{}),...(S.checkPick===-2?{checkNone:true,...(S.checkOwn&&S.checkOwn.trim()?{checkOwn:S.checkOwn.trim().slice(0,300)}:{})}:{}),...(S.notTaught?{notTaught:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0,coverFloor:S.coverFloor||coverFloor(q)}:{}),...(q.check&&S.checkPick!=null&&S.checkPick!==-1&&S.checkPick!==-2?{checkOk:S.checkPick===q.check.a,...(ans.correct?{}:{checkAfterWrong:true})}:{}),...(q.predict&&S.predictPick!=null?{predict:S.predictPick,predictOk:S.predictPick===q.predict.a}:{}),...(q.friend?{friend:true}:{}),...(q.sit?{sit:q.sit}:{}),...(st.loop?{loop:st.loop}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),len:q.q.length});
       advance();
     };
   }
 }
 function answer(a){ readStop(); S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
-function advance(){ { const a=S.steps[S.i], b=S.steps[S.i+1]; if(S.legs&&S.legs.length>=2&&a&&b&&a.leg!=null&&b.leg!=null&&b.leg>a.leg&&b.kind!=="rate"&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>expCheckpoint(a.leg),120) } readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.libOpen=0; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.coverFloor=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.predictPick=null; S.predOrder=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
+function advance(){ { const a=S.steps[S.i], b=S.steps[S.i+1]; if(S.legs&&S.legs.length>=2&&a&&b&&a.leg!=null&&b.leg!=null&&b.leg>a.leg&&b.kind!=="rate"&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>expCheckpoint(a.leg),120) } readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; S.answered=null; S.libOpen=0; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.checkOwn=""; S.checkOwnOpen=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.coverFloor=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.predictPick=null; S.predOrder=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
 
 /* concept card, one idea per screen: (1) why this topic exists — a puzzle to guess first (c.hook) or the "use" line,
    (2) each point alone with "เข้าใจแล้ว" / "ขออธิบายอีกแบบ" (c.more[i], else the next whole alternative),
@@ -2158,7 +2176,25 @@ function renderRate(){
 }
 
 /* ---------- unfinished set survives a tab switch or a reload (same day) ---------- */
+/* 22 Nov: only mode "set" was saved; the sweep / daily review / repair / recall / mini (mode "review") restarted from item 1 after a reload.
+   One slot per kind so a half-done lesson and a half-done sweep do not overwrite each other. */
+const RV_KEY="fieldnote.inprogress.rv.", RV_KINDS=["sweep","repair","review","recall","comp","mini"];
+function rvKind(){ return S.sweep?"sweep":S.comp?"comp":S.recall?"recall":S.mini?"mini":S.set&&S.set.id==="repair"?"repair":"review" }
+function saveReviewProgress(){
+  if(!S.steps||!S.steps.length||!(S.i>0||S.items.length)) return;
+  try{ localStorage.setItem(RV_KEY+rvKind(),JSON.stringify({day:todayKey(),kind:rvKind(),sweep:!!S.sweep,comp:!!S.comp,recall:!!S.recall,mini:!!S.mini,sweepPlan:S.sweepPlan||null,set:S.set,steps:S.steps,trial:S.trial||[],trialVote:S.trialVote||{},i:S.i,el:Date.now()-S.start,items:S.items,confused:S.confused||[],altShown:S.altShown||0,glossed:S.glossed||[]})) }catch(e){ console.warn("saveReviewProgress",e) }
+}
+function clearReviewProgress(k){ try{ localStorage.removeItem(RV_KEY+k) }catch(e){} }
+function pendingReviews(){ const out=[]; RV_KINDS.forEach(k=>{ try{ const p=JSON.parse(localStorage.getItem(RV_KEY+k)||"null"); if(p&&p.day===todayKey()&&p.steps&&p.set) out.push(p); else if(p) clearReviewProgress(k) }catch(e){} }); return out }
+function resumeReview(k){
+  if(S&&S.mode==="review"&&S.active&&rvKind()===k){ view="session"; render(); return true }
+  const p=pendingReviews().find(x=>x.kind===k); if(!p) return false;
+  /* the clock restarts from the time already spent, so the hours she was away do not count as study time */
+  S={mode:"review",...(p.sweep?{sweep:true,sweepPlan:p.sweepPlan}:{}),...(p.comp?{comp:true}:{}),...(p.recall?{recall:true}:{}),...(p.mini?{mini:true}:{}),set:p.set,steps:p.steps,trial:p.trial,trialVote:p.trialVote,
+     active:true,i:p.i,start:Date.now()-(p.el||0),qStart:Date.now(),items:p.items||[],answered:null,why:null,hints:0,struck:[],glossed:p.glossed||[],askOpen:null,confused:p.confused||[],altShown:p.altShown||0,pick:null,whyText:""};
+  view="session"; render(); window.scrollTo({top:0}); return true }
 function saveProgress(){
+  if(S&&S.mode==="review"&&S.active) return saveReviewProgress();
   if(!S||S.mode!=="set") return;
   try{ localStorage.setItem("fieldnote.inprogress",JSON.stringify({setId:S.set.id,conceptFirst:S.conceptFirst,day:todayKey(),i:S.i,start:S.start,items:S.items,confused:S.confused,altShown:S.altShown,conceptSec:S.conceptSec||0,glossed:S.glossed,readSec:S.readSec||0,readChars:S.readChars||0,
     perms:S.steps.map(x=>x.q?.perm||null),dueIds:S.dueIds||[],trialVote:S.trialVote||{}})) }catch(e){}
@@ -2201,7 +2237,7 @@ async function finishReview(){
     durationSec:Math.round((Date.now()-S.start)/1000),correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items),confused:S.confused,items});
 }
 async function finishWith(rec){
-  if(S&&rec.type!=="vocab"){ S.active=false; if(S.mode==="set") clearProgress() }
+  if(S&&rec.type!=="vocab"){ const rk=S.mode==="review"?rvKind():null; S.active=false; if(S.mode==="set") clearProgress(); if(rk) clearReviewProgress(rk) }
   PAD.open=false; document.body.classList.remove("padopen");
   const prevList=mine(), before=progressOf(prevList), ssB=spellStats(prevList);
   { const adj=xpRules(rec,prevList); if(adj!==rec) Object.assign(rec,adj); }
@@ -4820,6 +4856,7 @@ function parentDash(list){
   { const nt=it7.filter(x=>x.notTaught); if(nt.length){ const tp=[...new Set(nt.map(x=>x.topic).filter(Boolean))].slice(0,3).join(", "); A.push(["amber","📭",`น้องบอกว่ายังไม่ได้เรียน ${nt.length} ข้อ (${esc(tp)}) ไม่นับเป็นผิด ระบบประจำวันจะเช็กกับแผนของโรงเรียน`]) } }
   { const cv=it7.filter(x=>x.cover&&!x.skipped), fs=cv.filter(x=>coverFast(x)); if(fs.length) A.push([fs.length>=3&&fs.length/cv.length>=0.5?"amber":"green","⏩",`ข้อที่ซ่อนตัวเลือกให้คิดก่อน น้องกดเปิดเร็วกว่าเวลาอ่านโจทย์และคิด ${fs.length}/${cv.length} ครั้งใน 7 วัน (เร็วสุด ${Math.min(...fs.map(x=>x.coverSec||0))} วิ) ข้อเหล่านี้ตอบถูกก็ยังไม่นับว่าแก้แล้ว ระบบจะวนกลับมาอีก`]) }
   { const gs=it7.filter(x=>x.guessed).length; if(gs>=2) A.push(["amber","🎲",`น้องบอกเองว่าตอบถูกเพราะเดา ${gs} ข้อในสัปดาห์นี้ ไม่นับเป็นความชำนาญ และส่งกลับไปทวนแล้ว`]) }
+  { const co=it7.filter(x=>x.checkNone); if(co.length) A.push(["green","💭",`น้องบอกว่าวิธีคิดไม่ตรงกับตัวเลือกเหตุผล ${co.length} ข้อใน 7 วัน${co.filter(x=>x.checkOwn).length?": "+co.filter(x=>x.checkOwn).slice(-3).map(x=>"“"+esc(x.checkOwn)+"”").join(" · "):" (ไม่ได้พิมพ์)"}`]) }
   { const ot=it7.filter(x=>x.whyOther); if(ot.length) A.push(["green","✍️",`เหตุผลที่น้องพิมพ์เอง: ${ot.slice(-3).map(x=>"“"+esc(x.whyOther)+"”").join(" · ")}`]) }
   const sw={}; list.filter(a=>a.type==="sweep").forEach(a=>(a.items||[]).forEach(x=>{ const sp=QBANK[x.qid]?.q.spell; if(!sp) return; (sw[sp]??=[0,0]); sw[sp][0]++; if(x.correct) sw[sp][1]++ }));
   const weak=Object.entries(sw).filter(([k,[n,c]])=>n>=2&&c/n<0.5).map(([k])=>SPELLS.find(x=>x.id===k)?.topic||k); if(weak.length) A.push(["amber","🧠",`เรื่อง ม.1–2 ที่ลืมไปมาก: ${weak.slice(0,4).join(", ")}`]);
@@ -5308,7 +5345,7 @@ function miniQuestions(list){ const out=[], ids=new Set(), add=q=>{ if(q&&!ids.h
   if(out.length<6&&src) src.ids.forEach(id=>add(comeback(QBANK[id].q,list)));
   if(out.length<6){ const l=recommend(list); if(l) l.practice.filter(q=>(q.level||1)<=2).forEach(add) }
   return out }
-function startMini(){ const list=mine(), qs=miniQuestions(list); if(!qs.length) return;
+function startMini(){ if(resumeReview("mini")) return; const list=mine(), qs=miniQuestions(list); if(!qs.length) return;
   const steps=[...qs.map(q=>({kind:"q",phase:q._loop?"เช็กเรื่องที่สอนใหม่อีกแบบ":q._chk?"ด่านตรวจความจำ":q._retry?"ลองใหม่ ข้อที่เคยพลาด":"ชุดขั้นต่ำ",q:shuffleQ(q),...(q._loop?{loop:q._loop}:{}),...(q._chk?{chk:true}:{}),...(q._retry?{retry:true}:{})})),{kind:"finish",phase:"เสร็จ"}];
   S={mode:"review",mini:true,set:{id:"mini",subject:"ชุดขั้นต่ำ",topic:"ชุดขั้นต่ำ 15 นาที"},steps,trial:[],trialVote:{},active:true,i:0,start:Date.now(),qStart:Date.now(),items:[],answered:null,why:null,hints:0,struck:[],glossed:[],askOpen:null,confused:[],altShown:0,pick:null,whyText:""};
   view="session"; render(); window.scrollTo({top:0}) }

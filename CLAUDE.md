@@ -107,6 +107,43 @@ able to carry a figure too (`fig` in the reply, same `geo`/`svg` kinds). Sample 
 says "imagine a shape" (Z, C, angle pairs, graphs), give a figure, never words alone; until queue 3 exists, send the
 figure to the father as an image in the chat so he can show it to her.
 
+## Student feedback 22 Nov 2026: "สมุดคาถา understands less than a textbook + exercises" (father: very important)
+Said by the student unprompted; the father drew out two reasons. Treat as design evidence, not as a mood.
+(1) **Too few basic items before the jump.** A new lesson = one concept card + ~3 level-1 items, then level 2 starts at
+item 4 and level 3 by item 7–8 (measured 22 Nov over 37 lessons: median 8 practice items, median 3 level-1, level 2 at
+item 4; even the 13–14-item retrofits kept 3 level-1 and added level 2–3). Her accuracy L1/L2/L3 = 85/62/54%. A book
+gives a worked example then many graded drill items of one kind; we gave retrieval/spacing/understanding checks on top of
+a thin first learning, and the retrieval layer has little to retrieve. Design error on our side (mine), not her effort.
+(2) **No way back to the explanation while working.** In a question she has only hints; "📖 ไปอ่านเรื่องนี้" appears only
+after a wrong answer, and only through the subtopic library card (fallback: lesson summary). She cannot open the formula or
+the lesson card before answering, as she would flip back a page in a book.
+Fixes proposed to the father (front page ④, waiting for his choice; do not build the big parts before he chooses):
+(A) a "📖 ดูเนื้อหา/สูตร" button on every lesson question that opens the lesson's concept card as an overlay without
+leaving the question, logs `peek`, never blocks; a peeked item still counts as practice but, like a hint, cannot resolve a
+misconception or count toward "คงทน"; checkpoints and spaced checks keep it off. (B) acquisition before retrieval: every
+lesson = concept card → 1–2 fully worked examples → **≥ 6 graded level-1 items of the same kind, answered with the card
+one tap away** → level 2 → level 3, so level 2 starts at item ~8, not 4; the extra minutes (~4–6 per lesson) also close the
+daily-time gap, so this replaces the "second lesson a day" idea (use depth, not breadth). (C) optional later: a mastery gate
+("4 of the last 5 right") instead of a fixed count. Spacing, loop, sweep and checkpoints stay as the retention layer.
+Interim rule (AUTOMATION.md, 22 Nov): until he chooses, the nightly run adds level-1 items first. This is also a data point
+for the February "teaching method vs depth" decision: log what changes after (B).
+
+## Reason check: "none of these fits" (22 Nov 2026, built)
+After a right or wrong answer on an item with `check`, she can tap "✍️ วิธีคิดของฉันไม่ตรงกับข้อไหนเลย" and write her own
+reason BEFORE the explanation shows (so it is not contaminated). Stored on the item as `checkNone:true` and `checkOwn`
+(≤ 300 chars); never scored as a right/wrong option (`checkOk` stays unset), so it cannot resolve a misconception, and
+the item comes back like a guess. The parent page shows her last three own reasons. Read them in every weekly brief and
+nightly run: a recurring own reason means our option set is missing a real way of thinking, so add it to `check.opts`.
+
+## Unfinished sessions (fixed 22 Nov 2026)
+Only mode "set" (lessons, mixed, passages) was saved; sweep, daily review, repair, recall and mini (mode "review")
+restarted from item 1 after a reload or a phone killing the tab. Now each kind has its own localStorage slot
+(`fieldnote.inprogress.rv.<kind>`, same day only), a home card "ทำ … ค้างไว้" with ทำต่อ / เริ่มใหม่แทน, and starting that
+mission again resumes it. The clock resumes from the time already spent, so hours away do not count as study time.
+**Still open (set mode):** `resumeSet` restores `start`, so a lesson left open from noon to evening records a duration of
+hours (21 Nov: 107 min open vs ~14 min of answers); `minsToday` and the sweep size use it. Fix the same way
+(save `el`, restore `start=Date.now()-el`) in the next app chat; tell the father first because it changes recorded minutes.
+
 ## Figures in questions (father approved 16 Nov 2026)
 - **(1) DONE 18 Nov:** `geo` and `svg` fig kinds in `src/app.html` (`geoFig`, `svgFig`), `concept.figs` (a figure
   under a lesson point), checks in `tools/verify.js`; field reference in docs/writing-content.md "Figures".
