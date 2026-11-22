@@ -2867,8 +2867,8 @@ function dcRecallDue(list){ const seen=dcSeen(), t=todayKey(), done=new Set(list
   return dcOpenList().filter(c=>seen[c.day]&&seen[c.day]<t&&!done.has(c.day)&&c.q).pop()||null }
 function dcHtml(list){ if(!DCARDS.length) return ""; const c=dcToday(); if(!c) return ""; const nw=dcNew(), rc=dcRecallDue(list), n=Object.keys(dcSeen()).length;
   return `<div class="factbox"><div class="todayhead"><b>🗞️ เกร็ดประจำวัน</b><span class="small muted">อ่านแล้ว ${n} ใบ</span></div>
-    <button class="fcard dcard ${nw?"newf":""}" data-dc="1"><span class="fpet">${c.icon}</span><span><b>${esc(c.title)}</b><br><span class="small muted">${nw?(rc?"ทายใบเก่า 1 ข้อ (+5 XP) แล้วเปิดใบใหม่":"ใบใหม่วันนี้ แตะเพื่ออ่าน"):"อ่านแล้ว · พรุ่งนี้มีใบใหม่"}</span></span></button></div>` }
-function dcOpen(after){ const list=mine(), rc=dcRecallDue(list); if(rc&&dcNew()) return dcQuiz(rc,()=>dcShow(dcToday(),after)); dcShow(dcToday(),after) }
+    <button class="fcard dcard ${nw?"newf":""}" data-dc="1"><span class="fpet">${c.icon}</span><span><b>${esc(c.title)}</b><br><span class="small muted">${nw?(rc?"ทายใบเก่า 1 ข้อ (+5 XP) แล้วเปิดใบใหม่":"ใบใหม่วันนี้ แตะเพื่ออ่าน"):(rc?"ทายใบเก่า 1 ข้อ (+5 XP)":"อ่านแล้ว · พรุ่งนี้มีใบใหม่")}</span></span></button></div>` }
+function dcOpen(after){ const list=mine(), rc=dcRecallDue(list); if(rc) return dcQuiz(rc,()=>dcShow(dcToday(),after)); dcShow(dcToday(),after) }
 function dcShow(c,after){ if(!c) return; const s=dcSeen(); if(!s[c.day]){ s[c.day]=todayKey(); lsSet("fieldnote.dcseen",s) }
   const o=dcOpenList().filter(x=>dcSeen()[x.day]), i=o.indexOf(c);
   sheet({icon:c.icon,title:c.title,read:c.title+" "+c.body,html:`${c.tag?`<span class="chip">${esc(c.tag)}</span>`:""}<p class="factread">${esc(c.body)}</p><p class="small muted">พรุ่งนี้จะมีคำถามทวนใบนี้ 1 ข้อ ตอบถูกได้ +5 XP</p>`,

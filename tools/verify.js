@@ -123,6 +123,16 @@ for(const [orig,vs] of Object.entries(VAR)){ if(!qIds.has(orig)) warn(`variants.
     if(v.change==="situation"&&!(typeof v.sit==="string"&&v.sit.trim())) warn(`${w}: a situation-changing twin needs sit (a short label of its new situation)`);
     if((v.added||"")>=WAVE1&&!v.change) warn(`${w}: twins added from ${WAVE1} say what they change (change: "situation" | "numbers"); prefer situation`);
     if(v.check&&!(Array.isArray(v.check.opts)&&v.check.opts.length===3&&v.check.a===0)) warn(`${w}: check needs 3 reasons, right one first (a:0)`); } }
+/* daily cards (22 Nov 2026): the recall goal needs cards; shape check + stock warning */
+{ let DC={cards:[]}; try{ DC=J("content/cards.json") }catch(e){ warn("content/cards.json: not valid JSON") }
+  const seenDays=new Set(), today=new Date(Date.now()+7*3600000).toISOString().slice(0,10);
+  for(const c of DC.cards||[]){ const w=`cards.json ${c.day}`;
+    if(!/^\d{4}-\d\d-\d\d$/.test(c.day||"")) warn(`${w}: needs a YYYY-MM-DD day`);
+    if(seenDays.has(c.day)) warn(`${w}: duplicate day`); seenDays.add(c.day);
+    for(const k of ["icon","tag","title","body"]) if(!(typeof c[k]==="string"&&c[k].trim())) warn(`${w}: needs ${k}`);
+    if(!(c.q&&typeof c.q.q==="string"&&Array.isArray(c.q.opts)&&c.q.opts.length===3&&c.q.a===0)) warn(`${w}: q needs a question, 3 options and a:0 (right option first)`); }
+  const last=[...seenDays].sort().pop()||"", need=new Date(Date.now()+7*3600000+3*86400000).toISOString().slice(0,10);
+  if(last<need) console.log(`WARNING: cards.json last card is ${last||"none"}; needs cards through ${need} at least (the recall goal depends on them)`) }
 const cal=J("content/calendar.json");
 /* understanding-first calendar fields and the reteach cards (17 Nov 2026) */
 for(const k of ["wave1","wave2"]) if(cal.understand&&!/^\d{4}-\d\d-\d\d$/.test(cal.understand[k]||"")) warn(`calendar.json understand.${k}: needs a YYYY-MM-DD date`);

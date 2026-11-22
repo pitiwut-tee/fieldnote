@@ -144,6 +144,7 @@ The father does not want to watch the numbers himself: the run checks them and t
    | lessons left in `lessonQueue` | 10 school days ahead | Opus queue chats (new lessons need the father's material) |
    | situation twins for questions she missed in the last 3 days | every one | nightly run (already in step 4, "Twins") |
    | vocabulary | rule in step 4 | nightly run |
+   | daily cards (`content/cards.json`, the เกร็ดประจำวัน at บ้านคู่หู) | cards dated up to **7 days after today** (one `day` per date, no gaps) | the nightly run, any model (see below) |
    If the run is on **Opus** (the system prompt names the model; since 19 Nov the scheduled task runs on Opus, father's
    decision), it also: extends the next 4 lessons in `lessonQueue` order to ≥ 12 practice items (+4–5 level 2–3 items
    each, new situations, some in the 2569 exam formats from `content/exam-analysis.md`; append to `practice`, new ids,
@@ -153,6 +154,14 @@ The father does not want to watch the numbers himself: the run checks them and t
    Do NOT touch sci-solution-4, sci-separation-2, sci-solution-5 (a father's queue chat retrofits them) or any lesson a
    queue row names as in progress. If a floor is still unmet after the run, mark ③ "พ่อควรทำ" and add a queue row in ②
    for an Opus chat. On Sonnet, do not write lesson items; report the shortfall.
+
+**Daily cards (since 22 Nov 2026):** the app asks the recall question (+5 XP, the wish goal "ตอบคำถามทวนเกร็ดประจำวันถูก")
+only about a card she read on an earlier day, and only once per card. When the cards ran out on 15 Nov, the goal could not
+advance and the father's daughter could not finish her wish quest. So every run checks that `cards.json` has a card for
+each day up to today+7, and writes the missing ones: `day`, `icon`, `tag`, `title`, `body` (~250–350 Thai characters, a real
+fact tied to what she studies, no copied text), `q` (`q`, 3 `opts`, `a:0`; right option not always the longest). No topic
+repeats within 14 days. Every new card's question is solved blind by a separate agent and its body fact-checked (hard rule 5);
+the checker gets a keyless copy with shuffled options.
 
 Read `content/school-plan.md` every run: it holds the science weighting estimate, the usual topic order, and
 known gaps. Follow its balance when choosing non-current topics. If it ever contains the school's own outline,
