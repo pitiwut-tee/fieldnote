@@ -86,6 +86,16 @@ One page he reads in ~2 minutes a day. Keep it short; history goes to the other 
   full needs table stays in the other tab).
 - Every chat and every nightly run updates the date chip at the top.
 
+## Letters answer questions the student can still see (rule from 22 Nov 2026)
+She does not remember which question she typed about (sweeps are 10–15 items, the letter comes the next day), so a
+letter that only explains the idea leaves her unable to follow it. Every answer in a letter must carry, in the letter
+text itself: the question stem (copy our own question text), her typed words in quotes, then the answer. Give the
+final answer of a "try it yourself" item at the end of the letter. Find her questions in the parent db
+(`attempts` docs, field `confused[]`: `qid`, `prompt`, `ask`) and answer every one; answer the typed `ask`, not a
+nearby note (the first 22 Nov letter answered the "solvent" note from 20 Nov and missed the typed "ไม่รู้คำอังกฤษ" on
+sepp5~v1). Pending father's choice (front page ④, 22 Nov): a structured `replies` letter with `qid` and a
+"คำถามของฉัน" page in the app, so she can open the question itself.
+
 ## Figures in questions (father approved 16 Nov 2026)
 - **(1) DONE 18 Nov:** `geo` and `svg` fig kinds in `src/app.html` (`geoFig`, `svgFig`), `concept.figs` (a figure
   under a lesson point), checks in `tools/verify.js`; field reference in docs/writing-content.md "Figures".
