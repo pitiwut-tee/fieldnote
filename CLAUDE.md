@@ -140,9 +140,12 @@ Only mode "set" (lessons, mixed, passages) was saved; sweep, daily review, repai
 restarted from item 1 after a reload or a phone killing the tab. Now each kind has its own localStorage slot
 (`fieldnote.inprogress.rv.<kind>`, same day only), a home card "ทำ … ค้างไว้" with ทำต่อ / เริ่มใหม่แทน, and starting that
 mission again resumes it. The clock resumes from the time already spent, so hours away do not count as study time.
-**Still open (set mode):** `resumeSet` restores `start`, so a lesson left open from noon to evening records a duration of
-hours (21 Nov: 107 min open vs ~14 min of answers); `minsToday` and the sweep size use it. Fix the same way
-(save `el`, restore `start=Date.now()-el`) in the next app chat; tell the father first because it changes recorded minutes.
+**Study time = active time (fixed 22 Nov 2026, father's request).** Wall-clock `now-start` counted hours when she swiped
+Safari away or left a tab open. Now `ACT` clock in app.html: time counts only while the page is visible and was touched
+(gaps capped at 5 min); `sessSec()`/`actNow()` replace wall-clock; resume restores elapsed active time (`el`);
+new records carry `actSec`. Old records are wall-clock: `recSec(a)` uses `actSec`, else trims records whose duration
+exceeds 2x the answered-items estimate (+180 s). Always read minutes through `recSec`, never raw `durationSec`.
+Test: verify.js "study time is active time".
 
 ## Figures in questions (father approved 16 Nov 2026)
 - **(1) DONE 18 Nov:** `geo` and `svg` fig kinds in `src/app.html` (`geoFig`, `svgFig`), `concept.figs` (a figure

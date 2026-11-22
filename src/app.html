@@ -596,6 +596,7 @@ setTimeout(()=>{ try{ migrateBuddy() }catch(e){} },0);
 })();
 async function saveAttempt(rec){
   if(TEST) rec.test=true;
+  if(typeof rec.durationSec==="number"&&rec.actSec==null) rec.actSec=rec.durationSec;   /* 22 Nov: durations are active time from here on (see recSec) */
   if(db){
     try{ await db.collection("attempts").add(rec); return "db" }catch(e){}
   }
@@ -831,7 +832,25 @@ const DAY_TARGET={school:45,full:75,mid:60,light:40};
 const REVIEW_DAILY={school:6,holiday:8}, REVIEW_MIN_POOL=3;
 /* 21 Nov (father): a school Friday has no lesson, so the repair set is bigger (14, was 8) and the sweep may grow like a holiday (up to 15) */
 const REPAIR_FRIDAY=14;
-function minsToday(list){ const t=todayKey(); return list.filter(a=>dayKey(a.endedAt)===t&&a.type!=="sweep"&&!a.test).reduce((s,a)=>s+Math.min(2700,Math.max(0,+a.durationSec||0)),0)/60 }
+/* ---------- study time = ACTIVE time, not wall-clock time (22 Nov 2026) ----------
+   Before, every duration was now - start, so a lesson left open, swiped away on the iPad and resumed in the evening
+   recorded hours (21 Nov: 107 min open vs ~14 min of answers). Now time only runs while the page is visible and she
+   touches it: each touch adds the gap since the previous touch, but never more than ACT.cap (5 min, enough for thinking
+   or writing on paper); time while the page is hidden (app switched or swiped away) adds nothing. */
+const ACT={last:Date.now(),tot:0,cap:300000};
+function actTick(now){ if(ACT.last) ACT.tot+=Math.min(Math.max(0,now-ACT.last),ACT.cap); ACT.last=now }
+function actNow(){ const n=Date.now(); return ACT.tot+(ACT.last&&!document.hidden?Math.min(Math.max(0,n-ACT.last),ACT.cap):0) }
+["pointerdown","keydown","input","touchstart","touchmove","scroll","click"].forEach(ev=>addEventListener(ev,()=>{ if(!document.hidden) actTick(Date.now()) },{passive:true,capture:true}));
+document.addEventListener("visibilitychange",()=>{ if(document.hidden){ actTick(Date.now()); ACT.last=0 } else ACT.last=Date.now() });
+function sessMs(){ return Math.max(0,actNow()-(S&&S.act0!=null?S.act0:actNow())) }
+function sessSec(){ return Math.round(sessMs()/1000) }
+/* seconds of study for one record: new records carry actSec (= durationSec, already active time). Older records are
+   wall-clock; when the wall-clock time is far above what the answers add up to, use that estimate instead. */
+function recSec(a){ const d=Math.max(0,+a.durationSec||0); if(a.actSec!=null) return Math.max(0,+a.actSec||0);
+  const its=(a.items||[]).filter(x=>!x.skipped); if(its.length<3) return d;
+  const est=(+a.conceptSec||0)+its.reduce((s,x)=>s+(+x.timeSec||0)+(+x.exSec||0)+6,0);
+  return d>2*est+180?Math.round(est*1.3+60):d }
+function minsToday(list){ const t=todayKey(); return list.filter(a=>dayKey(a.endedAt)===t&&a.type!=="sweep"&&!a.test).reduce((s,a)=>s+Math.min(2700,recSec(a)),0)/60 }
 function repairToday(list,info){ return info.kind==="school"&&new Date().getDay()===5&&reviewPool(list).length+dueQuestions(list,3).length>=4 }
 const LOWER_REASONS=["มีธุระครอบครัว","ไปเที่ยว/ออกนอกบ้าน","การบ้านหรืองานเยอะ","เรียนพิเศษ/กิจกรรม","ไม่สบาย","อื่นๆ"];
 const MILESTONES=[3,7,14,30,50,100,200,365];
@@ -977,7 +996,7 @@ function startExamReview(x,n){ const list=mine(), ss=new Set(x.spells||[]), seen
   const t="ทบทวนก่อน"+x.name, steps=[...qs.map(q=>({kind:"q",phase:t,q:shuffleQ(comeback(q,list))})),{kind:"finish",phase:"เสร็จ"}];
   const trial=trialsToday(); markExplain(steps, trial);
   S = {mode:"review", set:{id:"exam-review",subject:"ทบทวน",topic:t}, steps, trial, trialVote:{},
-       active:true, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
+       active:true, i:0, start:Date.now(),act0:actNow(),qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
   view="session"; render(); window.scrollTo({top:0}) }
 function planToday(list, p){
   const school=p.info.kind==="school";
@@ -1101,7 +1120,7 @@ function startSet(set, conceptFirst, perms, dueIds){
     {kind:"rate",phase:"ปิดท้าย"}
   ]).map((st,k)=>st.q?{...st,q:shuffleQ(st.q,perms&&perms[k])}:st);   // the right answer is not always the first choice
   const trial=trialsToday(); markExplain(steps, trial, set.kind); const legs=expLegs(steps,set);
-  S = {mode:"set", active:true, set, conceptFirst, steps, legs, dueIds:due.map(q=>q._loop?"l:"+q.id+"@"+q._loop:(q._chk?"c:":q._retry?"r:":"")+q.id), trial, trialVote:{}, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, rating:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
+  S = {mode:"set", active:true, set, conceptFirst, steps, legs, dueIds:due.map(q=>q._loop?"l:"+q.id+"@"+q._loop:(q._chk?"c:":q._retry?"r:":"")+q.id), trial, trialVote:{}, i:0, start:Date.now(),act0:actNow(),qStart:Date.now(), items:[], answered:null, why:null, rating:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
   PAD.strokes=[]; PAD.hist=[]; saveProgress();
   view="session"; render(); window.scrollTo({top:0});
   if(legs.length>=2&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>{ if(S&&S.mode==="set"&&S.i===0&&!S.items.length) expStartSheet() },150);
@@ -1164,7 +1183,7 @@ function startReview(n, title, opts){
   const steps=[...qs.map(q=>({kind:"q",phase:dueIds.has(q.id)?t+" · ทบทวนตามรอบ":t,q:shuffleQ(comeback(q,list)),due:dueIds.has(q.id)})),{kind:"finish",phase:"เสร็จ"}];
   const trial=trialsToday(); markExplain(steps, trial);
   S = {mode:"review", set:{id:repair?"repair":"review",subject:"ทบทวน",topic:t}, steps, trial, trialVote:{},
-       active:true, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
+       active:true, i:0, start:Date.now(),act0:actNow(),qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
   view="session"; render(); window.scrollTo({top:0});
 }
 
@@ -1197,7 +1216,7 @@ function startSweep(){
   const t="ย้อนคาถาเก่า";
   const steps=[...qs.map(q=>({kind:"q",phase:t,q:shuffleQ(q)})),{kind:"finish",phase:"เสร็จ"}];
   S = {mode:"review", sweep:true, sweepPlan:{...sp,served:qs.length}, set:{id:"sweep",subject:"ย้อนคาถาเก่า",topic:"ย้อนคาถาเก่า ม.1–2"}, steps, trial:[], trialVote:{},
-       active:true, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
+       active:true, i:0, start:Date.now(),act0:actNow(),qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
   view="session"; render(); window.scrollTo({top:0});
 }
 
@@ -1219,7 +1238,7 @@ function compToday(list){ const t=todayKey(), done=new Set(), today=list.find(a=
   return {done:!!today, rec:today, q:pool[0]||null, left:pool.length, open:ok.size} }
 function startComp(){ if(resumeReview("comp")) return; const c=compToday(mine()); if(!c.q||c.done) return; const t="โจทย์แนวแข่งขันวันนี้";
   S = {mode:"review", comp:true, set:{id:"comp",subject:"แนวแข่งขัน",topic:t}, steps:[{kind:"q",phase:t+" · ลองคิดก่อน ผิดได้ไม่เสียอะไร",q:shuffleQ(c.q)},{kind:"finish",phase:"เสร็จ"}], trial:[], trialVote:{},
-       active:true, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
+       active:true, i:0, start:Date.now(),act0:actNow(),qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
   view="session"; render(); window.scrollTo({top:0}) }
 function startRecall(){
   if(resumeReview("recall")) return;
@@ -1228,7 +1247,7 @@ function startRecall(){
   const t="ทบทวนวันนี้ 3 ข้อ";
   const steps=[...pick.map(q=>({kind:"q",phase:t,q:shuffleQ(comeback(q,list))})),{kind:"finish",phase:"เสร็จ"}];
   S = {mode:"review", recall:true, set:{id:"recall",subject:"ทบทวน",topic:t}, steps, trial:[], trialVote:{},
-       active:true, i:0, start:Date.now(), qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
+       active:true, i:0, start:Date.now(),act0:actNow(),qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
   view="session"; render(); window.scrollTo({top:0});
 }
 
@@ -2169,7 +2188,7 @@ function renderRate(){
     e.target.disabled=true; e.target.textContent="กำลังบันทึก…";
     const items=S.items, scored=items.filter(x=>!x.skipped);
     const rec={...trialRec(),...((S.reflect||"").trim()?{reflect:S.reflect.trim()}:{}),...(S.dueIds&&S.dueIds.length?{dueIds:S.dueIds}:{}),type:S.set.kind==="probe"?"probe":S.set.kind==="mixed"?"mixed":S.set.kind==="passage"?"passage":"set",setId:S.set.id,spell:S.set.spell,subject:S.set.subject,topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
-      durationSec:Math.round((Date.now()-S.start)/1000),conceptSec:S.conceptSec||0,...(S.conceptHelp&&S.conceptHelp.length?{conceptHelp:[...new Set(S.conceptHelp)],...(S.hookPick!=null?{hookPick:S.hookPick}:{})}:S.hookPick!=null?{hookPick:S.hookPick}:{}),...(S.conceptListen?{conceptListen:S.conceptListen}:{}),...(S.readSec?{readSec:S.readSec,readChars:S.readChars}:{}),...(S.listenPassage?{listenPassage:S.listenPassage}:{}),rating:S.rating,memo:document.getElementById("memo").value.trim(),
+      durationSec:sessSec(),conceptSec:S.conceptSec||0,...(S.conceptHelp&&S.conceptHelp.length?{conceptHelp:[...new Set(S.conceptHelp)],...(S.hookPick!=null?{hookPick:S.hookPick}:{})}:S.hookPick!=null?{hookPick:S.hookPick}:{}),...(S.conceptListen?{conceptListen:S.conceptListen}:{}),...(S.readSec?{readSec:S.readSec,readChars:S.readChars}:{}),...(S.listenPassage?{listenPassage:S.listenPassage}:{}),rating:S.rating,memo:document.getElementById("memo").value.trim(),
       correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items)+20,altShown:S.altShown,glossed:S.glossed,confused:S.confused,items};
     await finishWith(rec);
   };
@@ -2182,7 +2201,7 @@ const RV_KEY="fieldnote.inprogress.rv.", RV_KINDS=["sweep","repair","review","re
 function rvKind(){ return S.sweep?"sweep":S.comp?"comp":S.recall?"recall":S.mini?"mini":S.set&&S.set.id==="repair"?"repair":"review" }
 function saveReviewProgress(){
   if(!S.steps||!S.steps.length||!(S.i>0||S.items.length)) return;
-  try{ localStorage.setItem(RV_KEY+rvKind(),JSON.stringify({day:todayKey(),kind:rvKind(),sweep:!!S.sweep,comp:!!S.comp,recall:!!S.recall,mini:!!S.mini,sweepPlan:S.sweepPlan||null,set:S.set,steps:S.steps,trial:S.trial||[],trialVote:S.trialVote||{},i:S.i,el:Date.now()-S.start,items:S.items,confused:S.confused||[],altShown:S.altShown||0,glossed:S.glossed||[]})) }catch(e){ console.warn("saveReviewProgress",e) }
+  try{ localStorage.setItem(RV_KEY+rvKind(),JSON.stringify({day:todayKey(),kind:rvKind(),sweep:!!S.sweep,comp:!!S.comp,recall:!!S.recall,mini:!!S.mini,sweepPlan:S.sweepPlan||null,set:S.set,steps:S.steps,trial:S.trial||[],trialVote:S.trialVote||{},i:S.i,el:sessMs(),items:S.items,confused:S.confused||[],altShown:S.altShown||0,glossed:S.glossed||[]})) }catch(e){ console.warn("saveReviewProgress",e) }
 }
 function clearReviewProgress(k){ try{ localStorage.removeItem(RV_KEY+k) }catch(e){} }
 function pendingReviews(){ const out=[]; RV_KINDS.forEach(k=>{ try{ const p=JSON.parse(localStorage.getItem(RV_KEY+k)||"null"); if(p&&p.day===todayKey()&&p.steps&&p.set) out.push(p); else if(p) clearReviewProgress(k) }catch(e){} }); return out }
@@ -2191,12 +2210,12 @@ function resumeReview(k){
   const p=pendingReviews().find(x=>x.kind===k); if(!p) return false;
   /* the clock restarts from the time already spent, so the hours she was away do not count as study time */
   S={mode:"review",...(p.sweep?{sweep:true,sweepPlan:p.sweepPlan}:{}),...(p.comp?{comp:true}:{}),...(p.recall?{recall:true}:{}),...(p.mini?{mini:true}:{}),set:p.set,steps:p.steps,trial:p.trial,trialVote:p.trialVote,
-     active:true,i:p.i,start:Date.now()-(p.el||0),qStart:Date.now(),items:p.items||[],answered:null,why:null,hints:0,struck:[],glossed:p.glossed||[],askOpen:null,confused:p.confused||[],altShown:p.altShown||0,pick:null,whyText:""};
+     active:true,i:p.i,start:Date.now()-(p.el||0),act0:actNow()-(p.el||0),qStart:Date.now(),items:p.items||[],answered:null,why:null,hints:0,struck:[],glossed:p.glossed||[],askOpen:null,confused:p.confused||[],altShown:p.altShown||0,pick:null,whyText:""};
   view="session"; render(); window.scrollTo({top:0}); return true }
 function saveProgress(){
   if(S&&S.mode==="review"&&S.active) return saveReviewProgress();
   if(!S||S.mode!=="set") return;
-  try{ localStorage.setItem("fieldnote.inprogress",JSON.stringify({setId:S.set.id,conceptFirst:S.conceptFirst,day:todayKey(),i:S.i,start:S.start,items:S.items,confused:S.confused,altShown:S.altShown,conceptSec:S.conceptSec||0,glossed:S.glossed,readSec:S.readSec||0,readChars:S.readChars||0,
+  try{ localStorage.setItem("fieldnote.inprogress",JSON.stringify({setId:S.set.id,conceptFirst:S.conceptFirst,day:todayKey(),i:S.i,start:S.start,el:sessMs(),items:S.items,confused:S.confused,altShown:S.altShown,conceptSec:S.conceptSec||0,glossed:S.glossed,readSec:S.readSec||0,readChars:S.readChars||0,
     perms:S.steps.map(x=>x.q?.perm||null),dueIds:S.dueIds||[],trialVote:S.trialVote||{}})) }catch(e){}
 }
 function clearProgress(){ try{ localStorage.removeItem("fieldnote.inprogress") }catch(e){} }
@@ -2210,6 +2229,8 @@ function resumeSet(){
   if(p.live){ view="session"; render(); return }
   const sv=p.saved; startSet(p.set, sv.conceptFirst, sv.perms, sv.dueIds||[]);
   Object.assign(S,{trialVote:sv.trialVote||{},readSec:sv.readSec||0,readChars:sv.readChars||0,i:sv.i,start:sv.start,items:sv.items||[],confused:sv.confused||[],altShown:sv.altShown||0,conceptSec:sv.conceptSec,glossed:sv.glossed||[]});
+  /* active clock continues from the time already spent, not from the first start (the hours away are not study time) */
+  { const el=Math.max(0,+sv.el||0); S.act0=actNow()-el; S.start=Date.now()-el }
   render();
 }
 
@@ -2223,18 +2244,18 @@ async function finishReview(){
   const items=S.items, scored=items.filter(x=>!x.skipped);
   if(S.sweep){ const sc=items.filter(x=>!x.skipped), c=sc.filter(x=>x.correct).length;
     return finishWith({type:"sweep",setId:"sweep",subject:"ย้อนคาถาเก่า",topic:"ย้อนคาถาเก่า ม.1–2",...(S.sweepPlan&&S.sweepPlan.mins!=null?{sweepBase:S.sweepPlan.base,sweepSize:S.sweepPlan.size,sweepServed:S.sweepPlan.served,minsBefore:S.sweepPlan.mins}:{}),startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
-      durationSec:Math.round((Date.now()-S.start)/1000),correct:c,total:sc.length,xp:itemXp(items),confused:S.confused,items}) }
+      durationSec:sessSec(),correct:c,total:sc.length,xp:itemXp(items),confused:S.confused,items}) }
   if(S.comp){ const sc=items.filter(x=>!x.skipped), c=sc.filter(x=>x.correct).length, read=sc.filter(x=>!x.exTotal||x.exSteps>=x.exTotal).length;
     return finishWith({type:"comp",setId:"comp",subject:"แนวแข่งขัน",topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
-      durationSec:Math.round((Date.now()-S.start)/1000),correct:c,total:sc.length,xp:sc.length?(read?10:4)+c*5:0,confused:S.confused,items}) }
+      durationSec:sessSec(),correct:c,total:sc.length,xp:sc.length?(read?10:4)+c*5:0,confused:S.confused,items}) }
   if(S.mini){ const sc=items.filter(x=>!x.skipped), c=sc.filter(x=>x.correct).length;
     return finishWith({type:"mini",setId:"mini",subject:"ชุดขั้นต่ำ",topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
-      durationSec:Math.round((Date.now()-S.start)/1000),correct:c,total:sc.length,xp:itemXp(items)+10,confused:S.confused,items}) }
+      durationSec:sessSec(),correct:c,total:sc.length,xp:itemXp(items)+10,confused:S.confused,items}) }
   if(S.recall){ const sc=items.filter(x=>!x.skipped), c=sc.filter(x=>x.correct).length;
     return finishWith({type:"recall",setId:"recall",subject:"ทบทวน",topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
-      durationSec:Math.round((Date.now()-S.start)/1000),correct:c,total:sc.length,xp:c*5+5,confused:S.confused,items}) }
+      durationSec:sessSec(),correct:c,total:sc.length,xp:c*5+5,confused:S.confused,items}) }
   await finishWith({...trialRec(),type:"review",setId:S.set.id,subject:"ทบทวน",topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
-    durationSec:Math.round((Date.now()-S.start)/1000),correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items),confused:S.confused,items});
+    durationSec:sessSec(),correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items),confused:S.confused,items});
 }
 async function finishWith(rec){
   if(S&&rec.type!=="vocab"){ const rk=S.mode==="review"?rvKind():null; S.active=false; if(S.mode==="set") clearProgress(); if(rk) clearReviewProgress(rk) }
@@ -3368,7 +3389,7 @@ function startVocab(){
   const base=isWeekend()?READINGS[Math.floor(todayKey()/DAY)%READINGS.length]:null;
   const read=base?{...base,qs:base.qs.map((q,qi)=>{const sq=shuffleQ(q); return {...sq,qth:base.th.qs[qi].q,optsTh:sq.perm.map(k=>base.th.qs[qi].opts[k])}})}:null;
   const card=cardForToday([...fresh,...due]), probe=probeDue(mine());
-  V={active:true,fresh,quiz,read,card,probe,pi:0,pres:[],phase:card&&!phonSeen()[card.id]?"card":fresh.length?"learn":"quiz",li:0,qi:0,ri:0,ans:null,results:[],rres:[],heard:new Set(),showTh:false,start:Date.now()};
+  V={active:true,fresh,quiz,read,card,probe,pi:0,pres:[],phase:card&&!phonSeen()[card.id]?"card":fresh.length?"learn":"quiz",li:0,qi:0,ri:0,ans:null,results:[],rres:[],heard:new Set(),showTh:false,start:Date.now(),act0:actNow()};
   view="vocab"; render(); window.scrollTo({top:0});
 }
 const sayBtn=(id,label)=>`<button class="btn ghost" id="${id}" type="button">🔊 ${label}</button>`;
@@ -3522,7 +3543,7 @@ async function finishVocab(){
   const c=V.results.filter(r=>r.correct).length, rc=V.rres.filter(Boolean).length;
   const sp=V.results.filter(r=>r.kind==="spell");
   await finishWith({type:"vocab",setId:"vocab",subject:"อังกฤษ",topic:"คำศัพท์วันนี้",startedAt:new Date(V.start).toISOString(),endedAt:new Date().toISOString(),
-    durationSec:Math.round((Date.now()-V.start)/1000),correct:c,total:V.results.length,newWords:V.fresh.length,
+    durationSec:Math.round((actNow()-V.act0)/1000),correct:c,total:V.results.length,newWords:V.fresh.length,
     spelling:{correct:sp.filter(r=>r.correct).length,total:sp.length},
     reading:V.read?{correct:rc,total:V.rres.length}:null,xp:c*5+(V.results.length-c)*2+rc*5+(V.rres.length-rc)*2+V.pres.length*2,
     ...(V.card?{phonCard:V.card.id}:{}),
@@ -4829,7 +4850,7 @@ function parentDash(list){
   if(!list.length) return "";
   const p=progressOf(list), t=todayKey(), days=Array.from({length:14},(_,i)=>t-(13-i)*DAY);
   const byDay=days.map(d=>{ const recs=list.filter(a=>dayKey(a.endedAt)===d), info=dayInfo(d,p.modes);
-    const g=DAY_GROUPS.map(([k,,,types])=>Math.round(recs.filter(a=>types.includes(a.type)).reduce((s,a)=>s+Math.min(a.durationSec||0,5400),0)/60));
+    const g=DAY_GROUPS.map(([k,,,types])=>Math.round(recs.filter(a=>types.includes(a.type)).reduce((s,a)=>s+Math.min(recSec(a),5400),0)/60));
     return {d,g,tot:g.reduce((a,b)=>a+b,0),met:p.met.has(d),target:info.kind==="school"?[45,60]:[75,90],school:info.kind==="school"} });
   const last7=byDay.slice(7), prev7=byDay.slice(0,7), active7=last7.filter(x=>x.tot>0);
   const avgMin=active7.length?Math.round(active7.reduce((s,x)=>s+x.tot,0)/active7.length):0;
@@ -5088,7 +5109,7 @@ function loopChecks(list,n,avoid){ const t=todayKey(), out=[], av=new Set(avoid|
    last two steps blank); a blank step is picked from options when the card gives them, otherwise she thinks first and self-checks ---------- */
 let LP=null;
 function lpSteps(w){ return (w.steps||[]).map(s=>typeof s==="string"?{t:s}:s) }
-function startLoop(ep,act){ const card=RETEACH[ep.sub]||null; LP={sub:ep.sub,act,card,stage:act==="guide"?"guide":"card",ex:0,rev:0,show:false,order:null,res:[],start:Date.now(),text:"",
+function startLoop(ep,act){ const card=RETEACH[ep.sub]||null; LP={sub:ep.sub,act,card,stage:act==="guide"?"guide":"card",ex:0,rev:0,show:false,order:null,res:[],start:Date.now(),act0:actNow(),text:"",
     K:card?newDeck(deckOf("reteach",card),true):null,miss:(ep.misses||[]).map(m=>m.qid),missDays:new Set((ep.misses||[]).map(m=>m.d)).size,T:null}; view="loop"; render(); window.scrollTo({top:0}) }
 function renderLoop(){ if(!LP){ view="home"; return render() } const c=LP.card, nm=subName(LP.sub), back=`<button class="btn ghost" id="lp-home" style="border:0;padding-left:0">← กลับหน้าแรก</button>`;
   const go=(f)=>{ f(); const y=0; renderLoop(); window.scrollTo({top:y}) };
@@ -5115,7 +5136,7 @@ function renderLoop(){ if(!LP){ view="home"; return render() } const c=LP.card, 
     { const sb=document.getElementById("lp-show"); if(sb) sb.onclick=()=>go(()=>{ LP.show=true }) }
     $v.querySelectorAll("[data-lps]").forEach(b=>b.onclick=()=>go(()=>{ LP.res.push({ex:LP.ex,step:cur,ok:b.dataset.lps==="1",self:true}); LP.rev++; LP.show=false }));
     { const nb=document.getElementById("lp-next"); if(nb) nb.onclick=async()=>{ if(LP.ex+1<W.length) return go(()=>{ LP.ex++; LP.rev=0; LP.show=false; LP.order=null });
-      nb.disabled=true; const now=new Date().toISOString(), dur=Math.round((Date.now()-LP.start)/1000), K=LP.K;
+      nb.disabled=true; const now=new Date().toISOString(), dur=Math.round((actNow()-(LP.act0!=null?LP.act0:actNow()))/1000), K=LP.K;
       const floorSec=readFloor((K?plainLen(K.d.all):0)+workedChars(c)), fast=!!(K&&K.fast)||tooFast(dur,floorSec); LP.fast=fast;
       await saveAttempt({type:"loop",act:"reteach",sub:LP.sub,setId:"loop-"+LP.sub,topic:"สอนใหม่อีกแบบ: "+nm,startedAt:new Date(LP.start).toISOString(),endedAt:now,durationSec:dur,
         cardSec:K?K.sec:null,cardFloor:K?K.floor:null,floorSec,fast,
@@ -5274,10 +5295,10 @@ function libGuides(sub){ return mine().filter(a=>a.type==="loop"&&a.act==="guide
 function libMissed(list){ const m={}; list.filter(a=>isLesson(a)||a.type==="recall").forEach(a=>(a.items||[]).forEach(x=>{ if(x.correct===false&&!x.skipped&&!x.notTaught&&!x.timeout){ const s=subOf(x.qid); if(s&&libSource(s)) m[s]=(m[s]||0)+1 } }));
   return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([s,k])=>({s,k})) }
 function openLib(sub,from,ret){ LB={mode:"list",sub:null,from:from||null,ret:ret||(from?"session":view),fromList:!sub}; if(sub) libStart(sub); view="lib"; render(); window.scrollTo({top:0}) }
-function libStart(sub){ const so=libSource(sub); Object.assign(LB,{sub,so,mode:so?"deck":"none",saved:false,xp:0,start:Date.now(),T:null,
+function libStart(sub){ const so=libSource(sub); Object.assign(LB,{sub,so,mode:so?"deck":"none",saved:false,xp:0,start:Date.now(),act0:actNow(),T:null,
   K:so?newDeck(deckOf(so.src,so.c,so.src==="lib"?so.c.title:subName(sub)),true):null,
   tq:so?tryPick(sub,2,LB.from?[LB.from.qid]:[]):[]}) }
-function libSave(){ if(!LB||LB.saved||!LB.so) return; const K=LB.K, sec=Math.round((Date.now()-LB.start)/1000), read=K.i>=K.d.screens.length;
+function libSave(){ if(!LB||LB.saved||!LB.so) return; const K=LB.K, sec=Math.round((actNow()-(LB.act0!=null?LB.act0:actNow()))/1000), read=K.i>=K.d.screens.length;
   if(!read&&sec<8&&!K.taps.length) return; LB.saved=true;
   const tries=LB.T?LB.T.res:[], first=!mine().some(a=>a.type==="lib"&&a.sub===LB.sub&&dayKey(a.endedAt)===todayKey()&&!a.fast), fast=read&&K.fast===true; LB.fast=fast;
   LB.xp=first&&read?(fast?0:10)+tryScore(tries):0;
@@ -5347,7 +5368,7 @@ function miniQuestions(list){ const out=[], ids=new Set(), add=q=>{ if(q&&!ids.h
   return out }
 function startMini(){ if(resumeReview("mini")) return; const list=mine(), qs=miniQuestions(list); if(!qs.length) return;
   const steps=[...qs.map(q=>({kind:"q",phase:q._loop?"เช็กเรื่องที่สอนใหม่อีกแบบ":q._chk?"ด่านตรวจความจำ":q._retry?"ลองใหม่ ข้อที่เคยพลาด":"ชุดขั้นต่ำ",q:shuffleQ(q),...(q._loop?{loop:q._loop}:{}),...(q._chk?{chk:true}:{}),...(q._retry?{retry:true}:{})})),{kind:"finish",phase:"เสร็จ"}];
-  S={mode:"review",mini:true,set:{id:"mini",subject:"ชุดขั้นต่ำ",topic:"ชุดขั้นต่ำ 15 นาที"},steps,trial:[],trialVote:{},active:true,i:0,start:Date.now(),qStart:Date.now(),items:[],answered:null,why:null,hints:0,struck:[],glossed:[],askOpen:null,confused:[],altShown:0,pick:null,whyText:""};
+  S={mode:"review",mini:true,set:{id:"mini",subject:"ชุดขั้นต่ำ",topic:"ชุดขั้นต่ำ 15 นาที"},steps,trial:[],trialVote:{},active:true,i:0,start:Date.now(),act0:actNow(),qStart:Date.now(),items:[],answered:null,why:null,hints:0,struck:[],glossed:[],askOpen:null,confused:[],altShown:0,pick:null,whyText:""};
   view="session"; render(); window.scrollTo({top:0}) }
 
 /* ---------- checkpoint mode (approved 17 Nov): timed, no hints, no explanations until the end, results to the parent page.
@@ -5553,7 +5574,7 @@ function renderParent(){
   const conf = all.flatMap(a=>(a.confused||[]).map(c=>({...c,date:a.endedAt})));
   const hasEx = attempts.some(a=>a.example||a.test); const nTest = attempts.filter(a=>a.test).length + fbList.filter(f=>f.test).length;
   const items = all.flatMap(a=>a.items||[]).filter(x=>!x.skipped);
-  const mins = Math.round(all.reduce((s,a)=>s+(a.durationSec||0),0)/60);
+  const mins = Math.round(all.reduce((s,a)=>s+recSec(a),0)/60);
   const acc = items.length? Math.round(items.filter(x=>x.correct).length/items.length*100):0;
   const lv = [1,2,3].map(l=>{const it=items.filter(x=>x.level===l);return {l,n:it.length,p:it.length?Math.round(it.filter(x=>x.correct).length/it.length*100):0}});
   const topics = {}; items.forEach(x=>{(topics[x.topic]??={n:0,c:0}).n++; if(x.correct) topics[x.topic].c++});
@@ -5720,7 +5741,7 @@ function renderParent(){
   </section>
   <section class="card"><h3>บันทึกการฝึก</h3><div class="log">
     ${all.slice(0,10).map(a=>`<div class="logi"><div class="row" style="justify-content:space-between"><b>${esc(a.topic)}</b>${a.example?`<span class="example">ตัวอย่าง</span>`:a.test?`<span class="example">ทดสอบ</span>`:""}</div>
-      <span class="small muted">${new Date(a.endedAt).toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})} · ${Math.round(a.durationSec/60)} นาที · ถูก ${a.correct}/${a.total} · รู้สึก${a.rating||"-"}</span>
+      <span class="small muted">${new Date(a.endedAt).toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"})} · ${Math.round(recSec(a)/60)} นาที · ถูก ${a.correct}/${a.total} · รู้สึก${a.rating||"-"}</span>
       ${a.memo?`<span class="small">“${esc(a.memo)}”</span>`:""}</div>`).join("")}
   </div></section>
   <section class="card"><h3>ข้อความที่ลูกเขียนถึง Claude</h3>
@@ -5803,9 +5824,9 @@ async function setupAsk(sum){ const skips=sum.skips||[], conf=sum.conf||[];
     const rLv=[1,2,3].map(l=>{const it=rItems.filter(x=>x.level===l);return {level:l,n:it.length,correct:it.filter(x=>x.correct).length}});
     const rErr={}; rItems.filter(x=>!x.correct).forEach(x=>(x.errorTypes&&x.errorTypes.length?x.errorTypes:[x.errorType||"unspecified"]).forEach(k=>{rErr[k]=(rErr[k]||0)+1}));
     const data={skips:rk.map(k=>({date:k.endedAt,reason:k.reason,memo:k.memo})),confused:rs.flatMap(a=>(a.confused||[]).map(c=>({...c,date:a.endedAt}))),notes:fbList.filter(f=>!f.test).slice(0,10).map(f=>f.text),
-      sessions:rs.map(a=>({topic:a.topic,date:a.endedAt,minutes:Math.round(a.durationSec/60),correct:a.correct,total:a.total,rating:a.rating,memo:a.memo,
+      sessions:rs.map(a=>({topic:a.topic,date:a.endedAt,minutes:Math.round(recSec(a)/60),correct:a.correct,total:a.total,rating:a.rating,memo:a.memo,
       wrong:(a.items||[]).filter(x=>x.correct===false).map(x=>({topic:x.topic,level:x.level,error:x.errorType,hints:x.hints}))})),accuracyByLevel:rLv,errors:rErr,streak:{days:rp.streak,freezeLeft:rp.freeze,goalDays:rp.goalDays},vocab:{sessions:rv.length,correct:rv.reduce((s,a)=>s+a.correct,0),total:rv.reduce((s,a)=>s+a.total,0)}};
-    const _unused={skips:skips.map(k=>({date:k.endedAt,reason:k.reason,memo:k.memo})),confused:conf,sessions:sum.all.map(a=>({topic:a.topic,date:a.endedAt,minutes:Math.round(a.durationSec/60),correct:a.correct,total:a.total,rating:a.rating,memo:a.memo,example:!!a.example,
+    const _unused={skips:skips.map(k=>({date:k.endedAt,reason:k.reason,memo:k.memo})),confused:conf,sessions:sum.all.map(a=>({topic:a.topic,date:a.endedAt,minutes:Math.round(recSec(a)/60),correct:a.correct,total:a.total,rating:a.rating,memo:a.memo,example:!!a.example,
       wrong:(a.items||[]).filter(x=>x.correct===false).map(x=>({topic:x.topic,level:x.level,error:x.errorType}))})),accuracyByLevel:sum.lv,errors:sum.errs};
     try{
       const {text}=await sample(`คุณเป็นโค้ชการเรียนที่ช่วยพ่อติดตามลูกสาว ม.2 ที่เตรียมสอบเข้า ม.4 แนวโรงเรียนวิทยาศาสตร์ เขียนภาษาไทย สั้น ชัด ไม่เกิน 180 คำ แบ่ง 3 หัวข้อ: "ทำได้ดี", "ต้องระวัง", "พ่อควรทำอะไรสัปดาห์นี้" (2–3 ข้อ ทำได้จริง น้ำเสียงให้กำลังใจ ไม่กดดันลูก) ถ้าข้อมูลน้อย ให้บอกตรงๆ ว่ายังสรุปไม่ได้มาก ใช้เฉพาะข้อมูลที่ให้มา ซึ่งเป็นข้อมูลจริงทั้งหมด\n\nข้อมูล:\n${JSON.stringify(data)}`,

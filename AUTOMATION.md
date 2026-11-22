@@ -266,3 +266,6 @@ and that the content followed the calendar only.
   If something needs him, also add a dated item to ①. Do not reorder or edit ② (only chats with him change the queue),
   except to add a row for Opus work you left for him (e.g. a reteach card a new misconception waits for).
 - If the Docs tools are not available in the run, say so in the evening report instead of skipping silently.
+
+
+Time note (22 Nov 2026): minutes = `actSec` when present, else an estimate from answered items (see CLAUDE.md "Study time = active time"); records before 22 Nov are wall-clock and may be inflated.
