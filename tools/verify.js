@@ -217,6 +217,8 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     for(let i=0;i<140;i++){
       if(await pg.locator("#sheet").count()){ await pg.evaluate(()=>closeSheet()); continue }   /* e.g. the level-1 gate's note (23 Nov) */
       if(await pg.locator("[data-hk]").count()){ await pg.locator("[data-hk]").first().click(); continue }
+      if(await pg.locator("[data-tu]").count()&&!await pg.locator("[data-tu].picked").count()){ await pg.click('[data-tu="ok"]'); continue }   /* spoken-style card rating (24 Nov) */
+      if(await pg.locator("[data-ws]").count()){ await pg.locator("[data-ws]").first().click(); continue }   /* worksheet page (24 Nov) */
       if(await pg.locator("[data-pred]").count()){ await pg.click(`[data-pred="0"]`); continue }   /* the right prediction is written first */
       if(await pg.locator("#cnext").count()){ await pg.click("#cnext"); continue }
       if(await pg.locator("#save").count()){ if(await pg.locator('[data-r="พอดี"]').count()) await pg.click('[data-r="พอดี"]'); await pg.click("#save"); break }
@@ -527,6 +529,7 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     for(let i=0;i<40&&!got;i++){
       if(await pg.locator("[data-ckown]").count()){ got=true; break }
       if(await pg.locator("[data-hk]").count()){ await pg.locator("[data-hk]").first().click(); continue }
+      if(await pg.locator("[data-ws]").count()){ await pg.locator("[data-ws]").first().click(); continue }
       if(await pg.locator("[data-pred]").count()){ await pg.click('[data-pred="0"]'); continue }
       if(await pg.locator("#cnext").count()){ await pg.click("#cnext"); continue }
       if(await pg.locator("#exnext").count()){ await pg.click("#exnext"); continue }
@@ -546,6 +549,48 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     if(it.checkOk!==undefined) return "an own reason must not be scored as a wrong or right option (checkOk set)";
     await reset() });
 
+  /* 24 Nov 2026 (father, after her feedback): spoken-style card with tap-to-mark and rating, and the worksheet page */
+  await T("spoken-style card: tap a confusing line, rate, compare with the old card (24 Nov)",async()=>{ await noToday(); await reset();
+    const id=await pg.evaluate(()=>{ const s=SETS.find(s=>s.kind==="lesson"&&s.concept&&s.concept.talk&&s.concept.talk.length); if(!s) return null; startSet(s,true); return s.id });
+    if(!id) return "no lesson with concept.talk";
+    for(let k=0;k<30&&!await pg.locator("[data-tl]").count();k++){ if(await pg.locator("#sheet").count()){ await pg.evaluate(()=>closeSheet()); continue } if(await pg.locator("[data-hk]").count()){ await pg.locator("[data-hk]").first().click(); continue } if(await pg.locator("#cnext").count()) await pg.click("#cnext"); else break }
+    if(!await pg.locator("[data-tl]").count()) return "the talk screens did not show tappable lines";
+    await pg.locator("[data-tl]").nth(1).click(); if(!await pg.locator(".tmark").count()) return "tapping a line does not mark it";
+    await pg.locator("[data-tl]").nth(1).click(); if(await pg.locator(".tmark").count()) return "tapping again does not unmark it";
+    await pg.locator("[data-tl]").nth(0).click();
+    for(let k=0;k<20&&!await pg.locator("[data-tu]").count();k++) await pg.click("#cnext");
+    if(!await pg.locator("#cnext[disabled]").count()) return "the rating screen must wait for a rating";
+    await pg.click('[data-tu="part"]'); await pg.click("#topen"); if(!await pg.locator("#sheet li").count()) return "the old card does not open"; await pg.evaluate(()=>{ closeSheet(); renderTalk() });
+    await pg.click('[data-tc="new"]'); await pg.fill("#tnote","ตอนที่ 2 งง"); await pg.click("#cnext");
+    if(!await pg.locator("#next").count()) return "no last screen with formulas";
+    const T2=await pg.evaluate(()=>S.talk);
+    if(!(T2.marks.length===1&&T2.marks[0].s===0&&T2.marks[0].l===0&&T2.u==="part"&&T2.cmp==="new"&&T2.oldOpen===1&&T2.note==="ตอนที่ 2 งง")) return "talk record wrong: "+JSON.stringify(T2);
+    const r=await pg.evaluate(()=>{ saveProgress(); const t=JSON.stringify(S.talk); S=null; resumeSet(); return JSON.stringify(S.talk)===t });
+    if(!r) return "resume lost the talk record";
+    await pg.click("#next"); for(let k=0;k<12&&!await pg.evaluate(()=>canPeek(S.steps[S.i]));k++) await pg.evaluate(()=>{ S.answered={at:Date.now()}; advance() });
+    await pg.evaluate(()=>{ S.wsOpen=false; S.wsSeen=true; render() });
+    if(await pg.locator("#peek").count()){ await pg.click("#peek"); if(!await pg.locator("#sheet .talk").count()) return "📖 peek must show the spoken-style card"; await pg.evaluate(()=>closeSheet()) }
+  });
+  await T("worksheet page: choose any item, skip and come back, level 2 locked until the gate (24 Nov)",async()=>{ await noToday(); await reset();
+    const id=await pg.evaluate(()=>{ const s=SETS.find(s=>s.kind==="lesson"&&gateEligible(s)&&s.practice.some(q=>q.level===2)); if(!s) return null; startSet(s,false); return s.id });
+    if(!id) return "no gate-eligible lesson";
+    await pg.evaluate(()=>{ const i=S.steps.findIndex(x=>x.kind==="q"&&x.phase==="ฝึกทำ"); S.i=i; view="session"; render() });
+    if(!await pg.locator("[data-ws]").count()) return "the worksheet page does not open when practice starts";
+    const info=await pg.evaluate(()=>({open:[...document.querySelectorAll("[data-ws]")].map(b=>+b.dataset.ws),lv:[...document.querySelectorAll("[data-ws]")].map(b=>S.steps[+b.dataset.ws].q.level||1)}));
+    if(info.lv.some(l=>l>1)) return "level 2 must be locked before the gate: "+info.lv.join("");
+    const j=info.open[2], want=await pg.evaluate(j=>S.steps[j].q.id,j);
+    await pg.click(`[data-ws="${j}"]`);
+    if(await pg.evaluate(()=>S.steps[S.i].q.id)!==want) return "picking an item did not open that item";
+    if(!await pg.locator("#wsopen").count()) return "no skip/whole-page button on a practice item";
+    await pg.click("#wsopen"); if(!await pg.locator("[data-ws]").count()) return "skip did not return to the page";
+    const sk=await pg.evaluate(()=>S.ws); if(!(sk&&sk.skips.includes(want))) return "the skip was not recorded";
+    if(!await pg.locator(`[data-ws]`).evaluateAll((bs,w)=>bs.some(b=>S.steps[+b.dataset.ws].q.id===w),want)) return "a skipped item must stay on the page";
+    const j2=info.open[4]; await pg.click(`[data-ws="${j2}"]`);
+    const before=await pg.evaluate(()=>({ids:S.steps.map(x=>x.q?x.q.id:x.kind).join(),opts:S.steps.map(x=>x.q?JSON.stringify(x.q.opts||null):"").join("|"),i:S.i}));
+    const after=await pg.evaluate(()=>{ saveProgress(); S=null; resumeSet(); return {ids:S.steps.map(x=>x.q?x.q.id:x.kind).join(),opts:S.steps.map(x=>x.q?JSON.stringify(x.q.opts||null):"").join("|"),i:S.i} });
+    if(after.ids!==before.ids||after.i!==before.i) return "resume lost the worksheet order";
+    if(after.opts!==before.opts) return "resume changed the option order after a worksheet pick";
+  });
   /* 23 Nov 2026 (queue 2, father agreed A+B): level-1 gate, day-1 level-2 quota, carried items, 📖 peek */
   await T("level-1 gate, carried items and the 📖 peek button (23 Nov)",async()=>{ await noToday(); await reset();
     const pick=await pg.evaluate(()=>{ const ok=SETS.filter(s=>s.kind==="lesson"&&s.concept&&s.concept.points&&s.practice.filter(q=>(q.level||1)===1).length===6&&s.practice.some(q=>q.level===3));
@@ -576,7 +621,7 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
       return {same:S.i===before.i&&S.steps.map(x=>!!x.gated).join()===before.gated&&JSON.stringify(S.gate)===before.gate} });
     if(!res.same) return "resume lost the gate's trimming";
     /* 📖 peek: on the lesson's own practice item, opens the card, is recorded on the item; never on warm-up steps */
-    await pg.evaluate(()=>{ S.answered=null; S.pick=null; view="session"; render() });
+    await pg.evaluate(()=>{ S.answered=null; S.pick=null; S.wsSeen=true; S.wsOpen=false; view="session"; render() });
     if(!await pg.locator("#peek").count()) return "no 📖 button on a lesson practice item";
     await pg.click("#peek"); if(!await pg.locator("#sheet .formula, #sheet li").count()) return "the peek sheet does not show the lesson card";
     await pg.click('#sheet [data-sh="0"]');

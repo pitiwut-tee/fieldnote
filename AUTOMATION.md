@@ -276,3 +276,14 @@ only when the lesson is served again (spaced) or in sweeps/checkpoints. Do not d
 Order of work from 23 Nov: the lessons in `lessonQueue` that will be served soonest and have < 6 level-1 items (as of 22 Nov, in queue order:
 sci-separation-4 (2), math-congruence-2 (2), sci-solution-3 (4), math-stats-5 (3), sci-solution-4 (3), math-stats-6 (3), sci-separation-2 (3),
 math-georeason-1 (2), sci-solution-5 (3), math-parallel-2 (2)). Each extended lesson still needs the blind check.
+
+Spoken-style cards and the worksheet page (father agreed 24 Nov, after her feedback that cards read "like AI", have no pictures, and
+that a person explaining aloud is clearer; CLAUDE.md "Student feedback 23 Nov"):
+- **Every run, before other writing:** the next **3** lessons to be served must have `concept.talk` (rules in docs/writing-content.md
+  "Spoken-style cards"). Done on 24 Nov: math-congruence-1, sci-separation-4. Then math-congruence-2, sci-solution-3, math-stats-5, ...
+  in `lessonQueue` order. A talk card with a science or "imagine a shape" idea needs a figure (render it and look at it).
+- **Read the feedback every run** (`talk` in lesson records: `u` ok/part/lost, `cmp` new/same/old, `marks` = sentences she tapped as
+  confusing, `note`): rewrite every tapped sentence in that lesson's `talk` (and the same pattern in the next talk cards you write),
+  and report in ③ one line: the rating, the comparison, how many sentences tapped, and what you changed. If she rates "ยังงง" or picks
+  "แบบเดิม" twice in a row, tell the father in ③ (`พ่อควรทำ`: ask her what was hard) instead of guessing.
+- Worksheet page (`ws` in lesson records: `opens`, `skips`): note in ③ when she skips the same kind of item often; it is a signal, not a fault.

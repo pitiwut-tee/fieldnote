@@ -320,3 +320,29 @@ Lessons written 4–12 Nov lack `hook`/`more` and open with a formula. Recipe (k
 - Since 20 Nov a retrofitted lesson also gets ≥ 12 practice items (13–14 so far), `parts` on every new level-3 item, and about one
   "which statements are correct" item (ก ข ค) per lesson. Option sets for a predict must ask about one unambiguous quantity: the
   blind check on 20 Nov caught "more or less gas comes out" (out of the bottle vs left dissolved); ask what the water can hold instead.
+
+## Spoken-style cards (`concept.talk`, father agreed 24 Nov 2026)
+
+Why: the student said the cards "feel like AI" and have no pictures, and that she understands when a person explains aloud.
+Measured 23 Nov: card points ran 134 characters on median with 3–5 facts each, 4 different analogies per card, almost no science figures.
+A `talk` card replaces the point-by-point card in the lesson (the old `points` stay: the comparison button, the library and
+the loop still use them). Shape: `"talk":[{"lines":["short sentence", ...], "fig": {...optional geo/svg...}}, ...]`, 4–7 screens.
+
+Rules (check each screen against all of them):
+1. **Write it the way a parent explains aloud to a child at the table.** Read it aloud: if you would say it differently, rewrite it.
+   Talk to her ("ลองนึกถึง…", "ทีนี้…", "แล้ว…ล่ะ?"), never textbook register. No "·"-joined lists of facts.
+2. **One idea per screen, one fact per line.** A line is one short sentence (aim ≤ 60 characters, never above ~110). 4–6 lines a screen.
+3. **Example or picture before the rule.** Start from something she can see or do (a glass of hot water, sticks of fixed length),
+   then name it ("วิธีนี้เรียกว่า…"). The technical term comes after the idea, once, in brackets if needed.
+4. **One analogy per idea, not five.** Keep the same picture across screens when you can.
+5. **A figure whenever she must imagine something** (apparatus, shapes, angle pairs, graphs, before/after). Thai labels, large text
+   (≥ 12 px in a 360-wide viewBox), every figure has `desc`; render and look at it; never copy a book figure.
+6. Say why ("ทำไมใช้ได้?") in one line where the reason is short; leave long derivations to `more`/library.
+7. Numbers in an example must not be the numbers of a practice item (do not give away an answer).
+8. Facts must match the lesson's `points` and formulas exactly (same conditions, same thresholds); the talk card is a rewrite, not new content.
+9. When she taps a sentence as confusing (record `talk.marks`), rewrite that sentence the next run; keep a short note in the run report.
+Example (crystallisation, before → after): "การตกผลึก: เตรียมสารละลายอิ่มตัวที่อุณหภูมิสูง แล้วปล่อยให้เย็นลง ตัวละลายส่วนที่เกินจะตกผลึกออกมา …"
+→ "ลองนึกถึงน้ำร้อนหนึ่งแก้ว / เราเติมน้ำตาลไปเรื่อยๆ จนละลายไม่ไหวแล้ว (สารละลายอิ่มตัว) / ทีนี้ปล่อยให้แก้วเย็นลง / น้ำเย็นรับน้ำตาลได้น้อยกว่าน้ำร้อน /
+น้ำตาลส่วนที่ "ล้น" เลยต้องออกมาเป็นเม็ดแข็งๆ นี่แหละคือผลึก" + a before/after figure.
+In the app (`renderTalk`): hook first, then one screen per tap, every line tappable to mark "งง", then a rating screen (เข้าใจ /
+เข้าใจบางส่วน / ยังงง, a button to open the old card and say which is easier, an optional note), then formulas and vocab. 📖 peek shows the talk card.

@@ -92,7 +92,7 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .celeicon{font-size:3.4rem;line-height:1}
 .sheetcard{text-align:left;max-height:86vh;overflow:auto;max-width:440px}.sheetcard.wide{max-width:560px}.sheetcard h2,.sheetcard .celeicon{text-align:center}
 .sheetx{position:absolute;top:8px;right:10px;border:0;background:transparent;font-size:1.2rem;color:var(--ink);cursor:pointer;padding:6px}
-.sheetbody p{line-height:1.7}.sheetact{justify-content:center;gap:8px;flex-wrap:wrap}
+.wslist{display:flex;flex-direction:column;gap:8px;margin:10px 0}.wsitem{display:flex;gap:10px;align-items:flex-start;text-align:left;font:inherit;color:inherit;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}.wsitem .wsno{font-weight:700;white-space:nowrap;min-width:3.2em}.wsitem .wsbody{display:flex;flex-direction:column;gap:2px}.wsitem.wsdone{opacity:.6;cursor:default}.wsitem.wslock{opacity:.45;cursor:default}.wsitem:not([disabled]):hover{border-color:var(--accent)}.talk .tline{font-size:1.12rem;line-height:1.8;margin:.45em 0;padding:2px 6px;border-radius:6px;cursor:pointer}.talk .tmark{background:#fff2b3}.sheetbody p{line-height:1.7}.sheetact{justify-content:center;gap:8px;flex-wrap:wrap}
 .factread{font-size:1.08rem}.factbig{display:inline-block;font-size:4.2rem;line-height:1}
 .sheetbody textarea{width:100%;box-sizing:border-box;font:inherit;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)}
 .studiolist{display:flex;flex-direction:column;gap:8px}.studiocard{display:flex;gap:10px;align-items:center;text-align:left;padding:10px;border-radius:14px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;cursor:pointer}
@@ -1119,6 +1119,7 @@ function gateApply(){ const g=S.gate; if(!g||g.done) return null;
     if(o.st.optional&&lv<3) return;
     o.st.gated=true; if(o.st.explain) hadExplain=true; deferred.push(o.st.q.id) });
   if(hadExplain&&kept.length){ const k=kept[kept.length-1]; k.explain=true; k.explain1=true }
+  S.wsOpen=true;
   Object.assign(g,{done:true,passed:pass,n1:its.length,ok1:its.filter(gateOk).length,why:pass?"pass":its.length>=GATE.cap?"cap":"out",deferred});
   const n2=kept.length; if(!n2&&!deferred.length) return null;
   return ()=>sheet({icon:pass?"🌱":"🧭",title:pass?"ขั้นพื้นฐานแน่นแล้ว!":"ฝึกขั้นพื้นฐานครบชุดแล้ว",
@@ -1157,8 +1158,9 @@ function startSet(set, conceptFirst, perms, dueIds){
     ...(set.challenge?[{kind:"q",phase:"ข้อท้าทาย (ไม่บังคับ)",q:fillize(set.challenge),optional:true}]:[]),
     {kind:"rate",phase:"ปิดท้าย"}
   ]).map((st,k)=>st.q?{...st,q:shuffleQ(st.q,perms&&perms[k])}:st);   // the right answer is not always the first choice
+  { let n=0; steps.forEach((st,k)=>{ st._k=k; if(st.kind==="q"&&st.phase==="ฝึกทำ"&&!st.optional) st._n=++n }) }
   const trial=trialsToday(); markExplain(steps, trial, set.kind); const legs=expLegs(steps,set);
-  S = {mode:"set", active:true, set, conceptFirst, steps, legs, dueIds:due.map(q=>q._loop?"l:"+q.id+"@"+q._loop:(q._carry?"g:":q._chk?"c:":q._retry?"r:":"")+q.id), gate:gateOn?{on:true,done:false}:null, peeks:0, trial, trialVote:{}, i:0, start:Date.now(),act0:actNow(),qStart:Date.now(), items:[], answered:null, why:null, rating:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
+  S = {mode:"set", active:true, set, conceptFirst, steps, legs, dueIds:due.map(q=>q._loop?"l:"+q.id+"@"+q._loop:(q._carry?"g:":q._chk?"c:":q._retry?"r:":"")+q.id), gate:gateOn?{on:true,done:false}:null, peeks:0, ws:null, wsSeen:false, wsOpen:false, trial, trialVote:{}, i:0, start:Date.now(),act0:actNow(),qStart:Date.now(), items:[], answered:null, why:null, rating:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
   PAD.strokes=[]; PAD.hist=[]; saveProgress();
   view="session"; render(); window.scrollTo({top:0});
   if(legs.length>=2&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>{ if(S&&S.mode==="set"&&S.i===0&&!S.items.length) expStartSheet() },150);
@@ -1973,6 +1975,7 @@ function renderStep(){
   if(st.kind==="passage") return renderPassage();
   if(st.kind==="rate") return renderRate();
   if(st.kind==="finish") return finishReview();
+  if(wsOn(st)&&!S.answered){ if(!S.wsSeen){ S.wsSeen=true; if(wsOpenIdx().length>1) S.wsOpen=true } if(S.wsOpen&&wsOpenIdx().length>=1) return renderWorksheet() }
   const q = st.q, ans = S.answered;
   const canQ=!q.en&&S.set.kind!=="mixed"&&CAL.listenQuestions!==false, waitMs=Math.max(0,(CAL.listenDelaySec??20)*1000-(Date.now()-S.qStart));
   /* trials: confidence buttons and/or a reason before the answer is shown, so choosing and sending are two taps */
@@ -2063,7 +2066,7 @@ function renderStep(){
     ${S.hints?`<div class="feedback">${HL.slice(0,S.hints).map((h,k)=>`<span class="small hintline"><span><b>คำใบ้ ${k+1}</b> ${esc(h)}</span>${ans?"":S.hintKnown.includes(k)?`<span class="muted">✓ รู้อยู่แล้ว <button class="linkbtn" data-hku="${k}" type="button">กดผิด ยกเลิก</button></span>`:`<button class="linkbtn" data-hk="${k}" type="button">รู้อยู่แล้ว</button>`}</span>`).join("")}
       ${!ans&&S.hints>=HL.length?`<span class="small muted">ใช้คำใบ้ครบแล้ว ลองเขียนสิ่งที่รู้ลงกระดาษทดก่อน ถ้ายังไปต่อไม่ได้ กด "ยังคิดไม่ออก ดูเฉลย" ได้เลย ไม่ผิดอะไร</span>`:""}</div>`:""}
     ${body}${fb}
-    <div class="row">${!ans&&!predWait&&canPeek(st)?`<button class="btn ghost" id="peek" type="button">📖 ดูเนื้อหา/สูตร</button>`:""}${!ans&&!predWait&&S.hints<HL.length?`<button class="btn ghost" id="hint">${S.hints===HL.length-1&&HL.length>(q.hints||[]).length?"ขอดูขั้นแรกของวิธีทำ":"ขอคำใบ้"} (${S.hints}/${HL.length})</button>`:""}
+    <div class="row">${!ans&&wsOn(st)&&wsOpenIdx().length>1?`<button class="btn ghost" id="wsopen" type="button">📄 ดูทั้งหน้า / ข้ามข้อนี้ไปก่อน</button>`:""}${!ans&&!predWait&&canPeek(st)?`<button class="btn ghost" id="peek" type="button">📖 ดูเนื้อหา/สูตร</button>`:""}${!ans&&!predWait&&S.hints<HL.length?`<button class="btn ghost" id="hint">${S.hints===HL.length-1&&HL.length>(q.hints||[]).length?"ขอดูขั้นแรกของวิธีทำ":"ขอคำใบ้"} (${S.hints}/${HL.length})</button>`:""}
     ${!ans&&!predWait?`<div class="row" style="gap:8px"><button class="btn ghost" id="dontknow">🤔 ยังคิดไม่ออก ดูเฉลย</button>${["mixed","probe","sweep"].includes(S.set.kind)||S.set.type==="sweep"?`<button class="btn ghost" id="nottaught">📭 ยังไม่ได้เรียนเรื่องนี้</button>`:""}</div>`:""}
     ${st.optional&&!ans&&!predWait?`<button class="btn ghost" id="skip">ข้ามข้อนี้</button>`:""}</div>
     ${!ans&&q.recall?`<p class="small muted">🧠 ข้อนี้เคยเจอแล้ว รอบนี้ไม่มีตัวเลือก พิมพ์คำตอบเองเลย</p>`:""}
@@ -2107,6 +2110,7 @@ function renderStep(){
       $v.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{const k=+b.dataset.x; S.struck=S.struck.includes(k)?S.struck.filter(x=>x!==k):[...S.struck,k]; const y=window.scrollY; renderStep(); window.scrollTo({top:y})});
     }
     { const pk=document.getElementById("peek"); if(pk) pk.onclick=()=>peekCard() }
+    { const wo=document.getElementById("wsopen"); if(wo) wo.onclick=()=>wsSkip() }
     const hb=document.getElementById("hint"); if(hb) hb.onclick=()=>{S.hints++;const y=window.scrollY;renderStep();window.scrollTo({top:y})};
     $v.querySelectorAll("[data-hku]").forEach(b=>b.onclick=()=>{ const k=+b.dataset.hku; S.hintKnown=(S.hintKnown||[]).filter(x=>x!==k); const y=window.scrollY; renderStep(); window.scrollTo({top:y}) });
     $v.querySelectorAll("[data-hk]").forEach(b=>b.onclick=()=>{ const k=+b.dataset.hk; S.hintKnown=[...new Set([...(S.hintKnown||[]),k])]; if(k===S.hints-1&&S.hints<hintList(q).length) S.hints++; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) });
@@ -2136,7 +2140,41 @@ function renderStep(){
   }
 }
 function answer(a){ readStop(); S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
-function advance(){ { const a=S.steps[S.i], b=S.steps.slice(S.i+1).find(x=>!x.gated); if(S.legs&&S.legs.length>=2&&a&&b&&a.leg!=null&&b.leg!=null&&b.leg>a.leg&&b.kind!=="rate"&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>expCheckpoint(a.leg),120) } readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; while(S.steps[S.i]&&S.steps[S.i].gated) S.i++; S.answered=null; S.libOpen=0; S.peekQ=0; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.checkOwn=""; S.checkOwnOpen=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.coverFloor=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.predictPick=null; S.predOrder=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; saveProgress(); renderStep(); window.scrollTo({top:0}) }
+/* per-question state, reset when the next question opens (advance) or when she picks another item on the worksheet */
+function qReset(){ S.answered=null; S.libOpen=0; S.peekQ=0; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.checkOwn=""; S.checkOwnOpen=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.coverFloor=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.predictPick=null; S.predOrder=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; }
+/* worksheet view (P2, father agreed 24 Nov after her feedback "in a book I see the whole page and choose which item to do first").
+   On a lesson's own practice items: the page of items opens when practice starts and from the "📄" button on any item; she
+   picks any open item, or skips one and comes back later. Level 2 stays locked until the level-1 gate is done (gated lessons).
+   Picking swaps the chosen step into the current slot, so the gate, legs and explain steps keep working; resume keeps the
+   order (ord) and perms are saved by original position (_k). Record: ws = {opens, skips:[qid]}. Warm-up, carried, loop,
+   checkpoint, review and the optional challenge keep their fixed order. */
+const WS=Object.assign({from:"2026-11-24"},CAL.worksheet||{});
+function wsOn(st){ return !!(S&&S.mode==="set"&&S.set.kind==="lesson"&&st&&st.kind==="q"&&st.phase==="ฝึกทำ"&&!st.optional&&!st.gated&&isoDay(todayKey())>=WS.from) }
+function wsLocked(st){ return !!(S.gate&&!S.gate.done&&(st.q.level||1)>1) }
+function wsOpenIdx(){ return S.steps.map((st,i)=>({st,i})).filter(o=>o.i>=S.i&&wsOn(o.st)&&!wsLocked(o.st)).map(o=>o.i) }
+function wsStem(q){ const t=String(q.q||"").replace(/<[^>]+>/g,"").replace(/\s+/g," ").trim(); return t.length>95?t.slice(0,92)+"…":t }
+function renderWorksheet(){
+  const all=S.steps.map((st,i)=>({st,i})).filter(o=>o.st.kind==="q"&&o.st.phase==="ฝึกทำ"&&!o.st.optional&&!o.st.gated);
+  const byQ={}; S.items.forEach(x=>{ if(x.phase==="ฝึกทำ") byQ[x.qid]=x });
+  const lv=n=>n===1?"พื้นฐาน":n===2?"ขั้น 2":"ขั้น 3";
+  const row=o=>{ const x=o.i<S.i?byQ[o.st.q.id]:null, lock=o.i>=S.i&&wsLocked(o.st);
+    const tag=x?(x.skipped?"ข้าม":x.correct?"✓ ถูก":"✗ ยังไม่ถูก"):lock?"🔒":"";
+    return `<button class="wsitem${x?" wsdone":""}${lock?" wslock":""}" type="button" ${!x&&!lock?`data-ws="${o.i}"`:"disabled"}>
+      <span class="wsno">ข้อ ${o.st._n||"?"}</span><span class="wsbody"><span class="small muted">${lv(o.st.q.level||1)}${tag?" · "+tag:""}</span><span>${esc(wsStem(o.st.q))}</span></span></button>` };
+  const open=all.filter(o=>o.i>=S.i&&!wsLocked(o.st)), lockN=all.filter(o=>o.i>=S.i&&wsLocked(o.st)).length, doneN=all.filter(o=>o.i<S.i).length;
+  $v.innerHTML=`<section class="card">${header()}
+    <span class="eyebrow">📄 หน้าแบบฝึกหัด</span>
+    <p class="small">เลือกทำข้อไหนก่อนก็ได้ ข้อไหนยังไม่อยากทำ กดข้ามแล้วกลับมาทำทีหลังได้ · ทำแล้ว ${doneN} ข้อ เหลือ ${open.length} ข้อ${lockN?` · ข้อขั้นต่อไปจะเปิดเมื่อผ่านขั้นพื้นฐาน`:""}</p>
+    <div class="wslist">${all.filter(o=>o.i<S.i||!wsLocked(o.st)).map(row).join("")}</div>
+    ${lockN?`<p class="small muted">🔒 ข้อขั้นต่อไปจะเปิดเมื่อทำขั้นพื้นฐานได้ถูก ${GATE.need} ใน ${GATE.win} ข้อล่าสุด (ถ้ายังไม่ถึง ไม่เป็นไร ระบบจะพาไปต่อเอง)</p>`:""}
+  </section>${padHtml()}`;
+  padSetup();
+  $v.querySelectorAll("[data-ws]").forEach(b=>b.onclick=()=>wsPick(+b.dataset.ws));
+}
+function wsPick(j){ if(j!==S.i&&S.steps[j]){ const t=S.steps[S.i]; S.steps[S.i]=S.steps[j]; S.steps[j]=t }
+  S.wsOpen=false; qReset(); saveProgress(); renderStep(); window.scrollTo({top:0}) }
+function wsSkip(){ const st=S.steps[S.i]; S.ws=S.ws||{opens:0,skips:[]}; S.ws.opens++; if(st&&st.q&&!S.answered) S.ws.skips.push(st.q.id); S.wsOpen=true; saveProgress(); renderStep(); window.scrollTo({top:0}) }
+function advance(){ { const a=S.steps[S.i], b=S.steps.slice(S.i+1).find(x=>!x.gated); if(S.legs&&S.legs.length>=2&&a&&b&&a.leg!=null&&b.leg!=null&&b.leg>a.leg&&b.kind!=="rate"&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>expCheckpoint(a.leg),120) } readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; while(S.steps[S.i]&&S.steps[S.i].gated) S.i++; qReset(); saveProgress(); renderStep(); window.scrollTo({top:0}) }
 
 /* 📖 peek (queue 2, 23 Nov): the lesson's card as an overlay over the question, as she would flip back a page in a book. Only on the
    lesson's own practice items; never on warm-up, spaced, carried, loop or checkpoint steps, mixed sets, probes or sweeps. Never blocks.
@@ -2147,15 +2185,87 @@ function conceptSumHtml(c){ return `<div style="text-align:left"><ul>${c.points.
   ${(c.formulas||[]).map(f=>`<div class="formula">${esc(f)}</div>`).join("")}
   ${(c.vocab||[]).length?`<div><span class="eyebrow">คำศัพท์อังกฤษของบทนี้</span><div class="vocab">${c.vocab.map(([e,t])=>`<span>${e} <i>${t}</i></span>`).join("")}</div></div>`:""}</div>` }
 function peekCard(){ const c=S.set.concept; S.peekQ=(S.peekQ||0)+1; S.peeks=(S.peeks||0)+1; saveProgress();
-  sheet({icon:"📖",title:c.title||"เนื้อหาของบทนี้",wide:true,read:[c.title,...c.points].filter(Boolean).map(x=>String(x).replace(/<[^>]+>/g,"")).join(" "),
-    html:`${conceptSumHtml(c)}<p class="small muted">เปิดดูได้ทุกเมื่อ ไม่เสียคะแนน ข้อที่เปิดดูยังนับเป็นการฝึก แต่ยังไม่นับว่าคงทน เพราะวันหลังจะลองทำโดยไม่ดู</p>`,
+  sheet({icon:"📖",title:c.title||"เนื้อหาของบทนี้",wide:true,read:[c.title,...(c.talk&&c.talk.length?c.talk.flatMap(x=>x.lines):c.points)].filter(Boolean).map(x=>String(x).replace(/<[^>]+>/g,"")).join(" "),
+    html:`${c.talk&&c.talk.length?talkSumHtml(c):conceptSumHtml(c)}<p class="small muted">เปิดดูได้ทุกเมื่อ ไม่เสียคะแนน ข้อที่เปิดดูยังนับเป็นการฝึก แต่ยังไม่นับว่าคงทน เพราะวันหลังจะลองทำโดยไม่ดู</p>`,
     actions:[{label:"กลับไปทำข้อนี้",fn:closeSheet}]}) }
 
 /* concept card, one idea per screen: (1) why this topic exists — a puzzle to guess first (c.hook) or the "use" line,
    (2) each point alone with "เข้าใจแล้ว" / "ขออธิบายอีกแบบ" (c.more[i], else the next whole alternative),
    (3) a short summary with formulas and vocab. Which points needed another explanation is saved as conceptHelp. */
 function conceptStages(c){ return [{t:"why"},...c.points.map((x,i)=>({t:"pt",i})),{t:"sum"}] }
+/* spoken-style card (father agreed 24 Nov, after her feedback "no pictures, feels like AI, a person explaining is clearer"):
+   c.talk = [{lines:[short sentences], fig?}] one screen each, written the way a parent explains aloud (docs/writing-content.md
+   "Spoken-style cards"). She can tap any sentence that confuses her (toggle; saved as talk.marks), then rates the card and may
+   open the old card to compare (talk.u / talk.cmp / talk.oldOpen / talk.note). The hook stays first; the last screen shows only
+   formulas and vocab. Lessons without c.talk keep the old card. */
+function talkStages(c){ return [...(c.hook?[{t:"why"}]:[]),...c.talk.map((x,i)=>({t:"tk",i})),{t:"fb"},{t:"sum"}] }
+function talkRec(){ const T=S.talk||(S.talk={marks:[],oldOpen:0,seen:0}); return T }
+function renderTalk(){
+  const c=S.set.concept, st=talkStages(c), T=talkRec(); S.cStage=S.cStage||0; const cur=st[Math.min(S.cStage,st.length-1)], n=c.talk.length;
+  T.seen=Math.max(T.seen||0,cur.t==="tk"?cur.i+1:cur.t==="why"?0:n);
+  const dots=`<div class="row" style="gap:4px;margin:4px 0">${st.map((x,k)=>`<span style="width:${k===S.cStage?18:8}px;height:8px;border-radius:4px;background:${k<=S.cStage?"var(--accent)":"var(--line)"};display:inline-block;transition:width .2s"></span>`).join("")}</div>`;
+  const marked=(i,l)=>T.marks.some(m=>m.s===i&&m.l===l);
+  let body="", btns="", said=[];
+  if(cur.t==="why"){ const h=c.hook;
+    body=`<span class="eyebrow">🤔 ลองคิดก่อน</span><p>${gloss(h.text)}</p>${h.q?`<p><b>${gloss(h.q)}</b></p>`:""}
+      ${h.opts&&S.hookPick==null?`<div class="opts">${h.opts.map((o,k)=>`<button class="opt" data-hk="${k}">${esc(o)}</button>`).join("")}</div><p class="small muted">เดาได้เลย ไม่มีผิดถูก ไม่นับคะแนน</p>`
+        :`<div class="feedback usebox"><p>${gloss(h.reveal)}</p></div>`}`;
+    btns=h.opts&&S.hookPick==null?"":`<button class="btn" id="cnext">ไปฟังอธิบายกัน</button>`;
+    said=[h.text,h.q||"",...(S.hookPick!=null||!h.opts?[h.reveal]:[])];
+  } else if(cur.t==="tk"){ const sc=c.talk[cur.i];
+    body=`<span class="eyebrow">ตอนที่ ${cur.i+1} จาก ${n}</span>
+      ${cur.i===0?`<p class="small muted">อ่านแล้วงงประโยคไหน แตะประโยคนั้นได้เลย (แตะซ้ำเพื่อยกเลิก) ไม่มีผลกับคะแนน ช่วยให้เราเขียนให้เข้าใจง่ายขึ้น</p>`:""}
+      <div class="talk">${sc.lines.map((l,k)=>`<p class="tline${marked(cur.i,k)?" tmark":""}" data-tl="${k}">${gloss(l)}${marked(cur.i,k)?' <span class="small">❓งง</span>':""}</p>`).join("")}</div>
+      ${figHtml(sc.fig).replace("max-width:340px","max-width:560px")}`;
+    btns=`<button class="btn" id="cnext">${cur.i===n-1?"จบแล้ว":"ต่อ →"}</button>`;
+    said=sc.lines;
+  } else if(cur.t==="fb"){
+    const U=[["ok","เข้าใจ"],["part","เข้าใจบางส่วน"],["lost","ยังงง"]], C=[["new","แบบใหม่"],["same","พอๆ กัน"],["old","แบบเดิม"]];
+    body=`<span class="eyebrow">ช่วยบอกเราหน่อย</span>
+      <p><b>อ่านคำอธิบายแบบนี้แล้ว เป็นยังไงบ้าง</b></p>
+      <div class="opts">${U.map(([k,t])=>`<button class="opt${T.u===k?" picked":""}" data-tu="${k}">${t}</button>`).join("")}</div>
+      ${T.marks.length?`<p class="small muted">ประโยคที่แตะว่างง ${T.marks.length} ประโยค เราจะอ่านแล้วเขียนใหม่ให้</p>`:""}
+      <p style="margin-top:14px"><b>ลองเทียบกับการ์ดแบบเดิม</b> <span class="small muted">(ไม่บังคับ แต่ช่วยเรามาก)</span></p>
+      <button class="btn ghost" id="topen">📄 เปิดดูการ์ดแบบเดิม</button>
+      ${T.oldOpen?`<p style="margin-top:10px"><b>แบบไหนเข้าใจง่ายกว่า</b></p><div class="opts">${C.map(([k,t])=>`<button class="opt${T.cmp===k?" picked":""}" data-tc="${k}">${t}</button>`).join("")}</div>`:""}
+      <label class="small" style="display:block;margin-top:12px">อยากบอกอะไรเพิ่ม เช่น ตรงไหนงง อยากให้อธิบายยังไง (ไม่บังคับ)
+      <textarea id="tnote" rows="2" maxlength="300" style="width:100%">${esc(T.note||"")}</textarea></label>`;
+    btns=`<button class="btn" id="cnext" ${T.u?"":"disabled"}>ต่อ →</button>`;
+    said=["อ่านคำอธิบายแบบนี้แล้ว เป็นยังไงบ้าง"];
+  } else {
+    body=`<span class="eyebrow">สูตรและคำศัพท์ของบทนี้</span><h2>${esc(c.title)}</h2>
+      ${(c.formulas||[]).map(f=>`<div class="formula">${esc(f)}</div>`).join("")}
+      ${(c.vocab||[]).length?`<div><span class="eyebrow">คำศัพท์อังกฤษของบทนี้</span><div class="vocab">${c.vocab.map(([e,t])=>`<span>${e} <i>${t}</i></span>`).join("")}</div></div>`:""}
+      <p class="small muted">ระหว่างทำข้อฝึก กด 📖 เปิดคำอธิบายนี้ดูได้ทุกเมื่อ</p>`;
+    btns=`<button class="btn" id="next">พร้อมแล้ว ไปฝึกทำ</button>`;
+    said=[c.title,...(c.formulas||[])];
+  }
+  $v.innerHTML=`<section class="card concept">${header()}${dots}
+    <div>${readBtn("concept","🔊 ฟังส่วนนี้")}</div>
+    ${body}
+    <div class="feedback" id="gloss-box" hidden></div>
+    <div class="row">${S.cStage>0?`<button class="btn ghost small" id="cback" style="border:0">← ย้อน</button>`:""}${btns}</div>
+    ${askHtml("concept")}</section>${padHtml()}`;
+  bindGloss(); padSetup(); bindAsk("concept",{topic:S.set.topic});
+  const cb=$v.querySelector('[data-read="concept"]'); if(cb) cb.onclick=()=>readAloud("concept",said.filter(Boolean).map(x=>String(x).replace(/<[^>]+>/g,"")),()=>{S.conceptListen=(S.conceptListen||0)+1});
+  const keepNote=()=>{ const t=document.getElementById("tnote"); if(t) T.note=t.value.slice(0,300) };
+  const go=k=>{ keepNote(); readStop(); S.cStage=k; saveProgress(); renderTalk(); window.scrollTo({top:0}) };
+  $v.querySelectorAll("[data-hk]").forEach(b=>b.onclick=()=>{ S.hookPick=+b.dataset.hk; renderTalk() });
+  $v.querySelectorAll("[data-tl]").forEach(p=>p.onclick=e=>{ if(e.target.closest(".term")) return; const l=+p.dataset.tl, i=cur.i, k=T.marks.findIndex(m=>m.s===i&&m.l===l);
+    if(k>=0) T.marks.splice(k,1); else T.marks.push({s:i,l,t:String(c.talk[i].lines[l]).replace(/<[^>]+>/g,"").slice(0,160)}); saveProgress(); renderTalk() });
+  $v.querySelectorAll("[data-tu]").forEach(b=>b.onclick=()=>{ keepNote(); T.u=b.dataset.tu; saveProgress(); renderTalk() });
+  $v.querySelectorAll("[data-tc]").forEach(b=>b.onclick=()=>{ keepNote(); T.cmp=b.dataset.tc; saveProgress(); renderTalk() });
+  const to=document.getElementById("topen"); if(to) to.onclick=()=>{ keepNote(); T.oldOpen=(T.oldOpen||0)+1; saveProgress();
+    sheet({icon:"📄",title:(c.title||"การ์ดแบบเดิม")+" (แบบเดิม)",wide:true,html:conceptSumHtml(c),actions:[{label:"ปิด แล้วกลับไปตอบว่าแบบไหนง่ายกว่า",fn:()=>{closeSheet();renderTalk()}}]}) };
+  const nx=document.getElementById("cnext"); if(nx) nx.onclick=()=>go(S.cStage+1);
+  const bk=document.getElementById("cback"); if(bk) bk.onclick=()=>go(S.cStage-1);
+  const fin=document.getElementById("next"); if(fin) fin.onclick=()=>{ keepNote(); S.conceptSec=Math.round((Date.now()-S.qStart)/1000); T.sec=S.conceptSec; S.cStage=0; advance() };
+}
+function talkSumHtml(c){ return `<div style="text-align:left">${c.talk.map(sc=>`<div class="talk" style="margin-bottom:10px">${sc.lines.map(l=>`<p>${gloss(l)}</p>`).join("")}${figHtml(sc.fig)}</div>`).join("")}
+  ${(c.formulas||[]).map(f=>`<div class="formula">${esc(f)}</div>`).join("")}
+  <details class="small"><summary>📄 การ์ดแบบเดิม</summary>${conceptSumHtml(c)}</details></div>` }
 function renderConcept(){
+  if(S.set.concept.talk&&S.set.concept.talk.length) return renderTalk();
   const c=S.set.concept, st=conceptStages(c); S.cStage=S.cStage||0; const cur=st[Math.min(S.cStage,st.length-1)], n=c.points.length;
   const dots=`<div class="row" style="gap:4px;margin:4px 0">${st.map((x,k)=>`<span style="width:${k===S.cStage?18:8}px;height:8px;border-radius:4px;background:${k<=S.cStage?"var(--accent)":"var(--line)"};display:inline-block;transition:width .2s"></span>`).join("")}</div>`;
   let body="", btns="";
@@ -2242,7 +2352,7 @@ function renderRate(){
     const items=S.items, scored=items.filter(x=>!x.skipped);
     const rec={...trialRec(),...((S.reflect||"").trim()?{reflect:S.reflect.trim()}:{}),...(S.dueIds&&S.dueIds.length?{dueIds:S.dueIds}:{}),type:S.set.kind==="probe"?"probe":S.set.kind==="mixed"?"mixed":S.set.kind==="passage"?"passage":"set",setId:S.set.id,spell:S.set.spell,subject:S.set.subject,topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
       durationSec:sessSec(),conceptSec:S.conceptSec||0,...(S.conceptHelp&&S.conceptHelp.length?{conceptHelp:[...new Set(S.conceptHelp)],...(S.hookPick!=null?{hookPick:S.hookPick}:{})}:S.hookPick!=null?{hookPick:S.hookPick}:{}),...(S.conceptListen?{conceptListen:S.conceptListen}:{}),...(S.readSec?{readSec:S.readSec,readChars:S.readChars}:{}),...(S.listenPassage?{listenPassage:S.listenPassage}:{}),rating:S.rating,memo:document.getElementById("memo").value.trim(),
-      correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items)+20,altShown:S.altShown,glossed:S.glossed,confused:S.confused,...(S.gate?{gate:{...S.gate}}:{}),...(S.peeks?{peeks:S.peeks}:{}),items};
+      correct:scored.filter(x=>x.correct).length,total:scored.length,xp:itemXp(items)+20,altShown:S.altShown,glossed:S.glossed,confused:S.confused,...(S.gate?{gate:{...S.gate}}:{}),...(S.peeks?{peeks:S.peeks}:{}),...(S.talk?{talk:S.talk}:{}),...(S.ws?{ws:S.ws}:{}),items};
     await finishWith(rec);
   };
 }
@@ -2269,7 +2379,7 @@ function saveProgress(){
   if(S&&S.mode==="review"&&S.active) return saveReviewProgress();
   if(!S||S.mode!=="set") return;
   try{ localStorage.setItem("fieldnote.inprogress",JSON.stringify({setId:S.set.id,conceptFirst:S.conceptFirst,day:todayKey(),i:S.i,start:S.start,el:sessMs(),items:S.items,confused:S.confused,altShown:S.altShown,conceptSec:S.conceptSec||0,glossed:S.glossed,readSec:S.readSec||0,readChars:S.readChars||0,
-    perms:S.steps.map(x=>x.q?.perm||null),dueIds:S.dueIds||[],trialVote:S.trialVote||{},gate:S.gate||null,peeks:S.peeks||0,gated:S.steps.map((x,k)=>x.gated?k:-1).filter(k=>k>=0),explainAt:S.steps.map((x,k)=>x.explain?k:-1).filter(k=>k>=0),explain1At:S.steps.map((x,k)=>x.explain1?k:-1).filter(k=>k>=0)})) }catch(e){}
+    perms:(()=>{ const a=[]; S.steps.forEach((x,k)=>{ a[x._k??k]=x.q?.perm||null }); return a })(),ord:S.steps.map((x,k)=>x._k??k),ws:S.ws||null,wsSeen:!!S.wsSeen,dueIds:S.dueIds||[],trialVote:S.trialVote||{},gate:S.gate||null,peeks:S.peeks||0,talk:S.talk||null,cStage:S.cStage||0,hookPick:S.hookPick??null,gated:S.steps.map((x,k)=>x.gated?k:-1).filter(k=>k>=0),explainAt:S.steps.map((x,k)=>x.explain?k:-1).filter(k=>k>=0),explain1At:S.steps.map((x,k)=>x.explain1?k:-1).filter(k=>k>=0)})) }catch(e){}
 }
 function clearProgress(){ try{ localStorage.removeItem("fieldnote.inprogress") }catch(e){} }
 function pendingSet(){
@@ -2281,10 +2391,13 @@ function resumeSet(){
   const p=pendingSet(); if(!p) return;
   if(p.live){ view="session"; render(); return }
   const sv=p.saved; startSet(p.set, sv.conceptFirst, sv.perms, sv.dueIds||[]);
+  /* worksheet: the steps come back in the order she left them (perms were saved by original position) */
+  if(Array.isArray(sv.ord)&&sv.ord.length===S.steps.length){ const by={}; S.steps.forEach(x=>{ by[x._k]=x }); const re=sv.ord.map(k=>by[k]); if(re.every(Boolean)) S.steps=re }
+  S.ws=sv.ws||null; S.wsSeen=!!sv.wsSeen;
   /* the gate's trimming and a moved explain step come back exactly as they were */
   if(sv.gate&&S.gate){ S.gate=sv.gate; (sv.gated||[]).forEach(k=>{ if(S.steps[k]) S.steps[k].gated=true });
     if(sv.explainAt) S.steps.forEach((x,k)=>{ x.explain=sv.explainAt.includes(k); x.explain1=(sv.explain1At||[]).includes(k) }) }
-  S.peeks=sv.peeks||0;
+  S.peeks=sv.peeks||0; if(sv.talk) S.talk=sv.talk; if(sv.cStage) S.cStage=sv.cStage; if(sv.hookPick!=null) S.hookPick=sv.hookPick;
   Object.assign(S,{trialVote:sv.trialVote||{},readSec:sv.readSec||0,readChars:sv.readChars||0,i:sv.i,start:sv.start,items:sv.items||[],confused:sv.confused||[],altShown:sv.altShown||0,conceptSec:sv.conceptSec,glossed:sv.glossed||[]});
   /* active clock continues from the time already spent, not from the first start (the hours away are not study time) */
   { const el=Math.max(0,+sv.el||0); S.act0=actNow()-el; S.start=Date.now()-el }
@@ -4993,6 +5106,18 @@ function gateCard(list){
     <p class="small">ตั้งแต่เริ่ม: ขั้น 2 ถูก ${pc(its.filter(x=>x.level===2))} · ขั้น 3 ถูก ${pc(its.filter(x=>x.level===3))} (ก่อนเปลี่ยน 62% / 54%) · ข้อที่ยกไปทำวันหลังทำแล้ว ${carried.length} ข้อ ถูก ${pc(carried)}</p>
     <p class="small muted">ข้อที่เปิดดูเนื้อหาก่อนตอบยังนับเป็นการฝึก แต่ไม่นับเป็นหลักฐานคงทนหรือการแก้ความเข้าใจผิด ตัวเลขชุดแรกยังน้อย อย่าเพิ่งสรุป</p>
   </section>` }
+/* 24 Nov: spoken-style cards (c.talk). Her rating, the comparison with the old card, the sentences she tapped as confusing
+   and her note. The nightly run reads these and rewrites tapped sentences (AUTOMATION.md). */
+function talkCard(list){
+  const tl=list.filter(a=>a.talk).sort((a,b)=>new Date(b.endedAt)-new Date(a.endedAt)); if(!tl.length) return "";
+  const U={ok:"เข้าใจ",part:"เข้าใจบางส่วน",lost:"ยังงง"}, C={new:"แบบใหม่",same:"พอๆ กัน",old:"แบบเดิม"};
+  const day=a=>new Date(a.endedAt).toLocaleDateString("th-TH",{day:"numeric",month:"short"});
+  return `<section class="card"><h3>การ์ดอธิบายแบบภาษาพูด (เริ่ม 24 พ.ย.)</h3>
+    <p class="small muted">ลูกอ่านการ์ดแบบใหม่ ให้คะแนนว่าเข้าใจไหม เปิดเทียบกับแบบเดิมได้ และแตะประโยคที่งง</p>
+    <div style="overflow-x:auto"><table class="mt"><thead><tr><th>วัน</th><th>บท</th><th>เข้าใจไหม</th><th>เทียบแบบเดิม</th><th>ประโยคที่งง</th><th>ลูกเขียน</th><th>เวลาอ่าน</th></tr></thead><tbody>
+    ${tl.slice(0,12).map(a=>{ const T=a.talk; return `<tr><td>${day(a)}</td><td>${esc(a.topic||a.setId)}</td><td>${esc(U[T.u]||"–")}</td><td>${T.oldOpen?esc(C[T.cmp]||"เปิดดูแต่ไม่ได้เลือก"):"ไม่ได้เปิด"}</td>
+      <td>${(T.marks||[]).length?(T.marks||[]).map(m=>`ตอน ${m.s+1}: “${esc(m.t)}”`).join("<br>"):"–"}</td><td>${T.note?esc(T.note):"–"}</td><td>${T.sec?Math.round(T.sec/60*10)/10+" นาที":"–"}</td></tr>` }).join("")}</tbody></table></div>
+  </section>` }
 /* old-topic sweep results by spell, plus her daily check-ins and which concept parts needed another explanation */
 function sweepCard(list){
   const sw=list.filter(a=>a.type==="sweep"), moods=list.filter(a=>a.type==="mood").slice(-7), help=list.filter(a=>a.conceptHelp&&a.conceptHelp.length).slice(-5);
@@ -5808,6 +5933,7 @@ function renderParent(){
   </section>
   ${sweepCard(attempts.filter(a=>!a.test))}
   ${gateCard(attempts.filter(a=>!a.test&&!voided(a)))}
+  ${talkCard(attempts.filter(a=>!a.test&&!voided(a)))}
   ${timeCard(all)}
   <section class="card"><h3>ข้อที่ควรนั่งคุยกัน</h3>
     ${talk.length?talk.map(x=>`<div class="logi"><span class="chip l${x.level}">${esc(x.topic)}</span><span class="small">${esc(x.prompt||x.qid)}</span></div>`).join(""):`<p class="muted small">ยังไม่มีข้อที่ต้องคุย</p>`}
