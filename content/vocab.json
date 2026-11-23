@@ -1114,5 +1114,185 @@
   "exTh": "เธอชอบสะสมการ์ดสิ่งมีชีวิตน่ารักๆ",
   "cat": "art",
   "syl": "col·lect"
+ },
+ {
+  "w": "solvent",
+  "th": "ตัวทำละลาย",
+  "ex": "Water is the solvent in salt water.",
+  "exTh": "น้ำเป็นตัวทำละลายในน้ำเกลือ",
+  "cat": "sci",
+  "syl": "sol·vent"
+ },
+ {
+  "w": "solute",
+  "th": "ตัวละลาย",
+  "ex": "Sugar is the solute in syrup.",
+  "exTh": "น้ำตาลเป็นตัวละลายในน้ำเชื่อม",
+  "cat": "sci",
+  "syl": "sol·ute"
+ },
+ {
+  "w": "impurity",
+  "th": "สิ่งเจือปน",
+  "ex": "Crystals leave most of the impurity in the water.",
+  "exTh": "การตกผลึกทิ้งสิ่งเจือปนส่วนใหญ่ไว้ในน้ำ",
+  "cat": "sci",
+  "syl": "im·pur·i·ty"
+ },
+ {
+  "w": "layer",
+  "th": "ชั้น",
+  "ex": "Oil makes a layer on top of the water.",
+  "exTh": "น้ำมันเกิดเป็นชั้นอยู่บนน้ำ",
+  "cat": "sci",
+  "syl": "lay·er"
+ },
+ {
+  "w": "pure",
+  "th": "บริสุทธิ์",
+  "ex": "Distilled water is almost pure.",
+  "exTh": "น้ำกลั่นเกือบบริสุทธิ์",
+  "cat": "sci",
+  "syl": "pure"
+ },
+ {
+  "w": "recycle",
+  "th": "นำกลับมาใช้ใหม่",
+  "ex": "We recycle plastic bottles at school.",
+  "exTh": "เรานำขวดพลาสติกกลับมาใช้ใหม่ที่โรงเรียน",
+  "cat": "sci",
+  "syl": "re·cy·cle",
+  "parts": [
+   [
+    "re-",
+    "อีกครั้ง"
+   ],
+   [
+    "cycle",
+    "วงจร"
+   ]
+  ]
+ },
+ {
+  "w": "unit",
+  "th": "หน่วย",
+  "ex": "Always write the unit after the number.",
+  "exTh": "เขียนหน่วยต่อท้ายตัวเลขทุกครั้ง",
+  "cat": "sci",
+  "syl": "u·nit"
+ },
+ {
+  "w": "area",
+  "th": "พื้นที่",
+  "ex": "The area of the table is two square metres.",
+  "exTh": "โต๊ะมีพื้นที่สองตารางเมตร",
+  "cat": "sci",
+  "syl": "ar·e·a"
+ },
+ {
+  "w": "prove",
+  "th": "พิสูจน์",
+  "ex": "Can you prove that the two triangles are equal?",
+  "exTh": "เธอพิสูจน์ได้ไหมว่าสามเหลี่ยมสองรูปนี้เท่ากัน",
+  "cat": "gen",
+  "syl": "prove"
+ },
+ {
+  "w": "equal",
+  "th": "เท่ากัน",
+  "ex": "The two sides are equal in length.",
+  "exTh": "ด้านทั้งสองยาวเท่ากัน",
+  "cat": "gen",
+  "syl": "e·qual"
+ },
+ {
+  "w": "notice",
+  "th": "สังเกตเห็น",
+  "ex": "Did you notice the mistake in the picture?",
+  "exTh": "เธอสังเกตเห็นจุดผิดในภาพไหม",
+  "cat": "gen",
+  "syl": "no·tice"
+ },
+ {
+  "w": "focus",
+  "th": "จดจ่อ / ตั้งใจ",
+  "ex": "It is easier to focus in a quiet room.",
+  "exTh": "จดจ่อได้ง่ายกว่าในห้องที่เงียบ",
+  "cat": "gen",
+  "syl": "fo·cus"
+ },
+ {
+  "w": "simple",
+  "th": "ง่าย / เรียบง่าย",
+  "ex": "Start with a simple example first.",
+  "exTh": "เริ่มจากตัวอย่างง่ายๆ ก่อน",
+  "cat": "gen",
+  "syl": "sim·ple"
+ },
+ {
+  "w": "honest",
+  "th": "ซื่อสัตย์ / ตรงไปตรงมา",
+  "ex": "An honest answer helps us learn.",
+  "exTh": "คำตอบที่ตรงไปตรงมาช่วยให้เราเรียนรู้",
+  "cat": "gen",
+  "syl": "hon·est"
+ },
+ {
+  "w": "portrait",
+  "th": "ภาพเหมือนบุคคล",
+  "ex": "She drew a portrait of her favourite hero.",
+  "exTh": "เธอวาดภาพเหมือนของฮีโร่ที่ชอบ",
+  "cat": "art",
+  "syl": "por·trait"
+ },
+ {
+  "w": "melody",
+  "th": "ทำนอง",
+  "ex": "The dance group practised to a new melody.",
+  "exTh": "วงเต้นซ้อมกับทำนองเพลงใหม่",
+  "cat": "art",
+  "syl": "mel·o·dy"
+ },
+ {
+  "w": "armor",
+  "th": "ชุดเกราะ",
+  "ex": "The swordsman wore light silver armor.",
+  "exTh": "นักดาบสวมชุดเกราะสีเงินเบาๆ",
+  "cat": "art",
+  "syl": "ar·mor"
+ },
+ {
+  "w": "castle",
+  "th": "ปราสาท",
+  "ex": "The mage guild lives in an old castle.",
+  "exTh": "กิลด์นักเวทอาศัยอยู่ในปราสาทเก่า",
+  "cat": "art",
+  "syl": "cas·tle"
+ },
+ {
+  "w": "dancer",
+  "th": "นักเต้น",
+  "ex": "Each dancer has a different colour costume.",
+  "exTh": "นักเต้นแต่ละคนใส่ชุดสีต่างกัน",
+  "cat": "art",
+  "syl": "dan·cer",
+  "parts": [
+   [
+    "dance",
+    "เต้น"
+   ],
+   [
+    "-er",
+    "ผู้ทำ"
+   ]
+  ]
+ },
+ {
+  "w": "sculpture",
+  "th": "ประติมากรรม / รูปปั้น",
+  "ex": "The robot made a sculpture out of driftwood.",
+  "exTh": "หุ่นยนต์ทำรูปปั้นจากไม้ที่ลอยมาเกยหาด",
+  "cat": "art",
+  "syl": "sculp·ture"
  }
 ]
