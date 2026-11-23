@@ -156,6 +156,28 @@ lesson (e.g. fix-sci-1: 9 practice items instead of 20) while carried items add 
 time report must watch whether weekday minutes drop, and say so on the front page. Worked examples (B's "1–2 fully worked
 examples") are content: not built in the app; the concept card/`ex` carry them for now.
 
+## Student feedback 23 Nov 2026 (second round): "can I read the book and use the app only for exercises?" (WAITING for father)
+She could not say why on her own; the father drew it out with yes/no questions, so treat each reason as a lead, not a finding.
+Teaching text: (1) no pictures, she cannot see it in her head; (2) our wording "feels like AI" and is hard to read alone;
+(3) she understands when a person explains aloud; read-aloud (TTS) does not help (not a human voice, just the text read out);
+(4) long text on an iPad screen tires her more than a paper book. Practice: (5) 6 level-1 items still do not feel like
+understanding; (6) a book shows the whole page of exercises and she chooses the order; the app forces one item at a time.
+Father's dilemma: adapting fully may weaken reading further; not adapting leaves the system unfit.
+Measured 23 Nov: concept `points` median 134 characters (max 319), several facts per point joined by "·"; median 4 `more`
+analogies per card, each a different picture; 8 of 42 lessons have any concept figure, 2 of 17 science lessons.
+Proposed principle (sent to the father in chat 23 Nov night): **adapt how we teach, not what she must read in the exam**.
+First learning goes through her strong channel (paper book + spoken-style text with a figure, or the father/school);
+exam-style stems stay long; reading is trained as its own measured track on paper. Proposals (none built, he chooses):
+P1 book-first lessons: the lesson card points to pages of HER school book (page numbers only, never copied text) + a short
+spoken-style summary with a figure; P2 worksheet view for lesson practice (whole page visible, any order, skip and come back,
+level-2 section opens after the level-1 gate); P3 "ทำจากหนังสือ" log card (book, pages, done, wrong, the item she could not do
+typed in her words → letter answers it; counts toward the day); P4 writing rule for every teaching text (one idea per screen,
+short sentences, example before rule, one analogy not five, figure whenever she must imagine something, read it aloud: if
+the father would say it differently, rewrite); P5 "แตะประโยคที่งง" on explanation screens so "AI language" becomes data;
+P6 a separate reading track (10 min a day of a paper book she chooses, read aloud to him sometimes); P7 better voice later
+(spoken-style script + the iPad's best Thai voice), low priority. Suggested first step: show her two versions of one card
+(current vs rewritten with a figure) and let her choose: comparing is easier for her than explaining.
+
 ## Reason check: "none of these fits" (22 Nov 2026, built)
 After a right or wrong answer on an item with `check`, she can tap "✍️ วิธีคิดของฉันไม่ตรงกับข้อไหนเลย" and write her own
 reason BEFORE the explanation shows (so it is not contaminated). Stored on the item as `checkNone:true` and `checkOwn`
