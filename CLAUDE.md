@@ -177,6 +177,18 @@ the father would say it differently, rewrite); P5 "แตะประโยค�
 P6 a separate reading track (10 min a day of a paper book she chooses, read aloud to him sometimes); P7 better voice later
 (spoken-style script + the iPad's best Thai voice), low priority. Suggested first step: show her two versions of one card
 (current vs rewritten with a figure) and let her choose: comparing is easier for her than explaining.
+**Father's decision 24 Nov 00:16:** no big rebuild; adapt step by step and collect her feedback daily (she agreed: if the
+adapted system still does not help, then switch method). Start with the two-version card + tap-to-mark (P5), P4 and P2.
+**BUILT 24 Nov (commit 17ee09b, parent page published):** `concept.talk` spoken-style cards (`renderTalk`, rules in
+docs/writing-content.md "Spoken-style cards"): hook → one screen per tap, every line tappable "งง" (`talk.marks`) → rating
+screen (เข้าใจ/เข้าใจบางส่วน/ยังงง, open the old card, which is easier, optional note) → formulas + vocab; 📖 peek shows the talk
+card; record `talk`; parent card "การ์ดอธิบายแบบภาษาพูด". Written for math-congruence-1 (24 Nov) and sci-separation-4 (25 Nov,
+new crystallisation + distillation svg figures). Worksheet page (`renderWorksheet`, `wsPick`, `wsSkip`, `CAL.worksheet.from`
+default 2026-11-24): practice items of a lesson as a page, pick any, "📄 ดูทั้งหน้า / ข้ามข้อนี้ไปก่อน" on each item, level 2
+locked until the gate; picking swaps steps so gate/legs/explain still work; resume keeps `ord`, perms saved by `_k`; record `ws`.
+verify.js tests for both. Nightly run (AUTOMATION.md, end): keep the next 3 lessons with `talk`, rewrite tapped sentences, report
+the ratings in ③. Not built yet: P1 (book pages), P3 (book log), P6 reading track, P7 voice; P5 only on talk cards so far
+(not yet on reteach/library cards).
 
 ## Reason check: "none of these fits" (22 Nov 2026, built)
 After a right or wrong answer on an item with `check`, she can tap "✍️ วิธีคิดของฉันไม่ตรงกับข้อไหนเลย" and write her own
