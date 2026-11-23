@@ -201,6 +201,18 @@ for(const id of cal.lessonQueue||[]) if(!setIds.has(id)) warn(`calendar.json les
 for(const sp of cal.currentSpells||[]) if(!spells.has(sp)) warn(`calendar.json: unknown current spell ${sp}`);
 for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) warn(`calendar.json: bad date ${d}`);
 
+/* letters with replies (24 Nov 2026, queue 2): each reply needs text; a qid must name a real question (sets, twins, challenges) */
+{ const ids=new Set();
+  for(const f of files){ const st=J("content/sets/"+f); [...(st.warm||[]),...(st.practice||[]),...(st.challenge?[st.challenge]:[])].forEach(q=>ids.add(q.id)) }
+  Object.values(J("content/variants.json").variants||{}).forEach(vs=>vs.forEach(v=>ids.add(v.id)));
+  ((J("content/challenges.json")||{}).items||[]).forEach(q=>ids.add(q.id));
+  for(const L of J("content/letters.json").letters||[]){
+    if(L.replies!==undefined&&!Array.isArray(L.replies)) warn(`letters.json ${L.id}: replies must be a list`);
+    (L.replies||[]).forEach((r,k)=>{ const w=`letters.json ${L.id} reply ${k+1}`;
+      if(!r||!String(r.text||"").trim()) warn(`${w}: needs text`);
+      if(r.qid&&!ids.has(r.qid)) warn(`${w}: unknown qid ${r.qid} (the app would fall back to plain text)`);
+      if(!r.qid&&!r.ask) warn(`${w}: needs a qid or the ask it answers`) }) } }
+
 /* ---- 2. play every set in the browser, answering correctly ---- */
 (async()=>{
   if(errs.length){ console.log("CONTENT PROBLEMS:\n- "+errs.join("\n- ")); process.exit(1) }
@@ -209,7 +221,7 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
   const pageErr=[]; pg.on("pageerror",e=>pageErr.push(e.message));
   const url="file://"+path.join(ROOT,"index.html");
   await pg.clock.install({time:new Date(Date.now()+86400000)});
-  await pg.addInitScript(()=>{ try{ localStorage.setItem("fieldnote.studioTeaser2","true"); localStorage.setItem("fieldnote.callmeAsked","true"); localStorage.setItem("fieldnote.guestpop",JSON.stringify(["x"])); localStorage.setItem("fieldnote.quietSheets","true"); localStorage.setItem("fieldnote.waveSeen",JSON.stringify([1,2])) }catch(e){} });
+  await pg.addInitScript(()=>{ try{ localStorage.setItem("fieldnote.studioTeaser2","true"); localStorage.setItem("fieldnote.callmeAsked","true"); localStorage.setItem("fieldnote.guestpop",JSON.stringify(["x"])); localStorage.setItem("fieldnote.quietSheets","true"); localStorage.setItem("fieldnote.waveSeen",JSON.stringify([1,2])) }catch(e){} window.__noTapGuard=true });
   await pg.goto(url);
   /* answer whatever session is open until it ends. wrong=true answers every question wrong (to test the paths after a miss) */
   async function play(wrong){ let ok=0, total=0;
@@ -683,6 +695,60 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     if(r.ok!==900) return "a plausible old record must keep its duration: "+r.ok;
     if(r.act!==300) return "actSec must win over durationSec: "+r.act;
     await reset() });
+
+  /* 24 Nov 2026 (front-page queue 2): letters show the question she asked about; "คำถามของฉัน" page */
+  await T("letter replies show the question, her words and a figure; unknown qid falls back (24 Nov)",async()=>{ await reset();
+    const q=await pg.evaluate(()=>{ const o=Object.values(QBANK).find(o=>o.q.fig&&o.q.fig.kind==="geo"&&!o.q.of); return {id:o.q.id,stem:o.q.q} });
+    await pg.evaluate(id=>{ $v.innerHTML=letterBody({text:"เปิดจดหมาย",replies:[{qid:id,ask:"ตรงนี้งง",text:"คำตอบทดสอบ",fig:{kind:"svg",svg:'<svg viewBox="0 0 10 10"><rect width="5" height="5"/></svg>',desc:"สี่เหลี่ยมทดสอบสำหรับอ่านออกเสียง"}},{qid:"no-such-q",text:"ข้อความล้วน"}],end:"ท้ายจดหมาย"}) },q.id);
+    const r=await pg.evaluate(()=>({found:document.querySelectorAll('.lreply[data-found="1"]').length,prompt:(document.querySelector('.lreply[data-found="1"] .prompt')||{}).textContent||"",
+      figs:document.querySelectorAll('.lreply[data-found="1"] figure, .lreply[data-found="1"] svg').length,ask:(document.querySelector(".lask")||{}).textContent||"",
+      fb:(document.querySelector('.lreply[data-found="0"]')||{}).textContent||"",end:document.body.textContent.includes("ท้ายจดหมาย"),
+      first:(document.querySelector(".lropts li")||{}).textContent||""}));
+    if(r.found!==1) return "the reply with a known qid did not render its question";
+    if(!r.prompt.replace(/\s/g,"").includes(q.stem.replace(/\s/g,"").slice(0,20))) return "the question stem is missing";
+    if(r.figs<2) return "the question figure and the reply figure must both show";
+    if(!r.ask.includes("ตรงนี้งง")) return "her typed words are missing";
+    if(!r.fb.includes("ข้อความล้วน")) return "an unknown qid must fall back to the plain text";
+    if(!r.end) return "the closing text (end) is missing";
+    const old=await pg.evaluate(()=>{ $v.innerHTML=letterBody({text:"จดหมายแบบเก่า"}); return document.body.textContent.includes("จดหมายแบบเก่า") });
+    if(!old) return "an old letter with only text must still show";
+    await reset() });
+  await T("คำถามของฉัน lists her asks with the letter reply when there is one (24 Nov)",async()=>{
+    const ids=await pg.evaluate(()=>Object.values(QBANK).filter(o=>o.set.kind==="lesson"&&!o.q.of).slice(0,2).map(o=>o.q.id));
+    const at=new Date(Date.now()-3*3600000).toISOString();
+    await reset([{type:"lesson",setId:"t",topic:"ทดสอบ",startedAt:at,endedAt:at,durationSec:60,correct:0,total:0,items:[],
+      confused:[{where:"question",key:ids[0],qid:ids[0],ask:"ข้อแรกงง"},{where:"question",key:ids[1],qid:ids[1],ask:"ข้อสองงง"},{where:"concept",key:"concept",topic:"บททดสอบ",ask:"การ์ดงง"},{where:"question",qid:ids[1],key:ids[1]}]}]);
+    const t=await pg.evaluate(()=>isoDay(todayKey()));
+    await pg.evaluate(([id,t])=>{ LETTERS.unshift({id:"t-letter",date:t,text:"ทดสอบ",replies:[{qid:id,ask:"ข้อแรกงง",text:"ตอบข้อแรกแล้ว"}]}); render() },[ids[0],t]);
+    if(!await pg.locator("#go-myq").count()) return "home has no entry to คำถามของฉัน";
+    await pg.click("#go-myq");
+    const r=await pg.evaluate(()=>({n:document.querySelectorAll("details.myq").length,txt:document.querySelector("#view").textContent,
+      done:[...document.querySelectorAll("details.myq summary")].filter(s=>s.textContent.includes("✅")).length,prompts:document.querySelectorAll("details.myq .prompt").length}));
+    await pg.evaluate(()=>{ LETTERS.shift() });
+    if(r.n!==3) return `expected 3 asks (one without ask text is skipped), got ${r.n}`;
+    if(r.done!==1||!r.txt.includes("ตอบข้อแรกแล้ว")) return "the letter reply is not matched to her question";
+    if(r.prompts<2) return "the question stems are missing";
+    if(!r.txt.includes("การ์ดงง")||!r.txt.includes("บททดสอบ")) return "an ask about a lesson card must show with its lesson";
+    await pg.click("#mq-back"); if(await pg.evaluate(()=>view)!=="home") return "back does not return home";
+    await reset() });
+  /* 24 Nov 2026 (front-page queue 2b): a tap right after a box closes must not fall through; an early "ยังคิดไม่ออก" asks again */
+  await T("tap guard after a box closes, and an early 'ยังคิดไม่ออก' asks once more (24 Nov)",async()=>{ await noToday(); await reset();
+    await pg.evaluate(()=>{ window.__noTapGuard=false; window.__hit=0; $v.insertAdjacentHTML("beforeend",'<button id="tg-b" style="position:fixed;top:300px;left:20px;z-index:1">x</button>'); document.getElementById("tg-b").onclick=()=>{ window.__hit++ };
+      sheet({title:"ทดสอบ",html:"<p>x</p>",actions:[{label:"ปิด",fn:closeSheet}]}) });
+    await pg.click('[data-sh="0"]'); await pg.click("#tg-b",{force:true});
+    const early=await pg.evaluate(()=>window.__hit); await pg.waitForTimeout(700); await pg.click("#tg-b",{force:true}); const late=await pg.evaluate(()=>window.__hit);
+    if(early!==0) return "a tap right after closing the box went through";
+    if(late!==1) return "taps must work again after the guard";
+    const set=await pg.evaluate(()=>SETS.find(s=>s.kind==="lesson"&&!gateEligible(s)&&s.practice.some(q=>!q.predict)).id);
+    await pg.evaluate(id=>{ localStorage.removeItem("fieldnote.inprogress"); introSet=SETS.find(s=>s.id===id); view="intro"; render() },set); await pg.click("#go");
+    for(let k=0;k<40&&!await pg.locator("#dontknow").count();k++){ if(await pg.locator("#sheet").count()){ await pg.evaluate(()=>closeSheet()); await pg.waitForTimeout(650); continue } if(await pg.locator("#cnext").count()){ await pg.click("#cnext"); continue } if(await pg.locator("[data-tu]").count()){ await pg.click('[data-tu="ok"]'); continue } if(await pg.locator("[data-ws]").count()){ await pg.locator("[data-ws]").first().click(); continue } if(await pg.locator("[data-pred]").count()){ await pg.click('[data-pred="0"]'); continue } if(await pg.locator("#next").count()){ await pg.click("#next"); continue } break }
+    if(!await pg.locator("#dontknow").count()) return "could not reach a question with 'ยังคิดไม่ออก'";
+    const n0=await pg.evaluate(()=>S.items.length);
+    await pg.evaluate(()=>{ S.qStart=Date.now() }); await pg.click("#dontknow");
+    if(await pg.evaluate(()=>S.items.length)!==n0||await pg.evaluate(()=>!!S.answered)) return "an early tap answered at once";
+    if(!(await pg.locator("#dontknow").textContent()).includes("แน่ใจ")) return "the button must ask once more";
+    await pg.click("#dontknow"); if(!await pg.evaluate(()=>!!S.answered)) return "the second tap must show the answer";
+    await pg.evaluate(()=>{ window.__noTapGuard=true }); await reset() });
 
   const testAttempts=await pg.evaluate(()=>{ const x=JSON.parse(JSON.stringify(mine())); return x });
   await b.close();

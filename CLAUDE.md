@@ -98,8 +98,16 @@ sepp5~v1). **Father approved 22 Nov ("ทำ") → front-page queue 3 (Opus, no 
 `geo`/`svg` renderers) + her typed words above the answer (qid is looked up in sets, `variants.json`, sweeps; if not
 found fall back to the plain `text`); keep the plain `text` field working for old letters. (2) a "คำถามของฉัน" page
 (home entry like the library): lists every `confused[]` entry with an `ask` from her own progress, each with the
-question, her words and the letter reply when one exists (match by qid + ask). Until it is built, keep putting the
-stems inside the letter text as above. Add `tools/verify.js` checks (a reply with a qid renders the stem and figure;
+question, her words and the letter reply when one exists (match by qid + ask). **BUILT 24 Nov (queue 2):** `letterBody`/`replyHtml`
+(`replies`, `end`; options shown in hashed order, never stored order), `renderMyQ` (view "myq"; entry on home under the library
+line and inside the library list), matching by qid + ask (`replyFor`); letter 24 Nov rewritten in the new form; format rules in
+docs/features-and-companion.md "Letters"; verify.js tests "letter replies ..." and "คำถามของฉัน ...". Parent page shows the
+letters with their replies (no open-logging added).
+**Tap-through fix 24 Nov (queue 2b):** after any sheet closes, clicks outside a sheet are ignored for 600 ms (`tapGuardUntil`,
+`SHEET_GUARD_MS`); a sheet's backdrop ignores taps in its first 600 ms; "🤔 ยังคิดไม่ออก ดูเฉลย" tapped within 4 s of a question
+appearing asks once more (`DK_CONFIRM_MS`, item `dkAsk`). verify.js sets `window.__noTapGuard` for the generic player and has its
+own guard test. The 📖 / hints / "ยังคิดไม่ออก" are hidden during a predict step **by design** (predict = a gut guess before any
+help); a line under the predict options now tells her they appear after she guesses. Add `tools/verify.js` checks (a reply with a qid renders the stem and figure;
 unknown qid falls back); parent page change only if the page logs opens (optional).
 **Added 22 Nov (father: the Z/C words alone were not visualisable, he and she were both lost):** a letter reply must be
 able to carry a figure too (`fig` in the reply, same `geo`/`svg` kinds). Sample for the ladder question (fxmp6): `docs/zc-ladder.svg`

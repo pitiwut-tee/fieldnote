@@ -73,7 +73,8 @@ the next 3 days is enough, do just the small tasks (apply approvals, answer new 
   Many `concept` or `dontknow` on a spell → next lesson for that spell re-teaches with a slower concept card.
   Many `read` / `misopt` → add longer, carefully worded questions. `unclear` → rewrite that question
   (edit its JSON, keep the same id) and mention it to the father.
-- Her own questions (`confused[].ask`): answer them in the letter, and the idea inside the next relevant concept card.
+- Her own questions (`confused[].ask`): answer every one in the letter as `replies` (format: docs/features-and-companion.md
+  "Letters"), and the idea inside the next relevant concept card.
 - Time: measured 4–19 Nov, a lesson takes her ~11–13 min, vocabulary ~5, mistake review 6 items ~5, sweep ~0.6 min
   an item (see "Daily time and supply check" below for the report rules). Ratings "ยาก/ยากมาก" two or more times in a row
   on a spell → keep the next set at level 1–2 heavier.

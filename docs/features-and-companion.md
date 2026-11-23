@@ -21,6 +21,14 @@ undermine interest (Deci, Koestner & Ryan 1999) while self-set goals help (Locke
 - **Letters** (`content/letters.json`, one per run, `id` "letter-YYYY-MM-DD", `date` = tomorrow): 5–10 short
   lines, plain text with line breaks. Content, in this order of priority:
   1. Answer her own questions (`confused[].ask`) since the last letter, simply, in the companion voice.
+     **Format since 24 Nov 2026:** put each answer in `replies:[{qid, ask, text, fig?}]`, not in `text`. `qid` = the
+     `confused[].qid` (a set item, a twin in `variants.json` or a challenge); `ask` = her typed words exactly as stored
+     (the app matches the reply to her question by qid + ask, and lists it under "💬 คำถามของฉัน"); `text` = the answer
+     only (the app already shows the stem, its figure, the options in mixed order and her words above it, so do not
+     copy the stem again); `fig` = a `geo`/`svg` figure whenever the answer asks her to imagine a shape (rules as for
+     question figures). An ask about a lesson card has no qid: give `ask` and say which card in `text`. Letter `text`
+     = the short opening, `end` = closing lines after the replies (good process, what comes next, then the answer of
+     a "ลองเอง" item last). Old letters with only `text` still show. verify.js checks every qid.
   2. One specific thing she did well, about process ("ข้อพีทาโกรัสยาวๆ เธอใช้แบ่งโจทย์แล้วทำได้"), from data.
   3. One thing coming up and why it helps (a spell due, the weekly passage, a mission).
   4. If she wrote a weekly reflection (`reflect`), respond to it with curiosity.

@@ -507,6 +507,11 @@ mark.sperr{background:#FFD3CC;color:#8A1F14;border-radius:3px;padding:0 1px}
 .lptable{overflow-x:auto}.lptable table{border-collapse:collapse;width:100%;font-size:.95rem}.lptable th,.lptable td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left}
 .lpcontrast{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 .rdtable{overflow-x:auto;max-width:100%}.rdtable table{border-collapse:collapse;min-width:640px;width:100%;font-size:.9rem}.rdtable th,.rdtable td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.lreply{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin:10px 0;background:var(--paper)}
+.lreply .prompt{font-size:1rem}.lropts{margin:4px 0;padding-left:1.2em}
+.lask{background:color-mix(in srgb,var(--accent) 10%,transparent);border-radius:8px;padding:6px 8px;margin:8px 0}
+.lans{border-left:4px solid var(--good);padding-left:10px;margin-top:8px}
+details.myq{border-top:1px solid var(--line);padding:8px 0}details.myq summary{cursor:pointer}
 </style>
 
 <div class="wrap" id="app">
@@ -1307,6 +1312,7 @@ function render(){
   if(view==="session") return renderStep();
   if(view==="loop") return renderLoop();
   if(view==="lib") return renderLib();
+  if(view==="myq") return renderMyQ();
   if(view==="cpintro") return renderCpIntro();
   if(view==="vocab") return renderVocab();
   if(view==="done") return renderDone();
@@ -1466,7 +1472,7 @@ function renderHome(){
     ${tr.length?`<div class="daypanel trialbox"><p class="small"><b>🧪 ทดลองของใหม่วันนี้:</b> ${tr.map(k=>TRIAL_NAMES[k]).join(" และ ")} · ลองสัปดาห์นี้แล้วบอกหน่อยว่าชอบไหม</p></div>`:""}
     ${specialMissions(p,ms,md,mission)}
     ${loopCard(list)}
-    ${libEntry()}
+    ${libEntry()}${myqEntry(list)}
     ${!ms.some(x=>x.key==="lesson")?"":mission(1,"lesson",(examAt(todayKey())||{}).phase==="during"?"ไม่บังคับช่วงสอบ":plan.exam?"โหมดเตรียมสอบ · ราว 25 นาที":plan.repair?"ชุดซ่อมจุดอ่อน (วันศุกร์) · ราว 15 นาที":"ชุดฝึก"+(md.lesson?" · ทำแล้ว":" · ราว 30 นาที"),lessonTitle,
       md.lesson&&doneLesson?`<div class="row">${notesBtn(doneLesson)}<button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"เลือกชุดอื่น"}</button></div>`
       :`<div class="row"><button class="btn" id="go-rec">${plan.exam?"เริ่มทบทวน":plan.repair?"เริ่มซ่อม":"เริ่มชุดนี้"}</button><button class="btn ghost" id="other">${showAll?"ซ่อนชุดอื่น":"อยากทำเรื่องอื่น"}</button></div>`,
@@ -2069,6 +2075,7 @@ function renderStep(){
     <div class="row">${!ans&&wsOn(st)&&wsOpenIdx().length>1?`<button class="btn ghost" id="wsopen" type="button">📄 ดูทั้งหน้า / ข้ามข้อนี้ไปก่อน</button>`:""}${!ans&&!predWait&&canPeek(st)?`<button class="btn ghost" id="peek" type="button">📖 ดูเนื้อหา/สูตร</button>`:""}${!ans&&!predWait&&S.hints<HL.length?`<button class="btn ghost" id="hint">${S.hints===HL.length-1&&HL.length>(q.hints||[]).length?"ขอดูขั้นแรกของวิธีทำ":"ขอคำใบ้"} (${S.hints}/${HL.length})</button>`:""}
     ${!ans&&!predWait?`<div class="row" style="gap:8px"><button class="btn ghost" id="dontknow">🤔 ยังคิดไม่ออก ดูเฉลย</button>${["mixed","probe","sweep"].includes(S.set.kind)||S.set.type==="sweep"?`<button class="btn ghost" id="nottaught">📭 ยังไม่ได้เรียนเรื่องนี้</button>`:""}</div>`:""}
     ${st.optional&&!ans&&!predWait?`<button class="btn ghost" id="skip">ข้ามข้อนี้</button>`:""}</div>
+    ${predWait?`<p class="small muted">🔮 ทายก่อนตามความรู้สึก ไม่มีถูกผิด แล้วปุ่ม${canPeek(st)?" 📖 ดูเนื้อหา":""} คำใบ้ และ “ยังคิดไม่ออก” จะขึ้นมา</p>`:""}
     ${!ans&&q.recall?`<p class="small muted">🧠 ข้อนี้เคยเจอแล้ว รอบนี้ไม่มีตัวเลือก พิมพ์คำตอบเองเลย</p>`:""}
     ${!ans&&q.num&&!q.recall?`<p class="small muted">✍️ ข้อเติมคำตอบแบบข้อสอบจริง ไม่มีตัวเลือกให้เดา ตอบเป็นเศษส่วนได้ เช่น 2/3</p>`:""}
     ${!ans?askHtml("question"):""}
@@ -2114,7 +2121,9 @@ function renderStep(){
     const hb=document.getElementById("hint"); if(hb) hb.onclick=()=>{S.hints++;const y=window.scrollY;renderStep();window.scrollTo({top:y})};
     $v.querySelectorAll("[data-hku]").forEach(b=>b.onclick=()=>{ const k=+b.dataset.hku; S.hintKnown=(S.hintKnown||[]).filter(x=>x!==k); const y=window.scrollY; renderStep(); window.scrollTo({top:y}) });
     $v.querySelectorAll("[data-hk]").forEach(b=>b.onclick=()=>{ const k=+b.dataset.hk; S.hintKnown=[...new Set([...(S.hintKnown||[]),k])]; if(k===S.hints-1&&S.hints<hintList(q).length) S.hints++; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) });
-    { const dk=document.getElementById("dontknow"); if(dk) dk.onclick=()=>{S.why=["dontknow"]; answer({choice:-1,raw:"",correct:false,dontknow:true})} }
+    { const dk=document.getElementById("dontknow"); if(dk) dk.onclick=()=>{ /* a tap in the first DK_CONFIRM_MS of a question asks once more (24 Nov, queue 2b) */
+      if(Date.now()-S.qStart<DK_CONFIRM_MS&&!dk.dataset.sure){ dk.dataset.sure="1"; dk.textContent="🤔 แน่ใจนะ? แตะอีกครั้งเพื่อดูเฉลย"; S.dkAsk=(S.dkAsk||0)+1; return }
+      S.why=["dontknow"]; answer({choice:-1,raw:"",correct:false,dontknow:true})} }
     { const nt=document.getElementById("nottaught"); if(nt) nt.onclick=()=>{S.why=["notTaught"]; S.notTaught=true; answer({choice:-1,raw:"",correct:false,dontknow:true})} }
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
     const sk=document.getElementById("skip"); if(sk) sk.onclick=()=>{S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,skipped:true,timeSec:0});advance()};
@@ -2132,7 +2141,7 @@ function renderStep(){
     const exn=document.getElementById("exnext"); if(exn) exn.onclick=()=>{ S.exStep=(S.exStep||1)+1; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) };
     { const lq=document.getElementById("go-lib-q"); if(lq) lq.onclick=()=>{ readStop(); S.libOpen=(S.libOpen||0)+1; openLib(lq.dataset.sub,{qid:q.id},"session") } }
     const nx=document.getElementById("next"); if(nx) nx.onclick=()=>{
-      S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,...(st.chk?{chk:1}:{}),...(st.leg!=null&&S.legs&&S.legs.length>=2?{leg:st.leg}:{}),...(S.hints&&S.hints>=(q.hints||[]).length+1?{hintStep:true}:{}),...(S.hintKnown&&S.hintKnown.length?{hintKnown:S.hintKnown}:{}),...(exStepped(q,ans)?{exSteps:Math.min(S.exStep||1,exSteps(q.ex).length),exTotal:exSteps(q.ex).length}:{}),struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
+      S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,...(S.dkAsk?{dkAsk:S.dkAsk}:{}),errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,...(st.chk?{chk:1}:{}),...(st.leg!=null&&S.legs&&S.legs.length>=2?{leg:st.leg}:{}),...(S.hints&&S.hints>=(q.hints||[]).length+1?{hintStep:true}:{}),...(S.hintKnown&&S.hintKnown.length?{hintKnown:S.hintKnown}:{}),...(exStepped(q,ans)?{exSteps:Math.min(S.exStep||1,exSteps(q.ex).length),exTotal:exSteps(q.ex).length}:{}),struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
         ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(S.libOpen?{lib:S.libOpen}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(S.whyOther&&(S.why||[]).includes("other")?{whyOther:S.whyOther.trim()}:{}),...(ans.correct&&(S.guessed||S.checkPick===-1)?{guessed:true}:{}),...(S.checkPick===-2?{checkNone:true,...(S.checkOwn&&S.checkOwn.trim()?{checkOwn:S.checkOwn.trim().slice(0,300)}:{})}:{}),...(S.notTaught?{notTaught:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0,coverFloor:S.coverFloor||coverFloor(q)}:{}),...(q.check&&S.checkPick!=null&&S.checkPick!==-1&&S.checkPick!==-2?{checkOk:S.checkPick===q.check.a,...(ans.correct?{}:{checkAfterWrong:true})}:{}),...(q.predict&&S.predictPick!=null?{predict:S.predictPick,predictOk:S.predictPick===q.predict.a}:{}),...(q.friend?{friend:true}:{}),...(q.sit?{sit:q.sit}:{}),...(st.loop?{loop:st.loop}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),...(S.peekQ?{peek:S.peekQ}:{}),...(st.carry?{carry:true}:{}),len:q.q.length});
       const gateNote=S.gate&&st.phase==="ฝึกทำ"&&(q.level||1)===1?gateApply():null;
       advance(); if(gateNote) gateNote();
@@ -2141,7 +2150,8 @@ function renderStep(){
 }
 function answer(a){ readStop(); S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
 /* per-question state, reset when the next question opens (advance) or when she picks another item on the worksheet */
-function qReset(){ S.answered=null; S.libOpen=0; S.peekQ=0; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.checkOwn=""; S.checkOwnOpen=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.coverFloor=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.predictPick=null; S.predOrder=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; }
+const DK_CONFIRM_MS=4000;
+function qReset(){ S.dkAsk=0; S.answered=null; S.libOpen=0; S.peekQ=0; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.checkOwn=""; S.checkOwnOpen=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.coverFloor=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.predictPick=null; S.predOrder=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; }
 /* worksheet view (P2, father agreed 24 Nov after her feedback "in a book I see the whole page and choose which item to do first").
    On a lesson's own practice items: the page of items opens when practice starts and from the "📄" button on any item; she
    picks any open item, or skips one and comes back later. Level 2 stays locked until the level-1 gate is done (gated lessons).
@@ -2663,14 +2673,63 @@ function lettersRead(){ try{ return JSON.parse(localStorage.getItem("fieldnote.l
 let letterOpen=false;
 function letterHtml(force){ const t=isoDay(todayKey()), ls=LETTERS.filter(l=>l.date<=t); if(!ls.length||!getBuddy()) return "";
   const read=lettersRead(), L=ls[0], unread=!read.includes(L.id); if(force&&unread) letterOpen=true;
-  if(!unread&&!letterOpen) return `<details class="small muted" style="padding:0 4px"><summary>💌 จดหมายจาก ${esc(bname())} (${ls.length} ฉบับ)</summary>${ls.map(l=>`<div class="logi" style="margin-top:6px"><span class="small muted">${new Date(l.date+"T00:00:00").toLocaleDateString("th-TH",{day:"numeric",month:"short"})}</span><span class="small" style="white-space:pre-wrap">${esc(l.text)}</span></div>`).join("")}</details>`;
+  if(!unread&&!letterOpen) return `<details class="small muted" style="padding:0 4px"><summary>💌 จดหมายจาก ${esc(bname())} (${ls.length} ฉบับ)</summary>${ls.map(l=>`<div class="logi" style="margin-top:6px"><span class="small muted">${new Date(l.date+"T00:00:00").toLocaleDateString("th-TH",{day:"numeric",month:"short"})}</span><div class="small">${letterBody(l)}</div></div>`).join("")}</details>`;
   return `<section class="card usebox"><span class="eyebrow">💌 จดหมายจาก ${esc(bname())}</span>
-    ${letterOpen?`<p style="white-space:pre-wrap">${esc(L.text)}</p><p class="small muted">— ${esc(bname())}</p><button class="btn ghost small" id="lclose">อ่านแล้ว</button>`
+    ${letterOpen?`${letterBody(L)}<p class="small muted">— ${esc(bname())}</p><button class="btn ghost small" id="lclose">อ่านแล้ว</button>`
       :`<p class="small">มีจดหมายฉบับใหม่ถึงเธอ</p><button class="btn" id="lopen">เปิดอ่าน</button>`}</section>` }
 function bindLetter(){ const t=isoDay(todayKey()), L=LETTERS.find(l=>l.date<=t);
-  const o=document.getElementById("lopen"); if(o) o.onclick=()=>{ sheet({icon:"💌",title:`จดหมายจาก ${bname()}`,read:nm(L.text),html:`<p class="factread" style="white-space:pre-wrap">${esc(nm(L.text))}</p><p class="small muted" style="text-align:right">— ${esc(bname())}</p>`,
+  const o=document.getElementById("lopen"); if(o) o.onclick=()=>{ sheet({icon:"💌",title:`จดหมายจาก ${bname()}`,read:letterRead(L),wide:!!(L.replies&&L.replies.length),html:`${letterBody(L,"factread")}<p class="small muted" style="text-align:right">— ${esc(bname())}</p>`,
     actions:[{label:"อ่านแล้ว",fn:()=>{ try{ localStorage.setItem("fieldnote.lettersread",JSON.stringify([...new Set([...lettersRead(),L.id])])) }catch(e){} closeSheet(); letterOpen=false; renderHome() }}]}) };
   const c=document.getElementById("lclose"); if(c) c.onclick=()=>{ try{ localStorage.setItem("fieldnote.lettersread",JSON.stringify([...new Set([...lettersRead(),L.id])])) }catch(e){} letterOpen=false; renderHome() } }
+
+/* ---------- letters that show the question she asked about (rule of 22 Nov, built 24 Nov: front-page queue 2) ----------
+   She does not remember which question she typed about, so a letter may carry replies:[{qid, ask?, text, fig?}].
+   Per reply the app shows the question stem + its figure (looked up in sets, twins and challenges), her typed words, then
+   the answer (+ an optional figure). An unknown qid falls back to the plain text. Letter fields: text (opening), replies,
+   end (closing text after the replies, e.g. the answer of a "try it yourself"). Old letters with only text still work.
+   "คำถามของฉัน" lists every confused[] entry with an ask from her own records, with the letter reply when one exists. */
+function qLookup(qid){ if(!qid) return null; const o=QBANK[qid]; if(o) return o.q; return COMP.find(x=>x.id===qid)||null }
+const askNorm=t=>String(t||"").replace(/\s+/g," ").trim();
+function myAsks(list){ const out=[], seen=new Set();
+  (list||mine()).slice().sort((a,b)=>String(a.endedAt)<String(b.endedAt)?1:-1).forEach(a=>(a.confused||[]).forEach(c=>{ if(!c||!c.ask) return;
+    const k=(c.qid||c.key||c.topic||"")+"|"+askNorm(c.ask); if(seen.has(k)) return; seen.add(k); out.push({...c,date:a.endedAt,setTopic:a.topic}) }));
+  return out }
+function replyFor(c){ const t=isoDay(todayKey());
+  for(const L of LETTERS){ if(L.date>t) continue; for(const r of (L.replies||[])){
+    if(r.qid&&r.qid===c.qid&&(!r.ask||askNorm(r.ask)===askNorm(c.ask))) return {r,L};
+    if(!r.qid&&r.ask&&askNorm(r.ask)===askNorm(c.ask)) return {r,L} } }
+  return null }
+function optsList(q){ if(!q||!Array.isArray(q.opts)||q.num) return "";   /* stored order puts the right answer first (rule 8), so mix it */
+  const o=q.opts.map((x,k)=>({x,k})).sort((a,b)=>hashStr(q.id+"|"+a.k)%101-hashStr(q.id+"|"+b.k)%101);
+  return `<ul class="small lropts">${o.map(v=>`<li>${esc(v.x)}</li>`).join("")}</ul>` }
+function qShow(q){ return `<p class="prompt" style="margin:4px 0">${qLines(esc(q.q))}</p>${figHtml(q.fig)}${friendHtml(q,true)}${optsList(q)}` }
+function replyHtml(r){ if(!r) return ""; const q=qLookup(r.qid), ask=r.ask||(r.qid?(myAsks().find(c=>c.qid===r.qid)||{}).ask:"");
+  const who=esc(nm("{name}")), ans=`<p style="white-space:pre-wrap;margin:6px 0 0">${esc(nm(r.text||""))}</p>${figHtml(r.fig)}`;
+  if(!q) return `<div class="lreply" data-lr="${esc(r.qid||"")}" data-found="0">${ask?`<p class="small">✍️ ${who}ถามว่า “${esc(ask)}”</p>`:""}${ans}</div>`;
+  return `<div class="lreply" data-lr="${esc(r.qid)}" data-found="1"><span class="eyebrow" style="text-transform:none">โจทย์ที่ถาม${q.topic?" · "+esc(q.topic):""}</span>${qShow(q)}
+    ${ask?`<p class="small lask">✍️ ${who}ถามว่า “${esc(ask)}”</p>`:""}<div class="lans"><b class="small">ตอบ</b>${ans}</div></div>` }
+function letterBody(L,cls){ const p=t=>t?`<p class="${cls||""}" style="white-space:pre-wrap">${esc(nm(t))}</p>`:"";
+  return p(L.text)+(L.replies||[]).map(replyHtml).join("")+p(L.end) }
+function letterRead(L){ const parts=[nm(L.text||"")];
+  (L.replies||[]).forEach(r=>{ const q=qLookup(r.qid), ask=r.ask||(r.qid?(myAsks().find(c=>c.qid===r.qid)||{}).ask:""); if(q) parts.push("โจทย์: "+q.q); if(ask) parts.push(nm("{name}")+"ถามว่า "+ask); parts.push("ตอบ: "+nm(r.text||"")) });
+  if(L.end) parts.push(nm(L.end)); return parts.filter(Boolean).join("\n") }
+let MQ=null;
+function myqEntry(list){ const n=myAsks(list).length; if(!n) return "";
+  return `<div class="row" style="justify-content:space-between;align-items:center;gap:8px;margin:4px 2px"><span class="small muted">💬 คำถามของฉัน: ${n} ข้อที่เคยพิมพ์ถาม พร้อมคำตอบ</span><button class="btn ghost small" id="go-myq" type="button">เปิดดู</button></div>` }
+function openMyQ(ret){ MQ={ret:ret||view}; view="myq"; render(); window.scrollTo({top:0}) }
+function renderMyQ(){ if(!MQ) MQ={ret:"home"}; const as=myAsks(mine()), who=esc(nm("{name}"));
+  const day=d=>{ try{ return new Date(d).toLocaleDateString("th-TH",{day:"numeric",month:"short"}) }catch(e){ return "" } };
+  const item=(c,k)=>{ const q=qLookup(c.qid), rp=replyFor(c);
+    const where=q?qShow(q):`<p class="small muted">ถามในการ์ดบทเรียน “${esc(c.topic||c.setTopic||"")}”${c.prompt?`: ${esc(c.prompt)}`:""}</p>`;
+    return `<details class="lbg myq" data-mq="${k}" data-qid="${esc(c.qid||"")}"${k===0?" open":""}><summary><span class="small">${rp?"✅":"⏳"} “${esc(c.ask)}”</span> <span class="small muted">· ${day(c.date)}${c.topic?" · "+esc(c.topic):""}</span></summary>
+      <div class="lreply">${q?`<span class="eyebrow" style="text-transform:none">โจทย์</span>`:""}${where}<p class="small lask">✍️ ${who}ถามว่า “${esc(c.ask)}”</p>
+      ${rp?`<div class="lans"><b class="small">ตอบ (จดหมาย ${day(rp.L.date+"T00:00:00")})</b><p style="white-space:pre-wrap;margin:6px 0 0">${esc(nm(rp.r.text||""))}</p>${figHtml(rp.r.fig)}</div>`
+        :`<p class="small muted">ยังไม่มีคำตอบในจดหมาย คำถามนี้ถึงพ่อกับ Claude แล้ว จะตอบในจดหมายฉบับถัดไป</p>`}</div></details>` };
+  $v.innerHTML=`<section class="card"><span class="eyebrow">💬 คำถามของฉัน</span><h2>ทุกข้อที่เคยพิมพ์ถาม</h2>
+    <p class="small muted">แตะที่คำถามเพื่อดูโจทย์ สิ่งที่${who}พิมพ์ไว้ และคำตอบ · ✅ ตอบแล้ว · ⏳ รอคำตอบ</p>
+    ${as.length?as.map(item).join(""):`<p class="small">ยังไม่เคยพิมพ์ถามเลย ระหว่างทำข้อ ถ้างงตรงไหน กด “✍️ พิมพ์ถามตรงจุดที่งง” ได้ทุกเมื่อ คำถามจะมาอยู่ที่นี่</p>`}
+    <button class="btn ghost" id="mq-back" style="border:0;padding-left:0">← กลับ</button></section>`;
+  document.getElementById("mq-back").onclick=()=>{ const r=MQ&&MQ.ret; MQ=null; view=r==="lib"&&LB?"lib":r==="map"?"map":"home"; render(); window.scrollTo({top:0}) } }
 
 /* ---------- monthly goal she sets herself, with a reward she proposes; dad agrees on the parent page ---------- */
 const DECISIONS=(CONTENT.decisions&&CONTENT.decisions.goals)||{};
@@ -4622,7 +4681,12 @@ function xpSourceCard(list){
 /* ---------- pop-up sheet (father, 8 Nov): knowledge and important moments open in their own card, so they are not lost
    in a long page. One sheet at a time; closes with ✕, the backdrop, or Esc; can read itself aloud in Thai. */
 function sayTh(text){ try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); u.lang="th-TH"; const v=thVoice(); if(v){ u.voice=v; u.lang=v.lang } u.rate=0.95; speechSynthesis.speak(u) }catch(e){} }
-function closeSheet(){ const s=document.getElementById("sheet"); if(s){ s.remove(); try{ speechSynthesis.cancel() }catch(e){} document.removeEventListener("keydown",sheetKey) } }
+/* tap guard (24 Nov, front-page queue 2b): on 23 Nov closing the "ขั้นพื้นฐานแน่นแล้ว!" box let a second tap fall through onto
+   "🤔 ยังคิดไม่ออก ดูเฉลย" of the next question. After a sheet closes, clicks outside a sheet are ignored for SHEET_GUARD_MS;
+   a sheet's backdrop also ignores taps in its first SHEET_GUARD_MS (a double tap on "ต่อไป" no longer closes it at once). */
+const SHEET_GUARD_MS=600; let tapGuardUntil=0;
+document.addEventListener("click",e=>{ if(window.__noTapGuard) return; if(Date.now()<tapGuardUntil&&!(e.target.closest&&e.target.closest("#sheet"))){ e.stopPropagation(); e.preventDefault() } },true);
+function closeSheet(){ const s=document.getElementById("sheet"); if(s){ tapGuardUntil=Date.now()+SHEET_GUARD_MS; s.remove(); try{ speechSynthesis.cancel() }catch(e){} document.removeEventListener("keydown",sheetKey) } }
 function sheetKey(e){ if(e.key==="Escape") closeSheet() }
 function sheet({icon,title,html,read,actions,wide}){
   closeSheet(); const d=document.createElement("div"); d.id="sheet"; d.className="celebrate"; d.setAttribute("role","dialog"); d.setAttribute("aria-modal","true"); d.setAttribute("aria-label",title||"");
@@ -4630,7 +4694,7 @@ function sheet({icon,title,html,read,actions,wide}){
     ${icon?`<div class="celeicon">${icon}</div>`:""}${title?`<h2>${esc(title)}</h2>`:""}<div class="sheetbody">${html||""}</div>
     <div class="row sheetact">${read?`<button class="btn ghost small" data-sh="read">🔊 อ่านให้ฟัง</button>`:""}${(actions||[]).map((a,i)=>`<button class="btn ${a.ghost?"ghost":""}" data-sh="${i}" ${a.disabled?"disabled":""}>${a.label}</button>`).join("")}</div></div>`;
   document.body.appendChild(d); document.addEventListener("keydown",sheetKey);
-  d.addEventListener("click",e=>{ if(e.target===d||e.target.closest(".sheetx")) return closeSheet(); const b=e.target.closest("[data-sh]"); if(!b) return;
+  const opened=Date.now(); d.addEventListener("click",e=>{ if(e.target===d&&Date.now()-opened<SHEET_GUARD_MS) return; if(e.target===d||e.target.closest(".sheetx")) return closeSheet(); const b=e.target.closest("[data-sh]"); if(!b) return;
     if(b.dataset.sh==="read") return sayTh(read); const a=(actions||[])[+b.dataset.sh]; if(a&&a.fn) a.fn(d) });
   const f=d.querySelector(".sheetbody textarea,.sheetbody input")||d.querySelector(".sheetx"); try{ f.focus({preventScroll:true}) }catch(e){}
   return d }
@@ -5515,6 +5579,7 @@ function renderLib(){ if(!LB){ view="home"; return render() } const re=()=>rende
       <p class="small muted">เลือกเรื่องที่อยากเข้าใจอีกรอบ อ่านทีละส่วน แล้วลองทำเอง 2 ข้อ · 📖 มีการ์ดเฉพาะเรื่องนี้ · 📄 ใช้สรุปของบทเรียนไปก่อน</p>
       <input id="lb-q" class="numin" style="font-size:1rem;text-align:left;width:100%" placeholder="ค้นเรื่อง เช่น Rf มัธยฐาน ความหนาแน่น" autocomplete="off">
       ${miss.length?`<div id="lb-miss"><h3>เรื่องที่เคยพลาด</h3><div class="row" style="gap:6px;flex-wrap:wrap">${miss.map(m=>btn(m.s,` <span class="muted">(${m.k})</span>`)).join("")}</div></div>`:""}
+      ${myAsks(mine()).length?`<div class="row" style="margin:6px 0"><button class="btn ghost small" id="lb-myq" type="button">💬 คำถามของฉัน (${myAsks(mine()).length})</button></div>`:""}
       <h3 id="lb-allh">ทุกคาถา</h3>
       ${groups.map(g=>`<details class="lbg"><summary>${esc(g.sp.name)} <span class="small muted">· ${esc(g.sp.topic||"")} (${g.subs.length})</span></summary><div class="row" style="gap:6px;flex-wrap:wrap;margin:6px 0">${g.subs.map(s=>btn(s.id)).join("")}</div></details>`).join("")}
       <p class="small muted" id="lb-none" hidden>ไม่เจอเรื่องนี้ ลองคำอื่น หรือพิมพ์ถามพ่อกับ Claude ตรงช่อง “พิมพ์ถามตรงจุดที่งง” ในชุดฝึก</p>
@@ -5525,6 +5590,7 @@ function renderLib(){ if(!LB){ view="home"; return render() } const re=()=>rende
       $v.querySelectorAll("details.lbg").forEach(d=>{ let n=0; d.querySelectorAll("[data-lbs]").forEach(b=>{ const ok=!q||b.dataset.k.includes(q); b.hidden=!ok; if(ok) n++ }); d.hidden=!n; d.open=!!q&&n>0; if(n) any=true });
       document.getElementById("lb-none").hidden=any };
     $v.querySelectorAll("[data-lbs]").forEach(b=>b.onclick=()=>{ libStart(b.dataset.lbs); re(); window.scrollTo({top:0}) });
+    { const mq=document.getElementById("lb-myq"); if(mq) mq.onclick=()=>openMyQ("lib") }
   } else if(LB.mode==="deck"){ const so=LB.so, n=LB.tq.length;
     const intro=so.src==="concept"?`ยังไม่มีการ์ดเฉพาะเรื่องนี้ ใช้สรุปของบทเรียน “${esc(so.set.topic)}” ไปก่อน เรื่องนี้อยู่ในบางส่วนของสรุป`
       :`อ่านทีละส่วน${n?` จบแล้วลองทำเอง ${n} ข้อ`:""}${LB.from?" แล้วค่อยกลับไปที่ข้อเดิม":""}`;
@@ -5659,6 +5725,7 @@ function loopCard(list){ let L=null; try{ L=loopTodo(list) }catch(e){} if(!L) re
 function bindUnderstandHome(list,p){ const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
   on("mini-go",()=>startMini());
   on("go-lib",()=>openLib(null,null,"home"));
+  on("go-myq",()=>openMyQ("home"));
   on("cp-go",()=>{ view="cpintro"; render(); window.scrollTo({top:0}) });
   on("paper-go",async e=>{ const b=e.target; if(b.dataset.armed!=="1"){ b.dataset.armed="1"; b.textContent="ทำครบ 90 นาทีแล้ว กดอีกครั้งเพื่อบันทึก"; return } b.disabled=true; const c=p.need.paper, now=new Date().toISOString();
     await saveAttempt({type:"paper",setId:"paper-"+(c&&c.date||isoDay(todayKey())),subject:c&&c.subject||"",topic:"ข้อสอบจำลองบนกระดาษ"+(c&&c.subject?" "+c.subject:""),startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:60,items:[]}); renderHome() });
@@ -5829,7 +5896,7 @@ function renderParent(){
             <div class="row"><button class="btn small" data-gok="${g.setId}">ตกลงรางวัลนี้</button><button class="btn ghost small" data-gtalk="${g.setId}">ขอคุยกันก่อน</button><span class="small" id="gmsg-${g.setId}"></span></div>`:""}</div>` }).join("")}
       ${teach.length?`<span class="eyebrow">ลูกเล่าให้พ่อฟัง</span>${teach.slice(0,6).map(t=>`<div class="topic"><span class="small">${new Date(t.endedAt).toLocaleDateString("th-TH",{day:"numeric",month:"short"})} · ${esc(t.topic)}</span><span class="small">${esc(t.dadReaction||t.dadRating||"")}</span></div>`).join("")}`:""}
       ${(()=>{const pets=ownedPets(realAttempts()); return pets.length?`<p class="small">บ้านคู่หู: ${pets.map(x=>x.e+" "+esc(petName(x.k,realAttempts()))).join(" · ")} · ⭐ ${Math.max(0,wallet(attempts.filter(a=>!a.test&&!a.example)).stars)} ดาวเวท</p>`:""})()}
-      ${LETTERS.length?`<details class="small"><summary>จดหมายที่คู่หูเขียนถึงลูก (${LETTERS.length})</summary>${LETTERS.slice(0,6).map(l=>`<div class="logi" style="margin-top:6px"><span class="muted">${esc(l.date)}</span><span style="white-space:pre-wrap">${esc(l.text)}</span></div>`).join("")}</details>`:""}
+      ${LETTERS.length?`<details class="small"><summary>จดหมายที่คู่หูเขียนถึงลูก (${LETTERS.length})</summary>${LETTERS.slice(0,6).map(l=>`<div class="logi" style="margin-top:6px"><span class="muted">${esc(l.date)}${l.replies&&l.replies.length?` · ตอบ ${l.replies.length} คำถามพร้อมโจทย์`:""}</span><div>${letterBody(l)}</div></div>`).join("")}</details>`:""}
       <p class="note">ตกลงรางวัลแล้ว คู่หูจะบอกลูกในรอบอัปเดตถัดไป (พุธ/อาทิตย์) หรือบอกลูกเองได้เลย รางวัลที่ไม่ได้บอกล่วงหน้า เช่น คำชมหรือพาไปเที่ยวแบบเซอร์ไพรส์ ไม่ลดแรงจูงใจ ให้ได้เสมอ</p></section>` })()}
   ${GUESTS.length?`<section class="card"><h3>🎁 แขกพิเศษประจำสัปดาห์</h3>
     <p class="small muted">ของหายากที่มาเยี่ยม 3 วัน พร้อมภารกิจเล็กๆ ที่ช่วยการเรียน ลูกจะเห็นเฉพาะรายการที่พ่ออนุมัติ ถ้าไม่ทัน แขกจะกลับมาใหม่ภายหลัง ไม่มีการลงโทษ</p>
