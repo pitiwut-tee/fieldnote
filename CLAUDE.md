@@ -30,8 +30,9 @@ This file is the long-term memory. Chats are disposable; this repo and the statu
 ## Focus until 31 Dec 2026 (father, 24 Nov 2026) — check EVERY decision against this, and warn him when a request drifts
 Do not plan for the entrance exam yet. December is a trial to decide, in a first pass, whether this system really helps her learn.
 Only two goals count until then:
-- **G1 midterm:** she walks into the school midterm (estimate 21–25 Dec) ready and confident, on the school's scope
-  (content/midterm-plan.md).
+- **G1 midterm:** she walks into the school midterm (**Mon 14 – Thu 17 Dec 2026**, school schedule the father got 24 Nov evening;
+  was estimated 21–25 Dec) ready and confident, on the school's scope (content/midterm-plan.md, section "24 Nov: midterm moved").
+  Final exam Tue 23 – Fri 26 Feb 2027.
 - **G2 real understanding:** find, by trying and measuring, how she learns well with the app, and adapt it so that understanding
   actually comes from using it (talk cards, worksheet page, level-1 gate, her taps and ratings, her own words).
 Decision filter for any new work, request or nightly writing: does it serve G1 or G2 before 31 Dec? If not, it goes to the backup

@@ -143,3 +143,30 @@ read or recorded). They match the 12 Nov notes. Findings:
 - Still not checkable: the exact exam wording.
 - **Science unit 2, closed 23 Nov 2026:** the father checked the school's documents and there is no unit 2 (the numbering
   skips it); nothing is missing from what we read, so no extra reading (front-page queue 24 removed).
+
+## 24 Nov: midterm moved to Mon 14 – Thu 17 Dec (school schedule; final Tue 23 – Fri 26 Feb 2027)
+`calendar.json` updated the same evening (`estimated:false`). With `examPrepDays` 7 the prep week now starts **Mon 7 Dec**,
+so the old buffer (spare days 9–11 Dec, mock 12 Dec, prep 14–20 Dec) is gone.
+**Lesson slots left** after math-congruence-1 (24 Nov): school Fridays 27 Nov and 4 Dec are repair days (no lesson),
+Sun 6 Dec is cp-1, so with prep from 7 Dec only **9 slots**: 25, 26, 28, 29, 30 Nov, 1, 2, 3, 5 Dec.
+**Lessons still queued for the midterm:** 11 written (sci-separation-4, math-congruence-2, sci-solution-3, math-stats-5,
+sci-solution-4, math-stats-6, sci-separation-2, math-georeason-1, sci-solution-5, sci-solution-6, math-parallel-2) + the
+construction lesson (not written) + meaning-sci-1, meaning-math-1, tool-ratio-table-1. Short by 3 (core) to 6 (all).
+Options put to the father (front page ④ ฉ, waiting):
+- **ก (recommended): prep week 5 days (`examPrepDays` 5 → prep Wed 9 – Sun 13 Dec)** → +2 slots (Mon 7 holiday, Tue 8) = 11:
+  25 sep-4 · 26 cong-2 · 28 sol-3 · 29 stats-5 · 30 sol-4 · 1 stats-6 · 2 sep-2 · 3 georeason-1 · 5 sol-5 · 7 sol-6 ·
+  8 construction (only if the school teaches it before the exam; otherwise math-parallel-2 takes the slot).
+  math-parallel-2 (if not used), meaning-sci-1, meaning-math-1, tool-ratio-table-1 move after the midterm.
+  cp-1 stays Sun 6 Dec; the mock moves to **Thu 10 Dec** (Constitution Day holiday), repair Fri 11 – Sun 13 Dec.
+  Queue deadlines: construction lesson before 6 Dec; mock written before 8 Dec; mock read 10–11 Dec.
+  Cost: lessons of 7–8 Dec get only 5–6 days before the exam and no ≥ 7-day check; no spare day (if she misses a day,
+  drop in this order: math-parallel-2/construction, sci-solution-5).
+- **ข: keep 7 prep days** (prep 7–13 Dec) → 9 slots: drop construction and math-parallel-2 (and one more if she misses a
+  day); mock Thu 10 Dec inside the prep week. More review time, fewer topics taught by the app.
+- **ค: a second lesson on Sat/Sun** (28–29 Nov, 5 Dec): fits everything, but it is the parked "second lesson a day" and
+  goes against her 22–23 Nov feedback (too fast, too thin) and G2. Not recommended.
+Nothing changes before Mon 7 Dec under any option (the first 9 lessons are the same), so the choice is needed only by ~1 Dec
+(the construction lesson must be written before 6 Dec if kept). Unknown that decides construction: whether the school
+reaches constructions / parallelogram proofs before 14 Dec (ask the teacher for the scope sheet).
+Note: the verify.js December test fails on "no 📖 อ่านคำอธิบาย after a wrong sweep answer" on the unchanged 8a4b98a too
+(not caused by the date change); check in the next app chat whether the real sweep shows the button.
