@@ -650,12 +650,91 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     if(await pg.evaluate(()=>chkOk({correct:true,peek:1}))) return "a peeked answer must not count as checkpoint evidence (คงทน)";
     const warmBtn=await pg.evaluate(()=>{ const k=S.steps.findIndex(x=>x.kind==="q"&&x.phase!=="ฝึกทำ"); if(k<0) return null; S.i=k; S.answered=null; render(); return !!document.getElementById("peek") });
     if(warmBtn) return "the 📖 button must not show on warm-up / spaced steps";
-    /* yesterday's deferred items come back as warm-up of the next lesson, at most GATE.carry */
+    /* yesterday's deferred items come back, at most GATE.carry: before the December split as lesson warm-up, after it as their own mission */
     const ids=r.gate.deferred, y=await pg.evaluate(()=>new Date(Date.now()-86400000).toISOString());
-    await reset([{type:"set",setId:pick.a,topic:"x",startedAt:y,endedAt:y,durationSec:600,correct:6,total:9,gate:{on:true,done:true,passed:true,n1:6,ok1:6,why:"pass",deferred:ids},items:[]}]);
-    const c=await pg.evaluate(id=>{ startSet(SETS.find(s=>s.id===id),false); return {carry:S.steps.filter(x=>x.carry).map(x=>x.q.id),due:S.dueIds.filter(d=>d.startsWith("g:"))} },pick.b);
-    if(!c.carry.length||c.carry.length>6||c.carry.some(id=>!ids.includes(id))||c.due.length!==c.carry.length) return "carried items wrong: "+JSON.stringify(c);
-    if(await pg.evaluate(()=>{ const k=S.steps.findIndex(x=>x.carry); S.i=k; S.answered=null; render(); return !!document.getElementById("peek") })) return "no 📖 on carried items";
+    const yrec=[{type:"set",setId:pick.a,topic:"x",startedAt:y,endedAt:y,durationSec:600,correct:6,total:9,gate:{on:true,done:true,passed:true,n1:6,ok1:6,why:"pass",deferred:ids},items:[]}];
+    await reset(yrec);
+    const DECJ=await pg.evaluate(()=>JSON.stringify(DEC));
+    const c=await pg.evaluate(id=>{ DEC.from="2099-01-01"; startSet(SETS.find(s=>s.id===id),false); return {carry:S.steps.filter(x=>x.carry).map(x=>x.q.id),due:S.dueIds.filter(d=>d.startsWith("g:"))} },pick.b);
+    await pg.evaluate(j=>{ Object.assign(DEC,JSON.parse(j)) },DECJ);
+    if(!c.carry.length||c.carry.length>6||c.carry.some(id=>!ids.includes(id))||c.due.length!==c.carry.length) return "carried items wrong (before the split): "+JSON.stringify(c);
+    if(await pg.evaluate(()=>{ const k=S.steps.findIndex(x=>x.carry); S.i=k; S.answered=null; render(); return !!document.getElementById("peek") })) return "no 📖 peek on carried items";
+    await reset() });
+
+  /* 24 Nov 2026 (father's decisions ก, ง, จ; front-page queue 1): one job per mission, the December midterm sweep, the 📖 explanation button */
+  await T("December: carried items are their own mission, lesson warm-up is its own, fixed midterm sweep, 📖 explanation (24 Nov)",async()=>{ await noToday(); await reset();
+    const pick=await pg.evaluate(()=>{ const cur=new Set(CAL.currentSpells||[]);
+      const a=SETS.find(s=>s.kind==="lesson"&&s.practice.filter(q=>(q.level||1)===1).length>=6&&s.practice.some(q=>q.level===3)&&cur.has(s.spell));
+      const m=SETS.find(s=>s.kind==="lesson"&&cur.has(s.spell)&&s!==a&&s.practice.length>=8);
+      const b=SETS.find(s=>s.kind==="lesson"&&s!==a&&s!==m&&s.warm&&s.warm.length);
+      return {a:a&&a.id,m:m&&m.id,b:b&&b.id,def:a?a.practice.filter(q=>(q.level||1)>=2).slice(0,8).map(q=>q.id):[],seen:m?m.practice.slice(0,3).map(q=>q.id):[],today:isoDay(todayKey()),from:DEC.from} });
+    if(!pick.a||!pick.m||!pick.b) return "need two midterm lessons and a lesson with warm items";
+    if(pick.today<pick.from) return "the test clock is before DEC.from";
+    const ago=n=>new Date(Date.now()-n*86400000).toISOString();
+    const recs=[{type:"set",setId:pick.a,topic:"x",startedAt:ago(1),endedAt:ago(1),durationSec:600,correct:6,total:6,gate:{on:true,done:true,passed:true,n1:6,ok1:6,why:"pass",deferred:pick.def},items:[]},
+      {type:"set",setId:pick.m,topic:"y",startedAt:ago(10),endedAt:ago(10),durationSec:600,correct:3,total:3,items:pick.seen.map(id=>({qid:id,level:1,correct:true}))}];
+    await reset(recs);
+    const ms=await pg.evaluate(()=>missionList(progressOf(mine())).map(x=>x.key));
+    if(ms[0]!=="lesson"||ms[1]!=="carry") return "the carried-items mission must follow the lesson: "+ms.join(",");
+    if(!await pg.locator("#carry-go").count()) return "no carried-items card on the home page";
+    if(!await pg.locator("#m-sweep",{hasText:"ย้อนคาถา"}).count()) return "no sweep card";
+    /* the lesson's warm-up is only its own warm items */
+    const w=await pg.evaluate(id=>{ const s=SETS.find(x=>x.id===id); startSet(s,false); const q=S.steps.filter(x=>x.kind==="q"&&x.phase!=="ฝึกทำ"&&!x.optional); return {n:q.length,warm:s.warm.length,extra:q.filter(x=>x.carry||x.chk||x.due||x.retry||x.loop).length,dueIds:S.dueIds.length} },pick.b);
+    if(w.extra||w.n!==w.warm||w.dueIds) return "the lesson warm-up must hold only its own warm items: "+JSON.stringify(w);
+    await reset(recs);
+    /* carried mission: items, 📖 before answering counts as a peek and is logged */
+    await pg.click("#carry-go");
+    const c=await pg.evaluate(()=>({n:S.steps.filter(x=>x.carry).length,ids:S.steps.filter(x=>x.carry).map(x=>x.q.id)}));
+    if(!c.n||c.n>6||c.ids.some(id=>!pick.def.includes(id))) return "carried mission items wrong: "+JSON.stringify(c);
+    if(await pg.locator("#peek").count()) return "the lesson's 📖 peek button must not show in the carried mission";
+    if(await pg.locator("[data-pred]").count()) await pg.click('[data-pred="0"]');   /* a prediction comes before any help, by design */
+    if(!await pg.locator("#expl").count()) return "no 📖 อ่านคำอธิบาย before answering a carried item";
+    await pg.click("#expl"); if(!await pg.locator("#sheet .talk, #sheet li").count()&&await pg.evaluate(()=>view)!=="lib") return "the explanation did not open";
+    await pg.evaluate(()=>{ if(document.getElementById("sheet")) closeSheet(); if(view==="lib"){ view="session"; render() } });
+    const n0=await pg.evaluate(()=>S.items.length);
+    for(let i=0;i<20&&await pg.evaluate(n=>S.items.length===n,n0);i++){
+      if(await pg.locator("#sheet").count()){ await pg.evaluate(()=>closeSheet()); continue }
+      if(await pg.locator("[data-pred]").count()){ await pg.click('[data-pred="0"]'); continue }
+      if(await pg.locator(".opt:not([disabled]):not(.ckopt)").count()){ const k=await pg.evaluate(()=>{ const q=S.steps[S.i].q; return q.opts.findIndex((_,j)=>j!==q.a) }); await pg.locator(".opt:not(.ckopt)").nth(k).click(); for(const b of ["#send-sure","#send-plain"]) if(await pg.locator(b).count()){ await pg.click(b); break } continue }
+      if(await pg.locator("#numin:not([disabled])").count()){ const a=await pg.evaluate(()=>S.steps[S.i].q.answer); await pg.fill("#numin",String(a+1000)); for(const b of ["#check","#send-unsure","#send-plain"]) if(await pg.locator(b).count()){ await pg.click(b); break } continue }
+      if(await pg.locator("[data-ck]").count()){ await pg.locator("[data-ck]").first().click(); continue }
+      if(await pg.locator("#exnext").count()){ await pg.click("#exnext"); continue }
+      if(i>2&&!await pg.locator("#expl, #go-lib-q").count()&&await pg.evaluate(()=>!!S.answered)) return "no 📖 after a wrong answer in the carried mission";
+      if(await pg.locator("#next").count()){ await pg.click("#next"); await pg.waitForTimeout(80); continue } break }
+    const it=await pg.evaluate(()=>S.items[S.items.length-1]);
+    if(!(it&&it.carry&&it.peek>=1&&it.expl>=1&&it.explWhen==="before")) return "the before-answer explanation was not logged like a peek: "+JSON.stringify(it&&{carry:it.carry,peek:it.peek,expl:it.expl,w:it.explWhen});
+    const rs=await pg.evaluate(()=>{ saveProgress(); const k=rvKind(); S.active=false; return {k,ok:pendingReviews().some(p=>p.kind==="carry")} });
+    if(!(rs.k==="carry"&&rs.ok)) return "the carried mission cannot be resumed: "+JSON.stringify(rs);
+    await pg.evaluate(()=>{ resumeReview("carry") }); for(let g=0;g<80&&await pg.evaluate(()=>S&&S.active);g++){ await pg.evaluate(()=>{ if(document.getElementById("sheet")) closeSheet(); const st=S.steps[S.i]; if(!st||st.kind!=="q") return; S.answered={correct:true,at:Date.now()}; S.items.push({qid:st.q.id,level:st.q.level,correct:true,carry:true,phase:st.phase}); advance() }); await pg.waitForTimeout(40) }
+    await pg.waitForTimeout(300);
+    const cr=await pg.evaluate(()=>{ const r=mine().find(a=>a.type==="carry"); const p=progressOf(mine()); return {rec:!!r,done:missionList(p).find(x=>x.key==="carry"),units:p.unitsToday} });
+    if(!cr.rec||!(cr.done&&cr.done.done)) return "finishing the carried mission does not tick it: "+JSON.stringify(cr);
+    if(cr.units) return "the carried mission must not count as the day's lesson";
+    /* December sweep: fixed size, unseen items of a midterm lesson done ≥ 7 days ago */
+    const sw=await pg.evaluate(m=>{ const p=progressOf(mine()), sp=sweepPlan(p,mine()), st=decSweepSteps(mine(),sp.size), mids=st.filter(x=>x.mid);
+      const setOf=id=>{ const o=QBANK[id]; return o&&o.set.id };
+      return {size:sp.size,fixed:!!sp.fixed,school:p.info.kind==="school",base:sp.base,n:st.length,mid:mids.length,fromM:mids.filter(x=>setOf(x.q.of||x.q.id)===m).length,seenBack:mids.some(x=>mine().some(a=>(a.items||[]).some(i=>i.qid===x.q.id))),
+        subs:new Set(mids.map(x=>subOf(x.q.id))).size} },pick.m);
+    if(!sw.fixed||sw.size!==(sw.school?6:sw.base)) return "December sweep size must be fixed: "+JSON.stringify(sw);
+    if(!sw.mid||!sw.fromM) return "the December sweep has no unseen item from the midterm lesson done 10 days ago: "+JSON.stringify(sw);
+    if(sw.seenBack) return "the December sweep served an item she has already answered";
+    if(sw.subs!==sw.mid) return "the December sweep must take one item per subtopic";
+    const young=await pg.evaluate(a=>decSweepPool(mine(),20,[]).some(q=>{ const o=QBANK[q.of||q.id]; return o&&o.set.id===a }),pick.a);
+    if(young) return "an item from a lesson done yesterday (under 7 days) reached the December sweep";
+    /* answer-first in the sweep: no 📖 before answering, the button after a wrong answer */
+    await pg.evaluate(()=>{ const st=decSweepSteps(mine(),6); S={mode:"review",sweep:true,sweepPlan:{fixed:true,size:6,base:6,mins:0,served:st.length},set:{id:"sweep",subject:"ย้อนคาถา",topic:DEC_SWEEP_TOPIC},steps:[...st,{kind:"finish",phase:"เสร็จ"}],trial:[],trialVote:{},active:true,i:0,start:Date.now(),act0:actNow(),qStart:Date.now(),items:[],answered:null,why:null,hints:0,struck:[],glossed:[],askOpen:null,confused:[],altShown:0,pick:null,whyText:""}; view="session"; render() });
+    if(await pg.locator("#expl").count()) return "the sweep must stay answer-first (📖 shown before answering)";
+    await pg.evaluate(()=>answer({choice:-1,raw:"",correct:false,dontknow:true}));
+    for(let k=0;k<6&&await pg.locator("[data-ck]").count();k++) await pg.locator("[data-ck]").first().click();
+    if(!await pg.locator("#expl, #go-lib-q").count()) return "no 📖 อ่านคำอธิบาย after a wrong sweep answer";
+    const right=await pg.evaluate(()=>{ S.answered=null; S.checkPick=null; S.checkDone=true; const q=S.steps[S.i].q; answer(q.num?{raw:String(q.answer),correct:true}:{choice:q.a,correct:true}); S.checkDone=true; renderStep(); return !!document.querySelector("#expl, #go-lib-q") });
+    if(right) return "a confident right answer must not show the explanation button";
+    const gs=await pg.evaluate(()=>{ S.guessed=true; renderStep(); return !!document.querySelector("#expl, #go-lib-q") });
+    if(!gs) return "a guessed right answer must show the explanation button";
+    await pg.evaluate(()=>{ S.active=false; clearReviewProgress("sweep") });
+    /* before DEC.from nothing changes: carried items stay in the lesson warm-up and the carry mission is not on the list */
+    const old=await pg.evaluate(()=>{ const f=DEC.from; DEC.from="2099-01-01"; const r=missionList(progressOf(mine())).map(x=>x.key); DEC.from=f; return r });
+    if(old.includes("carry")) return "before DEC.from the carried mission must not exist";
     await reset() });
 
   /* 22 Nov 2026: study time = active time. A forgotten open tab, the app hidden or swiped away, and a resumed lesson must not add hours */

@@ -76,6 +76,22 @@ items (home card, expedition stop, resume slot, flame/map-piece counting); the D
 (`currentSpells`) whose lesson she did ≥ 7 days ago, items she has never answered (gate-dropped/deferred lesson items, twins),
 one per subtopic, oldest-taught first, fall back to the old sweep bank when short; the explanation button logs opens and the
 next same-subtopic result; parent page shows both; publish the parent page; tell the father what she will see (one line for ③).
+**BUILT 24 Nov 09:00 (front-page queue 1; father asked to switch on the SAME day, 24 Nov, because she only uses the app in the
+evening):** `calendar.json` "december" {from 2026-11-24, to 2026-12-31, sweepSchool 6, minAge 7}; app.html `DEC`, `splitOn`, `decOn`.
+(ง) `startSet` serves no due/chk/retry/loop/carry warm-up items from `DEC.from`; `startCarry` = mission key `carry` (record type
+`carry`, in LESSON_TYPES, resume slot `carry`, home card `#carry-go`, expedition stop 🧩, flame via `carryOk`, not a lesson unit);
+`startReview` (daily + repair) adds 1 `loopChecks` item; `reviewDueToday` also counts a due loop check. (จ) `sweepPlan` fixed size
+in December (`fixed`, record `sweepFixed`, `sweepMid`); `decSweepSteps` = `checkPlan` ≤ 2 (chk) + `dueQuestions` 1 (due) +
+`decSweepPool` (unseen items of lessons in `currentSpells` done ≥ minAge days ago, never her seen items or still-carried items,
+one per subtopic, least recently swept then oldest taught, level 2 → 3 → 1; items `mid:true`) + old bank. (ก) `explSource`
+(own lesson's talk card → a done lesson teaching the subtopic with a talk card → library → own lesson card), `explOn`
+(review modes except comp, and carried steps), `explAfterHtml` (after wrong / guessed / unsure / wrong or own reason),
+`explBefore` (carried items only, counts as `peek`), item fields `expl`, `explWhen`, `explSrc`. Parent card `decCard`
+("ระบบ ธ.ค."): per day minutes (⚠ < 25), carried, loop checks, sweep (mid / chk), criterion 4, 📖 opens and the next
+same-subtopic result vs wrong-without-opening. verify.js test "December: carried items are their own mission ...".
+Talk cards written the same chat (most-missed midterm lessons from the parent db): sci-separation-3 (Rf, tower, steam, still),
+sci-solution-1 (solvent: state first, then amount), sci-solution-2 (saturated, scaling by water, crystals in two steps),
+math-parallel-1 (Z / C / F with 62°/118° figures, zigzag); remaining six are nightly, one a night (AUTOMATION.md).
 
 ## Commands (repo root)
 - Build: `python3 tools/build.py` (makes `index.html` and `dist/parent.html` from `src/app.html` + `content/`)

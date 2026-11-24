@@ -762,7 +762,7 @@ function voided(a){ return VOID.has(a.endedAt)||VOID_RULES.some(r=>a.type===r.ty
 function realAttempts(){ return attempts.filter(a=>!a.example&&!a.test&&!voided(a)) }
 function mine(){ return TEST ? attempts.filter(a=>!a.example) : realAttempts() }
 function isSkip(a){ return a.type==="skip" }
-const LESSON_TYPES=["set","probe","mixed","passage","review","sweep","checkpoint","mini"];
+const LESSON_TYPES=["set","probe","mixed","passage","review","sweep","checkpoint","mini","carry"];
 function isLesson(a){ return LESSON_TYPES.includes(a.type||"set") }
 /* 17 Nov fix (student's note: "ยังไม่ได้กดตอบ แค่เลื่อนหน้าจอมันก็ตอบเอง"): one tap on an answer option submits it, so
    a thumb that starts a scroll on an option could answer by accident. A tap on .opt now counts only if the finger
@@ -888,9 +888,11 @@ function questStatus(list, wk, upto, met){
   return {q,all:q.every(x=>x.have>=x.need)};
 }
 
+/* the daily mistake review is a mission today: pool ≥ REVIEW_MIN_POOL, or (December focus) a loop check is due; never on a Friday repair day */
+function reviewDueToday(list,info){ try{ if(repairToday(list,info)) return false; return reviewPool(list).length>=REVIEW_MIN_POOL||(splitOn()&&loopChecks(list,1).length>0) }catch(e){ return false } }
 function progressOf(list){
   const modes=dayModes(list);
-  const byDay=new Map(), reviewDays=new Set(), miniDays=new Set(), cpDays=new Set(), paperDays=new Set(), sweepDays=new Set(), skipDays=new Set(), leaveDays=new Set(), vocabDays=new Set(), units=new Map(), probes=new Map(), met=new Set();
+  const byDay=new Map(), carryDays=new Set(), reviewDays=new Set(), miniDays=new Set(), cpDays=new Set(), paperDays=new Set(), sweepDays=new Set(), skipDays=new Set(), leaveDays=new Set(), vocabDays=new Set(), units=new Map(), probes=new Map(), met=new Set();
   list.forEach(a=>{ const k=dayKey(a.endedAt);
     if(a.type==="daymode") return;
     if(a.type==="mission"||a.type==="teach"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* mission / teaching dad: XP only, not a daily unit */
@@ -901,6 +903,7 @@ function progressOf(list){
     /* 17 Nov fix (father + student): a plain "ทบทวนข้อที่เคยพลาด" set ticked mission 1 (ชุดฝึก), so on 17 Nov the day
        showed only review and the new lesson vanished. From 18 Nov a plain review gives XP but is not the day's lesson.
        Friday repair ("repair") and pre-exam review ("exam-review") still fill the slot. Days before stay as they were. */
+    if(a.type==="carry"){ carryDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* December focus (ง): carried items, own mission, not the lesson unit */
     if(plainReview(a)&&k>=REVIEW_RULE_FROM){ reviewDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
     if(a.type==="mini"){ miniDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* minimum day (15 min): its own daily step */
     if(a.type==="checkpoint") cpDays.add(k); if(a.type==="paper") paperDays.add(k);   /* 🧠 3-question recall tile: XP, not a lesson unit */   /* old-topic sweep: its own daily step, not a lesson unit */
@@ -917,7 +920,7 @@ function progressOf(list){
     { const c=checkpointAt(d); if(c) return {units:1,probe:false,info,cp:c.kind==="short"?c:null,paper:c.kind==="full"?c:null}; }
     if(ex&&ex.phase==="prep") return {units:1,probe:false,info};
     if(info.level==="school") return {units:1,probe:false,info}; const L=LEVELS[info.level]; return {units:L.units,probe:L.probe&&probesLeft(d),info} };
-  const sweepFrom=CAL.sweepFrom?new Date(CAL.sweepFrom+"T00:00:00").getTime():Infinity, noSweepToday=(()=>{try{return !sweepQuestions(list,1).length}catch(e){return true}})();
+  const sweepFrom=CAL.sweepFrom?new Date(CAL.sweepFrom+"T00:00:00").getTime():Infinity, noSweepToday=!sweepAny(list);
   const sweepOk=d=>d<sweepFrom||examAt(d)||sweepDays.has(d)||(d===today&&noSweepToday)||(()=>{ const n=need(d); return n.cp||n.paper })();
   /* 19 Nov (father): the daily mistake review is required for the flame from DAY_RULES_FROM, on the days it is a mission
      (pool ≥ REVIEW_MIN_POOL at the end of that day, not a Friday repair day, exam weeks, checkpoint/paper or minimum days).
@@ -925,11 +928,17 @@ function progressOf(list){
   const reviewCache=new Map();
   const reviewOk=d=>{ if(d<DAY_RULES_FROM||reviewDays.has(d)) return true; const n=need(d);
     if(n.min||n.cp||n.paper||n.exam||examAt(d)) return true;
-    if(d===today) return !(()=>{ try{ return reviewPool(list).length>=REVIEW_MIN_POOL&&!repairToday(list,n.info) }catch(e){ return false } })();
+    if(d===today) return !reviewDueToday(list,n.info);
     if(n.info.kind==="school"&&new Date(d).getDay()===5) return true;
     if(!reviewCache.has(d)){ let need_=false; try{ const end=nextDay(d); need_=reviewPool(list.filter(a=>new Date(a.endedAt).getTime()<end)).length>=REVIEW_MIN_POOL }catch(e){} reviewCache.set(d,!need_) }
     return reviewCache.get(d) };
-  const isMet=d=>{ const n=need(d); if(n.min) return miniDays.has(d)||(units.get(d)||0)>=1; return (vocabDays.has(d)||(d===today&&noVocabToday))&&(units.get(d)||0)>=n.units&&(!n.probe||(probes.get(d)||0)>=1)&&sweepOk(d)&&reviewOk(d) };
+  /* December focus (ง): the carried-items mission is part of the day from DEC.from, when there were carried items that day */
+  const carryCache=new Map(), carryNow=(()=>{ try{ return splitOn()&&carryQuestions(list,1).length>0 }catch(e){ return false } })();
+  const carryOk=d=>{ if(!splitOn(d)||carryDays.has(d)) return true; const n=need(d); if(n.min||n.cp||n.paper||n.exam||examAt(d)) return true;
+    if(d===today) return !carryNow;
+    if(!carryCache.has(d)){ let need_=false; try{ const end=nextDay(d); need_=carryQuestions(list.filter(a=>new Date(a.endedAt).getTime()<end),1,null,d).length>0 }catch(e){} carryCache.set(d,!need_) }
+    return carryCache.get(d) };
+  const isMet=d=>{ const n=need(d); if(n.min) return miniDays.has(d)||(units.get(d)||0)>=1; return (vocabDays.has(d)||(d===today&&noVocabToday))&&(units.get(d)||0)>=n.units&&(!n.probe||(probes.get(d)||0)>=1)&&sweepOk(d)&&reviewOk(d)&&carryOk(d) };
   const keys=[...byDay.keys(),...skipDays,...[...leaveDays].filter(d=>d<=today)];
   let streak=0, best=0, freeze=0, goalDays=0; const frozen=new Set(), earned=[], questDone=new Set();
   if(keys.length){
@@ -951,7 +960,7 @@ function progressOf(list){
   return {streak,best,freeze,goalDays,frozen,skipDays,byDay,met,todayXp:byDay.get(today)||0,leaveDays,onLeave:leaveDays.has(today),
     unitsToday:u,probesToday:pr,sweepToday:sweepDays.has(today),sweepNeeded:today>=sweepFrom&&!noSweepToday,lessonToday:u-pr>=1||(u>=1&&!n.probe),vocabToday:vocabDays.has(today),noVocabToday,need:n,info:n.info,modes,
     miniToday:miniDays.has(today),cpToday:cpDays.has(today),reviewToday:reviewDays.has(today),
-    reviewNeeded:(()=>{ try{ return today>=DAY_RULES_FROM&&reviewPool(list).length>=REVIEW_MIN_POOL&&!repairToday(list,need(today).info) }catch(e){ return false } })(),paperToday:paperDays.has(today),
+    reviewNeeded:today>=DAY_RULES_FROM&&reviewDueToday(list,need(today).info),carryNeeded:carryNow&&!(n.min||n.cp||n.paper||n.exam||examAt(today)),carryToday:carryDays.has(today),paperToday:paperDays.has(today),
     goalToday:met.has(today),earnedToday:earned.filter(e=>e.d===today),quests:questStatus(list,weekStart(today),today,met),questDoneThisWeek:questDone.has(weekStart(today)),questWeeks:[...questDone].sort()};
 }
 
@@ -1099,12 +1108,41 @@ function nextStep(sp,info){
    days as warm-up ("ต่อจากบทก่อน", up to GATE.carry a day, oldest lesson first, gone after GATE.carryDays). Lessons with fewer
    level-1 items run as before (the content side is filling them). The gate never applies to a lesson she has already done. */
 const GATE=Object.assign({from:"2026-11-23",min:6,cap:12,win:5,need:4,l2:3,l2fail:2,minL1:6,carry:6,carryDays:14},CAL.gate||{});
+/* ---------- December focus (father, 24 Nov 08:37, decisions ง + จ; switched on the SAME day at his request, because she only
+   opens the app in the evening). calendar.json "december" {from,to,sweepSchool,minAge}.
+   (ง) one job per mission, from DEC.from on (stays after December): the lesson keeps only its own 2–3 warm items; carried
+   level-2/3 items become their own mission "ฝึกต่อจากบทก่อน" (record type "carry"); the retry-mistake and loop-check items join
+   the daily mistake review; the spaced (due) and checkpoint (chk) items join the sweep.
+   (จ) from DEC.from to DEC.to the sweep has a fixed size (school DEC.sweepSchool, holiday the level's base) instead of the
+   time-gap size, and draws unseen items from midterm subtopics (CAL.currentSpells) whose lesson she did ≥ DEC.minAge days ago
+   (lesson items the gate dropped/deferred, twins), one per subtopic, least recently checked / oldest taught first; falls back
+   to the old ม.1–2 bank when short. The sweep and the mistake review stay answer-first. */
+const DEC=Object.assign({from:"2026-11-24",to:"2026-12-31",sweepSchool:6,minAge:7},CAL.december||{});
+function splitOn(d){ return isoDay(d==null?todayKey():d)>=DEC.from }
+function decOn(d){ const s=isoDay(d==null?todayKey():d); return s>=DEC.from&&s<=DEC.to }
+/* the December sweep pool: unseen lesson items (and twins) of midterm subtopics taught ≥ DEC.minAge days ago, one per subtopic */
+function decSweepPool(list,n,avoid){ const t=todayKey(), cur=new Set(CAL.currentSpells||[]), seen=new Set(), av=new Set(avoid||[]), setDay={}, lastSub={};
+  list.forEach(a=>(a.items||[]).forEach(x=>seen.add(x.qid)));
+  list.filter(a=>a.type==="set").forEach(a=>{ const d=dayKey(a.endedAt); setDay[a.setId]=Math.min(setDay[a.setId]??Infinity,d) });
+  list.filter(a=>a.type==="sweep").forEach(a=>(a.items||[]).forEach(x=>{ const s=subOf(x.qid); if(s) lastSub[s]=Math.max(lastSub[s]||0,dayKey(a.endedAt)) }));
+  const reserved=new Set(); list.filter(a=>a.type==="set"&&a.gate&&Array.isArray(a.gate.deferred)&&t-dayKey(a.endedAt)<=GATE.carryDays*DAY).forEach(a=>a.gate.deferred.forEach(id=>reserved.add(id)));
+  const bySub={}, taught={};
+  Object.values(QBANK).forEach(({q,set})=>{ if(!set||set.kind!=="lesson"||q.optional||!cur.has(q.spell)) return;
+    if(set.challenge&&(set.challenge.id===q.id||set.challenge.id===q.of)) return;
+    const d=setDay[set.id]; if(d==null||t-d<DEC.minAge*DAY) return;
+    if(seen.has(q.id)||av.has(q.id)||av.has(q.of||"")||reserved.has(q.id)||reserved.has(q.of||"")) return;
+    const s=subOf(q.id); if(!s) return; (bySub[s]??=[]).push(q); taught[s]=Math.min(taught[s]??Infinity,d) });
+  const lvOrder={2:0,3:1,1:2};
+  const subs=Object.keys(bySub).sort((a,b)=>(lastSub[a]||0)-(lastSub[b]||0)||taught[a]-taught[b]||hashStr(a+t)%97-hashStr(b+t)%97);
+  const out=[]; for(const s of subs){ if(out.length>=n) break; if(av.has("sub:"+s)) continue;
+    const q=bySub[s].slice().sort((p,r)=>(lvOrder[p.level||1]??3)-(lvOrder[r.level||1]??3)||hashStr(p.id+t)%97-hashStr(r.id+t)%97)[0]; out.push(q) }
+  return out }
 function gateEligible(set){ if(set.kind!=="lesson"||!set.practice||isoDay(todayKey())<GATE.from) return false;
   if((set.practice||[]).filter(q=>(q.level||1)===1).length<GATE.minL1) return false;
   return !mine().some(a=>a.type==="set"&&a.setId===set.id) }
 function gateOk(x){ return !!(x.correct&&!x.guessed&&!x.hintStep&&!x.dontknow) }
 /* deferred items of earlier gated lessons that she has not met since (any record), oldest lesson first, lower level first */
-function carryQuestions(list,n,exclude){ const t=todayKey(), met=new Set(), ex=new Set(exclude||[]), out=[];
+function carryQuestions(list,n,exclude,day){ const t=day||todayKey(), met=new Set(), ex=new Set(exclude||[]), out=[];
   list.forEach(a=>(a.items||[]).forEach(x=>met.add(x.qid)));
   list.filter(a=>a.type==="set"&&a.gate&&Array.isArray(a.gate.deferred)&&dayKey(a.endedAt)<t&&t-dayKey(a.endedAt)<=GATE.carryDays*DAY)
     .sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt)).forEach(a=>{
@@ -1136,6 +1174,7 @@ function startSet(set, conceptFirst, perms, dueIds){
   /* spaced review: a lesson's warm-up gets 1 question from a spell that is due again */
   /* plus 1 earlier mistake (at least 2 days old) so the mistake pile doesn't only wait for Friday */
   const due = set.kind==="lesson" ? (dueIds ? dueIds.map(id=>{const q=QBANK[id.replace(/^[rclg]:/,"").replace(/@.*$/,"")]?.q; return q&&(id.startsWith("g:")?{...q,_carry:true}:id.startsWith("l:")?{...q,_loop:id.split("@")[1]||subOf(q.id)}:id.startsWith("c:")?{...q,_chk:true}:{...recallize(q),...(id.startsWith("r:")?{_retry:true}:{})})}).filter(Boolean)
+    : splitOn()?[]   /* December focus (ง): the lesson's warm-up is only its own warm items; the rest moved to other missions */
     : (()=>{ const l=mine(), d=dueQuestions(l,1,[set.spell,...set.warm.map(q=>q.spell)]), t=todayKey();
         const last={}; l.filter(isLesson).forEach(a=>(a.items||[]).forEach(x=>{last[x.qid]=Math.max(last[x.qid]||0,dayKey(a.endedAt))}));
         const m=reviewPool(l).find(q=>!d.some(x=>x.id===q.id)&&q.spell!==set.spell&&t-(last[q.id]||0)>=2*DAY);
@@ -1222,10 +1261,13 @@ function startReview(n, title, opts){
   const list=mine(), repair=opts&&opts.daily?false:n>5;
   /* the Friday repair set also brings back up to 3 spells that are due (spaced review), not only mistakes */
   const due=repair?dueQuestions(list,3):[], dueIds=new Set(due.map(q=>q.id));
-  const qs=[...due,...reviewPool(list).filter(q=>!dueIds.has(q.id))].slice(0,n||5); if(!qs.length) return;
+  const qs=[...due,...reviewPool(list).filter(q=>!dueIds.has(q.id))].slice(0,n||5);
+  /* December focus (ง): the loop check (new-explanation check) moved here from the lesson warm-up */
+  const lq=splitOn()&&(repair||opts&&opts.daily)?loopChecks(list,1,qs.map(q=>q.id)):[];
+  if(!qs.length&&!lq.length) return;
   for(let i=qs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qs[i],qs[j]]=[qs[j],qs[i]]}
   const t=title||"ทบทวนข้อที่เคยพลาด";
-  const steps=[...qs.map(q=>({kind:"q",phase:dueIds.has(q.id)?t+" · ทบทวนตามรอบ":t,q:shuffleQ(comeback(q,list)),due:dueIds.has(q.id)})),{kind:"finish",phase:"เสร็จ"}];
+  const steps=[...lq.map(q=>({kind:"q",phase:"เช็กเรื่องที่สอนใหม่อีกแบบ",q:shuffleQ(q),loop:q._loop})),...qs.map(q=>({kind:"q",phase:dueIds.has(q.id)?t+" · ทบทวนตามรอบ":t,q:shuffleQ(comeback(q,list)),due:dueIds.has(q.id)})),{kind:"finish",phase:"เสร็จ"}];
   const trial=trialsToday(); markExplain(steps, trial);
   S = {mode:"review", set:{id:repair?"repair":"review",subject:"ทบทวน",topic:t}, steps, trial, trialVote:{},
        active:true, i:0, start:Date.now(),act0:actNow(),qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
@@ -1248,6 +1290,8 @@ function hashStr(x){ let h=0; for(const c of x) h=(h*31+c.charCodeAt(0))|0; retu
 function sweepBase(p){ return p.info.kind==="school"?SWEEP_SCHOOL:(LEVELS[p.info.level]||LEVELS.full).sweep }
 /* size of today's sweep (19 Nov rule, see DAY_RULES_FROM): base, minutes already spent today, gap to the day's target */
 function sweepPlan(p,list){ const base=sweepBase(p); if(!base||todayKey()<DAY_RULES_FROM) return {base,size:base,mins:null,gap:null};
+  /* December (จ): a fixed size so weeks compare; a short day is reported as a fact, not filled with more items */
+  if(decOn()){ const size=p.info.kind==="school"?DEC.sweepSchool:base; return {base,size,mins:Math.round(minsToday(list||mine())),gap:null,fixed:true} }
   const lv=p.info.level, tgt=DAY_TARGET[lv]||DAY_TARGET.school, mins=Math.round(minsToday(list||mine())), gap=tgt-mins, big=lv==="full"||(p.info.kind==="school"&&new Date().getDay()===5&&repairToday(list||mine(),p.info));
   const size=gap>10?(big?15:10):gap>=5?(big?12:8):base;
   return {base,size:Math.max(base,size),mins,gap} }
@@ -1257,7 +1301,13 @@ function startSweep(){
   const list=mine(), p=progressOf(list);
   if(sweepLocked(p)) return sheet({icon:"🔒",title:"ย้อนคาถาเก่ายังไม่เปิด",html:`<p>ทำภารกิจอื่นของวันนี้ให้ครบก่อน แล้วย้อนคาถาเก่าจะเปิดเป็นด่านสุดท้ายของวัน</p>`,actions:[{label:"โอเค",fn:closeSheet}]});
   if(resumeReview("sweep")) return;
-  const sp=sweepPlan(p,list), qs=sweepQuestions(list,sp.size); if(!qs.length) return;
+  const sp=sweepPlan(p,list);
+  if(decOn()){ const steps=decSweepSteps(list,sp.size); if(!steps.length) return;
+    const mid=steps.filter(x=>x.mid).length;
+    S = {mode:"review", sweep:true, sweepPlan:{...sp,served:steps.length,mid}, set:{id:"sweep",subject:"ย้อนคาถา",topic:DEC_SWEEP_TOPIC}, steps:[...steps,{kind:"finish",phase:"เสร็จ"}], trial:[], trialVote:{},
+       active:true, i:0, start:Date.now(),act0:actNow(),qStart:Date.now(), items:[], answered:null, why:null, hints:0, struck:[], glossed:[], askOpen:null, confused:[], altShown:0, pick:null, whyText:""};
+    view="session"; render(); window.scrollTo({top:0}); return }
+  const qs=sweepQuestions(list,sp.size); if(!qs.length) return;
   const t="ย้อนคาถาเก่า";
   const steps=[...qs.map(q=>({kind:"q",phase:t,q:shuffleQ(q)})),{kind:"finish",phase:"เสร็จ"}];
   S = {mode:"review", sweep:true, sweepPlan:{...sp,served:qs.length}, set:{id:"sweep",subject:"ย้อนคาถาเก่า",topic:"ย้อนคาถาเก่า ม.1–2"}, steps, trial:[], trialVote:{},
@@ -1265,9 +1315,30 @@ function startSweep(){
   view="session"; render(); window.scrollTo({top:0});
 }
 
+/* December sweep (จ + ง): checkpoint items (unseen, due by checkPlan) and one spaced item moved here from the lesson warm-up,
+   then unseen items of midterm subtopics taught ≥ DEC.minAge days ago, then the old ม.1–2 bank if still short. Answer first:
+   the explanation button only appears after answering, because the unaided answer is the evidence that understanding lasted. */
+const DEC_SWEEP_TOPIC="ย้อนคาถา: เรื่องกลางภาคที่เรียนไปแล้ว";
+function decSweepSteps(list,n){ const out=[], ids=new Set(), subs=new Set(), add=(q,st)=>{ if(!q||out.length>=n||ids.has(q.id)||ids.has(q.of||"")) return; ids.add(q.id); ids.add(q.of||q.id); const s=subOf(q.id); if(s) subs.add(s); out.push({kind:"q",q:shuffleQ(q),...st}) };
+  let chk=[]; try{ chk=checkPlan(list,Math.min(2,Math.max(0,n-2)),[]).qs }catch(e){}
+  chk.forEach(q=>add(fillize(q),{phase:"ด่านตรวจความจำ (ข้อใหม่ จากเรื่องที่เคยเรียน)",chk:true}));
+  if(n>=4) dueQuestions(list,1,chk.map(q=>q.spell)).forEach(q=>{ if(!ids.has(q.id)) add(comeback(q,list),{phase:"ทบทวนตามรอบ (คาถาที่ไม่ได้ใช้มาหลายวัน)",due:true}) });
+  decSweepPool(list,n-out.length,[...ids,...[...subs].map(s=>"sub:"+s)]).forEach(q=>add(fillize(q),{phase:DEC_SWEEP_TOPIC,mid:true}));
+  if(out.length<n) sweepQuestions(list,n-out.length).forEach(q=>add(q,{phase:"ย้อนคาถาเก่า ม.1–2"}));
+  for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}
+  return out }
+function sweepAny(list){ try{ return decOn()?decSweepSteps(list,1).length>0||sweepQuestions(list,1).length>0:sweepQuestions(list,1).length>0 }catch(e){ return false } }
+/* "ฝึกต่อจากบทก่อน" as its own mission (ง): yesterday's deferred level-2/3 items, oldest lesson first, lower level first.
+   Still part of first learning, so the explanation (talk card) can be opened BEFORE answering, counted like a peek. */
+const CARRY_TOPIC="ฝึกต่อจากบทก่อน";
+function startCarry(){ if(resumeReview("carry")) return; const list=mine(), qs=carryQuestions(list,GATE.carry); if(!qs.length) return;
+  const steps=[...qs.map(q=>({kind:"q",phase:CARRY_TOPIC+" (ข้อขั้นถัดไป)",q:shuffleQ(fillize(q)),carry:true})),{kind:"finish",phase:"เสร็จ"}];
+  S={mode:"review",carryM:true,set:{id:"carry",subject:"ฝึกต่อ",topic:CARRY_TOPIC},steps,trial:[],trialVote:{},active:true,i:0,start:Date.now(),act0:actNow(),qStart:Date.now(),items:[],answered:null,why:null,hints:0,struck:[],glossed:[],askOpen:null,confused:[],altShown:0,pick:null,whyText:""};
+  view="session"; render(); window.scrollTo({top:0}) }
+
 /* daily recall: 3 questions from what she learned today (or the last day she learned), answered from memory
    (a twin, typed answer, or hidden options). Once a day, small XP. Retrieval practice, not new content. */
-function recallSource(list){ const ls_=list.filter(a=>isLesson(a)&&!["review","sweep","checkpoint","mini"].includes(a.type)&&(a.items||[]).length);
+function recallSource(list){ const ls_=list.filter(a=>isLesson(a)&&!["review","sweep","checkpoint","mini","carry"].includes(a.type)&&(a.items||[]).length);
   if(!ls_.length) return null; const t=todayKey(), days=[...new Set(ls_.map(a=>dayKey(a.endedAt)))].sort((a,b)=>b-a);
   const day=days.includes(t)?t:days[0]; if(t-day>3*86400000) return null;
   const ids=[...new Set(ls_.filter(a=>dayKey(a.endedAt)===day).flatMap(a=>a.items.filter(x=>!x.skipped&&QBANK[x.qid]).map(x=>x.qid)))];
@@ -1342,6 +1413,7 @@ function missionList(p){
   if(p.need.paper) return [{key:"paper",done:p.paperToday||u>=1},{key:"vocab",done:p.vocabToday||p.noVocabToday}];
   const m=[{key:"lesson",done:nonProbe>=1||(!probeLeft&&u>=1)},{key:"vocab",done:p.vocabToday||p.noVocabToday}];
   const ex=examAt(todayKey()); if(ex&&ex.phase==="during") return m.slice(1); if(ex) return m;
+  if(splitOn()&&(p.carryNeeded||p.carryToday)) m.splice(1,0,{key:"carry",done:p.carryToday});
   if(lv==="full"||lv==="mid") m.push({key:"probe",done:probeLeft?p.probesToday>=1:u>=2});
   if(p.reviewNeeded||(p.reviewToday&&todayKey()>=DAY_RULES_FROM)) m.push({key:"review",done:p.reviewToday});
   if(p.sweepNeeded||p.sweepToday) m.push({key:"sweep",done:p.sweepToday});
@@ -1365,7 +1437,7 @@ function piecesBar(n){ const pc=n%7||(n?7:0); return `${"■".repeat(pc)}${"□"
 function piecesLine(list){ if(todayKey()<dayKey(PIECE_FROM+"T00:00:00+07:00")) return ""; const n=mapPieces(list);
   return `<p class="small" style="margin:4px 0">🧩 ชิ้นส่วนแผนที่ ${piecesBar(n)} <span class="muted">· ทำภารกิจวันนี้ครบทุกจุด ได้ 1 ชิ้น${n>=7?" · ครบแล้ว! เขตใหม่ของทีมกู้โลกกำลังมา":""}</span></p>` }
 /* the day's missions drawn as one expedition route (father, 10 Nov); the optional extra is a secret path that opens at the end */
-const EXP_STOP={lesson:["📘","บทเรียน"],vocab:["🔤","คำศัพท์"],probe:["⛰️","ด่านสำรวจ"],review:["🔁","ทบทวนข้อพลาด"],sweep:["🧭","ย้อนของเก่า"],mini:["⏱️","ชุดขั้นต่ำ"],checkpoint:["🏁","ด่านประเมิน"],paper:["📝","ข้อสอบกระดาษ"]};
+const EXP_STOP={lesson:["📘","บทเรียน"],carry:["🧩","ฝึกต่อ"],vocab:["🔤","คำศัพท์"],probe:["⛰️","ด่านสำรวจ"],review:["🔁","ทบทวนข้อพลาด"],sweep:["🧭","ย้อนของเก่า"],mini:["⏱️","ชุดขั้นต่ำ"],checkpoint:["🏁","ด่านประเมิน"],paper:["📝","ข้อสอบกระดาษ"]};
 function expRoute(ms,p){ const all=ms.every(x=>x.done), nx=ms.findIndex(x=>!x.done), n=ms.length, list=mine(), pw=expDayPower(list), bo=expBoost(list);
   const pts=ms.map((_,k)=>[10+(n>1?k*(66/(n-1)):33), k%2?42:72]); const sec=[90,16];
   const path=[...pts,sec].map((q,k,a)=>k?`Q ${(a[k-1][0]+q[0])/2} ${k%2?a[k-1][1]-14:a[k-1][1]+14} ${q[0]} ${q[1]}`:`M ${q[0]} ${q[1]}`).join(" ");
@@ -1442,7 +1514,7 @@ function renderHome(){
     return `<div class="mission ${st}" id="m-${key}"><span class="mcheck">${md[key]?"✅":n}</span>
       <div style="display:flex;flex-direction:column;gap:6px;flex:1"><span class="small muted">${label}</span>${title}${st==="done"?"":btn}${st==="done"&&/data-notes/.test(btn)?btn:""}${extraHtml||""}</div></div>` };
   const doneToday=list.filter(a=>isLesson(a)&&dayKey(a.endedAt)===today).sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt));
-  const doneNP=doneToday.filter(a=>!["probe","mixed","passage"].includes(a.type)&&!(plainReview(a)&&today>=REVIEW_RULE_FROM)), doneProbe=doneToday.find(a=>a.type==="mixed"||a.type==="passage")||doneToday.find(a=>a.type==="probe");
+  const doneNP=doneToday.filter(a=>!["probe","mixed","passage","carry"].includes(a.type)&&!(plainReview(a)&&today>=REVIEW_RULE_FROM)), doneProbe=doneToday.find(a=>a.type==="mixed"||a.type==="passage")||doneToday.find(a=>a.type==="probe");
   const tr=trialsToday();
   const doneTitle=a=>`<h2>${esc(a.topic)}</h2><p class="small muted">ทำแล้ว ✓</p>`;
   const lessonTitle=md.lesson&&(doneNP[0]||doneToday[0])?doneTitle(doneNP[0]||doneToday[0]):plan.exam?`<h2>ทบทวนก่อน${plan.exam.name}</h2><p class="small muted">10 ข้อจากเรื่องที่จะสอบ เน้นข้อที่เคยพลาด</p>`:plan.repair?`<h2>ชุดซ่อมจุดอ่อน</h2><p class="small muted">8 ข้อจากที่เคยพลาด ตัวเลือกสลับที่ใหม่</p>`
@@ -1488,14 +1560,20 @@ function renderHome(){
       :mission(3,"probe",plan.probe?"ด่านสำรวจ · เช็กเรื่องที่เรียนมาแล้ว ราว 20 นาที":"ชุดฝึกเพิ่ม (ด่านสำรวจครบแล้ว)",
       md.probe&&doneProbe?doneTitle(doneProbe):plan.probe?`<h2>${esc(plan.probe.topic)}</h2><p class="small muted">${plan.probe.practice.length} ข้อ ไม่มีการ์ดก่อนทำ ทำได้ดีคาถาขึ้นขั้นทันที</p>`:`<p class="small muted">ทำชุดไหนก็ได้อีก 1 ชุด</p>`,
       md.probe&&doneProbe?notesBtn(doneProbe):`<button class="btn" id="${plan.probe?"go-probe":"go-extra2"}">${plan.probe?"เข้าด่าน":"เลือกชุด"}</button>`)):""}
-    ${ms.some(x=>x.key==="review")?(()=>{ const rn=Math.min(REVIEW_DAILY[p.info.kind==="school"?"school":"holiday"],reviewPool(list).length);
+    ${ms.some(x=>x.key==="carry")?(()=>{ const cn=carryQuestions(list,GATE.carry).length;
+      return mission(ms.findIndex(x=>x.key==="carry")+1,"carry",`ฝึกต่อจากบทก่อน · ราว ${Math.max(3,Math.round(cn*1.2))} นาที`,
+      md.carry?`<h2>ฝึกต่อจากบทก่อน</h2><p class="small muted">ทำแล้ว ✓</p>`:`<h2>${cn} ข้อขั้นถัดไปจากบทที่เรียนไปแล้ว</h2><p class="small muted">ข้อที่ยากขึ้นอีกนิดของเรื่องที่เพิ่งเรียน เปิด 📖 อ่านคำอธิบายก่อนตอบได้ ไม่เสียคะแนน</p>`,
+      md.carry?"":`<button class="btn" id="carry-go">เริ่มฝึกต่อ</button>`) })():""}
+    ${ms.some(x=>x.key==="review")?(()=>{ const rn=Math.min(REVIEW_DAILY[p.info.kind==="school"?"school":"holiday"],reviewPool(list).length)+(splitOn()?loopChecks(list,1).length:0);
       return mission(ms.findIndex(x=>x.key==="review")+1,"review",`ทบทวนข้อที่เคยพลาด · ราว ${Math.max(3,Math.round(rn*0.8))} นาที`,
       md.review?`<h2>ทบทวนข้อที่เคยพลาด</h2><p class="small muted">ทำแล้ว ✓ ข้อที่ยังพลาดจะกลับมาอีกในวันหลัง</p>`:`<h2>${rn} ข้อที่เคยพลาด</h2><p class="small muted">บางข้อกลับมาในสถานการณ์ใหม่ ลองคิดใหม่ทีละขั้น ถูกแล้วข้อนั้นจะออกจากกองทบทวน</p>`,
       md.review?"":`<button class="btn" id="dreview-go">เริ่มทบทวน</button>`) })():""}
     ${ms.some(x=>x.key==="sweep")?(()=>{ const lock=!md.sweep&&sweepLocked(p), sz=lock?0:sweepSize(p,list);
-      return mission(ms.findIndex(x=>x.key==="sweep")+1,"sweep",lock?"ย้อนคาถาเก่า ม.1–2 · ด่านสุดท้ายของวัน":`ย้อนคาถาเก่า ม.1–2 · ราว ${Math.max(3,Math.round(sz*0.7))} นาที`,
-      md.sweep?`<h2>ย้อนคาถาเก่า</h2><p class="small muted">ทำแล้ว ✓ ข้อที่พลาดจะวนมาให้ทวน</p>`
+      const dec=decOn(), nm=dec?"ย้อนคาถา · เรื่องที่เรียนไปแล้ว":"ย้อนคาถาเก่า ม.1–2";
+      return mission(ms.findIndex(x=>x.key==="sweep")+1,"sweep",lock?nm+" · ด่านสุดท้ายของวัน":`${nm} · ราว ${Math.max(3,Math.round(sz*0.8))} นาที`,
+      md.sweep?`<h2>ย้อนคาถา</h2><p class="small muted">ทำแล้ว ✓ ข้อที่พลาดจะวนมาให้ทวน</p>`
       :lock?`<h2>🔒 ปลดล็อกหลังภารกิจอื่นเสร็จ</h2><p class="small muted">ทำภารกิจข้างบนให้ครบก่อน แล้วด่านนี้จะเปิดเป็นด่านสุดท้ายของวัน</p>`
+      :dec?`<h2>${sz} ข้อใหม่ จากเรื่องที่เรียนไปแล้วอย่างน้อย 1 สัปดาห์</h2><p class="small muted">ข้อที่ยังไม่เคยเห็น ส่วนใหญ่เป็นเรื่องที่จะสอบกลางภาค ตอบเองก่อน แล้วค่อยเปิดอ่านคำอธิบายได้ ผิดไม่เป็นไร เราจะได้รู้ว่าเรื่องไหนยังไม่ติด</p>`
       :`<h2>${sz} ข้อคละเรื่องที่เคยเรียน</h2><p class="small muted">เช็กว่ายังเข้าใจอยู่ไหม ไม่บอกล่วงหน้าว่าเรื่องอะไร ลืมไม่เป็นไร เราจะได้รู้ว่าต้องทวนตรงไหน</p>`,
       md.sweep||lock?"":`<button class="btn" id="sweep-go">เริ่มย้อน</button>`) })():""}
   </section>
@@ -1528,11 +1606,12 @@ function renderHome(){
     await saveAttempt({type:"mood",setId:"mood",mood:m.dataset.mood,topic:"ความพร้อมวันนี้: "+MOODS.find(x=>x[0]===m.dataset.mood)[2],startedAt:now,endedAt:now,durationSec:0,correct:0,total:0,xp:0,items:[]});
     buddyNote=moodReply(m.dataset.mood); renderHome() });
   { const sg=document.getElementById("sweep-go"); if(sg) sg.onclick=()=>startSweep() }
+  { const cg=document.getElementById("carry-go"); if(cg) cg.onclick=()=>startCarry() }
   { const dr=document.getElementById("dreview-go"); if(dr) dr.onclick=()=>startReview(REVIEW_DAILY[p.info.kind==="school"?"school":"holiday"],"ทบทวนข้อที่เคยพลาด",{daily:true}) }
   { const cg=document.getElementById("comp-go"); if(cg) cg.onclick=()=>startComp() }
   bindUnderstandHome(list,p);
   const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
-  on("exp-go",()=>{ const k=document.getElementById("exp-go").dataset.key, ids={lesson:["go-rec"],vocab:["vocab-go"],probe:["go-probe","go-extra2"],sweep:["sweep-go"],review:["dreview-go"],mini:["mini-go"],checkpoint:["cp-go"]}[k]||[];
+  on("exp-go",()=>{ const k=document.getElementById("exp-go").dataset.key, ids={lesson:["go-rec"],vocab:["vocab-go"],probe:["go-probe","go-extra2"],sweep:["sweep-go"],review:["dreview-go"],carry:["carry-go"],mini:["mini-go"],checkpoint:["cp-go"]}[k]||[];
     const b=ids.map(x=>document.getElementById(x)).find(Boolean); if(b) b.click(); else { const t=document.getElementById("m-"+k); if(t) t.scrollIntoView({behavior:"smooth",block:"center"}) } });
   on("exp-adv",()=>{ view="adv"; render(); window.scrollTo({top:0}) });
   $v.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>{ const t=document.getElementById(b.dataset.goto); if(t) t.scrollIntoView({behavior:"smooth",block:"center"}) });
@@ -2047,7 +2126,7 @@ function renderStep(){
       :!ans.correct&&ans.conf==="sure"?`<p class="small"><b>มั่นใจแต่พลาด</b> ข้อแบบนี้ถ้าเข้าใจตอนนี้ จะจำได้แม่นที่สุด อ่านเฉลยช้าๆ นะ</p>`:"";
     const predNote = q.predict&&S.predictPick!=null?(S.predictPick===q.predict.a?`<p class="small">🔮 <b>ทายไว้ตรง</b> “${esc(q.predict.opts[q.predict.a])}” ความรู้สึกเรื่องนี้เริ่มแม่นแล้ว</p>`:`<p class="small">🔮 ทายไว้ว่า “${esc(q.predict.opts[S.predictPick])}” ที่จริงคือ “${esc(q.predict.opts[q.predict.a])}” ${esc(q.predict.ex||"")}</p>`):"";
     const own = st.explain&&(ans.ownWhy||ans.ownWhyPad)?`<div class="feedback"><span class="small"><b>เหตุผลของเธอ:</b> ${ans.ownWhy?esc(ans.ownWhy):"(เขียนในกระดาษทด)"}</span><span class="small muted">ลองเทียบกับเฉลยด้านล่าง ตรงกันไหม ต่างกันตรงไหน</span></div>`:"";
-    fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answerText||q.answer} ${q.unit}`:""}</b>${predNote}${ckNote}${confNote}${exHtml(q,ans)}${ans.correct?"":libLink(q)}
+    fb = `${own}<div class="feedback"><b class="${ans.correct?"ok":"no"}">${head}${q.num&&!ans.correct?` · คำตอบคือ ${q.answerText||q.answer} ${q.unit}`:""}</b>${predNote}${ckNote}${confNote}${exHtml(q,ans)}${explAfterHtml(st,q,ans)}
       ${q.en?"":`<div>${readBtn("ex","🔊 ฟังเฉลย")}</div>`}
       ${ans.correct||ans.dontknow?"":`<span class="small muted">พลาดเพราะอะไร เลือกได้หลายข้อ (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
       <div class="why">${Object.entries(ERR).filter(([k])=>k!=="dontknow"&&k!=="notTaught").map(([k,v])=>`<button data-why="${k}" aria-pressed="${(S.why||[]).includes(k)}">${v}</button>`).join("")}</div>
@@ -2072,7 +2151,7 @@ function renderStep(){
     ${S.hints?`<div class="feedback">${HL.slice(0,S.hints).map((h,k)=>`<span class="small hintline"><span><b>คำใบ้ ${k+1}</b> ${esc(h)}</span>${ans?"":S.hintKnown.includes(k)?`<span class="muted">✓ รู้อยู่แล้ว <button class="linkbtn" data-hku="${k}" type="button">กดผิด ยกเลิก</button></span>`:`<button class="linkbtn" data-hk="${k}" type="button">รู้อยู่แล้ว</button>`}</span>`).join("")}
       ${!ans&&S.hints>=HL.length?`<span class="small muted">ใช้คำใบ้ครบแล้ว ลองเขียนสิ่งที่รู้ลงกระดาษทดก่อน ถ้ายังไปต่อไม่ได้ กด "ยังคิดไม่ออก ดูเฉลย" ได้เลย ไม่ผิดอะไร</span>`:""}</div>`:""}
     ${body}${fb}
-    <div class="row">${!ans&&wsOn(st)&&wsOpenIdx().length>1?`<button class="btn ghost" id="wsopen" type="button">📄 ดูทั้งหน้า / ข้ามข้อนี้ไปก่อน</button>`:""}${!ans&&!predWait&&canPeek(st)?`<button class="btn ghost" id="peek" type="button">📖 ดูเนื้อหา/สูตร</button>`:""}${!ans&&!predWait&&S.hints<HL.length?`<button class="btn ghost" id="hint">${S.hints===HL.length-1&&HL.length>(q.hints||[]).length?"ขอดูขั้นแรกของวิธีทำ":"ขอคำใบ้"} (${S.hints}/${HL.length})</button>`:""}
+    <div class="row">${!ans&&wsOn(st)&&wsOpenIdx().length>1?`<button class="btn ghost" id="wsopen" type="button">📄 ดูทั้งหน้า / ข้ามข้อนี้ไปก่อน</button>`:""}${!ans&&!predWait&&canPeek(st)?`<button class="btn ghost" id="peek" type="button">📖 ดูเนื้อหา/สูตร</button>`:""}${!ans&&!predWait&&explBefore(st,q)?`<button class="btn ghost" id="expl" type="button">📖 อ่านคำอธิบาย</button>`:""}${!ans&&!predWait&&S.hints<HL.length?`<button class="btn ghost" id="hint">${S.hints===HL.length-1&&HL.length>(q.hints||[]).length?"ขอดูขั้นแรกของวิธีทำ":"ขอคำใบ้"} (${S.hints}/${HL.length})</button>`:""}
     ${!ans&&!predWait?`<div class="row" style="gap:8px"><button class="btn ghost" id="dontknow">🤔 ยังคิดไม่ออก ดูเฉลย</button>${["mixed","probe","sweep"].includes(S.set.kind)||S.set.type==="sweep"?`<button class="btn ghost" id="nottaught">📭 ยังไม่ได้เรียนเรื่องนี้</button>`:""}</div>`:""}
     ${st.optional&&!ans&&!predWait?`<button class="btn ghost" id="skip">ข้ามข้อนี้</button>`:""}</div>
     ${predWait?`<p class="small muted">🔮 ทายก่อนตามความรู้สึก ไม่มีถูกผิด แล้วปุ่ม${canPeek(st)?" 📖 ดูเนื้อหา":""} คำใบ้ และ “ยังคิดไม่ออก” จะขึ้นมา</p>`:""}
@@ -2117,6 +2196,7 @@ function renderStep(){
       $v.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{const k=+b.dataset.x; S.struck=S.struck.includes(k)?S.struck.filter(x=>x!==k):[...S.struck,k]; const y=window.scrollY; renderStep(); window.scrollTo({top:y})});
     }
     { const pk=document.getElementById("peek"); if(pk) pk.onclick=()=>peekCard() }
+    { const xb=document.getElementById("expl"); if(xb) xb.onclick=()=>openExpl(q,true) }
     { const wo=document.getElementById("wsopen"); if(wo) wo.onclick=()=>wsSkip() }
     const hb=document.getElementById("hint"); if(hb) hb.onclick=()=>{S.hints++;const y=window.scrollY;renderStep();window.scrollTo({top:y})};
     $v.querySelectorAll("[data-hku]").forEach(b=>b.onclick=()=>{ const k=+b.dataset.hku; S.hintKnown=(S.hintKnown||[]).filter(x=>x!==k); const y=window.scrollY; renderStep(); window.scrollTo({top:y}) });
@@ -2139,10 +2219,11 @@ function renderStep(){
     $v.querySelectorAll("[data-why]").forEach(b=>b.onclick=()=>{const k=b.dataset.why; S.why=(S.why||[]).includes(k)?S.why.filter(x=>x!==k):[...(S.why||[]),k];const y=window.scrollY;renderStep();window.scrollTo({top:y})});
     bindAsk("question",{topic:q.topic,qid:q.id,prompt:q.q});
     const exn=document.getElementById("exnext"); if(exn) exn.onclick=()=>{ S.exStep=(S.exStep||1)+1; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) };
-    { const lq=document.getElementById("go-lib-q"); if(lq) lq.onclick=()=>{ readStop(); S.libOpen=(S.libOpen||0)+1; openLib(lq.dataset.sub,{qid:q.id},"session") } }
+    { const lq=document.getElementById("go-lib-q"); if(lq) lq.onclick=()=>{ readStop(); S.libOpen=(S.libOpen||0)+1; if(explOn(st)){ S.explQ=(S.explQ||0)+1; S.explWhen=S.explWhen||"after"; S.explSrc="lib" } openLib(lq.dataset.sub,{qid:q.id},"session") } }
+    { const xb=document.getElementById("expl"); if(xb) xb.onclick=()=>openExpl(q,false) }
     const nx=document.getElementById("next"); if(nx) nx.onclick=()=>{
       S.items.push({qid:q.id,topic:q.topic,level:q.level,spell:q.spell,phase:st.phase,correct:ans.correct,dontknow:!!ans.dontknow,...(S.dkAsk?{dkAsk:S.dkAsk}:{}),errorType:ans.correct?null:(ans.dontknow?"dontknow":((S.why||[])[0]||"unspecified")),errorTypes:ans.correct?[]:(ans.dontknow?["dontknow"]:(S.why&&S.why.length?S.why:["unspecified"])),hints:S.hints,...(st.chk?{chk:1}:{}),...(st.leg!=null&&S.legs&&S.legs.length>=2?{leg:st.leg}:{}),...(S.hints&&S.hints>=(q.hints||[]).length+1?{hintStep:true}:{}),...(S.hintKnown&&S.hintKnown.length?{hintKnown:S.hintKnown}:{}),...(exStepped(q,ans)?{exSteps:Math.min(S.exStep||1,exSteps(q.ex).length),exTotal:exSteps(q.ex).length}:{}),struck:S.struck.length,timeSec:Math.round((ans.at-S.qStart)/1000),prompt:q.q,
-        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(S.libOpen?{lib:S.libOpen}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(S.whyOther&&(S.why||[]).includes("other")?{whyOther:S.whyOther.trim()}:{}),...(ans.correct&&(S.guessed||S.checkPick===-1)?{guessed:true}:{}),...(S.checkPick===-2?{checkNone:true,...(S.checkOwn&&S.checkOwn.trim()?{checkOwn:S.checkOwn.trim().slice(0,300)}:{})}:{}),...(S.notTaught?{notTaught:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0,coverFloor:S.coverFloor||coverFloor(q)}:{}),...(q.check&&S.checkPick!=null&&S.checkPick!==-1&&S.checkPick!==-2?{checkOk:S.checkPick===q.check.a,...(ans.correct?{}:{checkAfterWrong:true})}:{}),...(q.predict&&S.predictPick!=null?{predict:S.predictPick,predictOk:S.predictPick===q.predict.a}:{}),...(q.friend?{friend:true}:{}),...(q.sit?{sit:q.sit}:{}),...(st.loop?{loop:st.loop}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),...(S.peekQ?{peek:S.peekQ}:{}),...(st.carry?{carry:true}:{}),len:q.q.length});
+        ...(ans.conf?{conf:ans.conf}:{}),...(st.explain?{explain:true,ownWhy:ans.ownWhy||"",ownWhyPad:!!ans.ownWhyPad}:{}),...(st.due?{due:true}:{}),...(S.libOpen?{lib:S.libOpen}:{}),...(st.retry?{retry:true}:{}),...(S.listenQ?{listen:S.listenQ}:{}),...(S.listenEx?{listenEx:S.listenEx}:{}),...(S.partsShown?{parts:true}:{}),...(q.of?{of:q.of}:{}),...(q.recall?{recall:true}:{}),...(q.num&&!q.recall?{fill:true}:{}),...(S.whyOther&&(S.why||[]).includes("other")?{whyOther:S.whyOther.trim()}:{}),...(ans.correct&&(S.guessed||S.checkPick===-1)?{guessed:true}:{}),...(S.checkPick===-2?{checkNone:true,...(S.checkOwn&&S.checkOwn.trim()?{checkOwn:S.checkOwn.trim().slice(0,300)}:{})}:{}),...(S.notTaught?{notTaught:true}:{}),...(q.num&&!ans.correct&&ans.raw?{typed:String(ans.raw).slice(0,20)}:{}),...(q.cover?{cover:true,coverSec:S.coverSec||0,coverFloor:S.coverFloor||coverFloor(q)}:{}),...(q.check&&S.checkPick!=null&&S.checkPick!==-1&&S.checkPick!==-2?{checkOk:S.checkPick===q.check.a,...(ans.correct?{}:{checkAfterWrong:true})}:{}),...(q.predict&&S.predictPick!=null?{predict:S.predictPick,predictOk:S.predictPick===q.predict.a}:{}),...(q.friend?{friend:true}:{}),...(q.sit?{sit:q.sit}:{}),...(st.loop?{loop:st.loop}:{}),...(!ans.correct&&q.optErr&&ans.choice>=0&&q.optErr[ans.choice]?{optErr:q.optErr[ans.choice]}:{}),...(ans.choice>=0&&q.perm?{orig:q.perm[ans.choice]}:{}),...(S.peekQ?{peek:S.peekQ}:{}),...(st.carry?{carry:true}:{}),...(st.mid?{mid:true}:{}),...(S.explQ?{expl:S.explQ,explWhen:S.explWhen||"after",...(S.explSrc?{explSrc:S.explSrc}:{})}:{}),len:q.q.length});
       const gateNote=S.gate&&st.phase==="ฝึกทำ"&&(q.level||1)===1?gateApply():null;
       advance(); if(gateNote) gateNote();
     };
@@ -2151,7 +2232,7 @@ function renderStep(){
 function answer(a){ readStop(); S.answered={...a,at:Date.now()}; if(!a.dontknow) S.why=[]; const y=window.scrollY; renderStep(); window.scrollTo({top:y}) }
 /* per-question state, reset when the next question opens (advance) or when she picks another item on the worksheet */
 const DK_CONFIRM_MS=4000;
-function qReset(){ S.dkAsk=0; S.answered=null; S.libOpen=0; S.peekQ=0; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.checkOwn=""; S.checkOwnOpen=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.coverFloor=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.predictPick=null; S.predOrder=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; }
+function qReset(){ S.dkAsk=0; S.answered=null; S.libOpen=0; S.peekQ=0; S.explQ=0; S.explWhen=null; S.explSrc=null; S.why=[]; S.pick=null; S.whyText=""; S.numDraft=""; S.listenQ=0; S.listenEx=0; S.partsShown=false; S.checkPick=null; S.checkDone=false; S.checkOwn=""; S.checkOwnOpen=false; S.whyOther=""; S.guessed=false; S.notTaught=false; S.checkOrder=null; S.uncovered=false; S.coverSec=0; S.coverFloor=0; S.hints=0; S.hintKnown=[]; S.exStep=1; S.struck=[]; S.askOpen=null; S.predictPick=null; S.predOrder=null; S.qStart=Date.now(); PAD.strokes=[]; PAD.hist=[]; }
 /* worksheet view (P2, father agreed 24 Nov after her feedback "in a book I see the whole page and choose which item to do first").
    On a lesson's own practice items: the page of items opens when practice starts and from the "📄" button on any item; she
    picks any open item, or skips one and comes back later. Level 2 stays locked until the level-1 gate is done (gated lessons).
@@ -2199,6 +2280,38 @@ function peekCard(){ const c=S.set.concept; S.peekQ=(S.peekQ||0)+1; S.peeks=(S.p
     html:`${c.talk&&c.talk.length?talkSumHtml(c):conceptSumHtml(c)}<p class="small muted">เปิดดูได้ทุกเมื่อ ไม่เสียคะแนน ข้อที่เปิดดูยังนับเป็นการฝึก แต่ยังไม่นับว่าคงทน เพราะวันหลังจะลองทำโดยไม่ดู</p>`,
     actions:[{label:"กลับไปทำข้อนี้",fn:closeSheet}]}) }
 
+/* 📖 อ่านคำอธิบาย (ก, father approved 24 Nov 08:30; built with ง/จ the same day). In the missions outside the lesson (carried
+   items, daily mistake review, Friday repair, sweep, minimum day, exam review) a button opens the spoken-style card (concept.talk)
+   of the lesson that teaches the item's subtopic: the item's own lesson if it has a talk card, else a lesson she has done that
+   teaches that subtopic; fallback = the subtopic's library card (สมุดคาถา), else the item's own lesson card. It shows after a
+   wrong answer and after a right answer that was guessed, unsure, or had a wrong / her own reason (all mean "not understood yet").
+   Before answering only on carried items (still first learning; counted like a peek: no คงทน credit). The sweep and the mistake
+   review stay answer-first: the unaided answer is the evidence for G2. Logged on the item: expl (opens), explWhen, explSrc; the
+   parent page pairs each with the next answer on the same subtopic. */
+let _explMap=null;
+function explLessons(sub){ if(!_explMap){ _explMap={}; SETS.filter(s=>s.kind==="lesson"&&s.concept&&s.concept.talk&&s.concept.talk.length).forEach(s=>{ new Set(s.practice.map(q=>subOf(q.id)).filter(Boolean)).forEach(x=>(_explMap[x]??=[]).push(s)) }) } return _explMap[sub]||[] }
+function explSource(q){ const s=subOf(q.id), own=((QBANK[q.of||q.id]||QBANK[q.id])||{}).set, c=s?explLessons(s):[];
+  const done=new Set(mine().filter(a=>a.type==="set").map(a=>a.setId));
+  const pick=c.find(x=>own&&x.id===own.id)||c.find(x=>done.has(x.id));
+  if(pick) return {kind:"talk",set:pick};
+  if(s&&libSource(s)) return {kind:"lib",sub:s};
+  if(own&&own.kind==="lesson"&&own.concept&&own.concept.points&&own.concept.points.length) return {kind:"concept",set:own};
+  return null }
+function explOn(st){ return !!(S&&((S.mode==="review"&&!S.comp)||(st&&st.carry))) }
+function explBefore(st,q){ return !!(st&&st.carry&&explOn(st)&&explSource(q)) }
+function explNeeded(q,ans){ if(!ans) return false; if(!ans.correct) return true;
+  return !!(S.guessed||ans.conf==="unsure"||S.checkPick===-1||S.checkPick===-2||(q.check&&S.checkPick!=null&&S.checkPick>=0&&S.checkPick!==q.check.a)) }
+function explAfterHtml(st,q,ans){ if(!explOn(st)) return ans.correct?"":libLink(q);
+  if(!explNeeded(q,ans)) return ""; const src=explSource(q); if(!src) return "";
+  if(src.kind==="lib") return libLink(q);
+  return `<button class="btn ghost small" id="expl" type="button">📖 อ่านคำอธิบาย: ${esc(src.set.topic)}</button>` }
+function openExpl(q,before){ const src=explSource(q); if(!src) return; readStop();
+  S.explQ=(S.explQ||0)+1; S.explWhen=S.explWhen||(before?"before":"after"); S.explSrc=src.set?src.set.id:"lib"; if(before) S.peekQ=(S.peekQ||0)+1; S.expls=(S.expls||0)+1; saveProgress();
+  if(src.kind==="lib"){ S.libOpen=(S.libOpen||0)+1; return openLib(src.sub,{qid:q.id},"session") }
+  const c=src.set.concept, talk=src.kind==="talk";
+  sheet({icon:"📖",title:c.title||src.set.topic,wide:true,read:[c.title,...(talk?c.talk.flatMap(x=>x.lines):c.points)].filter(Boolean).map(x=>String(x).replace(/<[^>]+>/g,"")).join(" "),
+    html:`${talk?talkSumHtml(c):conceptSumHtml(c)}<p class="small muted">${before?"เปิดอ่านก่อนตอบได้ ไม่เสียคะแนน ข้อนี้ยังนับเป็นการฝึก แต่ยังไม่นับว่าคงทน":"อ่านแล้วลองข้อถัดไปเรื่องเดียวกันดูนะ"}</p>`,
+    actions:[{label:"กลับไปที่ข้อนี้",fn:closeSheet}]}) }
 /* concept card, one idea per screen: (1) why this topic exists — a puzzle to guess first (c.hook) or the "use" line,
    (2) each point alone with "เข้าใจแล้ว" / "ขออธิบายอีกแบบ" (c.more[i], else the next whole alternative),
    (3) a short summary with formulas and vocab. Which points needed another explanation is saved as conceptHelp. */
@@ -2370,11 +2483,11 @@ function renderRate(){
 /* ---------- unfinished set survives a tab switch or a reload (same day) ---------- */
 /* 22 Nov: only mode "set" was saved; the sweep / daily review / repair / recall / mini (mode "review") restarted from item 1 after a reload.
    One slot per kind so a half-done lesson and a half-done sweep do not overwrite each other. */
-const RV_KEY="fieldnote.inprogress.rv.", RV_KINDS=["sweep","repair","review","recall","comp","mini"];
-function rvKind(){ return S.sweep?"sweep":S.comp?"comp":S.recall?"recall":S.mini?"mini":S.set&&S.set.id==="repair"?"repair":"review" }
+const RV_KEY="fieldnote.inprogress.rv.", RV_KINDS=["sweep","repair","review","recall","comp","mini","carry"];
+function rvKind(){ return S.carryM?"carry":S.sweep?"sweep":S.comp?"comp":S.recall?"recall":S.mini?"mini":S.set&&S.set.id==="repair"?"repair":"review" }
 function saveReviewProgress(){
   if(!S.steps||!S.steps.length||!(S.i>0||S.items.length)) return;
-  try{ localStorage.setItem(RV_KEY+rvKind(),JSON.stringify({day:todayKey(),kind:rvKind(),sweep:!!S.sweep,comp:!!S.comp,recall:!!S.recall,mini:!!S.mini,sweepPlan:S.sweepPlan||null,set:S.set,steps:S.steps,trial:S.trial||[],trialVote:S.trialVote||{},i:S.i,el:sessMs(),items:S.items,confused:S.confused||[],altShown:S.altShown||0,glossed:S.glossed||[]})) }catch(e){ console.warn("saveReviewProgress",e) }
+  try{ localStorage.setItem(RV_KEY+rvKind(),JSON.stringify({day:todayKey(),kind:rvKind(),carryM:!!S.carryM,sweep:!!S.sweep,comp:!!S.comp,recall:!!S.recall,mini:!!S.mini,sweepPlan:S.sweepPlan||null,set:S.set,steps:S.steps,trial:S.trial||[],trialVote:S.trialVote||{},i:S.i,el:sessMs(),items:S.items,confused:S.confused||[],altShown:S.altShown||0,glossed:S.glossed||[]})) }catch(e){ console.warn("saveReviewProgress",e) }
 }
 function clearReviewProgress(k){ try{ localStorage.removeItem(RV_KEY+k) }catch(e){} }
 function pendingReviews(){ const out=[]; RV_KINDS.forEach(k=>{ try{ const p=JSON.parse(localStorage.getItem(RV_KEY+k)||"null"); if(p&&p.day===todayKey()&&p.steps&&p.set) out.push(p); else if(p) clearReviewProgress(k) }catch(e){} }); return out }
@@ -2382,7 +2495,7 @@ function resumeReview(k){
   if(S&&S.mode==="review"&&S.active&&rvKind()===k){ view="session"; render(); return true }
   const p=pendingReviews().find(x=>x.kind===k); if(!p) return false;
   /* the clock restarts from the time already spent, so the hours she was away do not count as study time */
-  S={mode:"review",...(p.sweep?{sweep:true,sweepPlan:p.sweepPlan}:{}),...(p.comp?{comp:true}:{}),...(p.recall?{recall:true}:{}),...(p.mini?{mini:true}:{}),set:p.set,steps:p.steps,trial:p.trial,trialVote:p.trialVote,
+  S={mode:"review",...(p.carryM?{carryM:true}:{}),...(p.sweep?{sweep:true,sweepPlan:p.sweepPlan}:{}),...(p.comp?{comp:true}:{}),...(p.recall?{recall:true}:{}),...(p.mini?{mini:true}:{}),set:p.set,steps:p.steps,trial:p.trial,trialVote:p.trialVote,
      active:true,i:p.i,start:Date.now()-(p.el||0),act0:actNow()-(p.el||0),qStart:Date.now(),items:p.items||[],answered:null,why:null,hints:0,struck:[],glossed:p.glossed||[],askOpen:null,confused:p.confused||[],altShown:p.altShown||0,pick:null,whyText:""};
   view="session"; render(); window.scrollTo({top:0}); return true }
 function saveProgress(){
@@ -2423,8 +2536,11 @@ async function finishReview(){
   $v.innerHTML=`<section class="card"><p class="muted">กำลังบันทึก…</p></section>`;
   const items=S.items, scored=items.filter(x=>!x.skipped);
   if(S.sweep){ const sc=items.filter(x=>!x.skipped), c=sc.filter(x=>x.correct).length;
-    return finishWith({type:"sweep",setId:"sweep",subject:"ย้อนคาถาเก่า",topic:"ย้อนคาถาเก่า ม.1–2",...(S.sweepPlan&&S.sweepPlan.mins!=null?{sweepBase:S.sweepPlan.base,sweepSize:S.sweepPlan.size,sweepServed:S.sweepPlan.served,minsBefore:S.sweepPlan.mins}:{}),startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
+    return finishWith({type:"sweep",setId:"sweep",subject:S.set.subject||"ย้อนคาถาเก่า",topic:S.set.topic||"ย้อนคาถาเก่า ม.1–2",...(S.sweepPlan&&S.sweepPlan.mins!=null?{sweepBase:S.sweepPlan.base,sweepSize:S.sweepPlan.size,sweepServed:S.sweepPlan.served,minsBefore:S.sweepPlan.mins}:{}),...(S.sweepPlan&&S.sweepPlan.fixed?{sweepFixed:true,sweepMid:S.sweepPlan.mid||0}:{}),startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
       durationSec:sessSec(),correct:c,total:sc.length,xp:itemXp(items),confused:S.confused,items}) }
+  if(S.carryM){ const sc=items.filter(x=>!x.skipped), c=sc.filter(x=>x.correct).length;
+    return finishWith({type:"carry",setId:"carry",subject:"ฝึกต่อจากบทก่อน",topic:CARRY_TOPIC,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
+      durationSec:sessSec(),correct:c,total:sc.length,xp:itemXp(items)+10,confused:S.confused,...(S.expls?{expls:S.expls}:{}),items}) }
   if(S.comp){ const sc=items.filter(x=>!x.skipped), c=sc.filter(x=>x.correct).length, read=sc.filter(x=>!x.exTotal||x.exSteps>=x.exTotal).length;
     return finishWith({type:"comp",setId:"comp",subject:"แนวแข่งขัน",topic:S.set.topic,startedAt:new Date(S.start).toISOString(),endedAt:new Date().toISOString(),
       durationSec:sessSec(),correct:c,total:sc.length,xp:sc.length?(read?10:4)+c*5:0,confused:S.confused,items}) }
@@ -5182,6 +5298,28 @@ function talkCard(list){
     ${tl.slice(0,12).map(a=>{ const T=a.talk; return `<tr><td>${day(a)}</td><td>${esc(a.topic||a.setId)}</td><td>${esc(U[T.u]||"–")}</td><td>${T.oldOpen?esc(C[T.cmp]||"เปิดดูแต่ไม่ได้เลือก"):"ไม่ได้เปิด"}</td>
       <td>${(T.marks||[]).length?(T.marks||[]).map(m=>`ตอน ${m.s+1}: “${esc(m.t)}”`).join("<br>"):"–"}</td><td>${T.note?esc(T.note):"–"}</td><td>${T.sec?Math.round(T.sec/60*10)/10+" นาที":"–"}</td></tr>` }).join("")}</tbody></table></div>
   </section>` }
+/* December focus (ง + จ + ก, 24 Nov): one job per mission, the fixed-size midterm sweep, the 📖 explanation button.
+   Criterion 4 of the end-of-December decision reads the midterm sweep (items first seen ≥ 7 days after teaching). */
+function decCard(list){ const from=new Date(DEC.from+"T00:00:00").getTime(), recs=list.filter(a=>new Date(a.endedAt).getTime()>=from); if(!recs.length) return "";
+  const day=k=>new Date(k).toLocaleDateString("th-TH",{weekday:"short",day:"numeric",month:"short"}), pc=xs=>xs.length?`${xs.filter(x=>x.correct).length}/${xs.length} (${Math.round(xs.filter(x=>x.correct).length/xs.length*100)}%)`:"–";
+  const its=a=>(a.items||[]).filter(x=>!x.skipped), days=[...new Set(recs.filter(isLesson).map(a=>dayKey(a.endedAt)))].sort((a,b)=>b-a);
+  const rows=days.slice(0,10).map(d=>{ const r=recs.filter(a=>dayKey(a.endedAt)===d), of=t=>r.filter(a=>a.type===t).flatMap(its);
+    const sw=r.filter(a=>a.type==="sweep"), swI=sw.flatMap(its), mins=Math.round(r.filter(a=>!a.test&&a.type!=="daymode").reduce((m,a)=>m+Math.min(2700,recSec(a)),0)/60);
+    return `<tr><td>${day(d)}</td><td>${mins} นาที${mins<25?" ⚠":""}</td><td>${pc(of("carry"))}</td><td>${pc(r.filter(plainReview).flatMap(its).filter(x=>x.loop))}</td>
+      <td>${sw.length?`${swI.length} ข้อ · กลางภาค ${pc(swI.filter(x=>x.mid))} · ด่านตรวจ ${pc(swI.filter(x=>x.chk))}`:"–"}</td></tr>` }).join("");
+  const mid=recs.filter(a=>a.type==="sweep").flatMap(its).filter(x=>x.mid&&!x.notTaught), midOk=mid.filter(x=>chkOk(x));
+  /* the explanation button: after each open, is the next answer on the same subtopic right? baseline = after a wrong answer without opening */
+  const seq=list.filter(isLesson).slice().sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt)).flatMap(a=>its(a).map(x=>({...x,at:+new Date(a.endedAt)}))).filter(x=>x.at>=from);
+  const nextOf=k=>{ const s=subOf(seq[k].qid); if(!s) return null; for(let j=k+1;j<seq.length;j++) if(subOf(seq[j].qid)===s&&seq[j].qid!==seq[k].qid) return seq[j]; return null };
+  const opened=[], base=[]; seq.forEach((x,k)=>{ if(x.expl){ const n=nextOf(k); opened.push({x,n}) } else if(!x.correct&&!x.dontknow&&x.phase&&!/^ฝึกทำ/.test(x.phase)){ const n=nextOf(k); base.push({x,n}) } });
+  const nx=a=>{ const w=a.filter(o=>o.n); return w.length?`${w.filter(o=>o.n.correct).length}/${w.length}`:"ยังไม่มีข้อถัดไป" };
+  const ex=seq.filter(x=>x.expl);
+  return `<section class="card"><h3>ระบบ ธ.ค.: ภารกิจแยกหน้าที่ · ย้อนคาถาเรื่องกลางภาค · ปุ่มอ่านคำอธิบาย (เริ่ม ${esc(DEC.from)})</h3>
+    <p class="small muted">บทเรียนเหลือแค่ข้ออุ่นเครื่องของบทเอง · ข้อขั้น 2–3 ที่เลื่อนมาเป็นภารกิจ "ฝึกต่อจากบทก่อน" · ข้อเช็กเรื่องที่สอนใหม่อยู่ในทบทวนข้อที่เคยพลาด · ย้อนคาถาจำนวนคงที่ (วันเรียน ${DEC.sweepSchool} วันหยุด 10) ดึงข้อที่ลูกยังไม่เคยเห็นจากเรื่องกลางภาคที่เรียนไปแล้วอย่างน้อย ${DEC.minAge} วัน ถึง ${esc(DEC.to)} · วันที่ต่ำกว่า 25 นาทีมี ⚠ (รายงานตามจริง ไม่ใช่ปัญหาถ้าไม่ติดกัน 3 วัน)</p>
+    <div style="overflow-x:auto"><table class="mt"><thead><tr><th>วัน</th><th>เวลารวม</th><th>ฝึกต่อจากบทก่อน</th><th>เช็กเรื่องที่สอนใหม่</th><th>ย้อนคาถา</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="small"><b>เกณฑ์ข้อ 4 (ข้อเรื่องกลางภาคที่เห็นครั้งแรกหลังเรียนอย่างน้อย ${DEC.minAge} วัน):</b> ถูกแบบไม่เดา ไม่ใช้คำใบ้ ${mid.length?`${midOk.length}/${mid.length} (${Math.round(midOk.length/mid.length*100)}%)`:"ยังไม่มีข้อ"} · เป้าราว 65% · เป็นโจทย์ที่ผมเขียนเอง บอกแนวโน้มการเรียนรู้ ไม่ใช่ความพร้อมสอบ</p>
+    <p class="small"><b>📖 อ่านคำอธิบาย:</b> เปิด ${ex.length} ข้อ (ก่อนตอบ ${ex.filter(x=>x.explWhen==="before").length} · หลังตอบ ${ex.filter(x=>x.explWhen!=="before").length}) · ข้อถัดไปเรื่องเดียวกันถูก ${nx(opened)} · เทียบกับข้อที่ผิดแล้วไม่ได้เปิด: ข้อถัดไปถูก ${nx(base)}</p>
+    <p class="small muted">ตัวเลขช่วงแรกยังน้อยมาก อ่านเป็นแนวโน้มหลังผ่านไป 1–2 สัปดาห์</p></section>` }
 /* old-topic sweep results by spell, plus her daily check-ins and which concept parts needed another explanation */
 function sweepCard(list){
   const sw=list.filter(a=>a.type==="sweep"), moods=list.filter(a=>a.type==="mood").slice(-7), help=list.filter(a=>a.conceptHelp&&a.conceptHelp.length).slice(-5);
@@ -6001,6 +6139,7 @@ function renderParent(){
   ${sweepCard(attempts.filter(a=>!a.test))}
   ${gateCard(attempts.filter(a=>!a.test&&!voided(a)))}
   ${talkCard(attempts.filter(a=>!a.test&&!voided(a)))}
+  ${decCard(attempts.filter(a=>!a.test&&!voided(a)))}
   ${timeCard(all)}
   <section class="card"><h3>ข้อที่ควรนั่งคุยกัน</h3>
     ${talk.length?talk.map(x=>`<div class="logi"><span class="chip l${x.level}">${esc(x.topic)}</span><span class="small">${esc(x.prompt||x.qid)}</span></div>`).join(""):`<p class="muted small">ยังไม่มีข้อที่ต้องคุย</p>`}

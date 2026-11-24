@@ -75,7 +75,85 @@
     "แนวหน้าตัวทำละลาย"
    ]
   ],
-  "use": "โรงกลั่นน้ำมันทุกแห่งใช้การกลั่นลำดับส่วนแยกน้ำมันดิบเป็นเชื้อเพลิงคนละชนิด โรงงานน้ำหอมใช้การกลั่นด้วยไอน้ำ และห้องปฏิบัติการตรวจสารเสพติดหรือสีผสมอาหารใช้โครมาโทกราฟีเทียบค่า Rf กับสารมาตรฐาน"
+  "use": "โรงกลั่นน้ำมันทุกแห่งใช้การกลั่นลำดับส่วนแยกน้ำมันดิบเป็นเชื้อเพลิงคนละชนิด โรงงานน้ำหอมใช้การกลั่นด้วยไอน้ำ และห้องปฏิบัติการตรวจสารเสพติดหรือสีผสมอาหารใช้โครมาโทกราฟีเทียบค่า Rf กับสารมาตรฐาน",
+  "talk": [
+   {
+    "lines": [
+     "ลองนึกถึงน้ำเกลือหนึ่งขวด ต้มบนไฟ",
+     "น้ำกลายเป็นไอลอยออกไป แต่เกลือไม่ไปด้วย",
+     "ไอวิ่งผ่านท่อที่มีน้ำเย็นล้อมอยู่ (เครื่องควบแน่น) ก็กลับเป็นน้ำ หยดลงขวดใหม่",
+     "ได้น้ำจืด ส่วนเกลือค้างอยู่ในขวดต้ม",
+     "นี่คือการกลั่นธรรมดา",
+     "ใช้ได้ดีเมื่อตัวหนึ่งระเหยง่าย อีกตัวระเหยยาก หรือของเหลวสองชนิดที่เดือดห่างกันราว 30 °C ขึ้นไป"
+    ],
+    "fig": {
+     "kind": "svg",
+     "svg": "<svg viewBox='0 0 420 270' xmlns='http://www.w3.org/2000/svg'><path d='M72 132 A44 44 0 1 0 88 132' fill='none' stroke='currentColor' stroke-width='2'/><path d='M42 190 A44 44 0 0 0 118 190 Z' fill='#5FA8D3' fill-opacity='.45'/><line x1='72' y1='132' x2='72' y2='70' stroke='currentColor' stroke-width='2'/><line x1='88' y1='132' x2='88' y2='70' stroke='currentColor' stroke-width='2'/><rect x='70' y='64' width='20' height='8' fill='#999'/><line x1='80' y1='14' x2='80' y2='86' stroke='#C0392B' stroke-width='3'/><circle cx='80' cy='90' r='5' fill='#C0392B'/><line x1='86' y1='90' x2='120' y2='40' stroke='currentColor' stroke-width='1' stroke-dasharray='2 2'/><text x='124' y='30' font-size='13' fill='currentColor'>กระเปาะเทอร์มอมิเตอร์</text><text x='124' y='46' font-size='13' fill='currentColor'>อยู่ตรงทางที่ไอออก</text><line x1='88' y1='90' x2='330' y2='196' stroke='currentColor' stroke-width='2'/><line x1='157.3' y1='106.2' x2='299.3' y2='168.4' stroke='currentColor' stroke-width='2'/><line x1='146.9' y1='130.0' x2='288.9' y2='192.2' stroke='currentColor' stroke-width='2'/><line x1='157.3' y1='106.2' x2='146.9' y2='130.0' stroke='currentColor' stroke-width='2'/><line x1='299.3' y1='168.4' x2='288.9' y2='192.2' stroke='currentColor' stroke-width='2'/><polygon points='157.3,106.2 299.3,168.4 288.9,192.2 146.9,130.0' fill='#5FA8D3' fill-opacity='.25'/><line x1='276.1' y1='186.6' x2='276.1' y2='226.6' stroke='#1F77B4' stroke-width='3'/><polygon points='270.1,198.6 276.1,186.6 282.1,198.6' fill='#1F77B4'/><text x='268.1' y='242.6' font-size='13' text-anchor='end' fill='#1F77B4'>น้ำเย็นเข้าทางล่าง</text><line x1='170.2' y1='111.8' x2='170.2' y2='71.8' stroke='#1F77B4' stroke-width='3'/><polygon points='164.2,83.8 170.2,71.8 176.2,83.8' fill='#1F77B4'/><text x='180.2' y='81.8' font-size='13' fill='#1F77B4'>น้ำออกทางบน</text><text x='232.7' y='127.2' font-size='13' text-anchor='middle' fill='currentColor' transform='rotate(23.7 232.7 127.2)'>เครื่องควบแน่น</text><path d='M336 200 L336 215 L318 252 L392 252 L374 215 L374 200' fill='none' stroke='currentColor' stroke-width='2'/><path d='M327 234 L318 252 L392 252 L383 234 Z' fill='#5FA8D3' fill-opacity='.45'/><circle cx='333' cy='206' r='2.8' fill='#1F77B4'/><circle cx='334' cy='218' r='2.8' fill='#1F77B4'/><text x='355' y='268' font-size='13' text-anchor='middle' fill='currentColor'>ของเหลวที่กลั่นได้</text><path d='M70 252 Q80 232 75 222 Q90 236 90 252 Z' fill='#E67E22'/><text x='80' y='268' font-size='13' text-anchor='middle' fill='currentColor'>ให้ความร้อน</text><text x='80' y='178' font-size='12' text-anchor='middle' fill='currentColor'>ของผสม</text></svg>",
+     "desc": "ชุดกลั่นอย่างง่าย ขวดต้มของผสมบนไฟ เทอร์มอมิเตอร์มีกระเปาะอยู่ตรงทางแยกที่ไอออกไป ไอไหลลงเครื่องควบแน่นที่มีน้ำเย็นเข้าทางล่างและออกทางบน แล้วหยดเป็นของเหลวลงขวดรองรับ"
+    }
+   },
+   {
+    "lines": [
+     "แต่ถ้าของเหลวสองชนิดเดือดใกล้กันมากล่ะ เช่น เอทานอลกับน้ำ",
+     "กลั่นธรรมดา ไอจะออกมาปนกันทั้งคู่",
+     "เลยใช้หอสูงๆ ที่ข้างล่างร้อน ข้างบนเย็นกว่า",
+     "สารที่เดือดต่ำ ยังเป็นไออยู่ได้ จึงขึ้นไปถึงข้างบน",
+     "สารที่เดือดสูง เจอที่เย็นลงก็กลายเป็นของเหลวก่อน ค้างอยู่ชั้นล่าง",
+     "นี่คือการกลั่นลำดับส่วน"
+    ]
+   },
+   {
+    "lines": [
+     "น้ำมันดิบก็แยกด้วยหอแบบนี้",
+     "บนสุดคือแก๊สปิโตรเลียม เพราะเดือดต่ำที่สุด",
+     "ล่างสุดคือน้ำมันเตาและไข เดือดสูงที่สุด และข้นที่สุด",
+     "ตรงกลางเรียงตามรูป",
+     "จำแค่หลักเดียวพอ: ยิ่งลงล่าง ยิ่งเดือดสูง ยิ่งข้น"
+    ],
+    "fig": {
+     "kind": "svg",
+     "svg": "<svg viewBox='0 0 360 300' xmlns='http://www.w3.org/2000/svg'><rect x='40' y='20' width='90' height='250' rx='8' fill='none' stroke='currentColor' stroke-width='2'/><rect x='42' y='22' width='86' height='60' fill='#5FA8D3' fill-opacity='.25'/><rect x='42' y='200' width='86' height='68' fill='#E07A5F' fill-opacity='.3'/><text x='85' y='52' font-size='13' font-weight='700' text-anchor='middle' fill='currentColor'>เย็นกว่า</text><text x='85' y='240' font-size='13' font-weight='700' text-anchor='middle' fill='currentColor'>ร้อนกว่า</text><line x1='130' y1='35' x2='160' y2='35' stroke='currentColor' stroke-width='2'/><text x='166' y='40' font-size='13' font-weight='400' text-anchor='start' fill='currentColor'>แก๊สปิโตรเลียม</text><line x1='130' y1='68' x2='160' y2='68' stroke='currentColor' stroke-width='2'/><text x='166' y='73' font-size='13' font-weight='400' text-anchor='start' fill='currentColor'>แนฟทาเบา</text><line x1='130' y1='101' x2='160' y2='101' stroke='currentColor' stroke-width='2'/><text x='166' y='106' font-size='13' font-weight='400' text-anchor='start' fill='currentColor'>น้ำมันเบนซิน</text><line x1='130' y1='134' x2='160' y2='134' stroke='currentColor' stroke-width='2'/><text x='166' y='139' font-size='13' font-weight='400' text-anchor='start' fill='currentColor'>น้ำมันก๊าด</text><line x1='130' y1='167' x2='160' y2='167' stroke='currentColor' stroke-width='2'/><text x='166' y='172' font-size='13' font-weight='400' text-anchor='start' fill='currentColor'>น้ำมันดีเซล</text><line x1='130' y1='200' x2='160' y2='200' stroke='currentColor' stroke-width='2'/><text x='166' y='205' font-size='13' font-weight='400' text-anchor='start' fill='currentColor'>น้ำมันหล่อลื่น</text><line x1='130' y1='233' x2='160' y2='233' stroke='currentColor' stroke-width='2'/><text x='166' y='238' font-size='13' font-weight='400' text-anchor='start' fill='currentColor'>น้ำมันเตาและไข</text><path d='M20 262 L20 38' stroke='currentColor' stroke-width='2' marker-end='url(#ar)'/><defs><marker id='ar' markerWidth='8' markerHeight='8' refX='4' refY='4' orient='auto'><path d='M0 0 L8 4 L0 8 z' fill='currentColor'/></marker></defs><text x='85' y='290' font-size='13' font-weight='700' text-anchor='middle' fill='currentColor'>ยิ่งลงล่าง ยิ่งเดือดสูง ยิ่งข้น</text></svg>",
+     "desc": "หอกลั่นน้ำมันดิบ ข้างบนเย็นกว่า ข้างล่างร้อนกว่า จากบนลงล่าง: แก๊สปิโตรเลียม แนฟทาเบา น้ำมันเบนซิน น้ำมันก๊าด น้ำมันดีเซล น้ำมันหล่อลื่น น้ำมันเตาและไข ยิ่งลงล่างยิ่งเดือดสูงและข้น"
+    }
+   },
+   {
+    "lines": [
+     "ทีนี้ถ้าอยากได้น้ำมันหอมจากผิวมะกรูดล่ะ",
+     "น้ำมันหอมแบบนี้โดนร้อนจัดแล้วเสีย และไม่ละลายน้ำ",
+     "เราเลยเป่าไอน้ำผ่านผิวมะกรูด ไอน้ำพาน้ำมันหอมออกมาด้วย",
+     "พอเย็นลง น้ำมันกับน้ำแยกเป็นสองชั้น ตักน้ำมันออกได้เลย",
+     "นี่คือการกลั่นด้วยไอน้ำ"
+    ]
+   },
+   {
+    "lines": [
+     "อีกวิธีหนึ่ง: จุดหมึกสีดำไว้บนกระดาษ แล้วจุ่มปลายกระดาษลงในตัวทำละลาย",
+     "ตัวทำละลายค่อยๆ ซึมขึ้นไป พาสีในหมึกขึ้นไปด้วย",
+     "สีที่ละลายดีและไม่ค่อยติดกระดาษ วิ่งได้ไกล",
+     "สีที่ติดกระดาษแน่น วิ่งได้นิดเดียว",
+     "หมึกสีดำเลยแยกออกเป็นหลายสี นี่คือโครมาโทกราฟีแบบกระดาษ"
+    ],
+    "fig": {
+     "kind": "svg",
+     "svg": "<svg viewBox='0 0 360 280' xmlns='http://www.w3.org/2000/svg'><rect x='120' y='20' width='90' height='230' fill='#fff' fill-opacity='.6' stroke='currentColor' stroke-width='2'/><rect x='100' y='228' width='130' height='40' fill='#5FA8D3' fill-opacity='.3'/><text x='165' y='262' font-size='12' font-weight='400' text-anchor='middle' fill='currentColor'>ตัวทำละลาย</text><line x1='120' y1='220' x2='210' y2='220' stroke='currentColor' stroke-dasharray='4 3'/><text x='115' y='224' font-size='12' font-weight='400' text-anchor='end' fill='currentColor'>เส้นเริ่ม</text><line x1='120' y1='60' x2='210' y2='60' stroke='#1F7A8C' stroke-width='2' stroke-dasharray='6 3'/><text x='115' y='64' font-size='12' font-weight='400' text-anchor='end' fill='currentColor'>ตัวทำละลายไปถึง</text><circle cx='165' cy='124' r='8' fill='#3A6FD8'/><circle cx='165' cy='176' r='8' fill='#D8A23A'/><circle cx='165' cy='220' r='4' fill='#333'/><text x='180' y='128' font-size='12' font-weight='400' text-anchor='start' fill='currentColor'>สีฟ้า</text><text x='180' y='180' font-size='12' font-weight='400' text-anchor='start' fill='currentColor'>สีเหลือง</text><line x1='240' y1='220' x2='240' y2='60' stroke='#1F7A8C' stroke-width='2'/><text x='248' y='145' font-size='13' font-weight='700' text-anchor='start' fill='currentColor'>10 ซม.</text><line x1='290' y1='220' x2='290' y2='124' stroke='#3A6FD8' stroke-width='2'/><text x='298' y='175' font-size='13' font-weight='700' text-anchor='start' fill='currentColor'>6 ซม.</text></svg>",
+     "desc": "กระดาษโครมาโทกราฟีจุ่มอยู่ในตัวทำละลาย จุดหมึกไว้ที่เส้นเริ่ม หมึกแยกเป็นสีเหลืองที่อยู่ต่ำ และสีฟ้าที่ขึ้นไปสูงกว่า ตัวทำละลายขึ้นไปได้ 10 เซนติเมตรจากเส้นเริ่ม สีฟ้าขึ้นไปได้ 6 เซนติเมตร"
+    }
+   },
+   {
+    "lines": [
+     "จะบอกว่าแต่ละสีวิ่งได้ไกลแค่ไหน เราเทียบกับตัวทำละลาย",
+     "Rf = ระยะที่สีวิ่ง ÷ ระยะที่ตัวทำละลายวิ่ง",
+     "ในรูป: สีฟ้าวิ่ง 6 ซม. ตัวทำละลายวิ่ง 10 ซม. → Rf = 6 ÷ 10 = 0.6",
+     "ระวังอย่าหารกลับด้าน ตัวทำละลายอยู่ข้างล่างเสมอ",
+     "สีวิ่งแซงตัวทำละลายไม่ได้ Rf จึงอยู่ระหว่าง 0 ถึง 1 และไม่มีหน่วย"
+    ],
+    "fig": {
+     "kind": "svg",
+     "svg": "<svg viewBox='0 0 360 280' xmlns='http://www.w3.org/2000/svg'><rect x='120' y='20' width='90' height='230' fill='#fff' fill-opacity='.6' stroke='currentColor' stroke-width='2'/><rect x='100' y='228' width='130' height='40' fill='#5FA8D3' fill-opacity='.3'/><text x='165' y='262' font-size='12' font-weight='400' text-anchor='middle' fill='currentColor'>ตัวทำละลาย</text><line x1='120' y1='220' x2='210' y2='220' stroke='currentColor' stroke-dasharray='4 3'/><text x='115' y='224' font-size='12' font-weight='400' text-anchor='end' fill='currentColor'>เส้นเริ่ม</text><line x1='120' y1='60' x2='210' y2='60' stroke='#1F7A8C' stroke-width='2' stroke-dasharray='6 3'/><text x='115' y='64' font-size='12' font-weight='400' text-anchor='end' fill='currentColor'>ตัวทำละลายไปถึง</text><circle cx='165' cy='124' r='8' fill='#3A6FD8'/><circle cx='165' cy='176' r='8' fill='#D8A23A'/><circle cx='165' cy='220' r='4' fill='#333'/><text x='180' y='128' font-size='12' font-weight='400' text-anchor='start' fill='currentColor'>สีฟ้า</text><text x='180' y='180' font-size='12' font-weight='400' text-anchor='start' fill='currentColor'>สีเหลือง</text><line x1='240' y1='220' x2='240' y2='60' stroke='#1F7A8C' stroke-width='2'/><text x='248' y='145' font-size='13' font-weight='700' text-anchor='start' fill='currentColor'>10 ซม.</text><line x1='290' y1='220' x2='290' y2='124' stroke='#3A6FD8' stroke-width='2'/><text x='298' y='175' font-size='13' font-weight='700' text-anchor='start' fill='currentColor'>6 ซม.</text></svg>",
+     "desc": "กระดาษโครมาโทกราฟีจุ่มอยู่ในตัวทำละลาย จุดหมึกไว้ที่เส้นเริ่ม หมึกแยกเป็นสีเหลืองที่อยู่ต่ำ และสีฟ้าที่ขึ้นไปสูงกว่า ตัวทำละลายขึ้นไปได้ 10 เซนติเมตรจากเส้นเริ่ม สีฟ้าขึ้นไปได้ 6 เซนติเมตร"
+    }
+   }
+  ]
  },
  "practice": [
   {

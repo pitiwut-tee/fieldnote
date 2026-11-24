@@ -197,6 +197,24 @@
   }
  ],
  "checkpointsNote": "Approved 17 Nov 2026. short = our own unseen timed mixed set (content/sets kind 'checkpoint', ~24 items, topics taught >= 7 days earlier) in place of the lesson; full = a recalled paper printed at home, 90 min, father enters the score on the parent page. Decision on tutoring ~8-10 Feb 2027.",
- "gate": {"from": "2026-11-23", "min": 6, "cap": 12, "win": 5, "need": 4, "l2": 3, "l2fail": 2, "minL1": 6, "carry": 6, "carryDays": 14},
- "gateNote": "Acquisition gate (father agreed A+B 22 Nov; queue 2 built 23 Nov): a new lesson with >= minL1 level-1 items serves level 1 first until need of the last win are right (at least min, at most cap), then l2 level-2 items (l2fail if the gate was not met); the other level-2 and every level-3 item are carried to later lesson days as warm-up, up to carry a day, for carryDays. Lessons with fewer level-1 items run as before."
+ "gate": {
+  "from": "2026-11-23",
+  "min": 6,
+  "cap": 12,
+  "win": 5,
+  "need": 4,
+  "l2": 3,
+  "l2fail": 2,
+  "minL1": 6,
+  "carry": 6,
+  "carryDays": 14
+ },
+ "gateNote": "Acquisition gate (father agreed A+B 22 Nov; queue 2 built 23 Nov): a new lesson with >= minL1 level-1 items serves level 1 first until need of the last win are right (at least min, at most cap), then l2 level-2 items (l2fail if the gate was not met); the other level-2 and every level-3 item are carried to later lesson days as warm-up, up to carry a day, for carryDays. Lessons with fewer level-1 items run as before.",
+ "december": {
+  "from": "2026-11-24",
+  "to": "2026-12-31",
+  "sweepSchool": 6,
+  "minAge": 7,
+  "note": "December focus (father 24 Nov): from 'from' one job per mission (lesson warm-up = own warm items only; carried items = own mission; loop checks in the mistake review; spaced/checkpoint items in the sweep). From 'from' to 'to' the sweep has a fixed size (school sweepSchool, holiday the level's base) and draws unseen items of midterm subtopics taught >= minAge days ago. Switched on 24 Nov (father: she only uses the app in the evening, so the same day is safe)."
+ }
 }

@@ -18,6 +18,16 @@ In ③ add one G2 line when there is data: talk-card ratings (เข้าใจ
 lesson, worksheet skips, and her own words. Do not write a "10 นาทีกับพ่อ" brief (paused); instead, if she rates "ยังงง" twice in a
 row, write ③ "พ่อควรทำ": ask the father to explain that one point aloud (name the point and give him a 3-line explanation + figure).
 Any new idea that is not G1/G2 goes to the status doc tab "คิวสำรอง (หลัง ธ.ค.)", not to the queue.
+**Missions changed 24 Nov (front-page queue 1, live from 24 Nov evening; `calendar.json` "december"):** the lesson warm-up is only
+the lesson's own warm items; carried items are their own mission "ฝึกต่อจากบทก่อน" (record `type:"carry"`); loop checks are in the
+daily mistake review; checkpoint (`chk`) and spaced (`due`) items are in the sweep. Until 31 Dec the sweep is a fixed 6 (school) /
+level base (holiday) and draws unseen items of midterm subtopics taught ≥ 7 days ago (items `mid:true`), then the old ม.1–2 bank.
+So the old-bank floor matters less: keep 40 unseen, no more. In ③ (G2 line) also report: sweep `mid` items right/total (criterion 4,
+aim ~65%), carried mission done/right, 📖 explanation opens (`expl`, `explWhen`) and whether the next same-subtopic answer was right
+(parent card "ระบบ ธ.ค."). Time: report minutes as facts; alert only when under 25 min 3 days running.
+**Back-filled talk cards (one a night, after the next-3 rule):** done 24 Nov: sci-separation-3, sci-solution-1, sci-solution-2,
+math-parallel-1. Still to write, most-missed first: sci-separation-1, math-stats-1, math-stats-3, math-stats-4, math-dotplot-1,
+sci-solution-7. These feed the 📖 button in the review missions (it opens the talk card of the lesson that teaches the subtopic).
 
 ## Where the rest lives (read a file only when the day's work needs it)
 
