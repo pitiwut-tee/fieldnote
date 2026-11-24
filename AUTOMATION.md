@@ -26,7 +26,8 @@ So the old-bank floor matters less: keep 40 unseen, no more. In ③ (G2 line) al
 aim ~65%), carried mission done/right, 📖 explanation opens (`expl`, `explWhen`) and whether the next same-subtopic answer was right
 (parent card "ระบบ ธ.ค."). Time: report minutes as facts; alert only when under 25 min 3 days running.
 **Back-filled talk cards (one a night, after the next-3 rule):** done 24 Nov: sci-separation-3, sci-solution-1, sci-solution-2,
-math-parallel-1. Still to write, most-missed first: sci-separation-1, math-stats-1, math-stats-3, math-stats-4, math-dotplot-1,
+math-parallel-1. 24 Nov night: sci-separation-1 written and blind-checked but kept in docs/talk-drafts/ (a talk card in that set breaks
+the verify.js library test, which picks sepp3; front-page queue 7 fixes the test, then paste it in). Still to write, most-missed first: math-stats-1, math-stats-3, math-stats-4, math-dotplot-1,
 sci-solution-7. These feed the 📖 button in the review missions (it opens the talk card of the lesson that teaches the subtopic).
 
 ## Where the rest lives (read a file only when the day's work needs it)
