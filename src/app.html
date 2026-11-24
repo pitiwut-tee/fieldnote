@@ -992,7 +992,7 @@ function pickPassage(list){
   return SETS.find(s=>s.kind==="passage"&&!done.has(s.id))||null;
 }
 /* ---------- school exams (calendar.schoolExams): a week of review before, a light load during ---------- */
-function examAt(dk){ const ds=isoDay(dk); for(const x of CAL.schoolExams||[]){ const pre=isoDay(new Date(x.from+"T12:00:00").getTime()-(CAL.examPrepDays||7)*DAY);
+function examAt(dk){ const ds=isoDay(dk); for(const x of CAL.schoolExams||[]){ const pre=isoDay(new Date(x.from+"T12:00:00").getTime()-(x.prepDays||CAL.examPrepDays||7)*DAY);
     if(ds>=x.from&&ds<=x.to) return {x,phase:"during"}; if(ds>=pre&&ds<x.from) return {x,phase:"prep",days:Math.round((new Date(x.from+"T12:00:00")-new Date(ds+"T12:00:00"))/DAY)} } return null }
 function examNext(){ const t=isoDay(todayKey()); return (CAL.schoolExams||[]).find(x=>x.to>=t)||null }
 function examFmt(x){ const f=new Date(x.from+"T12:00:00"), t=new Date(x.to+"T12:00:00"); return f.getDate()+"–"+t.toLocaleDateString("th-TH",{day:"numeric",month:"short"})+(x.estimated?" (ประมาณ)":"") }

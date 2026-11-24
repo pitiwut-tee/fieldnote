@@ -33,6 +33,9 @@ Only two goals count until then:
 - **G1 midterm:** she walks into the school midterm (**Mon 14 – Thu 17 Dec 2026**, school schedule the father got 24 Nov evening;
   was estimated 21–25 Dec) ready and confident, on the school's scope (content/midterm-plan.md, section "24 Nov: midterm moved").
   Final exam Tue 23 – Fri 26 Feb 2027.
+  **Father chose plan ก (24 Nov 19:33):** lessons run to Tue 8 Dec, prep week Wed 9 – Sun 13 Dec (`prepDays` 5 on the midterm),
+  cp-1 Sun 6 Dec, mock Thu 10 Dec (holiday), repair 11–13 Dec; construction lesson ~8 Dec if the school tests it, else
+  math-parallel-2; meaning-sci-1, meaning-math-1, tool-ratio-table-1 after the midterm.
 - **G2 real understanding:** find, by trying and measuring, how she learns well with the app, and adapt it so that understanding
   actually comes from using it (talk cards, worksheet page, level-1 gate, her taps and ratings, her own words).
 Decision filter for any new work, request or nightly writing: does it serve G1 or G2 before 31 Dec? If not, it goes to the backup

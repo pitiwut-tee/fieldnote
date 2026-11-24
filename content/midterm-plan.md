@@ -152,7 +152,7 @@ Sun 6 Dec is cp-1, so with prep from 7 Dec only **9 slots**: 25, 26, 28, 29, 30 
 **Lessons still queued for the midterm:** 11 written (sci-separation-4, math-congruence-2, sci-solution-3, math-stats-5,
 sci-solution-4, math-stats-6, sci-separation-2, math-georeason-1, sci-solution-5, sci-solution-6, math-parallel-2) + the
 construction lesson (not written) + meaning-sci-1, meaning-math-1, tool-ratio-table-1. Short by 3 (core) to 6 (all).
-Options put to the father (front page ④ ฉ, waiting):
+Options put to the father (front page ④ ฉ). **Father chose ก, 24 Nov 19:33 (built the same evening, see below).**
 - **ก (recommended): prep week 5 days (`examPrepDays` 5 → prep Wed 9 – Sun 13 Dec)** → +2 slots (Mon 7 holiday, Tue 8) = 11:
   25 sep-4 · 26 cong-2 · 28 sol-3 · 29 stats-5 · 30 sol-4 · 1 stats-6 · 2 sep-2 · 3 georeason-1 · 5 sol-5 · 7 sol-6 ·
   8 construction (only if the school teaches it before the exam; otherwise math-parallel-2 takes the slot).
@@ -168,5 +168,9 @@ Options put to the father (front page ④ ฉ, waiting):
 Nothing changes before Mon 7 Dec under any option (the first 9 lessons are the same), so the choice is needed only by ~1 Dec
 (the construction lesson must be written before 6 Dec if kept). Unknown that decides construction: whether the school
 reaches constructions / parallelogram proofs before 14 Dec (ask the teacher for the scope sheet).
-Note: the verify.js December test fails on "no 📖 อ่านคำอธิบาย after a wrong sweep answer" on the unchanged 8a4b98a too
-(not caused by the date change); check in the next app chat whether the real sweep shows the button.
+Note: the verify.js December test failed twice at ~19:20 on "no 📖 อ่านคำอธิบาย after a wrong sweep answer" (also on the
+unchanged 8a4b98a) and passed at ~19:45 with no related change: it looks time-dependent or flaky; check it in the next app chat.
+**Built for ก (24 Nov evening):** `schoolExams[0].prepDays` 5 (app: `examAt` uses `x.prepDays||CAL.examPrepDays||7`, so the
+final keeps 7); prep = Wed 9 – Sun 13 Dec. `lessonQueue` order unchanged (sol-6 then math-parallel-2 …); the construction
+lesson chat (front-page queue 2) must insert its set id right before math-parallel-2 (verify.js fails on unknown ids, so no
+placeholder). Mock: the queue-4 chat writes it before 8 Dec and adds it to `checkpoints` for Thu 10 Dec.
