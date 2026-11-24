@@ -1,0 +1,88 @@
+{
+ "set": "sci-separation-1",
+ "written": "2026-11-24",
+ "blind_checked": true,
+ "why_not_in_set": "tools/verify.js test 'สมุดคาถา: wrong answer → read in chunks' picks the first s3.3 lesson item (sepp3 in this set) and cannot click through a talk card; adding talk here makes verify fail. Needs a one-line fix in verify.js (a chat with the father may edit tools/), then paste this array as concept.talk.",
+ "talk": [
+  {
+   "lines": [
+    "แยกของผสม ไม่ต้องท่องทุกวิธีพร้อมกัน ถามคำถามเดียวก่อน",
+    "สองอย่างนี้ \"ต่างกันตรงไหน\"",
+    "เม็ดใหญ่กับเม็ดเล็กไหม ละลายน้ำกับไม่ละลายไหม เดือดง่ายกับเดือดยากไหม",
+    "เจอความต่างแล้ว ก็เลือกวิธีที่ใช้ความต่างนั้น",
+    "เหมือนนักสืบ: หาจุดที่สองอย่างต่างกัน แล้วใช้จุดนั้นแยกมันออกจากกัน"
+   ]
+  },
+  {
+   "lines": [
+    "การกรอง ใช้แยกของแข็งที่ไม่ละลาย ออกจากของเหลว",
+    "กระดาษกรองเหมือนตะแกรงที่รูเล็กมาก",
+    "ทรายเม็ดใหญ่กว่ารู จึงค้างอยู่บนกระดาษ",
+    "แต่เกลือที่ละลายแล้ว เล็กกว่ารูมาก มันลอดผ่านไปกับน้ำ",
+    "น้ำเกลือที่มีทรายปน กรองแล้วจึงได้น้ำใส ที่ยังเค็มอยู่"
+   ],
+   "fig": {
+    "kind": "svg",
+    "svg": "<svg viewBox='0 0 360 280' xmlns='http://www.w3.org/2000/svg'><path d='M90 40 L230 40 L170 130 L170 175 L150 175 L150 130 Z' fill='none' stroke='currentColor' stroke-width='2'/><path d='M100 46 L220 46 L160 126 Z' fill='#fff' fill-opacity='.7' stroke='#888' stroke-width='1.5'/><path d='M128 80 L192 80 L160 122 Z' fill='#C9A15B'/><path d='M100 46 L220 46 L196 78 L124 78 Z' fill='#5FA8D3' fill-opacity='.35'/><path d='M120 200 L120 255 Q120 262 127 262 L193 262 Q200 262 200 255 L200 200' fill='none' stroke='currentColor' stroke-width='2'/><rect x='122' y='228' width='76' height='32' fill='#5FA8D3' fill-opacity='.35'/><line x1='160' y1='178' x2='160' y2='224' stroke='#5FA8D3' stroke-width='3' stroke-dasharray='4 5'/><line x1='232' y1='100' x2='184' y2='100' stroke='currentColor'/><text x='238' y='96' font-size='13' font-weight='700' fill='currentColor'>ทรายค้าง</text><text x='238' y='113' font-size='13' fill='currentColor'>บนกระดาษกรอง</text><line x1='232' y1='244' x2='202' y2='244' stroke='currentColor'/><text x='238' y='240' font-size='13' font-weight='700' fill='currentColor'>น้ำใส</text><text x='238' y='257' font-size='13' fill='currentColor'>แต่ยังเค็ม</text><text x='88' y='30' font-size='13' fill='currentColor'>น้ำเกลือที่มีทรายปน</text><text x='10' y='160' font-size='12' fill='currentColor'>เกลือที่ละลายแล้ว</text><text x='10' y='176' font-size='12' fill='currentColor'>เล็กกว่ารูกระดาษ</text><text x='10' y='192' font-size='12' fill='currentColor'>จึงลอดผ่านไป</text></svg>",
+    "desc": "กรวยกรองมีกระดาษกรอง ทรายค้างอยู่บนกระดาษกรอง น้ำที่หยดลงบีกเกอร์ข้างล่างใส แต่ยังเค็ม เพราะเกลือที่ละลายแล้วเล็กกว่ารูกระดาษจึงลอดผ่านไป"
+   }
+  },
+  {
+   "lines": [
+    "อยากได้เกลือคืนจากน้ำเกลือ มีสองทาง",
+    "ทางแรก ระเหยแห้ง: ต้มหรือตากจนน้ำหายหมด",
+    "ได้เกลือก็จริง แต่สิ่งสกปรกที่ละลายอยู่ก็ติดก้นภาชนะมาด้วย",
+    "ทางที่สอง ตกผลึก: ทำให้อิ่มตัวตอนร้อน แล้วปล่อยให้เย็นลงช้าๆ",
+    "ผลึกค่อยๆ โตขึ้นเอง ส่วนสิ่งเจือปนนิดหน่อยยังละลายอยู่ในน้ำ ผลึกจึงบริสุทธิ์กว่า"
+   ],
+   "fig": {
+    "kind": "svg",
+    "svg": "<svg viewBox='0 0 360 220' xmlns='http://www.w3.org/2000/svg'><path d='M14 46 L14 160 Q14 170 24 170 L114 170 Q124 170 124 160 L124 46' fill='none' stroke='currentColor' stroke-width='2'/><rect x='16' y='74' width='106' height='94' fill='#E07A5F' fill-opacity='.35'/><text x='69' y='190' font-size='14' font-weight='700' text-anchor='middle' fill='currentColor'>ร้อน</text><text x='69' y='208' font-size='12' text-anchor='middle' fill='currentColor'>ละลายจนเต็มที่</text><path d='M236 46 L236 160 Q236 170 246 170 L336 170 Q346 170 346 160 L346 46' fill='none' stroke='currentColor' stroke-width='2'/><rect x='238' y='74' width='106' height='94' fill='#5FA8D3' fill-opacity='.35'/><text x='291' y='190' font-size='14' font-weight='700' text-anchor='middle' fill='currentColor'>เย็นลงแล้ว</text><text x='291' y='208' font-size='12' text-anchor='middle' fill='currentColor'>ส่วนที่ล้นเป็นผลึก</text><circle cx='40' cy='105' r='3.5' fill='#3A7D44'/><circle cx='85' cy='132' r='3.5' fill='#3A7D44'/><circle cx='64' cy='152' r='3.5' fill='#3A7D44'/><circle cx='262' cy='108' r='3.5' fill='#3A7D44'/><circle cx='318' cy='98' r='3.5' fill='#3A7D44'/><circle cx='296' cy='128' r='3.5' fill='#3A7D44'/><polygon points='244,168 249,158 254,168' fill='#FFFFFF' stroke='#1F4E79' stroke-width='1.3'/><polygon points='256,168 261,154 266,168' fill='#FFFFFF' stroke='#1F4E79' stroke-width='1.3'/><polygon points='268,168 273,150 278,168' fill='#FFFFFF' stroke='#1F4E79' stroke-width='1.3'/><polygon points='280,168 285,158 290,168' fill='#FFFFFF' stroke='#1F4E79' stroke-width='1.3'/><polygon points='292,168 297,154 302,168' fill='#FFFFFF' stroke='#1F4E79' stroke-width='1.3'/><polygon points='304,168 309,150 314,168' fill='#FFFFFF' stroke='#1F4E79' stroke-width='1.3'/><polygon points='316,168 321,158 326,168' fill='#FFFFFF' stroke='#1F4E79' stroke-width='1.3'/><polygon points='328,168 333,154 338,168' fill='#FFFFFF' stroke='#1F4E79' stroke-width='1.3'/><path d='M134 112 L222 112' stroke='currentColor' stroke-width='2'/><polygon points='222,106 232,112 222,118' fill='currentColor'/><text x='182' y='102' font-size='12' text-anchor='middle' fill='currentColor'>ปล่อยให้เย็นลง</text><circle cx='18' cy='18' r='3.5' fill='#3A7D44'/><text x='26' y='22' font-size='12' fill='currentColor'>สิ่งเจือปน (มีนิดเดียว ยังละลายอยู่)</text><polygon points='18,40 23,28 28,40' fill='#FFFFFF' stroke='#1F4E79' stroke-width='1.3'/><text x='34' y='40' font-size='12' fill='currentColor'>ผลึกน้ำตาล</text></svg>",
+    "desc": "แก้วซ้ายร้อน น้ำตาลละลายเต็มที่ มีจุดสิ่งเจือปนนิดหน่อย พอปล่อยให้เย็นลงเป็นแก้วขวา น้ำตาลส่วนที่ล้นตกเป็นผลึกที่ก้นแก้ว ส่วนจุดสิ่งเจือปนยังลอยอยู่ในน้ำ"
+   }
+  },
+  {
+   "lines": [
+    "ถ้าอยากได้ \"น้ำ\" คืนมาด้วยล่ะ?",
+    "ต้มให้น้ำกลายเป็นไอ เกลือไม่กลายเป็นไอ จึงค้างอยู่ในขวด",
+    "แล้วพาไอไปทำให้เย็น ไอก็กลับเป็นหยดน้ำ (ควบแน่น)",
+    "เหมือนหยดน้ำที่เกาะฝาหม้อตอนต้มน้ำ",
+    "วิธีนี้เรียกว่า การกลั่นอย่างง่าย ใช้แยกของเหลวที่จุดเดือดต่างกันมากได้ด้วย"
+   ],
+   "fig": {
+    "kind": "svg",
+    "svg": "<svg viewBox='0 0 420 270' xmlns='http://www.w3.org/2000/svg'><path d='M72 132 A44 44 0 1 0 88 132' fill='none' stroke='currentColor' stroke-width='2'/><path d='M42 190 A44 44 0 0 0 118 190 Z' fill='#5FA8D3' fill-opacity='.45'/><line x1='72' y1='132' x2='72' y2='70' stroke='currentColor' stroke-width='2'/><line x1='88' y1='132' x2='88' y2='70' stroke='currentColor' stroke-width='2'/><rect x='70' y='64' width='20' height='8' fill='#999'/><line x1='80' y1='14' x2='80' y2='86' stroke='#C0392B' stroke-width='3'/><circle cx='80' cy='90' r='5' fill='#C0392B'/><line x1='86' y1='90' x2='120' y2='40' stroke='currentColor' stroke-width='1' stroke-dasharray='2 2'/><text x='124' y='30' font-size='13' fill='currentColor'>กระเปาะเทอร์มอมิเตอร์</text><text x='124' y='46' font-size='13' fill='currentColor'>อยู่ตรงทางที่ไอออก</text><line x1='88' y1='90' x2='330' y2='196' stroke='currentColor' stroke-width='2'/><line x1='157.3' y1='106.2' x2='299.3' y2='168.4' stroke='currentColor' stroke-width='2'/><line x1='146.9' y1='130.0' x2='288.9' y2='192.2' stroke='currentColor' stroke-width='2'/><line x1='157.3' y1='106.2' x2='146.9' y2='130.0' stroke='currentColor' stroke-width='2'/><line x1='299.3' y1='168.4' x2='288.9' y2='192.2' stroke='currentColor' stroke-width='2'/><polygon points='157.3,106.2 299.3,168.4 288.9,192.2 146.9,130.0' fill='#5FA8D3' fill-opacity='.25'/><line x1='276.1' y1='186.6' x2='276.1' y2='226.6' stroke='#1F77B4' stroke-width='3'/><polygon points='270.1,198.6 276.1,186.6 282.1,198.6' fill='#1F77B4'/><text x='268.1' y='242.6' font-size='13' text-anchor='end' fill='#1F77B4'>น้ำเย็นเข้าทางล่าง</text><line x1='170.2' y1='111.8' x2='170.2' y2='71.8' stroke='#1F77B4' stroke-width='3'/><polygon points='164.2,83.8 170.2,71.8 176.2,83.8' fill='#1F77B4'/><text x='180.2' y='81.8' font-size='13' fill='#1F77B4'>น้ำออกทางบน</text><text x='232.7' y='127.2' font-size='13' text-anchor='middle' fill='currentColor' transform='rotate(23.7 232.7 127.2)'>เครื่องควบแน่น</text><path d='M336 200 L336 215 L318 252 L392 252 L374 215 L374 200' fill='none' stroke='currentColor' stroke-width='2'/><path d='M327 234 L318 252 L392 252 L383 234 Z' fill='#5FA8D3' fill-opacity='.45'/><circle cx='333' cy='206' r='2.8' fill='#1F77B4'/><circle cx='334' cy='218' r='2.8' fill='#1F77B4'/><text x='355' y='268' font-size='13' text-anchor='middle' fill='currentColor'>ของเหลวที่กลั่นได้</text><path d='M70 252 Q80 232 75 222 Q90 236 90 252 Z' fill='#E67E22'/><text x='80' y='268' font-size='13' text-anchor='middle' fill='currentColor'>ให้ความร้อน</text><text x='80' y='178' font-size='12' text-anchor='middle' fill='currentColor'>ของผสม</text></svg>",
+    "desc": "ชุดกลั่นอย่างง่าย ขวดต้มของผสมบนไฟ เทอร์มอมิเตอร์มีกระเปาะอยู่ตรงทางแยกที่ไอออกไป ไอไหลลงเครื่องควบแน่นที่มีน้ำเย็นเข้าทางล่างและออกทางบน แล้วหยดเป็นของเหลวลงขวดรองรับ"
+   }
+  },
+  {
+   "lines": [
+    "ถ้าสีปนกันอยู่นิดเดียว เช่น หมึกปากกาสีดำ ใช้อีกวิธีหนึ่ง",
+    "จุดหมึกไว้บนกระดาษ แล้วจุ่มปลายกระดาษลงในตัวทำละลาย",
+    "ตัวทำละลายซึมขึ้นไป แล้วพาสีขึ้นไปด้วย",
+    "สีที่ละลายดีและเกาะกระดาษน้อย วิ่งไปได้ไกล",
+    "สีที่เกาะกระดาษแน่น วิ่งได้ใกล้ หมึกจึงแยกเป็นหลายสี",
+    "วิธีนี้เรียกว่า โครมาโทกราฟีกระดาษ"
+   ],
+   "fig": {
+    "kind": "svg",
+    "svg": "<svg viewBox='0 0 360 280' xmlns='http://www.w3.org/2000/svg'><rect x='120' y='20' width='90' height='230' fill='#fff' fill-opacity='.6' stroke='currentColor' stroke-width='2'/><rect x='100' y='228' width='130' height='40' fill='#5FA8D3' fill-opacity='.3'/><text x='165' y='262' font-size='12' font-weight='400' text-anchor='middle' fill='currentColor'>ตัวทำละลาย</text><line x1='120' y1='220' x2='210' y2='220' stroke='currentColor' stroke-dasharray='4 3'/><text x='115' y='224' font-size='12' font-weight='400' text-anchor='end' fill='currentColor'>เส้นเริ่ม</text><line x1='120' y1='60' x2='210' y2='60' stroke='#1F7A8C' stroke-width='2' stroke-dasharray='6 3'/><text x='115' y='64' font-size='12' font-weight='400' text-anchor='end' fill='currentColor'>ตัวทำละลายไปถึง</text><circle cx='165' cy='124' r='8' fill='#3A6FD8'/><circle cx='165' cy='176' r='8' fill='#D8A23A'/><circle cx='165' cy='220' r='4' fill='#333'/><text x='180' y='128' font-size='12' font-weight='400' text-anchor='start' fill='currentColor'>สีฟ้า</text><text x='180' y='180' font-size='12' font-weight='400' text-anchor='start' fill='currentColor'>สีเหลือง</text><line x1='240' y1='220' x2='240' y2='60' stroke='#1F7A8C' stroke-width='2'/><text x='248' y='145' font-size='13' font-weight='700' text-anchor='start' fill='currentColor'>10 ซม.</text><line x1='290' y1='220' x2='290' y2='124' stroke='#3A6FD8' stroke-width='2'/><text x='298' y='175' font-size='13' font-weight='700' text-anchor='start' fill='currentColor'>6 ซม.</text></svg>",
+    "desc": "กระดาษโครมาโทกราฟีจุ่มอยู่ในตัวทำละลาย จุดหมึกไว้ที่เส้นเริ่ม หมึกแยกเป็นสีเหลืองที่อยู่ต่ำ และสีฟ้าที่ขึ้นไปสูงกว่า ตัวทำละลายขึ้นไปได้ 10 เซนติเมตรจากเส้นเริ่ม สีฟ้าขึ้นไปได้ 6 เซนติเมตร"
+   }
+  },
+  {
+   "lines": [
+    "จะบอกว่าสีวิ่งได้ไกลแค่ไหน เราเทียบกับตัวทำละลาย",
+    "Rf = ระยะที่สีวิ่ง ÷ ระยะที่ตัวทำละลายวิ่ง",
+    "ในรูป สีฟ้าวิ่ง 6 ซม. ตัวทำละลายวิ่ง 10 ซม. Rf จึงเท่ากับ 0.6",
+    "สีวิ่งแซงตัวทำละลายไม่ได้ Rf จึงไม่เกิน 1 และไม่มีหน่วย",
+    "สารเดียวกัน ใช้กระดาษและตัวทำละลายเดียวกัน ได้ Rf เท่ากัน จึงใช้เทียบได้ว่าเป็นสารเดียวกันไหม"
+   ],
+   "fig": {
+    "kind": "svg",
+    "svg": "<svg viewBox='0 0 360 280' xmlns='http://www.w3.org/2000/svg'><rect x='120' y='20' width='90' height='230' fill='#fff' fill-opacity='.6' stroke='currentColor' stroke-width='2'/><rect x='100' y='228' width='130' height='40' fill='#5FA8D3' fill-opacity='.3'/><text x='165' y='262' font-size='12' font-weight='400' text-anchor='middle' fill='currentColor'>ตัวทำละลาย</text><line x1='120' y1='220' x2='210' y2='220' stroke='currentColor' stroke-dasharray='4 3'/><text x='115' y='224' font-size='12' font-weight='400' text-anchor='end' fill='currentColor'>เส้นเริ่ม</text><line x1='120' y1='60' x2='210' y2='60' stroke='#1F7A8C' stroke-width='2' stroke-dasharray='6 3'/><text x='115' y='64' font-size='12' font-weight='400' text-anchor='end' fill='currentColor'>ตัวทำละลายไปถึง</text><circle cx='165' cy='124' r='8' fill='#3A6FD8'/><circle cx='165' cy='176' r='8' fill='#D8A23A'/><circle cx='165' cy='220' r='4' fill='#333'/><text x='180' y='128' font-size='12' font-weight='400' text-anchor='start' fill='currentColor'>สีฟ้า</text><text x='180' y='180' font-size='12' font-weight='400' text-anchor='start' fill='currentColor'>สีเหลือง</text><line x1='240' y1='220' x2='240' y2='60' stroke='#1F7A8C' stroke-width='2'/><text x='248' y='145' font-size='13' font-weight='700' text-anchor='start' fill='currentColor'>10 ซม.</text><line x1='290' y1='220' x2='290' y2='124' stroke='#3A6FD8' stroke-width='2'/><text x='298' y='175' font-size='13' font-weight='700' text-anchor='start' fill='currentColor'>6 ซม.</text></svg>",
+    "desc": "กระดาษโครมาโทกราฟีจุ่มอยู่ในตัวทำละลาย จุดหมึกไว้ที่เส้นเริ่ม หมึกแยกเป็นสีเหลืองที่อยู่ต่ำ และสีฟ้าที่ขึ้นไปสูงกว่า ตัวทำละลายขึ้นไปได้ 10 เซนติเมตรจากเส้นเริ่ม สีฟ้าขึ้นไปได้ 6 เซนติเมตร"
+   }
+  }
+ ]
+}
