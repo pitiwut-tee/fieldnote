@@ -62,14 +62,20 @@ old more often; (3) lesson level 2–3 accuracy since 23 Nov above the old 62/54
 the real score when known (may come after December). Mixed reading: 3–4 pass but 1–2 fail = practice works but first teaching
 should come from the book or a person (adapt toward P1/P3); 3–4 fail = change method or add a human explainer. Numbers 2–4 come
 from our own questions: a learning trend, never exam readiness (hard rule 6).
-**Waiting (front page ④ ง, จ; 24 Nov):** ง = one job per mission: lesson mission keeps only its own 2–3 warm items; carried items
+**APPROVED 24 Nov 08:37 (front page ④ ง, จ; father: "ลุยเลย", then watch her feedback):** ง = one job per mission: lesson mission keeps only its own 2–3 warm items; carried items
 become their own mission "ฝึกต่อจากบทก่อน"; the warm-up's retry-mistake and loop-check items move to the mistake review; the
 warm-up's spaced/checkpoint items move into the sweep, which in December draws unseen items from midterm subtopics taught
 ≥ 7 days earlier (pool = lesson items the gate deferred/dropped, twins; no new writing at first). Answers the father's worry
 that a midterm sweep repeats the mistake review: the review re-asks the exact missed items (fix), the sweep asks unseen items
 (does understanding last). จ = keep the sweep lock; in December drop the time-gap size for a fixed size (school 6, holiday 10)
-so weeks compare; days under 45 min are then reported as facts, alert only on < 25 min 3 days running. If approved, build ง+จ
-in the same chat as queue 1.
+so weeks compare; days under 45 min are then reported as facts, alert only on < 25 min 3 days running. Build ก+ง+จ in ONE
+chat = front-page queue 1 (Opus, no computer). Build notes: switch on by a date in `calendar.json` (a school day she has not
+started; never mid-day), so verify.js can test both sides; keep each moved item's flags (`_chk`, `_loop`, `_retry`, `carry`)
+so `spellStats`, `miscState`, `checkPlan`, `reviewPool` and the parent cards keep reading them; new mission key for the carried
+items (home card, expedition stop, resume slot, flame/map-piece counting); the December sweep pool = midterm subtopics
+(`currentSpells`) whose lesson she did ≥ 7 days ago, items she has never answered (gate-dropped/deferred lesson items, twins),
+one per subtopic, oldest-taught first, fall back to the old sweep bank when short; the explanation button logs opens and the
+next same-subtopic result; parent page shows both; publish the parent page; tell the father what she will see (one line for ③).
 
 ## Commands (repo root)
 - Build: `python3 tools/build.py` (makes `index.html` and `dist/parent.html` from `src/app.html` + `content/`)
