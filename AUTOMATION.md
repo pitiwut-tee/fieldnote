@@ -9,6 +9,16 @@ You are preparing the next days of practice for a Thai ม.2 student who is
 aiming for the shared first-round science-school exam (วมว. > จุฬาภรณ์, run by MWIT) in mid-November 2570.
 Her father set this up. You only add **content**. You never change how the app works.
 
+## December focus (father, 24 Nov 2026 — overrides the rest of this file until 31 Dec 2026)
+Read CLAUDE.md "Focus until 31 Dec 2026". Only work for G1 (school midterm ~21–25 Dec) and G2 (she really understands through
+the app) is written. Order of nightly writing: (1) her questions/letter; (2) `concept.talk` for the next 3 lessons and rewriting
+tapped sentences; (3) level-1 items and twins for midterm lessons; (4) daily cards; (5) sweep top-up **only to a floor of 40**
+unseen (was 70; sweeps are old ม.1–2 topics = exam-oriented, so they get the least of the night's budget); nothing else new.
+In ③ add one G2 line when there is data: talk-card ratings (เข้าใจ/บางส่วน/ยังงง), old-vs-new choice, tapped sentences, peeks per
+lesson, worksheet skips, and her own words. Do not write a "10 นาทีกับพ่อ" brief (paused); instead, if she rates "ยังงง" twice in a
+row, write ③ "พ่อควรทำ": ask the father to explain that one point aloud (name the point and give him a 3-line explanation + figure).
+Any new idea that is not G1/G2 goes to the status doc tab "คิวสำรอง (หลัง ธ.ค.)", not to the queue.
+
 ## Where the rest lives (read a file only when the day's work needs it)
 
 | File | Read it when |

@@ -27,6 +27,27 @@ This file is the long-term memory. Chats are disposable; this repo and the statu
 9. Be detailed and honest with the father about capability, limits and needs. Warn before heavy usage; read
    books in portions and ask permission before big reads (scans cost ~10x a text PDF per page).
 
+## Focus until 31 Dec 2026 (father, 24 Nov 2026) — check EVERY decision against this, and warn him when a request drifts
+Do not plan for the entrance exam yet. December is a trial to decide, in a first pass, whether this system really helps her learn.
+Only two goals count until then:
+- **G1 midterm:** she walks into the school midterm (estimate 21–25 Dec) ready and confident, on the school's scope
+  (content/midterm-plan.md).
+- **G2 real understanding:** find, by trying and measuring, how she learns well with the app, and adapt it so that understanding
+  actually comes from using it (talk cards, worksheet page, level-1 gate, her taps and ratings, her own words).
+Decision filter for any new work, request or nightly writing: does it serve G1 or G2 before 31 Dec? If not, it goes to the backup
+tab "คิวสำรอง (หลัง ธ.ค.)" in the status doc, not into the queue. If the father asks for something exam-oriented, do it if he insists,
+but first say in one line that it is outside the December focus. Evidence for G2 is her behaviour and words (ratings, taps, peeks,
+cross-day retries on taught midterm topics, what she says), not our bank accuracy alone (hard rule 6); the school midterm is the
+only outside measure. End-of-December first decision (queue row, ~26–31 Dec): go on / adapt / change method, judged against
+criteria agreed in advance (draft on the front page ④, 24 Nov; once he approves, copy them here).
+Backed up on 24 Nov (in the backup tab, with reasons): exam-source readings, ID-Books 3121/3123, post-midterm lesson writing, IPST
+round 2 part 2, checkpoints 2–3, sweep low-data picking, second lesson a day, the final-term documents deadline, external exam
+papers, P6 reading track, P7 voice, the Cloudflare move. **The weekly "10 minutes with dad" is paused** (father: she should first
+learn through the new explanations); the tab stays. Fallback: if she rates a talk card "ยังงง" twice in a row, the nightly run asks
+the father (front page ③ "พ่อควรทำ") to explain that one point aloud, since a person explaining is the channel she says works.
+Six already-written post-midterm lessons stay at the end of `lessonQueue` (ratio ×3, number theory, motion, body), so a
+"go on" decision in late December has ~6 school days of lessons before new writing is needed.
+
 ## Commands (repo root)
 - Build: `python3 tools/build.py` (makes `index.html` and `dist/parent.html` from `src/app.html` + `content/`)
 - Verify: `node tools/verify.js` (must print "all checks passed")
@@ -58,6 +79,7 @@ This file is the long-term memory. Chats are disposable; this repo and the statu
   must provide, decisions waiting, current numbers and the log of recent work. He edits it; his edits win.
   Tabs (17 Nov): **หน้าแรกของพ่อ** (first; his one-page dashboard, see "Father's front page" below) · สถานะและบันทึกงาน
   (needs table, numbers, decisions, log) · 10 นาทีกับพ่อ · ทดลองที่บ้าน N.
+  Since 24 Nov also **คิวสำรอง (หลัง ธ.ค.)** (tab id `3eeff4a8-2539`): work parked by the December focus, with why and when.
 - Parent page (private artifact): https://claude.ai/artifact/59fiBfcRgbyEEC7mhXwqVR holds her results and his approvals.
 - Student page: GitHub Pages of the repo `pitiwut-tee/fieldnote`.
 
