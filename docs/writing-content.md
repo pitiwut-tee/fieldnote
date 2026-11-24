@@ -326,7 +326,11 @@ Lessons written 4–12 Nov lack `hook`/`more` and open with a formula. Recipe (k
 Why: the student said the cards "feel like AI" and have no pictures, and that she understands when a person explains aloud.
 Measured 23 Nov: card points ran 134 characters on median with 3–5 facts each, 4 different analogies per card, almost no science figures.
 A `talk` card replaces the point-by-point card in the lesson (the old `points` stay: the comparison button, the library and
-the loop still use them). Shape: `"talk":[{"lines":["short sentence", ...], "fig": {...optional geo/svg...}}, ...]`, 4–7 screens.
+the loop still use them). Shape: `"talk":[{"h":"short heading","lines":["short sentence", ...], "fig": {...optional geo/svg...}}, ...]`, 4–7 screens.
+**Every screen needs `h`** (24 Nov night, father): a 2–6 word heading that names what the screen is about ("ค่า Rf", "ด.ม.ด. และ ม.ด.ม.").
+She re-reads cards as a book: the 📖 buttons and the library show the whole card on one page with these headings as a list to jump
+to, so a heading must tell her where the part she forgot is. Library cards (`library.json` steps) take the same `h` on each step
+(`{"h":…, "t":…}`); a step that starts with a short "label: …" gets it as its heading automatically.
 
 Rules (check each screen against all of them):
 1. **Write it the way a parent explains aloud to a child at the table.** Read it aloud: if you would say it differently, rewrite it.
@@ -346,3 +350,11 @@ Example (crystallisation, before → after): "การตกผลึก: เ�
 น้ำตาลส่วนที่ "ล้น" เลยต้องออกมาเป็นเม็ดแข็งๆ นี่แหละคือผลึก" + a before/after figure.
 In the app (`renderTalk`): hook first, then one screen per tap, every line tappable to mark "งง", then a rating screen (เข้าใจ /
 เข้าใจบางส่วน / ยังงง, a button to open the old card and say which is easier, an optional note), then formulas and vocab. 📖 peek shows the talk card.
+
+## Structure beats length (24 Nov night, father and the student)
+She reads long explanations when the parts are clearly separated (headings, numbered steps, bullets, boxes) and gets lost in
+paragraph after paragraph with only line breaks. The app now structures text on its own (`richText` in app.html): a lead
+"label: …" becomes bold, facts joined by " · " become bullets, "1) … 2) …" becomes a numbered list, and a long paragraph breaks
+before ดังนั้น / จากนั้น / ระวัง / สรุป / เช่น … Worked solutions (`ex`) show every step at once as numbered boxes (no tapping step by
+step any more). So when writing: give every explanation a visible shape (a heading per part, one fact per bullet, steps that start
+with a short verb), never a wall of sentences.

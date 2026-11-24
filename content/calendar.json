@@ -214,8 +214,10 @@
  "december": {
   "from": "2026-11-24",
   "to": "2026-12-31",
-  "sweepSchool": 6,
+  "sweepSchool": 5,
   "minAge": 7,
-  "note": "December focus (father 24 Nov): from 'from' one job per mission (lesson warm-up = own warm items only; carried items = own mission; loop checks in the mistake review; spaced/checkpoint items in the sweep). From 'from' to 'to' the sweep has a fixed size (school sweepSchool, holiday the level's base) and draws unseen items of midterm subtopics taught >= minAge days ago. Switched on 24 Nov (father: she only uses the app in the evening, so the same day is safe)."
+  "note": "December focus (father 24 Nov): from 'from' one job per mission (lesson warm-up = own warm items only; carried items = own mission; loop checks in the mistake review; spaced/checkpoint items in the sweep). From 'from' to 'to' the sweep has a fixed size (school sweepSchool, holiday the level's base) and draws unseen items of midterm subtopics taught >= minAge days ago. Switched on 24 Nov (father: she only uses the app in the evening, so the same day is safe). 24 Nov night (father: 'too many items today', ~87 active min on a school day vs 45-60): school days sweepSchool 6->5, carrySchool 4 (was 6 = gate.carry), reviewSchool 4 (+1 loop check; was 6). Holidays unchanged.",
+  "carrySchool": 4,
+  "reviewSchool": 4
  }
 }

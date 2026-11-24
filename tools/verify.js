@@ -230,7 +230,7 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
       if(await pg.locator("#sheet").count()){ await pg.evaluate(()=>closeSheet()); continue }   /* e.g. the level-1 gate's note (23 Nov) */
       if(await pg.locator("[data-hk]").count()){ await pg.locator("[data-hk]").first().click(); continue }
       if(await pg.locator("[data-tu]").count()&&!await pg.locator("[data-tu].picked").count()){ await pg.click('[data-tu="ok"]'); continue }   /* spoken-style card rating (24 Nov) */
-      if(await pg.locator("[data-ws]").count()){ await pg.locator("[data-ws]").first().click(); continue }   /* worksheet page (24 Nov) */
+      /* worksheet (24 Nov night): the current item is answered in place inside the page, nothing to open */
       if(await pg.locator("[data-pred]").count()){ await pg.click(`[data-pred="0"]`); continue }   /* the right prediction is written first */
       if(await pg.locator("#cnext").count()){ await pg.click("#cnext"); continue }
       if(await pg.locator("#save").count()){ if(await pg.locator('[data-r="พอดี"]').count()) await pg.click('[data-r="พอดี"]'); await pg.click("#save"); break }
@@ -339,19 +339,20 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
       if(await pg.locator("#next").count()){ await pg.click("#next"); continue } }
     if(!await pg.locator("#go-lib-q").count()) return "no 'ไปอ่านเรื่องนี้' button after a wrong answer";
     await pg.click("#go-lib-q");
-    let screens=0; for(let i=0;i<20;i++){ if(await pg.locator("[data-dkt]").count()){ await pg.locator("[data-dkt]").first().click(); continue } if(await pg.locator("#dk-next").count()){ screens++; await pg.click("#dk-next"); continue } break }
-    if(screens!==info.screens) return `card s3.3 should show ${info.screens} screens, showed ${screens}`;
-    if(!await pg.locator("#dk-done").count()) return "no one-page summary at the end";
-    await pg.click("#dk-done");
-    const fastSheet=await pg.locator("#sheet [data-sh]").count(); if(!fastSheet) return "no 'too fast' sheet after clicking through a long card in a few seconds";
-    await pg.click('#sheet [data-sh="1"]');
+    /* 24 Nov night: a re-read opens as a "book" page (all sections, headings to jump to), not a deck of screens */
+    const secs=await pg.locator(".bksec").count(); if(secs!==info.screens) return `card s3.3 should show ${info.screens} sections, showed ${secs}`;
+    if(info.screens>=3&&!await pg.locator("[data-bk]").count()) return "no list of headings to jump to";
+    if(await pg.locator("#dk-next").count()) return "the library still steps screen by screen";
+    await pg.evaluate(()=>{ LB.act0=actNow()-30000 });
+    if(!await pg.locator("#lb-try").count()) return "no optional try-it button under the book page";
+    await pg.click("#lb-try");
     for(let i=0;i<6;i++){ if(await pg.locator("[data-tro]").count()){ await pg.locator("[data-tro]").first().click(); continue } if(await pg.locator("#tr-num").count()){ await pg.fill("#tr-num","1"); await pg.click("#tr-check"); continue }
       if(await pg.locator("#tr-next").count()){ await pg.click("#tr-next"); continue } break }
     const rec=await pg.evaluate(()=>mine().find(a=>a.type==="lib"));
-    if(!rec||!rec.read||rec.tries.length!==2||rec.taps.length!==info.taps||rec.from!==info.qid) return "lib record wrong: "+JSON.stringify(rec&&{read:rec.read,tries:rec.tries,taps:rec.taps,from:rec.from});
+    if(!rec||!rec.read||!rec.book||rec.tries.length!==2||rec.from!==info.qid) return "lib record wrong: "+JSON.stringify(rec&&{read:rec.read,book:rec.book,tries:rec.tries,from:rec.from});
     if(rec.tries.some(t=>t.qid===info.qid)) return "the question she just missed came back as a try question";
-    if(!rec.xp) return "first reading of the day earned no XP";
-    if(!(rec.fast===true&&rec.floorSec>=10&&rec.xp===rec.tries.reduce((s,x)=>s+(x.ok?10:5),0))) return "a too-fast reading must be recorded as fast and earn only its try-it XP: "+JSON.stringify({fast:rec.fast,floor:rec.floorSec,xp:rec.xp});
+    if(rec.fast!==false) return "a book re-read must never be flagged too fast";
+    if(rec.xp!==10+rec.tries.reduce((s,x)=>s+(x.ok?10:5),0)) return "first reading of the day: 10 XP + try-it XP, got "+rec.xp;
     await pg.click("#lb-back2");
     if(!await pg.evaluate(qid=>view==="session"&&S.steps[S.i].q&&S.steps[S.i].q.id===qid&&!!S.answered,info.qid)) return "did not come back to the same answered question";
     await play(false);
@@ -361,7 +362,7 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     await pg.click("#go-lib"); await pg.fill("#lb-q","rf");
     const vis=await pg.evaluate(()=>[...document.querySelectorAll("[data-lbs]")].filter(b=>!b.hidden&&!b.closest("[hidden]")).map(b=>b.dataset.lbs));
     if(!vis.includes("s3.3")||vis.length>3) return "search 'rf' shows: "+vis.join(",");
-    await pg.locator('[data-lbs="s3.3"]').first().click(); if(!await pg.locator("#dk-next").count()) return "card did not open from the list";
+    await pg.locator('[data-lbs="s3.3"]').first().click(); if(!await pg.locator(".bksec").count()) return "card did not open from the list";
     await pg.click("#lb-back"); if(!await pg.locator("#lb-q").count()) return "back from a card did not return to the list";
     await pg.evaluate(()=>{ SETS.splice(SETS.findIndex(s=>s.id==="zz-lib"),1); LB=null }) });
 
@@ -487,7 +488,7 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
       {type:"review",setId:"review",topic:"ทบทวน",startedAt:now,endedAt:now,durationSec:200,correct:1,total:1,xp:5,items:[]},{type:"probe",setId:"zz-probe",startedAt:now,endedAt:now,durationSec:300,correct:1,total:1,xp:5,items:[]}); view="home"; render() },[les]);
     const s2=await pg.evaluate(()=>{ const p=progressOf(mine()), sp=sweepPlan(p,mine()); return {locked:sweepLocked(p),sp} });
     if(s2.locked) return "sweep still locked after every other mission: "+JSON.stringify(await pg.evaluate(()=>missionList(progressOf(mine()))));
-    if(!(s2.sp.size>s2.sp.base)) return `sweep did not grow on a short day (${JSON.stringify(s2.sp)})`;
+    if(!(s2.sp.size>s2.sp.base)&&!s2.sp.fixed) return `sweep did not grow on a short day (${JSON.stringify(s2.sp)})`;   /* December: fixed size by design */
     if(!await pg.locator("#sweep-go").count()) return "no sweep button after unlock";
     /* the review is required for the flame by itself (also on a day the sweep bank is empty) */
     const g=await pg.evaluate(()=>{ const now=new Date(Date.now()-30000).toISOString(); attempts.push({type:"sweep",setId:"sweep",startedAt:now,endedAt:now,durationSec:60,correct:1,total:1,xp:5,items:[]});
@@ -535,21 +536,25 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     await reset() });
 
   /* 22 Nov 2026: "my way of thinking matches none of the reasons": she can write her own, before the explanation shows */
-  await T("reason check: own reason option (checkNone / checkOwn)",async()=>{ await reset();
+  await T("reason check: own reason option (checkNone / checkOwn) after a right answer only",async()=>{ await reset();
     await pg.evaluate(()=>{ CAL.understand={...CAL.understand,wave2:"2000-01-01"}; startSet(SETS.find(s=>s.id==="zz-test"),false) });
     let got=false;
     for(let i=0;i<40&&!got;i++){
       if(await pg.locator("[data-ckown]").count()){ got=true; break }
       if(await pg.locator("[data-hk]").count()){ await pg.locator("[data-hk]").first().click(); continue }
-      if(await pg.locator("[data-ws]").count()){ await pg.locator("[data-ws]").first().click(); continue }
       if(await pg.locator("[data-pred]").count()){ await pg.click('[data-pred="0"]'); continue }
       if(await pg.locator("#cnext").count()){ await pg.click("#cnext"); continue }
       if(await pg.locator("#exnext").count()){ await pg.click("#exnext"); continue }
       if(await pg.locator("#next").count()){ await pg.click("#next"); continue }
-      if(await pg.locator(".opt:not([disabled]):not(.ckopt)").count()){ const k=await pg.evaluate(()=>{ const q=S.steps[S.i].q; return q.opts.findIndex((_,j)=>j!==q.a) }); await pg.locator(".opt:not(.ckopt)").nth(k).click();
+      if(await pg.locator(".opt:not([disabled]):not(.ckopt)").count()){ const k=await pg.evaluate(()=>S.steps[S.i].q.a); await pg.locator("#ws-cur .opt:not(.ckopt), .card .opt:not(.ckopt)").nth(k).click();
         for(const b of ["#send-sure","#send-plain"]) if(await pg.locator(b).count()){ await pg.click(b); break } continue }
+      if(await pg.locator("#numin").count()){ await pg.evaluate(()=>{ const q=S.steps[S.i].q; answer({raw:String(q.answer),correct:true}) }); continue }
       await pg.waitForTimeout(60) }
-    if(!got){ await pg.evaluate(W2=>{ CAL.understand=JSON.parse(W2) },W2); return "no 'write my own reason' button shown after a wrong answer" }
+    if(!got){ await pg.evaluate(W2=>{ CAL.understand=JSON.parse(W2) },W2); return "no 'write my own reason' button shown after a right answer" }
+    /* 24 Nov night (her feedback): after a WRONG answer the own-reason button is gone (it repeated "พลาดเพราะอะไร → อื่นๆ") */
+    const onWrong=await pg.evaluate(()=>{ const keep=S.answered, q=S.steps[S.i].q; S.answered={choice:(q.a+1)%q.opts.length,correct:false,at:Date.now()}; S.checkPick=null; S.checkDone=false; renderStep();
+      const r=!!document.querySelector("[data-ckown]")&&!!document.querySelector("[data-ck]"); S.answered=keep; S.checkPick=null; S.checkDone=false; renderStep(); return r });
+    if(onWrong){ await pg.evaluate(W2=>{ CAL.understand=JSON.parse(W2) },W2); return "the own-reason button still shows after a wrong answer" }
     await pg.click("[data-ckown]");
     if(!await pg.locator("#ckown").count()){ await pg.evaluate(W2=>{ CAL.understand=JSON.parse(W2) },W2); return "own-reason box did not open" }
     if(await pg.locator("[data-ck]").count()){ await pg.evaluate(W2=>{ CAL.understand=JSON.parse(W2) },W2); return "the options are still shown next to the own-reason box" }
@@ -581,23 +586,34 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     if(!r) return "resume lost the talk record";
     await pg.click("#next"); for(let k=0;k<12&&!await pg.evaluate(()=>canPeek(S.steps[S.i]));k++) await pg.evaluate(()=>{ S.answered={at:Date.now()}; advance() });
     await pg.evaluate(()=>{ S.wsOpen=false; S.wsSeen=true; render() });
-    if(await pg.locator("#peek").count()){ await pg.click("#peek"); if(!await pg.locator("#sheet .talk").count()) return "📖 peek must show the spoken-style card"; await pg.evaluate(()=>closeSheet()) }
+    if(await pg.locator("#peek").count()){ await pg.click("#peek"); if(!await pg.locator("#sheet .bksec").count()) return "📖 peek must show the spoken-style card as a book page";
+      const hs=await pg.evaluate(()=>[...document.querySelectorAll("#sheet .bksec h3")].map(h=>h.textContent)); if(hs.length<3||!hs.every(h=>h.trim().length>1)) return "book sections need headings: "+hs.join(" | ");
+      if(!await pg.locator("#sheet [data-bk]").count()) return "no headings to jump to in the 📖 book"; await pg.evaluate(()=>closeSheet()) }
   });
-  await T("worksheet page: choose any item, skip and come back, level 2 locked until the gate (24 Nov)",async()=>{ await noToday(); await reset();
+  await T("worksheet page: every item on one page, answer in place, fixed order, level 2 locked until the gate (24 Nov night)",async()=>{ await noToday(); await reset();
     const id=await pg.evaluate(()=>{ const s=SETS.find(s=>s.kind==="lesson"&&gateEligible(s)&&s.practice.some(q=>q.level===2)); if(!s) return null; startSet(s,false); return s.id });
     if(!id) return "no gate-eligible lesson";
     await pg.evaluate(()=>{ const i=S.steps.findIndex(x=>x.kind==="q"&&x.phase==="ฝึกทำ"); S.i=i; view="session"; render() });
-    if(!await pg.locator("[data-ws]").count()) return "the worksheet page does not open when practice starts";
-    const info=await pg.evaluate(()=>({open:[...document.querySelectorAll("[data-ws]")].map(b=>+b.dataset.ws),lv:[...document.querySelectorAll("[data-ws]")].map(b=>S.steps[+b.dataset.ws].q.level||1)}));
-    if(info.lv.some(l=>l>1)) return "level 2 must be locked before the gate: "+info.lv.join("");
-    const j=info.open[2], want=await pg.evaluate(j=>S.steps[j].q.id,j);
-    await pg.click(`[data-ws="${j}"]`);
-    if(await pg.evaluate(()=>S.steps[S.i].q.id)!==want) return "picking an item did not open that item";
-    if(!await pg.locator("#wsopen").count()) return "no skip/whole-page button on a practice item";
-    await pg.click("#wsopen"); if(!await pg.locator("[data-ws]").count()) return "skip did not return to the page";
-    const sk=await pg.evaluate(()=>S.ws); if(!(sk&&sk.skips.includes(want))) return "the skip was not recorded";
-    if(!await pg.locator(`[data-ws]`).evaluateAll((bs,w)=>bs.some(b=>S.steps[+b.dataset.ws].q.id===w),want)) return "a skipped item must stay on the page";
-    const j2=info.open[4]; await pg.click(`[data-ws="${j2}"]`);
+    if(!await pg.locator("#ws-cur").count()) return "the current item is not shown inside the page";
+    const order=()=>pg.evaluate(()=>[...document.querySelectorAll(".wsno2")].map(e=>parseInt(e.textContent.replace(/\D+/,""))));
+    const o1=await order(); if(o1.length<4) return "the page does not list the items: "+o1.join(",");
+    if(o1.some((n,k)=>k&&n<o1[k-1])) return "items are not in their own order: "+o1.join(",");
+    const prev=await pg.locator("[data-wsq]").count(); if(!prev) return "no other items to pick on the page";
+    const lv=await pg.evaluate(()=>[...document.querySelectorAll("[data-wsq]")].map(c=>QBANK[c.dataset.wsq].q.level||1)); if(lv.some(l=>l>1)) return "level 2 must be locked before the gate: "+lv.join("");
+    if(await pg.locator(".wsprev .opt").count()) return "read-only items must not have answer buttons";
+    const want=await pg.evaluate(()=>document.querySelectorAll("[data-wsq]")[2].dataset.wsq), cur0=await pg.evaluate(()=>S.steps[S.i].q.id);
+    await pg.locator(`[data-wsq="${want}"]`).click();
+    if(await pg.evaluate(()=>S.steps[S.i].q.id)!==want) return "tapping an item did not make it the current one";
+    if(JSON.stringify(await order())!==JSON.stringify(o1)) return "the page order moved after picking an item";
+    const sk=await pg.evaluate(()=>S.ws); if(!(sk&&sk.skips.includes(cur0))) return "leaving an unanswered item was not recorded as a skip";
+    /* answer in place: the page stays, the item shows its result, the next item becomes current */
+    await pg.evaluate(()=>{ const q=S.steps[S.i].q; answer(q.num?{raw:String(q.answer),correct:true}:{choice:q.a,correct:true}); S.checkDone=true; renderStep() });
+    for(let k=0;k<6&&!await pg.locator("#next").count();k++){ if(await pg.locator("[data-ck]").count()) await pg.locator("[data-ck]").first().click(); else break }
+    if(!await pg.locator(".wsprev").count()) return "the page disappeared while answering";
+    await pg.click("#next");
+    if(!await pg.locator(".wsdone").count()) return "a done item does not stay on the page with its result";
+    if(JSON.stringify(await order())!==JSON.stringify(o1)) return "the page order moved after answering";
+    if(await pg.evaluate(w=>S.steps[S.i].q&&S.steps[S.i].q.id===w,want)) return "the next item did not become current";
     const before=await pg.evaluate(()=>({ids:S.steps.map(x=>x.q?x.q.id:x.kind).join(),opts:S.steps.map(x=>x.q?JSON.stringify(x.q.opts||null):"").join("|"),i:S.i}));
     const after=await pg.evaluate(()=>{ saveProgress(); S=null; resumeSet(); return {ids:S.steps.map(x=>x.q?x.q.id:x.kind).join(),opts:S.steps.map(x=>x.q?JSON.stringify(x.q.opts||null):"").join("|"),i:S.i} });
     if(after.ids!==before.ids||after.i!==before.i) return "resume lost the worksheet order";
@@ -715,7 +731,7 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
       const setOf=id=>{ const o=QBANK[id]; return o&&o.set.id };
       return {size:sp.size,fixed:!!sp.fixed,school:p.info.kind==="school",base:sp.base,n:st.length,mid:mids.length,fromM:mids.filter(x=>setOf(x.q.of||x.q.id)===m).length,seenBack:mids.some(x=>mine().some(a=>(a.items||[]).some(i=>i.qid===x.q.id))),
         subs:new Set(mids.map(x=>subOf(x.q.id))).size} },pick.m);
-    if(!sw.fixed||sw.size!==(sw.school?6:sw.base)) return "December sweep size must be fixed: "+JSON.stringify(sw);
+    if(!sw.fixed||sw.size!==(sw.school?await pg.evaluate(()=>DEC.sweepSchool):sw.base)) return "December sweep size must be fixed: "+JSON.stringify(sw);
     if(!sw.mid||!sw.fromM) return "the December sweep has no unseen item from the midterm lesson done 10 days ago: "+JSON.stringify(sw);
     if(sw.seenBack) return "the December sweep served an item she has already answered";
     if(sw.subs!==sw.mid) return "the December sweep must take one item per subtopic";
@@ -724,9 +740,11 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     /* answer-first in the sweep: no 📖 before answering, the button after a wrong answer */
     await pg.evaluate(()=>{ const st=decSweepSteps(mine(),6); S={mode:"review",sweep:true,sweepPlan:{fixed:true,size:6,base:6,mins:0,served:st.length},set:{id:"sweep",subject:"ย้อนคาถา",topic:DEC_SWEEP_TOPIC},steps:[...st,{kind:"finish",phase:"เสร็จ"}],trial:[],trialVote:{},active:true,i:0,start:Date.now(),act0:actNow(),qStart:Date.now(),items:[],answered:null,why:null,hints:0,struck:[],glossed:[],askOpen:null,confused:[],altShown:0,pick:null,whyText:""}; view="session"; render() });
     if(await pg.locator("#expl").count()) return "the sweep must stay answer-first (📖 shown before answering)";
+    /* items are shuffled; an old ม.1–2 bank item may have no explanation source at all, so test on one that has */
+    await pg.evaluate(()=>{ const k=S.steps.findIndex(x=>x.q&&explSource(x.q)); if(k>0){ S.i=k; qReset(); renderStep() } });
     await pg.evaluate(()=>answer({choice:-1,raw:"",correct:false,dontknow:true}));
     for(let k=0;k<6&&await pg.locator("[data-ck]").count();k++) await pg.locator("[data-ck]").first().click();
-    if(!await pg.locator("#expl, #go-lib-q").count()) return "no 📖 อ่านคำอธิบาย after a wrong sweep answer";
+    if(!await pg.locator("#expl, #go-lib-q").count()) return "no 📖 อ่านคำอธิบาย after a wrong sweep answer: "+JSON.stringify(await pg.evaluate(()=>{ const q=S.steps[S.i].q; return {id:q.id,sub:subOf(q.id),src:explSource(q),ans:S.answered,ck:S.checkPick,html:(document.querySelector(".feedback")||{}).innerHTML?.slice(0,300)} }));
     const right=await pg.evaluate(()=>{ S.answered=null; S.checkPick=null; S.checkDone=true; const q=S.steps[S.i].q; answer(q.num?{raw:String(q.answer),correct:true}:{choice:q.a,correct:true}); S.checkDone=true; renderStep(); return !!document.querySelector("#expl, #go-lib-q") });
     if(right) return "a confident right answer must not show the explanation button";
     const gs=await pg.evaluate(()=>{ S.guessed=true; renderStep(); return !!document.querySelector("#expl, #go-lib-q") });
@@ -738,6 +756,45 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     await reset() });
 
   /* 22 Nov 2026: study time = active time. A forgotten open tab, the app hidden or swiped away, and a resumed lesson must not add hours */
+  /* 24 Nov night (father's feedback round): review rotation, label lines in stems, structured text, dark mode, school-day volume */
+  await T("feedback 24 Nov night: review rotation, 'ขวด P:' lines, rich text, dark figures, smaller school day (24 Nov night)",async()=>{ await noToday();
+    const day=n=>new Date(Date.now()-n*86400000).toISOString();
+    const qs=await pg.evaluate(()=>SETS.filter(s=>s.kind==="lesson").flatMap(s=>s.practice).filter(q=>!q.num&&!q.of).slice(0,4).map(q=>q.id));
+    const it=(id,ok,extra)=>({qid:id,correct:ok,level:1,timeSec:20,...(extra||{})});
+    /* qs[0] missed long ago, then right with a fast uncover on 3 different days → cleared; qs[1] missed and right once → stays */
+    await reset([{type:"set",setId:"zz-a",startedAt:day(12),endedAt:day(12),durationSec:600,correct:0,total:3,items:[it(qs[0],false),it(qs[1],false),it(qs[2],false)]},
+      ...[5,4,3].map(n=>({type:"review",setId:"review",startedAt:day(n),endedAt:day(n),durationSec:100,correct:1,total:1,items:[it(qs[0],true,{retry:true,cover:true,coverSec:2,coverFloor:12})]})),
+      {type:"review",setId:"review",startedAt:day(1),endedAt:day(1),durationSec:100,correct:1,total:2,items:[it(qs[1],true,{retry:true,cover:true,coverSec:2,coverFloor:12}),it(qs[2],false,{retry:true})]}]);
+    const pool=await pg.evaluate(()=>reviewPool(mine()).map(q=>q.id));
+    if(pool.includes(qs[0])) return "a mistake answered right on 3 different days must leave the review pool";
+    if(!pool.includes(qs[1])) return "one right answer (fast uncover) must not clear a mistake";
+    if(pool[pool.length-1]!==qs[1]&&pool[pool.length-1]!==qs[2]) return "items served in the last review must wait behind the others: "+pool.join(",");
+    /* stems: "ขวด P: … · ขวด Q: …" keeps each label on its own line */
+    const ql=await pg.evaluate(()=>qLines("ได้ค่า Rf ดังนี้ ขวด P: 0.2 และ 0.6 · ขวด Q: 0.2, 0.4 และ 0.6 · ขวด R: 0.6 ข้อสรุปใดถูก"));
+    if(!/<span class="qline">ขวด P: 0\.2 และ 0\.6<\/span>/.test(ql)) return "the first label line lost its label: "+ql;
+    /* rich text: "·" facts become bullets, a lead label becomes bold */
+    const rt=await pg.evaluate(()=>richText("สรุป: น้ำมาก ละลายได้มาก · น้ำน้อย ละลายได้น้อย · อุณหภูมิสูง ละลายได้มาก"));
+    if(!(/<ul>/.test(rt)&&(rt.match(/<li>/g)||[]).length===3&&/rtlab/.test(rt))) return "richText did not structure the text: "+rt;
+    /* worked solutions: every step visible at once, no step button */
+    const ex=await pg.evaluate(()=>{ const q=Object.values(QBANK).map(o=>o.q).find(q=>exSteps(q.ex).length>=3); S=S||{}; S.guessed=false; S.checkPick=null; return {h:exHtml(q,{correct:false}),n:exSteps(q.ex).length} });
+    if((ex.h.match(/<li>/g)||[]).length!==ex.n||/exnext/.test(ex.h)) return "worked steps must all show at once";
+    /* dark mode: the tapped-sentence mark and fixed-paint figures stay readable */
+    const dk=await pg.evaluate(()=>{ document.documentElement.dataset.theme="dark"; const p=document.createElement("p"); p.className="tline tmark"; const w=document.createElement("div"); w.className="talk"; w.appendChild(p); document.body.appendChild(w);
+      const cs=getComputedStyle(p), bg=cs.backgroundColor, fg=cs.color; w.remove();
+      const f=figHtml({kind:"svg",svg:"<svg viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg'><rect width='10' height='10' fill='#FFFFFF'/><text x='1' y='8' fill='currentColor'>a</text></svg>"}); delete document.documentElement.dataset.theme; return {bg,fg,light:/figlight/.test(f)} });
+    const lum=c=>{ const m=c.match(/[\d.]+/g).map(Number); return (0.299*m[0]+0.587*m[1]+0.114*m[2])/255 };
+    if(Math.abs(lum(dk.bg)-lum(dk.fg))<0.4) return "dark mode: the tapped-sentence mark has low contrast "+JSON.stringify(dk);
+    if(!dk.light) return "a figure with white boxes must be drawn on a light panel";
+    /* school day in December: smaller carried mission and review */
+    const v=await pg.evaluate(()=>({c:DEC.carrySchool,r:DEC.reviewSchool,sw:DEC.sweepSchool,rn:reviewN({info:{kind:"school"}}),rh:reviewN({info:{kind:"holiday"}})}));
+    const expR=await pg.evaluate(()=>decOn()?DEC.reviewSchool:REVIEW_DAILY.school);
+    if(!(v.c===4&&v.r===4&&v.sw===5&&v.rn===expR)) return "school-day sizes wrong: "+JSON.stringify(v);
+    if(v.rh!==await pg.evaluate(()=>REVIEW_DAILY.holiday)) return "holiday review size must stay as before";
+    /* a library reading is never the day's lesson */
+    await reset([{type:"lib",sub:"s3.3",setId:"lib-s3.3",startedAt:day(0),endedAt:new Date().toISOString(),durationSec:60,read:true,xp:10,items:[]}]);
+    if(await pg.evaluate(()=>progressOf(mine()).unitsToday)) return "a library reading counted as the day's lesson";
+    await reset() });
+
   await T("study time is active time, not wall clock (22 Nov)",async()=>{ await noToday();
     const old=await pg.evaluate(()=>new Date(Date.now()-3*86400000).toISOString());
     const L=await pg.evaluate(()=>SETS.find(s=>s.kind==="lesson"&&s.practice.length>=6).practice.slice(0,6).map(q=>q.id));

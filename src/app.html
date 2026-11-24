@@ -26,8 +26,8 @@ p{margin:0}
 .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .brand{display:flex;flex-direction:column}
 .brand small{color:var(--muted);font-size:.85rem}
-.tabs{display:flex;gap:6px;background:var(--soft);padding:4px;border-radius:999px}
-.tabs a{padding:6px 14px;border-radius:999px;color:var(--ink);text-decoration:none;font-size:.9rem}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;background:var(--soft);padding:4px;border-radius:22px;max-width:100%}
+.tabs a{white-space:nowrap;padding:6px 14px;border-radius:999px;color:var(--ink);text-decoration:none;font-size:.9rem}
 .tabs a[aria-current="page"]{background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
 .eyebrow{font-size:.84rem;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
@@ -92,7 +92,7 @@ body.padopen .padfab{bottom:calc(48vh + 10px)}
 .celeicon{font-size:3.4rem;line-height:1}
 .sheetcard{text-align:left;max-height:86vh;overflow:auto;max-width:440px}.sheetcard.wide{max-width:560px}.sheetcard h2,.sheetcard .celeicon{text-align:center}
 .sheetx{position:absolute;top:8px;right:10px;border:0;background:transparent;font-size:1.2rem;color:var(--ink);cursor:pointer;padding:6px}
-.wslist{display:flex;flex-direction:column;gap:8px;margin:10px 0}.wsitem{display:flex;gap:10px;align-items:flex-start;text-align:left;font:inherit;color:inherit;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}.wsitem .wsno{font-weight:700;white-space:nowrap;min-width:3.2em}.wsitem .wsbody{display:flex;flex-direction:column;gap:2px}.wsitem.wsdone{opacity:.6;cursor:default}.wsitem.wslock{opacity:.45;cursor:default}.wsitem:not([disabled]):hover{border-color:var(--accent)}.talk .tline{font-size:1.12rem;line-height:1.8;margin:.45em 0;padding:2px 6px;border-radius:6px;cursor:pointer}.talk .tmark{background:#fff2b3}.sheetbody p{line-height:1.7}.sheetact{justify-content:center;gap:8px;flex-wrap:wrap}
+.wslist{display:flex;flex-direction:column;gap:8px;margin:10px 0}.wsitem{display:flex;gap:10px;align-items:flex-start;text-align:left;font:inherit;color:inherit;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer}.wsitem .wsno{font-weight:700;white-space:nowrap;min-width:3.2em}.wsitem .wsbody{display:flex;flex-direction:column;gap:2px}.wsitem.wsdone{opacity:.6;cursor:default}.wsitem.wslock{opacity:.45;cursor:default}.wsitem:not([disabled]):hover{border-color:var(--accent)}.talk .tline{font-size:1.12rem;line-height:1.8;margin:.45em 0;padding:2px 6px;border-radius:6px;cursor:pointer}.talk .tmark{background:color-mix(in srgb,var(--warn) 28%,var(--card));color:var(--ink);box-shadow:inset 3px 0 0 var(--warn)}.sheetbody p{line-height:1.7}.sheetact{justify-content:center;gap:8px;flex-wrap:wrap}
 .factread{font-size:1.08rem}.factbig{display:inline-block;font-size:4.2rem;line-height:1}
 .sheetbody textarea{width:100%;box-sizing:border-box;font:inherit;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)}
 .studiolist{display:flex;flex-direction:column;gap:8px}.studiocard{display:flex;gap:10px;align-items:center;text-align:left;padding:10px;border-radius:14px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;cursor:pointer}
@@ -216,9 +216,10 @@ button.elc[data-cell]{cursor:pointer}button.elc[data-cell]:hover{outline:2px sol
 .rbar i{display:block;height:100%;border-radius:5px}
 .rbar b{position:absolute;top:-3px;width:2px;height:16px;background:var(--good)}
 .pgroup{border:1.5px solid var(--line);border-radius:16px;background:var(--card);margin:0}
-.ptabs{position:sticky;top:0;z-index:5;display:flex;gap:6px;overflow-x:auto;padding:8px 2px;background:var(--paper);scrollbar-width:none}
+/* 24 Nov night (father: the last tab ran off the screen and the bar would not scroll on his phone): the tabs wrap onto a second line */
+.ptabs{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:6px;padding:8px 2px;background:var(--paper)}
 .ptabs::-webkit-scrollbar{display:none}
-.ptabs button{flex:0 0 auto;font:inherit;font-size:.92rem;padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;white-space:nowrap}
+.ptabs button{flex:0 1 auto;font:inherit;font-size:.9rem;padding:7px 12px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;white-space:nowrap}
 .ptabs button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
 .pfold>summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px}.pfold>summary::-webkit-details-marker{display:none}
 .pfold>summary h2,.pfold>summary h3{margin:0}.pfold>summary::after{content:"เปิด ▾";font-size:.8rem;color:var(--accent);font-weight:600;flex:none}.pfold[open]>summary::after{content:"ปิด ▴"}
@@ -512,6 +513,30 @@ mark.sperr{background:#FFD3CC;color:#8A1F14;border-radius:3px;padding:0 1px}
 .lask{background:color-mix(in srgb,var(--accent) 10%,transparent);border-radius:8px;padding:6px 8px;margin:8px 0}
 .lans{border-left:4px solid var(--good);padding-left:10px;margin-top:8px}
 details.myq{border-top:1px solid var(--line);padding:8px 0}details.myq summary{cursor:pointer}
+
+/* 24 Nov night (father's feedback round): dark-theme safe colours, "book" view for re-reading, structured text, one-page worksheet */
+.qfig.figlight{background:#fff;color:#16302B;border-radius:10px;padding:6px;color-scheme:light}
+.book{display:flex;flex-direction:column;gap:12px;text-align:left}
+.booktoc{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.booktoc button{font:inherit;font-size:.85rem;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;text-align:left}
+.bksec{border-left:4px solid var(--accent);background:var(--paper);border-radius:0 12px 12px 0;padding:10px 14px;display:flex;flex-direction:column;gap:6px;scroll-margin-top:14px}
+.bksec.trap{border-left-color:var(--beak)}.bksec.sum{border-left-color:var(--good)}
+.bksec>h3{display:flex;gap:8px;align-items:baseline;font-size:1.05rem}
+.bkno{flex:none;display:inline-grid;place-items:center;min-width:1.7em;height:1.7em;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:.82rem;font-family:var(--body)}
+.bksec p{line-height:1.75}
+.rt>p+p{margin-top:.5em}.figlight figcaption{color:#5B716B!important}
+.rt ul,.rt ol{margin:.15em 0;padding-left:1.35em;display:flex;flex-direction:column;gap:3px}
+.rtlab{font-weight:600}
+.bkcheck{border-top:1px dashed var(--line);padding-top:6px}
+.exsteps.all li{background:var(--paper);border-left:3px solid var(--accent);border-radius:0 10px 10px 0}
+.wsprev{display:flex;flex-direction:column;gap:8px;cursor:pointer;scroll-margin-top:10px}
+.wsprev .opts .opt{pointer-events:none}
+.wsprev.wsdone{opacity:.85;cursor:default}.wsprev.wslock{opacity:.5;cursor:default}
+.wsno2{font-family:var(--display);font-weight:500}
+.wscur{scroll-margin-top:10px;box-shadow:0 0 0 2.5px var(--accent)}
+.wsres{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.ppane{overflow-x:hidden}.ppane section{min-width:0;max-width:100%}.ppane table{display:block;max-width:100%;overflow-x:auto}.ppane pre,.ppane code{white-space:pre-wrap;overflow-wrap:anywhere}
+.ppane td,.ppane th{overflow-wrap:anywhere}
 </style>
 
 <div class="wrap" id="app">
@@ -795,10 +820,12 @@ function exSteps(t){ const w=String(t||"").split(/\s+/).filter(Boolean), out=[];
    because the first explanation step usually names the right option. */
 /* wrong, don't-know or guessed → the explanation opens one step at a time; a confident right answer sees it all at once */
 function exStepped(q,ans){ return ans&&(!ans.correct||S.guessed||S.checkPick===-1||S.checkPick===-2)&&exSteps(q.ex).length>=2 }
-function exLeft(q,ans){ return exStepped(q,ans)&&(S.exStep||1)<exSteps(q.ex).length }
-function exHtml(q,ans){ if(!exStepped(q,ans)) return `<p>${gloss(q.ex)}</p>`; const st=exSteps(q.ex), n=Math.min(st.length,S.exStep||1);
-  return `<ol class="exsteps">${st.slice(0,n).map((x,i)=>`<li class="${i===n-1?"now":""}">${gloss(x)}</li>`).join("")}</ol>
-    ${n<st.length?`<button class="btn small" id="exnext" type="button">ขั้นต่อไป ▸ (${n}/${st.length})</button>`:`<span class="small muted">ครบ ${st.length} ขั้นแล้ว</span>`}` }
+/* 24 Nov night (father: she opened every step anyway, then read them together; clearly separated parts are what make it readable):
+   the worked solution shows all its steps at once as numbered boxes, for right and wrong answers alike. exSteps/exTotal are still
+   logged for a wrong answer (always complete now). */
+function exLeft(q,ans){ return false }
+function exHtml(q,ans){ const st=exSteps(q.ex); if(st.length<2) return `<div class="rt">${richText(q.ex)}</div>`; if(exStepped(q,ans)) S.exStep=st.length;
+  return `<span class="small muted">วิธีคิดทีละขั้น</span><ol class="exsteps all">${st.map(x=>`<li>${gloss(x)}</li>`).join("")}</ol>` }
 function hintList(q){ const h=[...(q.hints||[])], st=exSteps(q.ex), a=String(q.num?(q.answerText||q.answer):q.opts?q.opts[q.a]:"").trim();
   const leaks=a&&new RegExp("(^|[^0-9.])"+a.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"([^0-9.]|$)").test(st[0]||"");
   if(q.step1) h.push("ขั้นแรกของวิธีทำ: "+q.step1); else if(q.num&&st.length>=2&&!leaks&&(q.hints||[]).length<3) h.push("ขั้นแรกของวิธีทำ: "+st[0]); return h }
@@ -899,7 +926,7 @@ function progressOf(list){
     if(a.type==="goal"||a.type==="goaldone"||a.type==="shop"||a.type==="mood"||a.type==="adv"||a.type==="studio"||a.type==="elem"||a.type==="save"||a.type==="card"||a.type==="wish"||a.type==="chem") return;
     if(a.type==="lab"||a.type==="labverdict"||a.type==="labquest"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
     if(a.type==="sweep"){ sweepDays.add(k); byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
-    if(a.type==="recall"||a.type==="comp"||a.type==="loop"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }
+    if(a.type==="recall"||a.type==="comp"||a.type==="loop"||a.type==="lib"){ byDay.set(k,(byDay.get(k)||0)+xpOf(a)); return }   /* lib (สมุดคาถา reading): XP only, never the day's lesson (fixed 24 Nov night) */
     /* 17 Nov fix (father + student): a plain "ทบทวนข้อที่เคยพลาด" set ticked mission 1 (ชุดฝึก), so on 17 Nov the day
        showed only review and the new lesson vanished. From 18 Nov a plain review gives XP but is not the day's lesson.
        Friday repair ("repair") and pre-exam review ("exam-review") still fill the slot. Days before stay as they were. */
@@ -1031,16 +1058,24 @@ function planToday(list, p){
 function recommend(list){ return pickLesson(list,true) }
 /* questions to look at again: wrong answers, and (trial) right answers she was not sure about */
 function reviewPool(list){
-  const wrong=new Map();
+  const wrong=new Map(), okDays=new Map(), lastServed=new Map();
   list.filter(isLesson).slice().sort((a,b)=>new Date(a.endedAt)-new Date(b.endedAt)).forEach(a=>(a.items||[]).forEach(x=>{
     if(x.skipped||!QBANK[x.qid]) return; const id=QBANK[x.qid].q.of||x.qid;
     /* a right answer only clears a mistake if she had to think: a twin, a typed answer, hidden options, or a fresh set.
        Re-tapping the same remembered option in a review does not count, and neither do hidden options uncovered faster
        than she could read the stem and think (coverFast, 18 Nov). */
     const thought=a.type!=="review"&&!x.retry||x.of||x.recall||(x.cover&&!coverFast(x));
-    if(x.notTaught) return; if(x.correct===false||(x.correct&&(x.conf==="unsure"||x.checkOk===false||x.checkNone||x.guessed||x.hintStep))) wrong.set(id,+new Date(a.endedAt)); else if(x.correct&&thought) wrong.delete(id);
+    if(x.notTaught) return; if(x.correct===false||(x.correct&&(x.conf==="unsure"||x.checkOk===false||x.checkNone||x.guessed||x.hintStep))){ wrong.set(id,+new Date(a.endedAt)); okDays.delete(id) }
+    else if(x.correct&&thought) wrong.delete(id);
+    /* 24 Nov night (her note: "the first review item is always the same"): pd10 was answered right 5 times since 8 Nov, but each time
+       by uncovering the options in 2–8 s, so it never cleared and, as the oldest mistake, was served every day. Plainly right on 3
+       different days since the last miss now clears it too (no hint, no guess, reason not wrong). */
+    else if(x.correct&&wrong.has(id)){ const d=okDays.get(id)||new Set(); d.add(dayKey(a.endedAt)); okDays.set(id,d); if(d.size>=3) wrong.delete(id) }
+    if(a.type==="review") lastServed.set(id,+new Date(a.endedAt));
   }));
-  return [...wrong.entries()].sort((a,b)=>a[1]-b[1]).map(([qid])=>QBANK[qid].q);
+  /* oldest mistake first, but one served in the last review waits behind the others, so the same item does not open every day */
+  const lastRev=Math.max(0,...list.filter(a=>a.type==="review").map(a=>+new Date(a.endedAt)));
+  return [...wrong.entries()].sort((a,b)=>((lastServed.get(a[0])||0)>=lastRev-6*3600e3)-((lastServed.get(b[0])||0)>=lastRev-6*3600e3)||a[1]-b[1]).map(([qid])=>QBANK[qid].q);
 }
 /* spaced review: spells not practised for a while come back, one question each (questions she has seen before) */
 const SPACING=[3,4,7,14];   // days before a spell is due again, by tier 0..3
@@ -1118,6 +1153,11 @@ const GATE=Object.assign({from:"2026-11-23",min:6,cap:12,win:5,need:4,l2:3,l2fai
    (lesson items the gate dropped/deferred, twins), one per subtopic, least recently checked / oldest taught first; falls back
    to the old ม.1–2 bank when short. The sweep and the mistake review stay answer-first. */
 const DEC=Object.assign({from:"2026-11-24",to:"2026-12-31",sweepSchool:6,minAge:7},CAL.december||{});
+/* daily volume (24 Nov night, father: "today was far too many items"): on a school day in December the carried mission and the
+   daily mistake review are smaller (calendar.json december.carrySchool / reviewSchool); holidays keep the full size */
+function schoolToday(list){ try{ return progressOf(list||mine()).info.kind==="school" }catch(e){ return false } }
+function carryN(list){ return decOn()&&DEC.carrySchool&&schoolToday(list)?Math.min(GATE.carry,DEC.carrySchool):GATE.carry }
+function reviewN(p){ const k=p.info.kind==="school"?"school":"holiday"; return decOn()&&k==="school"&&DEC.reviewSchool?DEC.reviewSchool:REVIEW_DAILY[k] }
 function splitOn(d){ return isoDay(d==null?todayKey():d)>=DEC.from }
 function decOn(d){ const s=isoDay(d==null?todayKey():d); return s>=DEC.from&&s<=DEC.to }
 /* the December sweep pool: unseen lesson items (and twins) of midterm subtopics taught ≥ DEC.minAge days ago, one per subtopic */
@@ -1331,7 +1371,7 @@ function sweepAny(list){ try{ return decOn()?decSweepSteps(list,1).length>0||swe
 /* "ฝึกต่อจากบทก่อน" as its own mission (ง): yesterday's deferred level-2/3 items, oldest lesson first, lower level first.
    Still part of first learning, so the explanation (talk card) can be opened BEFORE answering, counted like a peek. */
 const CARRY_TOPIC="ฝึกต่อจากบทก่อน";
-function startCarry(){ if(resumeReview("carry")) return; const list=mine(), qs=carryQuestions(list,GATE.carry); if(!qs.length) return;
+function startCarry(){ if(resumeReview("carry")) return; const list=mine(), qs=carryQuestions(list,carryN(list)); if(!qs.length) return;
   const steps=[...qs.map(q=>({kind:"q",phase:CARRY_TOPIC+" (ข้อขั้นถัดไป)",q:shuffleQ(fillize(q)),carry:true})),{kind:"finish",phase:"เสร็จ"}];
   S={mode:"review",carryM:true,set:{id:"carry",subject:"ฝึกต่อ",topic:CARRY_TOPIC},steps,trial:[],trialVote:{},active:true,i:0,start:Date.now(),act0:actNow(),qStart:Date.now(),items:[],answered:null,why:null,hints:0,struck:[],glossed:[],askOpen:null,confused:[],altShown:0,pick:null,whyText:""};
   view="session"; render(); window.scrollTo({top:0}) }
@@ -1560,11 +1600,11 @@ function renderHome(){
       :mission(3,"probe",plan.probe?"ด่านสำรวจ · เช็กเรื่องที่เรียนมาแล้ว ราว 20 นาที":"ชุดฝึกเพิ่ม (ด่านสำรวจครบแล้ว)",
       md.probe&&doneProbe?doneTitle(doneProbe):plan.probe?`<h2>${esc(plan.probe.topic)}</h2><p class="small muted">${plan.probe.practice.length} ข้อ ไม่มีการ์ดก่อนทำ ทำได้ดีคาถาขึ้นขั้นทันที</p>`:`<p class="small muted">ทำชุดไหนก็ได้อีก 1 ชุด</p>`,
       md.probe&&doneProbe?notesBtn(doneProbe):`<button class="btn" id="${plan.probe?"go-probe":"go-extra2"}">${plan.probe?"เข้าด่าน":"เลือกชุด"}</button>`)):""}
-    ${ms.some(x=>x.key==="carry")?(()=>{ const cn=carryQuestions(list,GATE.carry).length;
+    ${ms.some(x=>x.key==="carry")?(()=>{ const cn=carryQuestions(list,carryN(list)).length;
       return mission(ms.findIndex(x=>x.key==="carry")+1,"carry",`ฝึกต่อจากบทก่อน · ราว ${Math.max(3,Math.round(cn*1.2))} นาที`,
       md.carry?`<h2>ฝึกต่อจากบทก่อน</h2><p class="small muted">ทำแล้ว ✓</p>`:`<h2>${cn} ข้อขั้นถัดไปจากบทที่เรียนไปแล้ว</h2><p class="small muted">ข้อที่ยากขึ้นอีกนิดของเรื่องที่เพิ่งเรียน เปิด 📖 อ่านคำอธิบายก่อนตอบได้ ไม่เสียคะแนน</p>`,
       md.carry?"":`<button class="btn" id="carry-go">เริ่มฝึกต่อ</button>`) })():""}
-    ${ms.some(x=>x.key==="review")?(()=>{ const rn=Math.min(REVIEW_DAILY[p.info.kind==="school"?"school":"holiday"],reviewPool(list).length)+(splitOn()?loopChecks(list,1).length:0);
+    ${ms.some(x=>x.key==="review")?(()=>{ const rn=Math.min(reviewN(p),reviewPool(list).length)+(splitOn()?loopChecks(list,1).length:0);
       return mission(ms.findIndex(x=>x.key==="review")+1,"review",`ทบทวนข้อที่เคยพลาด · ราว ${Math.max(3,Math.round(rn*0.8))} นาที`,
       md.review?`<h2>ทบทวนข้อที่เคยพลาด</h2><p class="small muted">ทำแล้ว ✓ ข้อที่ยังพลาดจะกลับมาอีกในวันหลัง</p>`:`<h2>${rn} ข้อที่เคยพลาด</h2><p class="small muted">บางข้อกลับมาในสถานการณ์ใหม่ ลองคิดใหม่ทีละขั้น ถูกแล้วข้อนั้นจะออกจากกองทบทวน</p>`,
       md.review?"":`<button class="btn" id="dreview-go">เริ่มทบทวน</button>`) })():""}
@@ -1607,7 +1647,7 @@ function renderHome(){
     buddyNote=moodReply(m.dataset.mood); renderHome() });
   { const sg=document.getElementById("sweep-go"); if(sg) sg.onclick=()=>startSweep() }
   { const cg=document.getElementById("carry-go"); if(cg) cg.onclick=()=>startCarry() }
-  { const dr=document.getElementById("dreview-go"); if(dr) dr.onclick=()=>startReview(REVIEW_DAILY[p.info.kind==="school"?"school":"holiday"],"ทบทวนข้อที่เคยพลาด",{daily:true}) }
+  { const dr=document.getElementById("dreview-go"); if(dr) dr.onclick=()=>startReview(reviewN(p),"ทบทวนข้อที่เคยพลาด",{daily:true}) }
   { const cg=document.getElementById("comp-go"); if(cg) cg.onclick=()=>startComp() }
   bindUnderstandHome(list,p);
   const on=(id,f)=>{const e=document.getElementById(id); if(e) e.onclick=f};
@@ -1864,7 +1904,9 @@ function svgFig(f){
     [...root.attributes].forEach(a=>{ if(!SVG_ATTR.test(a.name)) root.removeAttribute(a.name) }); walk(root);
     root.setAttribute("role","img"); root.setAttribute("aria-label",f.desc||"รูป"); root.setAttribute("style","max-width:340px;width:100%;height:auto;margin:0 auto");
     const note=[f.caption?esc(f.caption):"", f.scale===false?"รูปไม่ได้วาดตามสเกล":""].filter(Boolean).join(" · ");
-    return `<figure class="qfig">${new XMLSerializer().serializeToString(root)}${note?`<figcaption class="small muted" style="text-align:center">${note}</figcaption>`:""}</figure>` }catch(e){ return "" }
+    /* a figure with fixed light/dark paint (white label boxes, #333 text) is drawn on a light panel so it stays readable in dark mode */
+    const light=/fill=['"]#(fff|ffffff|333|999)['"]|stroke=['"]#(333|1F4E79)['"]/i.test(f.svg);
+    return `<figure class="qfig${light?" figlight":""}">${new XMLSerializer().serializeToString(root)}${note?`<figcaption class="small muted" style="text-align:center">${note}</figcaption>`:""}</figure>` }catch(e){ return "" }
 }
 /* ---------- figures inside questions (q.fig): dot plot, stem-and-leaf (one or two sided), histogram/bar chart, table ---------- */
 function figHtml(f){
@@ -1928,7 +1970,11 @@ Object.assign(GLOSS,(CONTENT.library&&CONTENT.library.terms)||{});   /* more ter
 const GLOSS_KEYS=Object.keys(GLOSS).sort((a,b)=>b.length-a.length);
 /* question data written as "a → b · c → d · ..." is shown one item per line (father, 10 Nov: the dots were hard to read) */
 function qLines(h){ if(!h||h.indexOf(" · ")<0||/English corner/.test(h)) return h; const parts=h.split(" · ");
-  let head=parts[0], first="", after=""; const c=head.lastIndexOf(": "); if(c>0&&c>head.length-40){ first=head.slice(c+2); head=head.slice(0,c+1) } else { const o=head.lastIndexOf("("); if(o>=0&&o>head.length-40){ first=head.slice(o+1); head=head.slice(0,o+1) } else { first=head; head="" } }
+  let head=parts[0], first="", after=""; const c=head.lastIndexOf(": ");
+  /* "… ดังนี้ ขวด P: 0.2 และ 0.6 · ขวด Q: …" (24 Nov): when the other lines are "label: value", the first line keeps its label too */
+  const lab2=(parts[1]||"").match(/^\s*([^:\s]{1,12})[^:]{0,14}:\s/), li=lab2&&c>0?head.lastIndexOf(lab2[1],c):-1;
+  if(li>0&&c-li<28){ first=head.slice(li); head=head.slice(0,li) }
+  else if(c>0&&c>head.length-40){ first=head.slice(c+2); head=head.slice(0,c+1) } else { const o=head.lastIndexOf("("); if(o>=0&&o>head.length-40){ first=head.slice(o+1); head=head.slice(0,o+1) } else { first=head; head="" } }
   const items=[first,...parts.slice(1)]; let last=items[items.length-1];
   const startsData=x=>/^\s*[\d(]/.test(x);
   if(items.length>2&&startsData(items[0])&&!startsData(last)&&!/→/.test(last)){ items.pop(); after=last }
@@ -2053,6 +2099,7 @@ function padDraw(resize){
 window.addEventListener("resize",()=>padDraw(true));
 
 /* ---------- one question ---------- */
+const QA=sel=>(document.getElementById("ws-cur")||$v).querySelectorAll(sel);
 function renderStep(){
   if(S.mode==="cp") return renderCpStep();
   const st = S.steps[S.i];
@@ -2060,7 +2107,7 @@ function renderStep(){
   if(st.kind==="passage") return renderPassage();
   if(st.kind==="rate") return renderRate();
   if(st.kind==="finish") return finishReview();
-  if(wsOn(st)&&!S.answered){ if(!S.wsSeen){ S.wsSeen=true; if(wsOpenIdx().length>1) S.wsOpen=true } if(S.wsOpen&&wsOpenIdx().length>=1) return renderWorksheet() }
+  const inl=wsOn(st);   /* lesson practice = one page with every item (24 Nov night); the item she is doing is answered in place */
   const q = st.q, ans = S.answered;
   const canQ=!q.en&&S.set.kind!=="mixed"&&CAL.listenQuestions!==false, waitMs=Math.max(0,(CAL.listenDelaySec??20)*1000-(Date.now()-S.qStart));
   /* trials: confidence buttons and/or a reason before the answer is shown, so choosing and sending are two taps */
@@ -2105,10 +2152,12 @@ function renderStep(){
   const ownBtn=`<button class="opt ckopt" data-ckown="1">✍️ วิธีคิดของฉันไม่ตรงกับข้อไหนเลย ขอเขียนเอง</button>`;
   const ownPanel=`<div class="opts"><textarea id="ckown" rows="3" maxlength="300" placeholder="เธอคิดยังไงถึงได้คำตอบนี้ พิมพ์สั้นๆ ตามที่คิดจริงได้เลย ไม่มีถูกผิด" style="font:inherit;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink)">${esc(S.checkOwn||"")}</textarea>
       <button class="btn" id="ckown-send">ส่งวิธีคิดของฉัน แล้วดูเฉลย</button><button class="btn ghost" id="ckown-skip">ข้ามไปดูเฉลยเลย</button></div>`;
+  /* 24 Nov night (her feedback): after a WRONG answer the "write my own way of thinking" button is gone: it asked the same thing as
+     "พลาดเพราะอะไร → อื่นๆ (พิมพ์บอกเอง)" a few lines below. After a RIGHT answer it stays (there it is the only place to say how). */
   if(ck&&S.checkPick==null&&!ans.correct){
     S.checkOrder=S.checkOrder||ck.opts.map((_,i)=>i).sort(()=>Math.random()-.5);
     fb=`<div class="feedback"><b class="no">ยังไม่ใช่ · คำตอบที่ถูกคือ ${esc(q.num?(q.answerText||q.answer)+" "+(q.unit||""):q.opts[q.a])}</b><p><b>ก่อนอ่านเฉลย ลองเลือกดู:</b> เหตุผลข้อไหนพาไปถึงคำตอบนี้</p>
-      ${S.checkOwnOpen?ownPanel:`<div class="opts">${S.checkOrder.map(k=>`<button class="opt ckopt" data-ck="${k}">${esc(ck.opts[k])}</button>`).join("")}${ownBtn}<button class="opt ckopt" data-ck="-1">ยังมองไม่ออก ขออ่านเฉลยเลย</button></div>`}
+      ${`<div class="opts">${S.checkOrder.map(k=>`<button class="opt ckopt" data-ck="${k}">${esc(ck.opts[k])}</button>`).join("")}<button class="opt ckopt" data-ck="-1">ยังมองไม่ออก ขออ่านเฉลยเลย</button></div>`}
       <span class="small muted">เลือกเหตุผลให้ถูก แปลว่าเริ่มเห็นทางแล้ว แม้คำตอบรอบนี้จะพลาด</span></div>`;
   } else if(ck&&S.checkPick==null){
     S.checkOrder=S.checkOrder||ck.opts.map((_,i)=>i).sort(()=>Math.random()-.5);
@@ -2130,13 +2179,13 @@ function renderStep(){
       ${q.en?"":`<div>${readBtn("ex","🔊 ฟังเฉลย")}</div>`}
       ${ans.correct||ans.dontknow?"":`<span class="small muted">พลาดเพราะอะไร เลือกได้หลายข้อ (ช่วยให้ระบบเลือกข้อทบทวนได้ตรงขึ้น)</span>
       <div class="why">${Object.entries(ERR).filter(([k])=>k!=="dontknow"&&k!=="notTaught").map(([k,v])=>`<button data-why="${k}" aria-pressed="${(S.why||[]).includes(k)}">${v}</button>`).join("")}</div>
-      ${(S.why||[]).includes("other")?`<input id="whyother" class="numin" style="font-size:1rem" maxlength="200" placeholder="พลาดเพราะอะไร พิมพ์สั้นๆ" value="${esc(S.whyOther||"")}">`:""}`}
+      ${(S.why||[]).includes("other")?`<input id="whyother" class="numin" style="font-size:1rem" maxlength="200" placeholder="พลาดเพราะอะไร หรือตอนตอบคิดยังไง พิมพ์สั้นๆ" value="${esc(S.whyOther||"")}">`:""}`}
       ${ans.correct&&!ans.dontknow&&!(q.check&&S.checkPick!=null)?`<button class="btn ghost small" id="guessed" aria-pressed="${!!S.guessed}">${S.guessed?"✓ บอกแล้วว่าข้อนี้เดา":"🎲 ข้อนี้ถูกเพราะเดา"}</button>`:""}
       ${askHtml("question")}
     </div>
-    ${exLeft(q,ans)?`<p class="small muted">อ่านเฉลยทีละขั้นให้ครบก่อน แล้วปุ่ม "ต่อไป" จะขึ้นมา</p>`:`<button class="btn" id="next">ต่อไป</button>`}`;
+    ${exLeft(q,ans)?`<p class="small muted">อ่านเฉลยทีละขั้นให้ครบก่อน แล้วปุ่ม "ต่อไป" จะขึ้นมา</p>`:`<button class="btn" id="next">${wsOn(st)?"เรียบร้อย ไปข้อถัดไป ↓":"ต่อไป"}</button>`}`;
   }
-  $v.innerHTML = `<section class="card">${header()}
+  const card = `<section class="card${inl?" wscur":""}"${inl?' id="ws-cur"':""}>${inl?`<span class="wsno2">ข้อ ${st._n||"?"} · กำลังทำ</span>`:header()}
     <span class="row" style="gap:6px">${S.set.kind==="mixed"?`<span class="chip">${/^s/.test(q.spell||"")?"🔬 วิทย์":"📐 คณิต"}</span>`:""}<span class="chip l${q.level}">${LV[q.level]}${S.set.kind==="mixed"&&!ans?"":" · "+esc(q.topic)}</span>${q.en?`<span class="chip">English corner</span>`:""}</span>
     ${st.passage?passageDetails():""}
     <p class="prompt">${qLines(gloss(q.q))}</p>
@@ -2151,15 +2200,16 @@ function renderStep(){
     ${S.hints?`<div class="feedback">${HL.slice(0,S.hints).map((h,k)=>`<span class="small hintline"><span><b>คำใบ้ ${k+1}</b> ${esc(h)}</span>${ans?"":S.hintKnown.includes(k)?`<span class="muted">✓ รู้อยู่แล้ว <button class="linkbtn" data-hku="${k}" type="button">กดผิด ยกเลิก</button></span>`:`<button class="linkbtn" data-hk="${k}" type="button">รู้อยู่แล้ว</button>`}</span>`).join("")}
       ${!ans&&S.hints>=HL.length?`<span class="small muted">ใช้คำใบ้ครบแล้ว ลองเขียนสิ่งที่รู้ลงกระดาษทดก่อน ถ้ายังไปต่อไม่ได้ กด "ยังคิดไม่ออก ดูเฉลย" ได้เลย ไม่ผิดอะไร</span>`:""}</div>`:""}
     ${body}${fb}
-    <div class="row">${!ans&&wsOn(st)&&wsOpenIdx().length>1?`<button class="btn ghost" id="wsopen" type="button">📄 ดูทั้งหน้า / ข้ามข้อนี้ไปก่อน</button>`:""}${!ans&&!predWait&&canPeek(st)?`<button class="btn ghost" id="peek" type="button">📖 ดูเนื้อหา/สูตร</button>`:""}${!ans&&!predWait&&explBefore(st,q)?`<button class="btn ghost" id="expl" type="button">📖 อ่านคำอธิบาย</button>`:""}${!ans&&!predWait&&S.hints<HL.length?`<button class="btn ghost" id="hint">${S.hints===HL.length-1&&HL.length>(q.hints||[]).length?"ขอดูขั้นแรกของวิธีทำ":"ขอคำใบ้"} (${S.hints}/${HL.length})</button>`:""}
+    <div class="row">${!ans&&!predWait&&canPeek(st)?`<button class="btn ghost" id="peek" type="button">📖 ดูเนื้อหา/สูตร</button>`:""}${!ans&&!predWait&&explBefore(st,q)?`<button class="btn ghost" id="expl" type="button">📖 อ่านคำอธิบาย</button>`:""}${!ans&&!predWait&&S.hints<HL.length?`<button class="btn ghost" id="hint">${S.hints===HL.length-1&&HL.length>(q.hints||[]).length?"ขอดูขั้นแรกของวิธีทำ":"ขอคำใบ้"} (${S.hints}/${HL.length})</button>`:""}
     ${!ans&&!predWait?`<div class="row" style="gap:8px"><button class="btn ghost" id="dontknow">🤔 ยังคิดไม่ออก ดูเฉลย</button>${["mixed","probe","sweep"].includes(S.set.kind)||S.set.type==="sweep"?`<button class="btn ghost" id="nottaught">📭 ยังไม่ได้เรียนเรื่องนี้</button>`:""}</div>`:""}
     ${st.optional&&!ans&&!predWait?`<button class="btn ghost" id="skip">ข้ามข้อนี้</button>`:""}</div>
     ${predWait?`<p class="small muted">🔮 ทายก่อนตามความรู้สึก ไม่มีถูกผิด แล้วปุ่ม${canPeek(st)?" 📖 ดูเนื้อหา":""} คำใบ้ และ “ยังคิดไม่ออก” จะขึ้นมา</p>`:""}
     ${!ans&&q.recall?`<p class="small muted">🧠 ข้อนี้เคยเจอแล้ว รอบนี้ไม่มีตัวเลือก พิมพ์คำตอบเองเลย</p>`:""}
     ${!ans&&q.num&&!q.recall?`<p class="small muted">✍️ ข้อเติมคำตอบแบบข้อสอบจริง ไม่มีตัวเลือกให้เดา ตอบเป็นเศษส่วนได้ เช่น 2/3</p>`:""}
     ${!ans?askHtml("question"):""}
-  </section>${padHtml()}`;
-  bindGloss(); padSetup();
+  </section>`;
+  $v.innerHTML = inl?wsPageHtml(card):card+padHtml();
+  bindGloss(); padSetup(); if(inl) bindWsPage();
   clearTimeout(RD.timer);
   const qb=$v.querySelector('[data-read="q"]');
   if(qb){ if(qb.disabled) RD.timer=setTimeout(()=>{ qb.disabled=false; qb.dataset.label="🔊 ฟังโจทย์"; if(RD.where!=="q") qb.textContent="🔊 ฟังโจทย์" },waitMs);
@@ -2181,9 +2231,9 @@ function renderStep(){
       const ck=document.getElementById("check"); if(ck) ck.onclick=()=>go();
       ni.onkeydown=e=>{if(e.key==="Enter"&&!staged)go()};
     } else if(staged){
-      $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{S.pick=+b.dataset.k; const y=window.scrollY; renderStep(); window.scrollTo({top:y})});
+      QA(".opt").forEach(b=>b.onclick=()=>{S.pick=+b.dataset.k; const y=window.scrollY; renderStep(); window.scrollTo({top:y})});
     } else {
-      $v.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer({choice:+b.dataset.k,correct:+b.dataset.k===q.a}));
+      QA(".opt").forEach(b=>b.onclick=()=>answer({choice:+b.dataset.k,correct:+b.dataset.k===q.a}));
     }
     if(staged){
       const send=conf=>{ if(q.num){ const raw=document.getElementById("numin").value.trim();const v=parseAns(raw);if(raw===""||isNaN(v)){document.getElementById("numin").focus();return}
@@ -2263,9 +2313,40 @@ function renderWorksheet(){
   $v.querySelectorAll("[data-ws]").forEach(b=>b.onclick=()=>wsPick(+b.dataset.ws));
 }
 function wsPick(j){ if(j!==S.i&&S.steps[j]){ const t=S.steps[S.i]; S.steps[S.i]=S.steps[j]; S.steps[j]=t }
-  S.wsOpen=false; qReset(); saveProgress(); renderStep(); window.scrollTo({top:0}) }
+  S.wsOpen=false; qReset(); saveProgress(); renderStep(); wsScroll() }
+/* one-page worksheet (24 Nov night; her words: "going into each item and back out feels odd; show every item on one page").
+   Items stay in their own order (ข้อ 1, 2, 3 … by _n) whatever she picks, so nothing moves when she comes back (her 2nd note).
+   The item she is doing is the full interactive card in its place; the others show stem, figure and options read-only: tap one
+   to do it next (an unanswered current item is logged as skipped, as before). Done items stay on the page with her result and a
+   folded explanation, like a marked page of a book. Level-2 items stay locked until the level-1 gate is done. */
+function wsAll(){ return S.steps.map((st,i)=>({st,i})).filter(o=>o.st.kind==="q"&&o.st.phase==="ฝึกทำ"&&!o.st.optional&&!o.st.gated).sort((a,b)=>(a.st._n||0)-(b.st._n||0)) }
+function wsScroll(){ const c=document.getElementById("ws-cur"); if(c) c.scrollIntoView({block:"start"}); else window.scrollTo({top:0}) }
+function wsAnsText(q){ return q.num?`${q.answerText||q.answer} ${q.unit||""}`:q.opts[q.a] }
+function wsPageHtml(active){ const all=wsAll(), byQ={}; S.items.forEach(x=>{ if(x.phase==="ฝึกทำ") byQ[x.qid]=x });
+  const lv=n=>n===1?"พื้นฐาน":n===2?"ขั้น 2":"ขั้น 3";
+  const open=all.filter(o=>o.i>S.i&&!wsLocked(o.st)).length, lockN=all.filter(o=>o.i>S.i&&wsLocked(o.st)).length, doneN=all.filter(o=>o.i<S.i).length;
+  const row=o=>{ const q=o.st.q, n=o.st._n||"?";
+    if(o.i===S.i) return active;
+    if(o.i<S.i){ const x=byQ[q.id]||{}; return `<section class="card wsprev wsdone"><div class="wsres"><span class="wsno2">ข้อ ${n}</span><span class="small muted">${lv(q.level||1)}</span><b class="${x.correct?"ok":"no"}">${x.skipped?"ข้าม":x.correct?"✓ ถูก":"✗ ยังไม่ถูก"}</b></div>
+      <p class="prompt" style="font-size:1rem">${qLines(esc(q.q))}</p>${x.correct?"":`<p class="small">คำตอบที่ถูก: <b>${esc(wsAnsText(q))}</b></p>`}
+      <details class="small"><summary>ดูวิธีคิดอีกครั้ง</summary>${exHtml(q,null)}</details></section>` }
+    if(wsLocked(o.st)) return `<section class="card wsprev wslock"><div class="wsres"><span class="wsno2">ข้อ ${n}</span><span class="small muted">${lv(q.level||1)} · 🔒 เปิดเมื่อผ่านขั้นพื้นฐาน</span></div><p class="small">${esc(wsStem(q))}</p></section>`;
+    return `<section class="card wsprev" data-wsq="${esc(q.id)}" role="button" tabindex="0" aria-label="ทำข้อ ${n}"><div class="wsres"><span class="wsno2">ข้อ ${n}</span><span class="chip l${q.level||1}">${lv(q.level||1)}</span></div>
+      <p class="prompt">${qLines(esc(q.q))}</p>${figHtml(q.fig)}
+      ${q.num?`<p class="small muted">✍️ เติมคำตอบเอง</p>`:q.cover?`<p class="small muted">🧠 ตัวเลือกจะขึ้นหลังคิดแล้ว</p>`:`<ul class="small" style="margin:0;padding-left:1.4em;list-style:circle">${q.opts.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`}
+      <span class="small" style="color:var(--accent)">แตะเพื่อทำข้อนี้</span></section>` };
+  return `<section class="card">${header()}<span class="eyebrow">📄 หน้าแบบฝึกหัด</span>
+    <p class="small">ทุกข้ออยู่ในหน้านี้ ทำข้อไหนก่อนก็ได้ แตะที่ข้อเพื่อทำ ข้อที่ทำแล้วผลจะอยู่ตรงนั้น · ทำแล้ว ${doneN} ข้อ เหลือ ${open+1} ข้อ${lockN?` · อีก ${lockN} ข้อ (ขั้นต่อไป) จะเปิดเมื่อผ่านขั้นพื้นฐาน`:""}</p></section>
+    ${all.map(row).join("")}${padHtml()}` }
+function bindWsPage(){ $v.querySelectorAll("[data-wsq]").forEach(c=>c.onclick=e=>{ if(e.target.closest("button,a,details,input,textarea")) return; const qid=c.dataset.wsq;
+  if(S.answered){ const nb=document.getElementById("next"); if(!nb){ const cur=document.getElementById("ws-cur"); if(cur) cur.scrollIntoView({block:"start",behavior:"smooth"}); return } S.wsWant=qid; nb.click(); return }
+  const j=S.steps.findIndex((st,k)=>k>S.i&&st.q&&st.q.id===qid); if(j<0) return; const cur=S.steps[S.i];
+  S.ws=S.ws||{opens:0,skips:[]}; S.ws.opens++; if(cur&&cur.q) S.ws.skips.push(cur.q.id); wsPick(j) }) }
 function wsSkip(){ const st=S.steps[S.i]; S.ws=S.ws||{opens:0,skips:[]}; S.ws.opens++; if(st&&st.q&&!S.answered) S.ws.skips.push(st.q.id); S.wsOpen=true; saveProgress(); renderStep(); window.scrollTo({top:0}) }
-function advance(){ { const a=S.steps[S.i], b=S.steps.slice(S.i+1).find(x=>!x.gated); if(S.legs&&S.legs.length>=2&&a&&b&&a.leg!=null&&b.leg!=null&&b.leg>a.leg&&b.kind!=="rate"&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>expCheckpoint(a.leg),120) } readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } S.i++; while(S.steps[S.i]&&S.steps[S.i].gated) S.i++; qReset(); saveProgress(); renderStep(); window.scrollTo({top:0}) }
+function advance(){ { const a=S.steps[S.i], b=S.steps.slice(S.i+1).find(x=>!x.gated); if(S.legs&&S.legs.length>=2&&a&&b&&a.leg!=null&&b.leg!=null&&b.leg>a.leg&&b.kind!=="rate"&&!ls("fieldnote.quietSheets",false)) setTimeout(()=>expCheckpoint(a.leg),120) } readStop(); if(S.answered&&S.answered.at&&S.items.length){ const last=S.items[S.items.length-1]; if(last&&last.exSec==null) last.exSec=Math.round((Date.now()-S.answered.at)/1000) } const was=S.steps[S.i], wasWs=wsOn(was); S.i++; while(S.steps[S.i]&&S.steps[S.i].gated) S.i++;
+  if(wasWs&&wsOn(S.steps[S.i])){ const all=wsAll().filter(o=>o.i>=S.i&&!wsLocked(o.st)), want=S.wsWant&&all.find(o=>o.st.q.id===S.wsWant), n0=was._n||0;
+    const pick=want||all.find(o=>(o.st._n||0)>n0)||all[0]; if(pick&&pick.i!==S.i){ const t=S.steps[S.i]; S.steps[S.i]=S.steps[pick.i]; S.steps[pick.i]=t } }
+  S.wsWant=null; qReset(); saveProgress(); renderStep(); if(wasWs&&wsOn(S.steps[S.i])) wsScroll(); else window.scrollTo({top:0}) }
 
 /* 📖 peek (queue 2, 23 Nov): the lesson's card as an overlay over the question, as she would flip back a page in a book. Only on the
    lesson's own practice items; never on warm-up, spaced, carried, loop or checkpoint steps, mixed sets, probes or sweeps. Never blocks.
@@ -2276,9 +2357,7 @@ function conceptSumHtml(c){ return `<div style="text-align:left"><ul>${c.points.
   ${(c.formulas||[]).map(f=>`<div class="formula">${esc(f)}</div>`).join("")}
   ${(c.vocab||[]).length?`<div><span class="eyebrow">คำศัพท์อังกฤษของบทนี้</span><div class="vocab">${c.vocab.map(([e,t])=>`<span>${e} <i>${t}</i></span>`).join("")}</div></div>`:""}</div>` }
 function peekCard(){ const c=S.set.concept; S.peekQ=(S.peekQ||0)+1; S.peeks=(S.peeks||0)+1; saveProgress();
-  sheet({icon:"📖",title:c.title||"เนื้อหาของบทนี้",wide:true,read:[c.title,...(c.talk&&c.talk.length?c.talk.flatMap(x=>x.lines):c.points)].filter(Boolean).map(x=>String(x).replace(/<[^>]+>/g,"")).join(" "),
-    html:`${c.talk&&c.talk.length?talkSumHtml(c):conceptSumHtml(c)}<p class="small muted">เปิดดูได้ทุกเมื่อ ไม่เสียคะแนน ข้อที่เปิดดูยังนับเป็นการฝึก แต่ยังไม่นับว่าคงทน เพราะวันหลังจะลองทำโดยไม่ดู</p>`,
-    actions:[{label:"กลับไปทำข้อนี้",fn:closeSheet}]}) }
+  bookSheet(c.talk&&c.talk.length?"talk":"concept",c,c.title||"เนื้อหาของบทนี้","เปิดดูได้ทุกเมื่อ ไม่เสียคะแนน ข้อที่เปิดดูยังนับเป็นการฝึก แต่ยังไม่นับว่าคงทน เพราะวันหลังจะลองทำโดยไม่ดู","กลับไปทำข้อนี้") }
 
 /* 📖 อ่านคำอธิบาย (ก, father approved 24 Nov 08:30; built with ง/จ the same day). In the missions outside the lesson (carried
    items, daily mistake review, Friday repair, sweep, minimum day, exam review) a button opens the spoken-style card (concept.talk)
@@ -2307,11 +2386,14 @@ function explAfterHtml(st,q,ans){ if(!explOn(st)) return ans.correct?"":libLink(
   return `<button class="btn ghost small" id="expl" type="button">📖 อ่านคำอธิบาย: ${esc(src.set.topic)}</button>` }
 function openExpl(q,before){ const src=explSource(q); if(!src) return; readStop();
   S.explQ=(S.explQ||0)+1; S.explWhen=S.explWhen||(before?"before":"after"); S.explSrc=src.set?src.set.id:"lib"; if(before) S.peekQ=(S.peekQ||0)+1; S.expls=(S.expls||0)+1; saveProgress();
-  if(src.kind==="lib"){ S.libOpen=(S.libOpen||0)+1; return openLib(src.sub,{qid:q.id},"session") }
-  const c=src.set.concept, talk=src.kind==="talk";
-  sheet({icon:"📖",title:c.title||src.set.topic,wide:true,read:[c.title,...(talk?c.talk.flatMap(x=>x.lines):c.points)].filter(Boolean).map(x=>String(x).replace(/<[^>]+>/g,"")).join(" "),
-    html:`${talk?talkSumHtml(c):conceptSumHtml(c)}<p class="small muted">${before?"เปิดอ่านก่อนตอบได้ ไม่เสียคะแนน ข้อนี้ยังนับเป็นการฝึก แต่ยังไม่นับว่าคงทน":"อ่านแล้วลองข้อถัดไปเรื่องเดียวกันดูนะ"}</p>`,
-    actions:[{label:"กลับไปที่ข้อนี้",fn:closeSheet}]}) }
+  if(src.kind==="lib"){ S.libOpen=(S.libOpen||0)+1; const so=libSource(src.sub); if(!so) return; const t0=Date.now(), a0=actNow();
+    bookSheet(so.src==="concept"?"concept":so.src,so.c,so.src==="lib"?so.c.title:subName(src.sub),before?"เปิดอ่านก่อนตอบได้ ไม่เสียคะแนน ข้อนี้ยังนับเป็นการฝึก แต่ยังไม่นับว่าคงทน":"อ่านแล้วลองข้อถัดไปเรื่องเดียวกันดูนะ");
+    sheetOnClose=()=>{ const sec=Math.round((actNow()-a0)/1000), first=!mine().some(a=>a.type==="lib"&&a.sub===src.sub&&dayKey(a.endedAt)===todayKey()&&!a.fast), n=bookOf(so.src==="concept"?"concept":so.src,so.c).secs.length;
+      saveAttempt({type:"lib",sub:src.sub,setId:"lib-"+src.sub,topic:"สมุดคาถา: "+subName(src.sub),src:so.src+(so.set?":"+so.set.id:""),from:q.id,book:true,
+        startedAt:new Date(t0).toISOString(),endedAt:new Date().toISOString(),durationSec:sec,read:sec>=8,screens:n,reached:sec>=8?n:0,cardSec:sec,floorSec:null,fast:false,taps:[],stuck:[],tries:[],correct:0,total:0,xp:first&&sec>=20?10:0,items:[]}) };
+    return }
+  const c=src.set.concept;
+  bookSheet(src.kind==="talk"?"talk":"concept",c,c.title||src.set.topic,before?"เปิดอ่านก่อนตอบได้ ไม่เสียคะแนน ข้อนี้ยังนับเป็นการฝึก แต่ยังไม่นับว่าคงทน":"อ่านแล้วลองข้อถัดไปเรื่องเดียวกันดูนะ") }
 /* concept card, one idea per screen: (1) why this topic exists — a puzzle to guess first (c.hook) or the "use" line,
    (2) each point alone with "เข้าใจแล้ว" / "ขออธิบายอีกแบบ" (c.more[i], else the next whole alternative),
    (3) a short summary with formulas and vocab. Which points needed another explanation is saved as conceptHelp. */
@@ -2336,7 +2418,7 @@ function renderTalk(){
     btns=h.opts&&S.hookPick==null?"":`<button class="btn" id="cnext">ไปฟังอธิบายกัน</button>`;
     said=[h.text,h.q||"",...(S.hookPick!=null||!h.opts?[h.reveal]:[])];
   } else if(cur.t==="tk"){ const sc=c.talk[cur.i];
-    body=`<span class="eyebrow">ตอนที่ ${cur.i+1} จาก ${n}</span>
+    body=`<span class="eyebrow">ตอนที่ ${cur.i+1} จาก ${n}</span>${sc.h?`<h3>${esc(sc.h)}</h3>`:""}
       ${cur.i===0?`<p class="small muted">อ่านแล้วงงประโยคไหน แตะประโยคนั้นได้เลย (แตะซ้ำเพื่อยกเลิก) ไม่มีผลกับคะแนน ช่วยให้เราเขียนให้เข้าใจง่ายขึ้น</p>`:""}
       <div class="talk">${sc.lines.map((l,k)=>`<p class="tline${marked(cur.i,k)?" tmark":""}" data-tl="${k}">${gloss(l)}${marked(cur.i,k)?' <span class="small">❓งง</span>':""}</p>`).join("")}</div>
       ${figHtml(sc.fig).replace("max-width:340px","max-width:560px")}`;
@@ -2387,6 +2469,51 @@ function renderTalk(){
 function talkSumHtml(c){ return `<div style="text-align:left">${c.talk.map(sc=>`<div class="talk" style="margin-bottom:10px">${sc.lines.map(l=>`<p>${gloss(l)}</p>`).join("")}${figHtml(sc.fig)}</div>`).join("")}
   ${(c.formulas||[]).map(f=>`<div class="formula">${esc(f)}</div>`).join("")}
   <details class="small"><summary>📄 การ์ดแบบเดิม</summary>${conceptSumHtml(c)}</details></div>` }
+/* ---------- structured text + "book" view (father's feedback 24 Nov night) ----------
+   Her words: long text is fine when it has headings and clearly separated parts (bullets, numbered steps, boxes); what she cannot
+   read is paragraph after paragraph with only line breaks. And when she goes BACK to an explanation she wants a book: open the page,
+   jump to the part she forgot, without stepping through the whole lesson again. So every re-read (📖 in a question, 📖 อ่านคำอธิบาย,
+   the library) shows one scrollable page: a formula box, a list of section headings to jump to, then each section as a numbered box.
+   First learning (the lesson's own talk card) keeps its one-screen-per-tap flow, because her taps and rating there are G2 evidence. */
+function richText(raw){ let t=String(raw==null?"":raw).trim(); if(!t) return "";
+  let lab=""; const m=t.match(/^([^:：0-9][^:：]{1,38}?)[:：]\s+(.{12,})$/s); if(m&&!/=|→/.test(m[1])){ lab=m[1]; t=m[2] }
+  const L=lab?`<span class="rtlab">${gloss(lab)}:</span> `:"";
+  const dots=t.split(/\s+·\s+/); if(dots.length>=2) return `${L?`<p>${L}</p>`:""}<ul>${dots.map(x=>`<li>${gloss(x)}</li>`).join("")}</ul>`;
+  const nm=t.split(/\s(?=\(?[1-9]\)\s)/); if(nm.length>=3&&/^\(?1\)/.test(nm[1]||"")){ const head=nm.shift(); return `<p>${L}${gloss(head)}</p><ol>${nm.map(x=>`<li>${gloss(x.replace(/^\(?[1-9]\)\s*/,""))}</li>`).join("")}</ol>` }
+  if(t.length>150){ const parts=[]; let cur=""; t.split(/\s+/).forEach(w=>{ if(cur.length>=40&&/^(ดังนั้น|จากนั้น|เพราะฉะนั้น|สรุป|ระวัง|จำไว้|แต่ถ้า|ส่วน|ทีนี้|เช่น)/.test(w)){ parts.push(cur); cur=w } else cur=cur?cur+" "+w:w }); if(cur) parts.push(cur);
+    if(parts.length>=2) return `<p>${L}${gloss(parts[0])}</p>`+parts.slice(1).map(x=>`<p>${gloss(x)}</p>`).join("") }
+  return `<p>${L}${gloss(t)}</p>` }
+function bookCheck(tp){ return tp&&tp.q&&tp.opts?`<details class="small bkcheck"><summary>🤔 เช็กตัวเอง: ${esc(tp.q)}</summary><p><b>${esc(tp.opts[0])}</b>${tp.ex?" · "+gloss(tp.ex):""}</p></details>`:"" }
+function vocabHtml(c){ return (c.vocab||[]).length?`<div><span class="eyebrow">คำศัพท์อังกฤษ</span><div class="vocab">${c.vocab.map(([e,t])=>`<span>${e} <i>${t}</i></span>`).join("")}</div></div>`:"" }
+function fmlHtml(f){ return (f||[]).length?`<div class="feedback"><b class="small">📌 สูตร/ข้อสรุปสั้นๆ</b>${f.map(x=>`<div class="formula">${esc(x)}</div>`).join("")}</div>`:"" }
+/* one source → {title, top (formula box), secs:[{h, body, cls}], tail} */
+function bookOf(kind,c,title){
+  if(kind==="talk") return {title:title||c.title, top:fmlHtml(c.formulas), tail:vocabHtml(c),
+    secs:c.talk.map((sc,i)=>({h:sc.h||`ตอนที่ ${i+1}`, body:`<div class="rt">${sc.lines.map(l=>richText(l)).join("")}</div>${figHtml(sc.fig).replace("max-width:340px","max-width:520px")}`}))};
+  if(kind==="lib"){ const st=(c.steps||[]).map(pText), secs=[{h:"เรื่องนี้คืออะไร", body:`<div class="rt">${richText(c.what)}</div>${bookCheck(c.whatTap)}`}];
+    st.forEach((x,i)=>{ const m=String(x.t||"").match(/^([^:：0-9][^:：]{1,38}?)[:：]\s+(.{12,})$/s), h=x.h||(m&&!/=|→/.test(m[1])?m[1]:`ส่วนที่ ${i+1}`), body=x.h||!(m&&!/=|→/.test(m[1]))?x.t:m[2];
+      secs.push({h, body:`<div class="rt">${richText(body)}</div>${figHtml(x.fig)}${bookCheck(x.tap)}`}) });
+    if(c.trap) secs.push({h:"กับดักที่เจอบ่อย", cls:"trap", body:`<div class="rt">${richText(c.trap)}</div>${bookCheck(c.trapTap)}`});
+    return {title:title||c.title, top:fmlHtml(c.formula), secs, tail:""} }
+  if(kind==="reteach"){ const secs=[{h:"อธิบายอีกแบบ", body:`<div class="rt">${(c.text||[]).map(pText).map(x=>richText(x.t)).join("")}</div>`}];
+    if(c.table) secs.push({h:"ดูเป็นตาราง", body:tableHtml(c.table)}); if(c.contrast) secs.push({h:"สองกรณีวางข้างกัน", body:contrastHtml(c.contrast)}); if(c.fig) secs.push({h:"รูป", body:figHtml(c.fig)});
+    return {title:title||c.title, top:"", secs, tail:""} }
+  /* old concept card: each point is its own box (heading = its lead label when it has one) */
+  return {title:title||c.title, top:fmlHtml(c.formulas), tail:vocabHtml(c),
+    secs:[...(c.use?[{h:"เรื่องนี้ใช้ทำอะไร", body:`<div class="rt">${richText(c.use)}</div>`}]:[]),
+      ...(c.points||[]).map((pt,i)=>{ const m=String(pt).match(/^([^:：0-9][^:：]{1,38}?)[:：]\s+(.{12,})$/s), ok=m&&!/=|→/.test(m[1]);
+        return {h:ok?m[1]:`ข้อสรุปที่ ${i+1}`, body:`<div class="rt">${richText(ok?m[2]:pt)}</div>${figHtml((c.figs||[])[i])}${(c.more||[])[i]?`<details class="small"><summary>ขออธิบายอีกแบบ</summary><p>${gloss(c.more[i])}</p></details>`:""}`} })]} }
+function bookHtml(b,intro){ const n=b.secs.length;
+  return `<div class="book">${intro?`<p class="small muted">${intro}</p>`:""}${b.top||""}
+    ${n>=3?`<div class="booktoc"><span class="small muted">ข้ามไปที่:</span>${b.secs.map((x,i)=>`<button type="button" data-bk="${i}">${i+1}. ${esc(x.h)}</button>`).join("")}</div>`:""}
+    ${b.secs.map((x,i)=>`<section class="bksec ${x.cls||""}" id="bk-${i}"><h3><span class="bkno">${i+1}</span><span>${esc(x.h)}</span></h3>${x.body}</section>`).join("")}
+    ${b.tail||""}</div>` }
+function bookSay(b){ return [b.title,...b.secs.flatMap(x=>[x.h,String(x.body).replace(/<details[\s\S]*?<\/details>/g,"").replace(/<[^>]+>/g," ").replace(/\s+/g," ")])].filter(Boolean) }
+function bindBook(root){ (root||document).querySelectorAll("[data-bk]").forEach(btn=>btn.onclick=e=>{ e.stopPropagation(); const el=document.getElementById("bk-"+btn.dataset.bk); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}) }) }
+/* a re-read in an overlay over the question (📖 peek and 📖 อ่านคำอธิบาย) */
+function bookSheet(kind,c,title,note,backLabel){ const b=bookOf(kind,c,title);
+  const d=sheet({icon:"📖",title:b.title||"",wide:true,read:bookSay(b).join(" "),html:bookHtml(b,"อ่านแบบเปิดหนังสือ: กดหัวข้อเพื่อข้ามไปตรงที่อยากทวน ไม่ต้องอ่านใหม่ทั้งหมด")+(kind==="talk"?`<details class="small"><summary>📄 การ์ดแบบเดิม</summary>${conceptSumHtml(c)}</details>`:"")+(note?`<p class="small muted">${note}</p>`:""),
+    actions:[{label:backLabel||"กลับไปที่ข้อนี้",fn:closeSheet}]}); bindBook(d); return d }
 function renderConcept(){
   if(S.set.concept.talk&&S.set.concept.talk.length) return renderTalk();
   const c=S.set.concept, st=conceptStages(c); S.cStage=S.cStage||0; const cur=st[Math.min(S.cStage,st.length-1)], n=c.points.length;
@@ -3647,15 +3774,20 @@ const IN_APP = /Line\/|FBAN|FBAV|Instagram|; wv\)|Claude/i.test(UA);
 const IS_ANDROID = /Android/i.test(UA);
 let speechBroken = !CAN_SPEAK;
 try{ if(CAN_SPEAK) speechSynthesis.getVoices(); }catch(e){}
-function speak(text, slow){
+/* 24 Nov night (father: the "sound is not playing" box showed although the word had just been read out): a short word finishes
+   before the 2.5 s check, and iPad Safari does not always fire onstart, so "not started and not speaking" was a false alarm.
+   Now any sign of life (onstart, onend, onboundary, speaking/pending at the check) counts, and the help box needs two misses in a row. */
+let speechMiss=0;
+function speak(text, slow, onOk){
   if(!CAN_SPEAK){ speechBroken=true; showSpeechHelp(); return }
   try{
     if(speechSynthesis.speaking||speechSynthesis.pending) speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(text); u.lang="en-US"; u.rate=slow?0.42:0.9;
     const v=pickVoice(); if(v){ u.voice=v; u.lang=v.lang }
-    let started=false; u.onstart=()=>{started=true;speechBroken=false;hideSpeechHelp()}; u.onerror=e=>{ if(e.error!=="interrupted"&&e.error!=="canceled"){speechBroken=true;showSpeechHelp()} };
+    let alive=false; const ok=()=>{ if(alive) return; alive=true; speechMiss=0; speechBroken=false; hideSpeechHelp(); if(onOk) try{ onOk() }catch(e){} };
+    u.onstart=ok; u.onend=ok; u.onboundary=ok; u.onerror=e=>{ if(e.error!=="interrupted"&&e.error!=="canceled"){ speechMiss++; if(speechMiss>=2){ speechBroken=true; showSpeechHelp() } } };
     speechSynthesis.speak(u);
-    setTimeout(()=>{ if(!started&&!speechSynthesis.speaking){ speechBroken=true; showSpeechHelp() } },2500);
+    setTimeout(()=>{ if(alive) return; if(speechSynthesis.speaking||speechSynthesis.pending) return ok(); speechMiss++; if(speechMiss>=2){ speechBroken=true; showSpeechHelp() } },2500);
   }catch(e){ speechBroken=true; showSpeechHelp() }
 }
 function enVoices(){ try{ return speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)) }catch(e){ return [] } }
@@ -3774,12 +3906,13 @@ function renderVocab(){
         ${w.parts?`<span class="small">ส่วนประกอบ: ${w.parts.map(([pp,mm])=>`<b>${esc(pp)}</b> (${esc(mm)})`).join(" + ")}</span>`:""}
         ${(()=>{ const cs=PHON.cards.filter(c=>c.id!=="schwa"&&cardMatches(c,w.w)).slice(0,2); return cs.length?`<span class="small muted">หลักเสียงในคำนี้: ${cs.map(c=>esc(c.t)).join(" · ")}</span>`:"" })()}</div>
       <div class="row">${sayBtn("say-w","ฟังคำนี้")}${sayBtn("say-slow","ฟังช้าๆ")}${sylOf(w).length>1?`<button class="btn ghost" id="say-ch" type="button">🔊 ฟังทีละส่วน</button>`:""}</div>
-      <p class="small ${heard?"muted":""}" style="${heard?"":"color:var(--beak)"}">${speechBroken?"อ่านออกเสียงเองดังๆ หนึ่งรอบ":heard?"ฟังแล้ว ลองพูดตามดังๆ หนึ่งรอบ":"กดฟังเสียงก่อนนะ แล้วพูดตามดังๆ"}</p>
+      <p id="heard-note" class="small ${heard?"muted":""}" style="${heard?"":"color:var(--beak)"}">${speechBroken?"อ่านออกเสียงเองดังๆ หนึ่งรอบ":heard?"ฟังแล้ว ลองพูดตามดังๆ หนึ่งรอบ":"ฟังเสียงคำนี้ก่อนนะ (กด 🔊 ฟังคำนี้ ถ้ายังไม่ได้ยิน) แล้วพูดตามดังๆ"}</p>
       <div id="speech-slot">${speechBroken?speechHelpHtml():""}</div>
       <div class="feedback"><p class="vex">“${esc(w.ex)}”</p>
         ${V.showTh?`<p class="small">${esc(w.exTh)}</p>`:`<button class="btn ghost" id="show-th" style="border:0;padding:0">ลองเดาความหมายก่อน แล้วกดดูคำแปล</button>`}
         <div class="row">${sayBtn("say-ex","ฟังประโยค")}${sayBtn("say-ex-slow","ฟังช้าๆ")}</div></div>
       <div class="row">${V.li>0?`<button class="btn ghost" id="vprev">← คำก่อนหน้า</button>`:""}<button class="btn" id="vn" ${heard?"":"disabled"}>${V.li+1<V.fresh.length?"ต่อไป":"ไปทดสอบ"}</button></div></section>`;
+    if(!heard&&!speechBroken&&V.autoSaid!==w.w){ V.autoSaid=w.w; setTimeout(()=>speak(w.w,false,()=>{ if(!V.heard.has(w.w)&&V.phase==="learn"&&V.fresh[V.li]===w){ V.heard.add(w.w); const vn=document.getElementById("vn"); if(vn) vn.disabled=false; const hn=document.getElementById("heard-note"); if(hn){ hn.textContent="ฟังแล้ว ลองพูดตามดังๆ หนึ่งรอบ"; hn.className="small muted"; hn.style.color="" } } }),200) }
     bindSay("say-w",w.w,false,()=>{if(!V.heard.has(w.w)){V.heard.add(w.w);renderVocab()}});
     bindSay("say-slow",w.w,true,()=>{if(!V.heard.has(w.w)){V.heard.add(w.w);renderVocab()}});
     bindSay("say-ex",w.ex,false); bindSay("say-ex-slow",w.ex,true);
@@ -4802,7 +4935,8 @@ function sayTh(text){ try{ speechSynthesis.cancel(); const u=new SpeechSynthesis
    a sheet's backdrop also ignores taps in its first SHEET_GUARD_MS (a double tap on "ต่อไป" no longer closes it at once). */
 const SHEET_GUARD_MS=600; let tapGuardUntil=0;
 document.addEventListener("click",e=>{ if(window.__noTapGuard) return; if(Date.now()<tapGuardUntil&&!(e.target.closest&&e.target.closest("#sheet"))){ e.stopPropagation(); e.preventDefault() } },true);
-function closeSheet(){ const s=document.getElementById("sheet"); if(s){ tapGuardUntil=Date.now()+SHEET_GUARD_MS; s.remove(); try{ speechSynthesis.cancel() }catch(e){} document.removeEventListener("keydown",sheetKey) } }
+let sheetOnClose=null;
+function closeSheet(){ if(sheetOnClose){ const f=sheetOnClose; sheetOnClose=null; try{ f() }catch(e){} } const s=document.getElementById("sheet"); if(s){ tapGuardUntil=Date.now()+SHEET_GUARD_MS; s.remove(); try{ speechSynthesis.cancel() }catch(e){} document.removeEventListener("keydown",sheetKey) } }
 function sheetKey(e){ if(e.key==="Escape") closeSheet() }
 function sheet({icon,title,html,read,actions,wide}){
   closeSheet(); const d=document.createElement("div"); d.id="sheet"; d.className="celebrate"; d.setAttribute("role","dialog"); d.setAttribute("aria-modal","true"); d.setAttribute("aria-label",title||"");
@@ -5690,21 +5824,21 @@ const tryScore=r=>r.reduce((s,x)=>s+(x.ok?10:5),0);
 let LB=null;
 function libConceptSet(sub){ const n={}; Object.values(QBANK).forEach(o=>{ if(subOf(o.q.id)===sub&&o.set.kind==="lesson"&&o.set.concept&&(o.set.concept.points||[]).length) n[o.set.id]=(n[o.set.id]||0)+1 });
   const top=Object.entries(n).sort((a,b)=>b[1]-a[1])[0]; return top?SETS.find(s=>s.id===top[0]):null }
-function libSource(sub){ if(LIB[sub]) return {src:"lib",c:LIB[sub]}; const s=libConceptSet(sub); if(s) return {src:"concept",c:s.concept,set:s}; if(RETEACH[sub]) return {src:"reteach",c:RETEACH[sub]}; return null }
+function libSource(sub){ if(LIB[sub]) return {src:"lib",c:LIB[sub]}; { const done=new Set(mine().filter(a=>a.type==="set").map(a=>a.setId)), tl=explLessons(sub), t=tl.find(x=>done.has(x.id))||tl[0]; if(t) return {src:"talk",c:t.concept,set:t} } const s=libConceptSet(sub); if(s) return {src:"concept",c:s.concept,set:s}; if(RETEACH[sub]) return {src:"reteach",c:RETEACH[sub]}; return null }
 function libGuides(sub){ return mine().filter(a=>a.type==="loop"&&a.act==="guide"&&a.sub===sub&&a.text).map(a=>a.text) }
 function libMissed(list){ const m={}; list.filter(a=>isLesson(a)||a.type==="recall").forEach(a=>(a.items||[]).forEach(x=>{ if(x.correct===false&&!x.skipped&&!x.notTaught&&!x.timeout){ const s=subOf(x.qid); if(s&&libSource(s)) m[s]=(m[s]||0)+1 } }));
   return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([s,k])=>({s,k})) }
 function openLib(sub,from,ret){ LB={mode:"list",sub:null,from:from||null,ret:ret||(from?"session":view),fromList:!sub}; if(sub) libStart(sub); view="lib"; render(); window.scrollTo({top:0}) }
-function libStart(sub){ const so=libSource(sub); Object.assign(LB,{sub,so,mode:so?"deck":"none",saved:false,xp:0,start:Date.now(),act0:actNow(),T:null,
+function libStart(sub){ const so=libSource(sub); Object.assign(LB,{sub,so,mode:so?"book":"none",saved:false,xp:0,start:Date.now(),act0:actNow(),T:null,
   K:so?newDeck(deckOf(so.src,so.c,so.src==="lib"?so.c.title:subName(sub)),true):null,
   tq:so?tryPick(sub,2,LB.from?[LB.from.qid]:[]):[]}) }
-function libSave(){ if(!LB||LB.saved||!LB.so) return; const K=LB.K, sec=Math.round((actNow()-(LB.act0!=null?LB.act0:actNow()))/1000), read=K.i>=K.d.screens.length;
+function libSave(){ if(!LB||LB.saved||!LB.so) return; const K=LB.K, sec=Math.round((actNow()-(LB.act0!=null?LB.act0:actNow()))/1000); if(LB.book){ K.i=sec>=8?K.d.screens.length:0; K.fast=false; K.sec=sec } const read=K.i>=K.d.screens.length;
   if(!read&&sec<8&&!K.taps.length) return; LB.saved=true;
   const tries=LB.T?LB.T.res:[], first=!mine().some(a=>a.type==="lib"&&a.sub===LB.sub&&dayKey(a.endedAt)===todayKey()&&!a.fast), fast=read&&K.fast===true; LB.fast=fast;
-  LB.xp=first&&read?(fast?0:10)+tryScore(tries):0;
+  LB.xp=first&&read?(fast||LB.book&&sec<20?0:10)+tryScore(tries):0;
   saveAttempt({type:"lib",sub:LB.sub,setId:"lib-"+LB.sub,topic:"สมุดคาถา: "+subName(LB.sub),src:LB.so.src+(LB.so.set?":"+LB.so.set.id:""),from:LB.from&&LB.from.qid||null,
     startedAt:new Date(LB.start).toISOString(),endedAt:new Date().toISOString(),durationSec:sec,read,screens:K.d.screens.length,reached:Math.min(K.i+1,K.d.screens.length),
-    cardSec:K.sec,floorSec:K.floor,fast,taps:K.taps,stuck:K.stuck,tries,correct:0,total:0,xp:LB.xp,items:[]}) }
+    cardSec:K.sec,floorSec:K.floor,fast,...(LB.book?{book:true}:{}),taps:K.taps,stuck:K.stuck,tries,correct:0,total:0,xp:LB.xp,items:[]}) }
 function libLink(q){ const s=subOf(q.id); if(!s||!libSource(s)) return ""; return `<button class="btn ghost small" id="go-lib-q" data-sub="${esc(s)}" type="button">📖 ไปอ่านเรื่องนี้: ${esc(subName(s))}</button>` }
 function libEntry(){ return `<div class="row" style="justify-content:space-between;align-items:center;gap:8px;margin:4px 2px"><span class="small muted">📚 สมุดคาถา: กลับไปอ่านเรื่องไหนก็ได้ เช่น ค่า Rf</span><button class="btn ghost small" id="go-lib" type="button">เปิดสมุด</button></div>` }
 function renderLib(){ if(!LB){ view="home"; return render() } const re=()=>renderLib();
@@ -5729,6 +5863,15 @@ function renderLib(){ if(!LB){ view="home"; return render() } const re=()=>rende
       document.getElementById("lb-none").hidden=any };
     $v.querySelectorAll("[data-lbs]").forEach(b=>b.onclick=()=>{ libStart(b.dataset.lbs); re(); window.scrollTo({top:0}) });
     { const mq=document.getElementById("lb-myq"); if(mq) mq.onclick=()=>openMyQ("lib") }
+  } else if(LB.mode==="book"){ const so=LB.so, n=LB.tq.length; LB.book=true;
+    const b=bookOf(so.src==="concept"?"concept":so.src,so.c,so.src==="lib"?so.c.title:so.src==="talk"?(so.c.title||so.set.topic):subName(LB.sub));
+    const intro=so.src==="concept"?`ยังไม่มีการ์ดเฉพาะเรื่องนี้ ใช้สรุปของบทเรียน “${esc(so.set.topic)}” ไปก่อน`:so.src==="talk"?`จากบทเรียน “${esc(so.set.topic)}” กดหัวข้อเพื่อข้ามไปตรงที่อยากทวน`:"กดหัวข้อเพื่อข้ามไปตรงที่อยากทวน ไม่ต้องอ่านใหม่ทั้งหมด";
+    $v.innerHTML=`<section class="card concept"><span class="eyebrow" style="text-transform:none">📚 สมุดคาถา · ${esc(subName(LB.sub))}</span><h2>${esc(b.title||"")}</h2>
+      <div>${readBtn("deck","🔊 ฟังทั้งหน้า")}</div>${bookHtml(b,intro)}<div class="feedback" id="gloss-box" hidden></div>
+      <div class="row">${n?`<button class="btn ghost" id="lb-try" type="button">ลองทำเอง ${n} ข้อ (ไม่บังคับ)</button>`:""}${LB.from?`<button class="btn" id="lb-back2" type="button">กลับไปที่ข้อเดิม</button>`:""}</div>${back}</section>`;
+    bindGloss(); bindBook($v);
+    { const rb=$v.querySelector('[data-read="deck"]'); if(rb) rb.onclick=()=>readAloud("deck",bookSay(b)) }
+    { const tb=document.getElementById("lb-try"); if(tb) tb.onclick=()=>{ readStop(); LB.T=newTry(LB.tq); LB.mode="try"; re(); window.scrollTo({top:0}) } }
   } else if(LB.mode==="deck"){ const so=LB.so, n=LB.tq.length;
     const intro=so.src==="concept"?`ยังไม่มีการ์ดเฉพาะเรื่องนี้ ใช้สรุปของบทเรียน “${esc(so.set.topic)}” ไปก่อน เรื่องนี้อยู่ในบางส่วนของสรุป`
       :`อ่านทีละส่วน${n?` จบแล้วลองทำเอง ${n} ข้อ`:""}${LB.from?" แล้วค่อยกลับไปที่ข้อเดิม":""}`;

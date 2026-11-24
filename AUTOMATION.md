@@ -309,3 +309,6 @@ that a person explaining aloud is clearer; CLAUDE.md "Student feedback 23 Nov"):
   and report in ③ one line: the rating, the comparison, how many sentences tapped, and what you changed. If she rates "ยังงง" or picks
   "แบบเดิม" twice in a row, tell the father in ③ (`พ่อควรทำ`: ask her what was hard) instead of guessing.
 - Worksheet page (`ws` in lesson records: `opens`, `skips`): note in ③ when she skips the same kind of item often; it is a signal, not a fault.
+- **24 Nov night:** every `talk` screen and every library step you write needs a short heading `h` (docs/writing-content.md "Spoken-style
+  cards"); the re-read view lists them so she can jump to the part she forgot. Since the worksheet is one page now, `ws.skips` means
+  "left an item unanswered to do another first". Library reads from a question are `book:true` records (never flagged too fast).

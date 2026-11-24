@@ -269,6 +269,32 @@ verify.js tests for both. Nightly run (AUTOMATION.md, end): keep the next 3 less
 the ratings in ③. Not built yet: P1 (book pages), P3 (book log), P6 reading track, P7 voice; P5 only on talk cards so far
 (not yet on reteach/library cards).
 
+## Father's feedback round 24 Nov 2026 night (first evening of the new system; BUILT the same night)
+What she and he reported, and what was done (app.html; verify.js test "feedback 24 Nov night" + the rewritten worksheet/library tests):
+- **Worksheet = one page.** Tapping into an item and back out felt odd, and item order moved after coming back (picking swapped steps).
+  Now the lesson practice is ONE page in fixed order (ข้อ 1, 2, 3 … by `_n`): the current item is the full card in place, other items
+  show stem/figure/options read-only (tap to do one next; an unanswered current item is logged in `ws.skips`), done items stay with
+  their result and a folded explanation, level 2 locked until the gate (`wsPageHtml`, `bindWsPage`, `wsAll`; handlers scoped by `QA`).
+- **Re-reading = a book, not a lesson.** In the carried mission she opened 📖 five times on one item (fxsp7, 6.5 min) and the library
+  stepped her through the whole card each time; and the library showed the OLD summary even where a talk card exists (cg1p4/cg1p5 →
+  concept:math-congruence-1). Now every re-read (📖 peek, 📖 อ่านคำอธิบาย, library from a question or the list) is one scrollable page:
+  formula box, headings to jump to, numbered section boxes (`bookOf`, `bookHtml`, `bookSheet`, library mode "book"; try-it is an
+  optional button). `libSource` prefers a talk card over the old summary. A library source from a question opens as an overlay
+  and saves a `lib` record with `book:true` on close. First learning (lesson talk card) keeps its screen-per-tap flow (her taps and
+  rating there are G2 evidence) but now shows each screen's heading `h`. Headings added to all 35 talk screens and 21 library steps.
+- **Structured text** (`richText`) and worked solutions with every step visible at once (she opened all steps anyway; `exLeft` is off).
+- **Dark theme** (she always uses iPad dark mode): the tapped-sentence mark was light yellow under white text (unreadable); now theme
+  colours. SVG figures with fixed white/#333 paint are drawn on a light panel (`figlight`). Check every new colour in dark mode.
+- **Small fixes:** own-reason button removed after a WRONG answer (it duplicated "พลาดเพราะอะไร → อื่นๆ"; kept after a right answer);
+  "ขวด P: …" stem lines keep their label (`qLines`); vocab "sound is not playing" false alarm (short word ended before the 2.5 s check,
+  iPad does not always fire onstart: any sign of life counts, help needs 2 misses; the new word is read out on entry and counts as heard);
+  review: pd10 opened every review since 8 Nov (right 5 times, always by a fast uncover, so never cleared, and oldest first) → plainly
+  right on 3 different days clears an item, and items served in the last review go to the back; parent page tab bars wrap instead of
+  scrolling off-screen; a `lib` record no longer counts as the day's lesson unit (it did).
+- **Daily volume:** 24 Nov (school day) was ~87 active min (lesson 43 incl. 16 on the card, carried 13, review 10, sweep 11.5, vocab 5.5,
+  library ~4) against 45–60. calendar.json `december`: school days carry 4 (was 6), review 4 + 1 loop check (was 6), sweep 5 (was 6);
+  holidays unchanged. Starting point, not final: judge with the first week's minutes (front-page queue 1).
+
 ## Reason check: "none of these fits" (22 Nov 2026, built)
 After a right or wrong answer on an item with `check`, she can tap "✍️ วิธีคิดของฉันไม่ตรงกับข้อไหนเลย" and write her own
 reason BEFORE the explanation shows (so it is not contaminated). Stored on the item as `checkNone:true` and `checkOwn`
