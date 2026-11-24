@@ -47,6 +47,29 @@ learn through the new explanations); the tab stays. Fallback: if she rates a tal
 the father (front page ③ "พ่อควรทำ") to explain that one point aloud, since a person explaining is the channel she says works.
 Six already-written post-midterm lessons stay at the end of `lessonQueue` (ratio ×3, number theory, motion, body), so a
 "go on" decision in late December has ~6 school days of lessons before new writing is needed.
+**Father's decisions 24 Nov 08:30.** (ก) APPROVED, front-page queue 1 (Opus): a "📖 อ่านคำอธิบาย" button that opens the
+spoken-style `talk` card of the lesson teaching the item's subtopic (fallback: the current library/concept card) in carried
+warm-ups, daily mistake review, repair sets and sweeps; shown after a wrong answer AND after a right answer that was guessed,
+unsure, or had a wrong/own reason; before answering only on carried "ต่อจากบทก่อน" items (counted like `peek`: no คงทน credit);
+sweeps and the mistake review stay answer-first (the unaided answer is the G2 evidence). Log the open and whether the next item
+of the same subtopic is right. Also write `talk` cards backwards for the ~10 taught midterm lessons (math-dotplot-1,
+sci-solution-1, math-stats-4, sci-solution-2, math-stats-3, sci-separation-1, sci-solution-7, math-stats-1, sci-separation-3,
+math-parallel-1), most-missed subtopics first: 3–4 in that chat, then the nightly run one a night after its next-3 rule.
+(ข) APPROVED end-of-December criteria, "go on" if most hold: (1) she says herself the new cards/system help her understand and
+does not ask to go back to the book alone; (2) talk-card ratings in December: "เข้าใจ" ≥ half, "ยังงง" ≤ 1 in 5, new chosen over
+old more often; (3) lesson level 2–3 accuracy since 23 Nov above the old 62/54% (aim ~70%); (4) midterm-topic items answered
+≥ 7 days after teaching (cp-1, the mock, warm-ups/sweeps) right ≥ ~65%; (5) she says she walked into the midterm confident, plus
+the real score when known (may come after December). Mixed reading: 3–4 pass but 1–2 fail = practice works but first teaching
+should come from the book or a person (adapt toward P1/P3); 3–4 fail = change method or add a human explainer. Numbers 2–4 come
+from our own questions: a learning trend, never exam readiness (hard rule 6).
+**Waiting (front page ④ ง, จ; 24 Nov):** ง = one job per mission: lesson mission keeps only its own 2–3 warm items; carried items
+become their own mission "ฝึกต่อจากบทก่อน"; the warm-up's retry-mistake and loop-check items move to the mistake review; the
+warm-up's spaced/checkpoint items move into the sweep, which in December draws unseen items from midterm subtopics taught
+≥ 7 days earlier (pool = lesson items the gate deferred/dropped, twins; no new writing at first). Answers the father's worry
+that a midterm sweep repeats the mistake review: the review re-asks the exact missed items (fix), the sweep asks unseen items
+(does understanding last). จ = keep the sweep lock; in December drop the time-gap size for a fixed size (school 6, holiday 10)
+so weeks compare; days under 45 min are then reported as facts, alert only on < 25 min 3 days running. If approved, build ง+จ
+in the same chat as queue 1.
 
 ## Commands (repo root)
 - Build: `python3 tools/build.py` (makes `index.html` and `dist/parent.html` from `src/app.html` + `content/`)
