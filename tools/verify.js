@@ -331,8 +331,9 @@ for(const d of Object.keys(cal.holidays||{})) if(!/^\d{4}-\d\d-\d\d$/.test(d)) w
     const info=await pg.evaluate(()=>{ const o=Object.values(QBANK).find(o=>subOf(o.q.id)==="s3.3"&&o.set.kind==="lesson"&&!o.q.num&&!o.q.of&&!o.q.check&&!o.q.predict&&!o.q.friend);
       const set={...o.set,id:"zz-lib",warm:[],practice:[o.q],challenge:null}; SETS.push(set); startSet(set,false); const c=LIB["s3.3"];
       return {qid:o.q.id,screens:c?1+c.steps.length+(c.trap?1:0):0,taps:c?c.steps.filter(x=>x.tap).length+(c.whatTap?1:0)+(c.trapTap?1:0):0} });
-    for(let i=0;i<15&&!await pg.locator("#go-lib-q").count();i++){
+    for(let i=0;i<25&&!await pg.locator("#go-lib-q").count();i++){
       if(await pg.locator("[data-hk]").count()){ await pg.locator("[data-hk]").first().click(); continue }
+      if(await pg.locator("[data-tu]").count()&&await pg.locator("#cnext[disabled]").count()){ await pg.click('[data-tu="ok"]'); continue }   /* a talk card's rating screen */
       if(await pg.locator("#cnext").count()){ await pg.click("#cnext"); continue }
       if(await pg.locator(".opt:not([disabled]):not(.ckopt)").count()){ const k=await pg.evaluate(()=>{ const q=S.steps[S.i].q; return q.opts.findIndex((_,k)=>k!==q.a) }); await pg.locator(".opt:not(.ckopt)").nth(k).click();
         for(const b of ["#send-sure","#send-plain"]) if(await pg.locator(b).count()){ await pg.click(b); break } continue }
