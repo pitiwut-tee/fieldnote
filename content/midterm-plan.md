@@ -174,3 +174,22 @@ unchanged 8a4b98a) and passed at ~19:45 with no related change: it looks time-de
 final keeps 7); prep = Wed 9 – Sun 13 Dec. `lessonQueue` order unchanged (sol-6 then math-parallel-2 …); the construction
 lesson chat (front-page queue 2) must insert its set id right before math-parallel-2 (verify.js fails on unknown ids, so no
 placeholder). Mock: the queue-4 chat writes it before 8 Dec and adds it to `checkpoints` for Thu 10 Dec.
+
+## 26 Nov: the school's midterm topic list (given by the father) checked against the plan
+List: science = solutions (components, solubility, concentration, uses of solutions) + separation (evaporation to dryness,
+crystallisation, chromatography, distillation, solvent extraction); math = statistics, congruence, geometric reasoning.
+Result: same five exam spells as before (s4, s3, m22, m16, m15), so lesson order and dates do NOT change.
+- **Thin: "uses of solutions".** No subtopic or lesson of its own (s4.9 has 2 items; dilution s4.6 has 25; ss6p13 organic/inorganic
+  solvent). The 21 Nov note left daily-life uses out on purpose, but the school now names it as a heading. Proposed (waits for the
+  father): ~6–8 own items (choose a solvent for a job, dilute a cleaner / pesticide / saline, read a label concentration) added to
+  sci-solution-5 (5 Dec) or sci-solution-6 (7 Dec); ask the father for the section's page headings first (never copy text).
+- **Not on his list but in our lessons:** ppm and energy of dissolving (sci-solution-6, 7 Dec; ppm is in the school's documents),
+  filtering / sublimation / separating funnel / magnet (sci-separation-2, 2 Dec; she asked about the funnel on 25 Nov), quartiles
+  (m22.10, not served). Keep; if a slot is lost, cut sci-solution-6 ppm/energy items before anything on his list.
+- **Constructions / parallelogram proofs:** the list gives chapter titles only, so it does not settle whether they are tested.
+  The teacher question (by 1 Dec) stays; math-parallel-2 is still the fallback for the 8 Dec slot.
+- **Readiness of the remaining lessons (26 Nov):** level-1 items below the gate's 6 in math-stats-6 (3), sci-separation-2 (3),
+  math-georeason-1 (2), sci-solution-5 (3), math-parallel-2 (2); they would run the old thin way unless topped up before
+  1 / 2 / 3 / 5 / 8 Dec. Talk cards missing for sol-4 (30 Nov), stats-6, sep-2, georeason-1, sol-5, sol-6, parallel-2 and, backwards,
+  dotplot-1, stats-1, stats-3, stats-4, sol-7: 12 cards in ~11 nights, so the nightly run should write forward cards first
+  (a lesson served without one is the thin case), backward cards after.
