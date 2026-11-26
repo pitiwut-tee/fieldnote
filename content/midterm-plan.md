@@ -206,3 +206,7 @@ Result: same five exam spells as before (s4, s3, m22, m16, m15), so lesson order
   Left out on purpose: the school slide's "15% w/v saline as a laxative" (unsafe to drink; not taught) and its 70:30 propane:butane (the item says
   "ตัวเลขสมมติ", real LPG ratios vary).
 - The school's science files are text PDFs except the 48 MB unit (scan); `สารละลาย.pdf` is the teacher's slide deck.
+
+## 26 Nov (later): sci-solution-6 back before the midterm
+Re-read the teacher's 52-slide unit-1 deck (หน่วยที่1 สารละลาย) as images. It has: ppm as one "Know it" slide (tap water chlorine <= 0.2 ppm, 1 L has <= 0.2 mg) with no ppm exercises; concentration only as % w/w, % w/v-style and % v/v with 9 exercises; saturation and solubility curves; uses in daily life (saline, thinner, pesticide, hydroponics). Energy of dissolving was not in it (the larger 48 MB deck "หน่วย 1 สารละลาย ม.2" was not read).
+Father's decision: teach sci-solution-6 whole before the midterm and shorten prep. Queue order unchanged (math-parallel-2 8 Dec, sci-solution-6 9 Dec); midterm `prepDays` 5 -> 4 (prep Thu 10 - Sun 13 Dec; mock still Thu 10 Dec). Nightly: sci-solution-6 needs level-1 top-up (check count) and a talk card; ppm items must match the school's depth (what it means, conversion from mg per kg or L), energy-of-dissolving items stay light.

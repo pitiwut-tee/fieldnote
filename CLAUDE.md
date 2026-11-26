@@ -33,7 +33,7 @@ Only two goals count until then:
 - **G1 midterm:** she walks into the school midterm (**Mon 14 – Thu 17 Dec 2026**, school schedule the father got 24 Nov evening;
   was estimated 21–25 Dec) ready and confident, on the school's scope (content/midterm-plan.md, section "24 Nov: midterm moved").
   Final exam Tue 23 – Fri 26 Feb 2027.
-  **Father chose plan ก (24 Nov 19:33):** lessons run to Tue 8 Dec, prep week Wed 9 – Sun 13 Dec (`prepDays` 5 on the midterm),
+  **Father chose plan ก (24 Nov 19:33):** lessons run to Wed 9 Dec (changed 26 Nov, father: sci-solution-6 with ppm / preparing solutions is taught before the midterm, 9 Dec, after math-parallel-2), prep Thu 10 – Sun 13 Dec (`prepDays` 4 on the midterm; was 5),
   cp-1 Sun 6 Dec, mock Thu 10 Dec (holiday), repair 11–13 Dec; **26 Nov (father): compass constructions are probably NOT tested, so no
   construction lesson (he will tell us if that changes); parallelogram proofs stay (math-georeason-1); 8 Dec = math-parallel-2;**
   **7 Dec = new sci-solution-8 (uses of solutions, from the school's own file); sci-solution-6 (ppm, energy, preparing) moved after the
