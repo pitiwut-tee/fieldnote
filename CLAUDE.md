@@ -38,6 +38,14 @@ Only two goals count until then:
   construction lesson (he will tell us if that changes); parallelogram proofs stay (math-georeason-1); 8 Dec = math-parallel-2;**
   **7 Dec = new sci-solution-8 (uses of solutions, from the school's own file); sci-solution-6 (ppm, energy, preparing) moved after the
   midterm**; meaning-sci-1, meaning-math-1, tool-ratio-table-1 after the midterm.
+  **26 Nov (father agreed): checkpoint 1 becomes the midterm mock on Mon 7 Dec (holiday)**; sci-solution-8 moves to Sun 6 Dec;
+  the separate 10 Dec mock is dropped and Thu 10 Dec becomes a short "ด่านเช็กซ่อม" (new items only on subtopics weak on 7 Dec +
+  the 8–9 Dec lessons) so 7 → 10 Dec shows whether repair built understanding (G2). Mock content = the 5 midterm topics only
+  (reuse cp-1's 13 midterm items; its 11 off-scope items go to a January checkpoint), every item tagged by days since taught
+  (≥ 7 days feeds criterion 4), confidence taps on. Real exam (father): per subject ~50–60 min, multiple choice + written
+  show-your-work. Proposed and WAITING (front page ④ ช): science and math as two separate sets of 50–60 min with a ≥ 1 h break;
+  printed paper (MC + written) with MC answers entered into the app afterwards and the written part marked by the father
+  with our rubric. Front-page queue 2 writes it (by Fri 4 Dec, printable Sat 5 Dec).
 - **G2 real understanding:** find, by trying and measuring, how she learns well with the app, and adapt it so that understanding
   actually comes from using it (talk cards, worksheet page, level-1 gate, her taps and ratings, her own words).
 Decision filter for any new work, request or nightly writing: does it serve G1 or G2 before 31 Dec? If not, it goes to the backup
