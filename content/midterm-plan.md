@@ -219,12 +219,18 @@ math-parallel-2 (8 Dec) and sci-solution-6 (9 Dec) go to the 10 Dec repair check
 **Ladder (4 levels; level is in the key, never on her paper):** L1 one idea, school floor (define, read, one step) · L2 school
 standard (2 steps, table/graph) · L3 IPST-exercise level (conditions, combine ideas, converse, real situations; own questions in
 that style, never copied) · L4 hardest IPST style. Purpose: a ceiling per topic (where she stops), not one total score.
-**Per subject, 60 min:** Part A 16 MC (~25–30 min) in topic blocks, each block L1 → L3; Part B 4 written (~25–30 min) at L3–L4,
-one question per page. Science A: solutions 8 (2/3/3), separation 8 (2/3/3); B: concentration + dilution with steps,
-solubility curve + mass that crystallises with a reason, plan a separation with reasons in order, one L4 data item (Rf /
-distillation). Math A: stats 6 (2/2/2), congruence 4 (1/2/1), parallel + reasoning 6 (2/2/2); B: target / missing / combined
-mean with working, a data set meeting conditions, a congruence proof (given / to prove / reasons), angles with an auxiliary
-parallel line or a parallelogram proof. Reuse cp-1's 13 midterm items where they fit; the rest new; blind check all.
+**Per subject, 60 min (father 26 Nov: L3–L4 only ~25–30%, not 40%, to protect confidence a week before the exam):**
+20 items = L1 6 (30%) · L2 9 (45%) · L3 4 (20%) · L4 1 (5%); may add one L3 MC (→ 30%) if a topic has no L3 item.
+Part A 16 MC (~25–30 min) = L1 6 · L2 7 · L3 3, in topic blocks, each block L1 → L3. Part B 4 written (~25–30 min), one per page
+= L2 2 (school-standard show-your-work) · L3 1 · L4 1 (last, marked "บอส").
+Science A: solutions 8 (L1 3 / L2 4 / L3 1), separation 8 (3 / 3 / 2). B: L2 concentration + dilution with steps · L2 solubility
+curve, mass that crystallises · L3 plan a separation with reasons in order · L4 data item (Rf / distillation).
+Math A: stats 6 (2 / 3 / 1), congruence 4 (2 / 1 / 1), parallel + reasoning 6 (2 / 3 / 1). B: L2 missing / combined mean with
+working · L2 angles with parallel lines with reasons · L3 congruence proof (given / to prove / reasons) · L4 a data set meeting
+conditions or a parallelogram proof. Trade-off: one L3 MC per topic, so the IPST-depth ceiling is read more coarsely.
+Reuse cp-1's 13 midterm items where they fit; the rest new; blind check all.
+Solutions depth reference: IPST ม.2 เล่ม 1 solutions chapter, read at the start of queue 2 (father approved 26 Nov; scan, needs
+the folder `D:\เตรียมม.ปลาย` added in the desktop app); notes go to content/school-plan.md for later entrance-exam use too.
 **Paper:** cover (start/end time boxes, rules: any order, cross out with one line, never erase, write working beside MC too);
 MC items with fixed printed order ก–ง (shuffled once at build, key kept in a separate teacher file); one answer grid page per
 subject: item · ก ข ค ง · มั่นใจ / ไม่แน่ใจ / เดา, "–" = not done; written pages with a large code (ว-W1 … ค-W4) in the header,
