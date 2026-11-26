@@ -312,3 +312,8 @@ that a person explaining aloud is clearer; CLAUDE.md "Student feedback 23 Nov"):
 - **24 Nov night:** every `talk` screen and every library step you write needs a short heading `h` (docs/writing-content.md "Spoken-style
   cards"); the re-read view lists them so she can jump to the part she forgot. Since the worksheet is one page now, `ws.skips` means
   "left an item unanswered to do another first". Library reads from a question are `book:true` records (never flagged too fast).
+
+## Added 26 Nov 2026 (midterm topic check)
+- Level-1 top-up order (each to >= 6 level-1 items, blind-checked): math-stats-6 (1 Dec), sci-separation-2 (2 Dec), math-georeason-1 (3 Dec; has only 2), sci-solution-5 (5 Dec), math-parallel-2 (8 Dec).
+- Talk cards: forward first (sci-solution-4, math-stats-6, sci-separation-2, math-georeason-1, sci-solution-5, math-parallel-2), then backwards for the older midterm lessons. sci-solution-8 already has its own talk card.
+- Compass constructions are cut (father, 26 Nov); parallelogram proofs stay in math-georeason-1. sci-solution-6 (ppm, energy) is after the midterm.
