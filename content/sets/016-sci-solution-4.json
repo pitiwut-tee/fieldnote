@@ -133,7 +133,88 @@
     ]
    }
   ],
-  "use": "ชงชาด้วยน้ำร้อน คนให้ทั่ว ใช้น้ำตาลทรายละเอียดแทนน้ำตาลก้อน คือการทำให้ละลายเร็วขึ้น แต่ถ้าใส่น้ำตาลเกินที่น้ำรับได้ คนเท่าไรก็ไม่หมด"
+  "use": "ชงชาด้วยน้ำร้อน คนให้ทั่ว ใช้น้ำตาลทรายละเอียดแทนน้ำตาลก้อน คือการทำให้ละลายเร็วขึ้น แต่ถ้าใส่น้ำตาลเกินที่น้ำรับได้ คนเท่าไรก็ไม่หมด",
+  "talk": [
+   {
+    "h": "สองคำถาม: มากแค่ไหน กับ เร็วแค่ไหน",
+    "lines": [
+     "ลองเทเกลือ 5 ช้อนโต๊ะลงในน้ำครึ่งแก้ว คนเท่าไรก็ยังเหลือเกลือนอนก้นแก้ว",
+     "เพราะน้ำครึ่งแก้วนั้นรับเกลือได้เต็มแล้ว",
+     "\"น้ำรับสารได้มากที่สุดเท่าไร\" เรียกว่า สภาพละลายได้",
+     "เหมือนความจุของแก้ว เต็มแล้วก็คือเต็ม",
+     "\"ละลายเสร็จเร็วแค่ไหน\" เรียกว่า อัตราการละลาย",
+     "เหมือนความเร็วตอนเทน้ำใส่แก้ว เทเร็วหรือช้า แก้วก็จุเท่าเดิม"
+    ]
+   },
+   {
+    "h": "ตัวเลข \"ต่อน้ำ 100 g\"",
+    "lines": [
+     "สภาพละลายได้บอกเป็น \"กี่กรัม ต่อน้ำ 100 g\" ที่อุณหภูมิหนึ่ง",
+     "สมมติสาร K ละลายได้ 24 g ต่อน้ำ 100 g",
+     "มีน้ำ 200 g (2 เท่า) ก็รับได้ 2 เท่า คือ 48 g",
+     "มีน้ำแค่ 50 g (ครึ่งเดียว) ก็รับได้แค่ครึ่งเดียว คือ 12 g",
+     "ตัวเลข \"24 ต่อน้ำ 100 g\" ไม่เปลี่ยน แต่ที่ละลายได้จริงขึ้นกับว่ามีน้ำเท่าไร",
+     "เกลือนอนก้นแก้ว อยากให้หมด ต้องเติมน้ำ คนต่อเท่าไรก็ไม่ช่วย"
+    ],
+    "fig": {
+     "kind": "svg",
+     "svg": "<svg viewBox='0 0 360 250' xmlns='http://www.w3.org/2000/svg'><path d='M20 40 L20 184 Q20 190 26 190 L104 190 Q110 190 110 184 L110 40' fill='none' stroke='currentColor' stroke-width='2'/><rect x='22' y='160' width='86' height='28' fill='#5FA8D3' fill-opacity='.4'/><text x='65.0' y='152' font-size='13' font-weight='700' text-anchor='middle' fill='currentColor'>น้ำ 50 g</text><text x='65.0' y='212' font-size='13' text-anchor='middle' fill='currentColor'>รับสาร K ได้</text><text x='65.0' y='232' font-size='15' font-weight='700' text-anchor='middle' fill='#D9822B'>12 g</text><path d='M135 40 L135 184 Q135 190 141 190 L219 190 Q225 190 225 184 L225 40' fill='none' stroke='currentColor' stroke-width='2'/><rect x='137' y='130' width='86' height='58' fill='#5FA8D3' fill-opacity='.4'/><text x='180.0' y='122' font-size='13' font-weight='700' text-anchor='middle' fill='currentColor'>น้ำ 100 g</text><text x='180.0' y='212' font-size='13' text-anchor='middle' fill='currentColor'>รับสาร K ได้</text><text x='180.0' y='232' font-size='15' font-weight='700' text-anchor='middle' fill='#D9822B'>24 g</text><path d='M250 40 L250 184 Q250 190 256 190 L334 190 Q340 190 340 184 L340 40' fill='none' stroke='currentColor' stroke-width='2'/><rect x='252' y='70' width='86' height='118' fill='#5FA8D3' fill-opacity='.4'/><text x='295.0' y='62' font-size='13' font-weight='700' text-anchor='middle' fill='currentColor'>น้ำ 200 g</text><text x='295.0' y='212' font-size='13' text-anchor='middle' fill='currentColor'>รับสาร K ได้</text><text x='295.0' y='232' font-size='15' font-weight='700' text-anchor='middle' fill='#D9822B'>48 g</text></svg>",
+     "desc": "บีกเกอร์สามใบ น้ำ 50 กรัม รับสาร K ได้ 12 กรัม น้ำ 100 กรัม รับได้ 24 กรัม น้ำ 200 กรัม รับได้ 48 กรัม น้ำมากขึ้นกี่เท่า ก็รับสารได้มากขึ้นเท่านั้น"
+    }
+   },
+   {
+    "h": "อ่านกราฟ: ใต้เส้น บนเส้น เหนือเส้น",
+    "lines": [
+     "กราฟสภาพละลายได้ บอกว่าน้ำ 100 g รับสารได้เท่าไร ที่แต่ละอุณหภูมิ",
+     "ให้มองเส้นกราฟเป็นขีดบอก \"เต็ม\" ข้างแก้ว ที่ขยับตามอุณหภูมิ",
+     "จุดใต้เส้น: ยังไม่เต็ม ละลายเพิ่มได้อีก (ยังไม่อิ่มตัว)",
+     "จุดบนเส้นพอดี: เต็มพอดี (อิ่มตัว)",
+     "จุดเหนือเส้น: ใส่เกินที่น้ำรับได้ ส่วนเกินค้างก้นแก้ว หรือตกผลึกออกมา"
+    ],
+    "fig": {
+     "kind": "svg",
+     "svg": "<svg viewBox='0 0 320 236' xmlns='http://www.w3.org/2000/svg'><line x1='46.0' y1='14' x2='46.0' y2='196' stroke='currentColor' stroke-opacity='.15'/><text x='46.0' y='210' font-size='10.5' text-anchor='middle' fill='currentColor'>0</text><line x1='111.0' y1='14' x2='111.0' y2='196' stroke='currentColor' stroke-opacity='.15'/><text x='111.0' y='210' font-size='10.5' text-anchor='middle' fill='currentColor'>20</text><line x1='176.0' y1='14' x2='176.0' y2='196' stroke='currentColor' stroke-opacity='.15'/><text x='176.0' y='210' font-size='10.5' text-anchor='middle' fill='currentColor'>40</text><line x1='241.0' y1='14' x2='241.0' y2='196' stroke='currentColor' stroke-opacity='.15'/><text x='241.0' y='210' font-size='10.5' text-anchor='middle' fill='currentColor'>60</text><line x1='306.0' y1='14' x2='306.0' y2='196' stroke='currentColor' stroke-opacity='.15'/><text x='306.0' y='210' font-size='10.5' text-anchor='middle' fill='currentColor'>80</text><line x1='46' y1='196.0' x2='306' y2='196.0' stroke='currentColor' stroke-opacity='.15'/><text x='40' y='199.5' font-size='10.5' text-anchor='end' fill='currentColor'>0</text><line x1='46' y1='165.7' x2='306' y2='165.7' stroke='currentColor' stroke-opacity='.15'/><text x='40' y='169.2' font-size='10.5' text-anchor='end' fill='currentColor'>30</text><line x1='46' y1='135.3' x2='306' y2='135.3' stroke='currentColor' stroke-opacity='.15'/><text x='40' y='138.8' font-size='10.5' text-anchor='end' fill='currentColor'>60</text><line x1='46' y1='105.0' x2='306' y2='105.0' stroke='currentColor' stroke-opacity='.15'/><text x='40' y='108.5' font-size='10.5' text-anchor='end' fill='currentColor'>90</text><line x1='46' y1='74.7' x2='306' y2='74.7' stroke='currentColor' stroke-opacity='.15'/><text x='40' y='78.2' font-size='10.5' text-anchor='end' fill='currentColor'>120</text><line x1='46' y1='44.3' x2='306' y2='44.3' stroke='currentColor' stroke-opacity='.15'/><text x='40' y='47.8' font-size='10.5' text-anchor='end' fill='currentColor'>150</text><line x1='46' y1='14.0' x2='306' y2='14.0' stroke='currentColor' stroke-opacity='.15'/><text x='40' y='17.5' font-size='10.5' text-anchor='end' fill='currentColor'>180</text><line x1='46' y1='196' x2='306' y2='196' stroke='currentColor'/><line x1='46' y1='14' x2='46' y2='196' stroke='currentColor'/><polyline points='46.0,182.9 78.5,174.8 111.0,163.6 143.5,149.5 176.0,131.3 208.5,110.1 241.0,84.8 273.5,56.5 306.0,25.1' fill='none' stroke='#1F7A8C' stroke-width='2.6' stroke-linejoin='round'/><text x='247.5' y='34.2' font-size='11' font-weight='700' fill='#1F7A8C'>สาร X</text><circle cx='143.5' cy='175.8' r='4.2' fill='#D9822B'/><text x='150.5' y='169.8' font-size='12' font-weight='700' fill='currentColor'>U</text><text x='150.5' y='187.8' font-size='10' fill='currentColor'>ยังไม่อิ่มตัว</text><circle cx='208.5' cy='110.1' r='4.2' fill='#D9822B'/><text x='215.5' y='104.1' font-size='12' font-weight='700' fill='currentColor'>S</text><text x='215.5' y='122.1' font-size='10' fill='currentColor'>อิ่มตัว</text><circle cx='143.5' cy='125.2' r='4.2' fill='#D9822B'/><text x='150.5' y='119.2' font-size='12' font-weight='700' fill='currentColor'>O</text><text x='150.5' y='137.2' font-size='10' fill='currentColor'>เกิน</text><text x='176' y='230' font-size='11' text-anchor='middle' fill='currentColor'>อุณหภูมิ (°C)</text><text transform='translate(12 105) rotate(-90)' font-size='11' text-anchor='middle' fill='currentColor'>กรัม ต่อน้ำ 100 g</text></svg>",
+     "desc": "กราฟสภาพละลายได้ของสาร X ต่อน้ำ 100 กรัม เส้นโค้งขึ้นเมื่ออุณหภูมิสูงขึ้น จุด U อยู่ใต้เส้น ยังไม่อิ่มตัว จุด S อยู่บนเส้น อิ่มตัวพอดี จุด O อยู่เหนือเส้น ใส่เกินที่น้ำรับได้",
+     "caption": "ค่าโดยประมาณของโพแทสเซียมไนเทรต"
+    }
+   },
+   {
+    "h": "อิ่มตัว ไม่ได้แปลว่า 100%",
+    "lines": [
+     "\"อิ่มตัว\" แปลว่าน้ำรับไม่ไหวแล้ว ไม่ได้แปลว่าเข้มข้น 100%",
+     "สมมติสาร A ละลายได้ 25 g ต่อน้ำ 100 g",
+     "สารละลายอิ่มตัวจึงหนักรวม 25 + 100 = 125 g",
+     "เข้มข้น 25 ÷ 125 × 100 = 20% ไม่ใช่ 25%",
+     "เพราะร้อยละเทียบกับทั้งแก้ว (น้ำ + สาร) ไม่ได้เทียบกับน้ำอย่างเดียว"
+    ]
+   },
+   {
+    "h": "อะไรทำให้ละลายได้มากขึ้น",
+    "lines": [
+     "ความจุ (สภาพละลายได้) ขึ้นกับ 3 อย่าง (ถ้าเป็นแก๊ส มีความดันเพิ่มอีกอย่าง)",
+     "ชนิดของตัวละลาย: เกลือกับน้ำตาลละลายในน้ำได้ไม่เท่ากัน",
+     "ชนิดของตัวทำละลาย: สารบางอย่างละลายน้ำได้น้อย แต่ละลายในแอลกอฮอล์ได้ดี",
+     "อุณหภูมิ: ของแข็งส่วนใหญ่ร้อนขึ้นแล้วละลายได้มากขึ้น (มีบางชนิดกลับน้อยลง)",
+     "แก๊สกลับกัน ร้อนขึ้นแล้วละลายได้น้อยลง",
+     "ส่วนความดัน มีผลกับแก๊สเท่านั้น ไม่มีผลกับของแข็ง"
+    ]
+   },
+   {
+    "h": "อะไรทำให้ละลายเร็วขึ้น",
+    "lines": [
+     "ส่วนเรื่อง \"เร็ว\" มีตัวช่วย 3 อย่าง: คน บดให้ละเอียด และทำให้ร้อนขึ้น",
+     "คนกับบด ช่วยแค่ให้เร็ว ความจุยังเท่าเดิม",
+     "ในสามอย่างนี้ มีแค่อุณหภูมิที่เปลี่ยนได้ทั้งความเร็วและปริมาณ",
+     "ถ้าจะทดสอบว่าอะไรมีผล ให้เปลี่ยนทีละอย่าง ที่เหลือเท่ากันหมด",
+     "เช่น เทียบก้อนกับผง ต้องคนเหมือนกัน น้ำเท่ากัน อุณหภูมิเดียวกัน"
+    ],
+    "fig": {
+     "kind": "svg",
+     "svg": "<svg viewBox='0 0 360 250' xmlns='http://www.w3.org/2000/svg'><rect x='10' y='10' width='164' height='200' rx='12' fill='currentColor' fill-opacity='.06' stroke='currentColor' stroke-opacity='.5'/><text x='92' y='40' font-size='15' font-weight='700' text-anchor='middle' fill='currentColor'>ละลายเร็วขึ้น</text><text x='92' y='85' font-size='14' font-weight='400' text-anchor='middle' fill='currentColor'>คน</text><text x='92' y='130' font-size='14' font-weight='400' text-anchor='middle' fill='currentColor'>บดให้ละเอียด</text><rect x='20' y='153' width='144' height='32' rx='8' fill='#D9822B' fill-opacity='.25'/><text x='92' y='175' font-size='14' font-weight='700' text-anchor='middle' fill='currentColor'>อุณหภูมิสูงขึ้น</text><rect x='186' y='10' width='164' height='200' rx='12' fill='currentColor' fill-opacity='.06' stroke='currentColor' stroke-opacity='.5'/><text x='268' y='40' font-size='15' font-weight='700' text-anchor='middle' fill='currentColor'>ละลายได้มากขึ้น</text><rect x='196' y='63' width='144' height='32' rx='8' fill='#D9822B' fill-opacity='.25'/><text x='268' y='85' font-size='14' font-weight='700' text-anchor='middle' fill='currentColor'>อุณหภูมิ</text><text x='268' y='130' font-size='14' font-weight='400' text-anchor='middle' fill='currentColor'>ชนิดตัวทำละลาย</text><text x='268' y='175' font-size='14' font-weight='400' text-anchor='middle' fill='currentColor'>ความดัน (แก๊ส)</text><text x='180' y='238' font-size='13' text-anchor='middle' fill='currentColor'>มีแค่อุณหภูมิที่อยู่ทั้งสองฝั่ง</text></svg>",
+     "desc": "กล่องซ้าย ละลายเร็วขึ้น: คน บดให้ละเอียด อุณหภูมิสูงขึ้น กล่องขวา ละลายได้มากขึ้น: อุณหภูมิ ชนิดตัวทำละลาย ความดันสำหรับแก๊ส อุณหภูมิอยู่ทั้งสองกล่อง"
+    }
+   }
+  ]
  },
  "practice": [
   {
