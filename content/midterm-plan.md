@@ -244,3 +244,11 @@ map per subtopic with its ceiling level, then plans 8–9 Dec repair and writes 
 **Suggested day:** science ~09:00, math after lunch (≥ 1 h break), no other missions except vocabulary.
 Reading (hard rule 6): our own items = a trend. L3 reached on a topic = the app took her to IPST depth there; L1–L2 only =
 school floor reached, depth not yet. Entrance-exam meaning is read only in the late-December decision.
+
+**Queue split, 26 Nov (father agreed): front-page queue 2 = 2ก + 2ข.** 2ก (Sat 28 – Mon 30 Nov, Opus, computer needed): read the IPST ม.2 เล่ม 1
+solutions chapter, notes to content/school-plan.md; no dependence on her data. 2ข (Tue 1 Dec after queue 1, latest Wed 2 Dec morning; Opus, no
+computer): write the two paper sets, blind check, printable files + separate key pages, calendar.json dates; father imports her file first.
+**Blueprint comes from the school scope + the ladder above, NOT from her weak spots** (the mock measures: a tilted paper biases the green/yellow/red map,
+lowers confidence a week before the exam and spoils the 7 → 10 Dec comparison; weak spots are served by the 10 Dec repair check). Her data is used for
+only three things: (1) never reuse an item she has already answered (check the parent db / bank "seen" list, and re-check against lesson items the nightly
+run adds after 1 Dec); (2) L2–L3 distractors and situations built from her real misconceptions; (3) lessons of 3–6 Dec have no data, write from the lesson sets.
