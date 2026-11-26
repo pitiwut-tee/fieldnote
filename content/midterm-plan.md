@@ -210,3 +210,31 @@ Result: same five exam spells as before (s4, s3, m22, m16, m15), so lesson order
 ## 26 Nov (later): sci-solution-6 back before the midterm
 Re-read the teacher's 52-slide unit-1 deck (หน่วยที่1 สารละลาย) as images. It has: ppm as one "Know it" slide (tap water chlorine <= 0.2 ppm, 1 L has <= 0.2 mg) with no ppm exercises; concentration only as % w/w, % w/v-style and % v/v with 9 exercises; saturation and solubility curves; uses in daily life (saline, thinner, pesticide, hydroponics). Energy of dissolving was not in it (the larger 48 MB deck "หน่วย 1 สารละลาย ม.2" was not read).
 Father's decision: teach sci-solution-6 whole before the midterm and shorten prep. Queue order unchanged (math-parallel-2 8 Dec, sci-solution-6 9 Dec); midterm `prepDays` 5 -> 4 (prep Thu 10 - Sun 13 Dec; mock still Thu 10 Dec). Nightly: sci-solution-6 needs level-1 top-up (check count) and a talk card; ppm items must match the school's depth (what it means, conversion from mg per kg or L), energy-of-dissolving items stay light.
+
+## 26 Nov: checkpoint 1 = paper midterm mock, Mon 7 Dec (design agreed in chat; father confirms the final numbers)
+Father: printer at home; exam ratio of MC to written unknown; ignore the school's paper layout, focus on content; he types the MC
+answers into the chat and sends photos of the written pages; I analyse her working (photos never enter the repo, rule 1).
+**Scope:** taught by Sun 6 Dec only (stats 1–6, congruence 1–2, parallel-1, georeason-1, solutions 1–5, 7, 8, separation 1–4).
+math-parallel-2 (8 Dec) and sci-solution-6 (9 Dec) go to the 10 Dec repair check. Every item tagged with days since taught.
+**Ladder (4 levels; level is in the key, never on her paper):** L1 one idea, school floor (define, read, one step) · L2 school
+standard (2 steps, table/graph) · L3 IPST-exercise level (conditions, combine ideas, converse, real situations; own questions in
+that style, never copied) · L4 hardest IPST style. Purpose: a ceiling per topic (where she stops), not one total score.
+**Per subject, 60 min:** Part A 16 MC (~25–30 min) in topic blocks, each block L1 → L3; Part B 4 written (~25–30 min) at L3–L4,
+one question per page. Science A: solutions 8 (2/3/3), separation 8 (2/3/3); B: concentration + dilution with steps,
+solubility curve + mass that crystallises with a reason, plan a separation with reasons in order, one L4 data item (Rf /
+distillation). Math A: stats 6 (2/2/2), congruence 4 (1/2/1), parallel + reasoning 6 (2/2/2); B: target / missing / combined
+mean with working, a data set meeting conditions, a congruence proof (given / to prove / reasons), angles with an auxiliary
+parallel line or a parallelogram proof. Reuse cp-1's 13 midterm items where they fit; the rest new; blind check all.
+**Paper:** cover (start/end time boxes, rules: any order, cross out with one line, never erase, write working beside MC too);
+MC items with fixed printed order ก–ง (shuffled once at build, key kept in a separate teacher file); one answer grid page per
+subject: item · ก ข ค ง · มั่นใจ / ไม่แน่ใจ / เดา, "–" = not done; written pages with a large code (ว-W1 … ค-W4) in the header,
+a blank work area and a feeling line (เข้าใจ / ไม่แน่ใจ / ไม่รู้จะเริ่มยังไง); last page: 2 lines in her words (hardest item and
+why; which topic she feels ready for). Tell her before: the last items of each topic are "บอส" above the school level.
+**Return (no app build needed):** father types one line per subject, e.g. `ว 1ก 2ข? 3ค! 4- …` (? unsure, ! guess, - not done),
+plus the finish time of Part A; photos: every written page + MC pages where she wrote working, one upright photo per page.
+The analysis chat scores, writes per-item results to the parent db (`parentlog`, kind `mock`), classifies written errors
+(concept / method right but slip / could not start / misread / right answer, reasoning gap), gives a green / yellow / red
+map per subtopic with its ceiling level, then plans 8–9 Dec repair and writes the 10 Dec check.
+**Suggested day:** science ~09:00, math after lunch (≥ 1 h break), no other missions except vocabulary.
+Reading (hard rule 6): our own items = a trend. L3 reached on a topic = the app took her to IPST depth there; L1–L2 only =
+school floor reached, depth not yet. Entrance-exam meaning is read only in the late-December decision.

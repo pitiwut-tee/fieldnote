@@ -43,9 +43,10 @@ Only two goals count until then:
   the 8–9 Dec lessons) so 7 → 10 Dec shows whether repair built understanding (G2). Mock content = the 5 midterm topics only
   (reuse cp-1's 13 midterm items; its 11 off-scope items go to a January checkpoint), every item tagged by days since taught
   (≥ 7 days feeds criterion 4), confidence taps on. Real exam (father): per subject ~50–60 min, multiple choice + written
-  show-your-work. Proposed and WAITING (front page ④ ช): science and math as two separate sets of 50–60 min with a ≥ 1 h break;
-  printed paper (MC + written) with MC answers entered into the app afterwards and the written part marked by the father
-  with our rubric. Front-page queue 2 writes it (by Fri 4 Dec, printable Sat 5 Dec).
+  show-your-work. Agreed 26 Nov: printed paper, science and math as separate 60-min sets (≥ 1 h break), MC + written, a 4-level
+  ladder up to IPST-exercise level; father types MC answers into the chat and photographs written pages for my analysis (no app
+  entry page). Full design: content/midterm-plan.md "26 Nov: checkpoint 1 = paper midterm mock". Front-page queue 2 writes it
+  (by Fri 4 Dec, printable Sat 5 Dec).
 - **G2 real understanding:** find, by trying and measuring, how she learns well with the app, and adapt it so that understanding
   actually comes from using it (talk cards, worksheet page, level-1 gate, her taps and ratings, her own words).
 Decision filter for any new work, request or nightly writing: does it serve G1 or G2 before 31 Dec? If not, it goes to the backup
