@@ -193,3 +193,16 @@ Result: same five exam spells as before (s4, s3, m22, m16, m15), so lesson order
   1 / 2 / 3 / 5 / 8 Dec. Talk cards missing for sol-4 (30 Nov), stats-6, sep-2, georeason-1, sol-5, sol-6, parallel-2 and, backwards,
   dotplot-1, stats-1, stats-3, stats-4, sol-7: 12 cards in ~11 nights, so the nightly run should write forward cards first
   (a lesson served without one is the thin case), backward cards after.
+
+## 26 Nov (later): father's answers and what changed
+- **Constructions cut:** father expects compass constructions are not tested (he will say if that changes). No construction lesson, no
+  construction-reason items in the mock. **Parallelogram proofs stay** (math-georeason-1: gr1p10, gr1p11); it still needs level-1 top-ups (2 now).
+  8 Dec slot = math-parallel-2.
+- **"Uses of solutions" added** from the school's own file (science `สารละลาย.pdf` pp. 10–11, "การใช้สารละลายในชีวิตประจำวัน": vinegar, rubbing
+  alcohol, nail-polish remover, thinner, saline, cooking gas, cleaners, pesticide: solvent/solute, concentration on the label, dilute or use low
+  concentration for hazards, choose the solvent for the job). New set `056-sci-solution-8` (7 warm 2 + 14 practice, 7 at level 1, + challenge, spoken
+  card of 6 screens, table figure, tagged s4.9/s4.4/s4.6), blind-checked 17/17 and the card fact-checked. It takes the **7 Dec** slot;
+  **sci-solution-6 moved to after math-parallel-2 (post-midterm)**. Trade-off: ppm is in the school's documents but not on the father's topic list.
+  Left out on purpose: the school slide's "15% w/v saline as a laxative" (unsafe to drink; not taught) and its 70:30 propane:butane (the item says
+  "ตัวเลขสมมติ", real LPG ratios vary).
+- The school's science files are text PDFs except the 48 MB unit (scan); `สารละลาย.pdf` is the teacher's slide deck.
