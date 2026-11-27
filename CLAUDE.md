@@ -44,9 +44,9 @@ Only two goals count until then:
   (reuse cp-1's 13 midterm items; its 11 off-scope items go to a January checkpoint), every item tagged by days since taught
   (≥ 7 days feeds criterion 4), confidence taps on. Real exam (father): per subject ~50–60 min, multiple choice + written
   show-your-work. Agreed 26 Nov: printed paper, science and math as separate 60-min sets (≥ 1 h break), MC + written, a 4-level
-  ladder up to IPST-exercise level (L3–L4 ~25–30% per father, not 40%; IPST ม.2 เล่ม 1 solutions chapter read first in queue 2); father types MC answers into the chat and photographs written pages for my analysis (no app
+  ladder up to IPST-exercise level (L3–L4 ~25–30% per father, not 40%; IPST ม.2 เล่ม 1 solutions exercises read 27 Nov in queue 2ก, notes in content/school-plan.md); father types MC answers into the chat and photographs written pages for my analysis (no app
   entry page). Full design: content/midterm-plan.md "26 Nov: checkpoint 1 = paper midterm mock". Front-page queue 2 writes it
-  (by Fri 4 Dec, printable Sat 5 Dec); split 26 Nov into 2ก (read IPST chapter, 28–30 Nov) and 2ข (write the sets, Tue 1 Dec; blueprint from school scope, her data only for no-repeat items and distractors: see midterm-plan.md "Queue split").
+  (by Fri 4 Dec, printable Sat 5 Dec); split 26 Nov into 2ก (read IPST chapter; DONE 27 Nov) and 2ข (write the sets, Tue 1 Dec; blueprint from school scope, her data only for no-repeat items and distractors: see midterm-plan.md "Queue split").
 - **G2 real understanding:** find, by trying and measuring, how she learns well with the app, and adapt it so that understanding
   actually comes from using it (talk cards, worksheet page, level-1 gate, her taps and ratings, her own words).
 Decision filter for any new work, request or nightly writing: does it serve G1 or G2 before 31 Dec? If not, it goes to the backup

@@ -139,6 +139,63 @@ the corrected file). Also compare unit 5 with the school's final-term "หน่
 never been read (60 MB scan: read only its contents and exercise pages). Science figures (pulleys, inclined
 planes, energy bars) can use the `svg` fig kind.
 
+## IPST วิทย์ ม.2 เล่ม 1, unit 2 สารละลาย: end-of-chapter and end-of-unit exercises (read 27 Nov 2026, front-page queue 2ก)
+
+Source: 6 photos the father took (book pp. 28–29 = chapter 1 exercises, 6 items; p. 43 = chapter 2 exercises, 6 items;
+pp. 45–47 = end-of-unit test, 9 items, multiple choice). The content pages were NOT photographed and are not needed: the
+school documents and ID-Book 3122 already cover the content; the exercises answer what queue 2ข needs (how deep "IPST level"
+goes and in what form). Nothing copied; only kinds of task are recorded. The book marks every item `*` or `**`
+(apparently its own difficulty level). Use for the paper mock ladder: `*` ≈ our L2–L3, `**` ≈ L3–L4.
+
+**Chapter 1 (solubility, factors) asks:**
+- `**` solubility from an experiment: mass put in, water not 100 g, undissolved mass filtered and weighed → subtract,
+  then scale to 100 g water (two steps; the trap is forgetting to subtract or to scale).
+- `*` one factor changed at a time (form of the solid, temperature, pressure) → effect on solubility of a solid; the point
+  is that powder and (for solids) pressure change speed or nothing, not solubility.
+- `*` judge a claim "stirring raises solubility" → wrong: stirring speeds dissolving only (rate vs amount).
+- `*`/`**` a 4-curve solubility graph (rising, steep rising, falling, falling then flat): which solutions are unsaturated /
+  just saturated at a given temperature when equal masses go into NON-100 g water; how much stays undissolved; what
+  happens when saturated solutions are cooled (rising curve crystallises, falling curve does not).
+- `**` infer the solubility-temperature trend from data given at different water masses → scale each to 100 g first
+  (the raw numbers rise, the per-100 g values can fall: the trap).
+- `**` a 4-run table (two solvents × lump/powder, same temperature) → aim of the experiment, independent / dependent /
+  controlled variables for a chosen pair of runs, conclusion (solvent type matters, particle size does not).
+
+**Chapter 2 (concentration) asks:**
+- `*` % v/v and % w/v: solute needed for a given volume (litres → litres, litres → kg); % w/w with a unit change
+  (tonnes → kg).
+- `**` reverse: given solute mass and % w/v, the maximum volume that can be made.
+- `*` rank three preparations by colour strength → compute % w/v for each (the biggest mass is not the strongest).
+- `**` table of products (concentration × volume): which contains the most solute (mass = % × volume, not the highest %),
+  and which is most hazardous to the body (the highest concentration: hazard on contact follows concentration, not total).
+
+**End-of-unit test (MC) asks:**
+- `*` one curve, mass into water given in cm³ (not 100 g) → is any left, how much (scale the curve value down).
+- `*`/`**` two solutes on one graph in the same 200 g water: how much of each is left at a temperature; total solid left
+  at another temperature; `**` what temperature change leaves only one of the two undissolved (read where one curve
+  passes the needed value, then give the change from the current temperature, not the target temperature).
+- `*` a short real-life text (a plastic foam dissolving in a solvent, faster when hot) → which factors affect dissolving.
+- `**` feasibility: given solute mass and water, can a stated % w/v and volume be made, and why (enough solute? enough
+  water?), with four reason-options.
+- `*` maximum volume of a % w/v solution from a given mass.
+- `**` same substance, first trial gives the solubility (put in − undissolved, at a non-100 g water mass) → predict a
+  second trial with different masses (dissolves fully / just saturated / how much left).
+- `**` multi-answer: which (concentration, volume) pairs can be made from a fixed mass (solute needed = % × volume ≤ mass).
+
+**What this means for queue 2ข and the bank (check before writing the science set):**
+- Every `**` item is a chain of two familiar steps (subtract, then scale to 100 g; or % × volume, then compare). The bank
+  has each single step; L3–L4 on the mock should be these two-step chains, which matches the ladder's L3 "combine ideas".
+- Rare or absent in the bank (grep 27 Nov over the solution sets and `variants.json`): feasibility "can it be made / why
+  not" (0 hits), multi-answer selection (0; the paper can use "choose all that apply" in Part B instead of MC), two
+  solutes on one graph with "total solid left" and "temperature change to leave only one" (1–2 hits), trend inferred from
+  data at different water masses, variables of an experiment for a chosen pair of runs (2 files). These are good
+  candidates for the L3 MC and the L4 data item (midterm-plan.md ladder), and later for twins.
+- Distractor ideas the book's own options use (own wording when reused): giving the target temperature instead of the
+  change; forgetting to scale non-100 g water; "most solute" = "highest %"; powder or stirring "raises solubility".
+- Ladder check: the book's `*` items are school-standard (one calculation, one reading); its `**` items are what our L3
+  means. Nothing here is above the school scope (no ppm, no dilution, no energy of dissolving in these exercises), so the
+  mock stays inside the midterm scope while reaching IPST depth.
+
 ## Pilot: reading a whole IPST chapter (12 Nov 2026) — VERDICT: worth it, do it again
 
 The father asked whether reading an IPST textbook chapter in full pays for the usage. Tried on

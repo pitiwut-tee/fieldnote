@@ -229,8 +229,8 @@ Math A: stats 6 (2 / 3 / 1), congruence 4 (2 / 1 / 1), parallel + reasoning 6 (2
 working · L2 angles with parallel lines with reasons · L3 congruence proof (given / to prove / reasons) · L4 a data set meeting
 conditions or a parallelogram proof. Trade-off: one L3 MC per topic, so the IPST-depth ceiling is read more coarsely.
 Reuse cp-1's 13 midterm items where they fit; the rest new; blind check all.
-Solutions depth reference: IPST ม.2 เล่ม 1 solutions chapter, read at the start of queue 2 (father approved 26 Nov; scan, needs
-the folder `D:\เตรียมม.ปลาย` added in the desktop app); notes go to content/school-plan.md for later entrance-exam use too.
+Solutions depth reference: IPST ม.2 เล่ม 1 unit 2 สารละลาย, **DONE 27 Nov (queue 2ก)**: the father photographed only the end-of-chapter
+and end-of-unit exercises (6 pages, enough); notes and what they mean for 2ข in content/school-plan.md "IPST วิทย์ ม.2 เล่ม 1, unit 2".
 **Paper:** cover (start/end time boxes, rules: any order, cross out with one line, never erase, write working beside MC too);
 MC items with fixed printed order ก–ง (shuffled once at build, key kept in a separate teacher file); one answer grid page per
 subject: item · ก ข ค ง · มั่นใจ / ไม่แน่ใจ / เดา, "–" = not done; written pages with a large code (ว-W1 … ค-W4) in the header,
